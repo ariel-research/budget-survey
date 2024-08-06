@@ -1,6 +1,5 @@
 # Budget Survey
 
-## Installation
 ## Prerequisites
 
 - python >= 3.8
