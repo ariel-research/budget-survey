@@ -24,3 +24,11 @@
     ```bash
     pip install -r requirements.txt
     ```
+
+## Usage Example
+```python
+from generate_examples import generate_user_example
+
+user_vector = (10, 20, 70)
+generate_user_example(user_vector, n=15, save_txt=True)
+```
