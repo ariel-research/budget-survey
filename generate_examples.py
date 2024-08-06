@@ -129,7 +129,7 @@ def graph_n_edges(user_vector, n: int=10, vector_size=3)->nx.Graph:
     """
     vectors = set()
     G = nx.Graph()
-    while len(G.edges) <= n:
+    while len(G.edges) < n:
         v = create_random_vector(vector_size)
         print(v)
         while v in vectors:
@@ -143,6 +143,8 @@ def graph_n_edges(user_vector, n: int=10, vector_size=3)->nx.Graph:
                 continue
             if should_add_edge(u, diff_sum, ratio):
                 G.add_edge(u[0], v)
+                if len(G.edges)>=n:
+                    break
     return G
 
 
