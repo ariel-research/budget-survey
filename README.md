@@ -1,11 +1,6 @@
 # Budget Survey
 
 ## Installation
-Here's the updated installation guide with added requirements for Python and `pip`:
-
----
-
-# Budget Survey
 ## Prerequisites
 
 - python >= 3.8
