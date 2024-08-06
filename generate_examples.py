@@ -209,14 +209,3 @@ def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)-
                 file.write(f"{e[0]} {e[1]}\n")
             
     return G.edges
-
-
-if __name__=="__main__":
-
-    vector_sum = 0
-    while vector_sum != 100:
-        input_vector = input("insert user vector items. for example: 10 20 70\n")
-        user_vector = tuple(map(int, input_vector.split()))
-        vector_sum = sum(user_vector)
-
-    examples = generate_user_example(user_vector, save_txt=True)

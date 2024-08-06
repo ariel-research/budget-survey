@@ -26,9 +26,11 @@
     ```
 
 ## Usage Example
-```python
-from generate_examples import generate_user_example
+Open the python shell in the project folder and execute the following commands:
 
-user_vector = (10, 20, 70)
-generate_user_example(user_vector, n=15, save_txt=True)
+```python
+>>> from generate_examples import generate_user_example
+>>> user_vector = (10, 20, 70)
+>>> examples = generate_user_example(user_vector, plot=True, save_txt=True)
+>>> print(examples)
 ```
