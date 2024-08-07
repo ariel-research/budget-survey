@@ -28,9 +28,21 @@
 ## Usage Example
 Open the python shell in the project folder and execute the following commands:
 
+Here's the corrected and structured phrasing for your documentation:
+
+### Generate Examples for a Specific User
+
 ```python
 >>> from generate_examples import generate_user_example
 >>> user_vector = (10, 20, 70)
 >>> examples = generate_user_example(user_vector, plot=True, save_txt=True)
 >>> print(examples)
+```
+
+### Generate Surveys for Multiple Users
+
+```python
+>>> from generate_random_survey import n_surveys
+>>> surveys = n_surveys(2, html=True)
+>>> print(surveys)
 ```
