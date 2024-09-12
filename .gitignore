@@ -307,8 +307,8 @@ psd
 thumb
 sketch
 
-# End of https://www.toptal.com/developers/gitignore/api/python,macos,flask,react
-
 venv/*
 graphs/*
 examples/*
+
+# End of https://www.toptal.com/developers/gitignore/api/python,macos,flask,react
