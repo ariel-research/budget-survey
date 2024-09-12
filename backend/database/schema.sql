@@ -9,6 +9,7 @@ CREATE TABLE survey_responses (
   user_id INT NOT NULL,
   survey_name VARCHAR(255) NOT NULL,
   optimal_allocation JSON NOT NULL,
+  completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
