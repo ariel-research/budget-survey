@@ -25,6 +25,12 @@
     pip install -r requirements.txt
     ```
 
+## Database Schema
+
+Below is the image showing the tables and their relationships in the project:
+
+![Database Schema](docs/db_schema_diagram.png)
+
 ## Usage Example
 Open the python shell in the project folder and execute the following commands:
 
