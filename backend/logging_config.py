@@ -1,8 +1,18 @@
+import os
 import logging
 import logging.config
 
 def setup_logging():
     """Configures the logging system with console and file handlers."""
+
+    # Get the project's root directory
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    log_dir = os.path.join(project_root, 'logs')
+    
+    # Create the directory if it does not exist
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
     logging.config.dictConfig({
         'version': 1,
         'disable_existing_loggers': False,
@@ -19,7 +29,7 @@ def setup_logging():
             'file': {
                 'class': 'logging.FileHandler',
                 'formatter': 'default',
-                'filename': './logs/app.log',  # Log file location
+                'filename': os.path.join(log_dir, 'app.log'),  # Log file location
             },
         },
         'root': {
