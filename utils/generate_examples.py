@@ -104,8 +104,8 @@ def get_vector_sr(user_vector:tuple, v: tuple):
            - The minimal ratio of the corresponding elements of `v` to the user vector, ignoring any divisions by zero.
 
     Example:
-    >>> get_vector_sr((10, 20, 30), (15, 25, 35))
-    (15, 0.75)
+    >>> get_vector_sr((50, 30, 20), (30, 40, 30))
+    (40, 0.6)
     """
     return (sum_of_differences(user_vector, v),minimal_ratio(user_vector, v))
 
