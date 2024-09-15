@@ -2,7 +2,7 @@ import networkz as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-def create_random_vector(size=3)->tuple:
+def create_random_vector(size: int = 3) -> tuple:
     """
     Generate a random vector of integers that sums to 100, with each element
     being a multiple of 5.
@@ -57,8 +57,8 @@ def minimal_ratio(user_vector: tuple, generated_vector: tuple)->float:
            vector to the user vector, ignoring any divisions by zero.
 
     Example:
-    >>> minimal_ratio((10, 20, 30), (15, 25, 35))
-    0.75
+    >>> minimal_ratio((50, 30, 20), (30, 40, 30))
+    0.6
     """
     ratios = np.array(generated_vector) / np.array(user_vector)
     return np.min(ratios[np.isfinite(ratios)])  # Handle division by zero

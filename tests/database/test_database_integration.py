@@ -6,8 +6,8 @@ import random
 # Add the parent directory to the system path to allow importing from the backend module.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from backend.database.db import get_db_connection, execute_query
-from backend.database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed
+from database.db import get_db_connection, execute_query
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed
 
 @pytest.fixture(scope="module")
 def db_connection():
