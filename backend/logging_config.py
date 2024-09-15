@@ -10,8 +10,13 @@ def setup_logging():
     log_dir = os.path.join(project_root, 'logs')
     
     # Create the directory if it does not exist
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        print(f"Log directory created/verified at: {log_dir}")
+    except Exception as e:
+        print(f"Error creating log directory: {e}")
+
+    log_file = os.path.join(log_dir, 'app.log')
 
     logging.config.dictConfig({
         'version': 1,
@@ -25,15 +30,17 @@ def setup_logging():
             'console': {
                 'class': 'logging.StreamHandler',
                 'formatter': 'default',
+                'level': 'DEBUG',
             },
             'file': {
                 'class': 'logging.FileHandler',
                 'formatter': 'default',
-                'filename': os.path.join(log_dir, 'app.log'),  # Log file location
+                'filename': log_file,
+                'level': 'DEBUG',
             },
         },
         'root': {
-            'level': 'INFO',  # Set the default logging level
+            'level': 'DEBUG',  # Set to DEBUG to capture all levels of logs
             'handlers': ['console', 'file']
         }
     })
