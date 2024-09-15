@@ -19,7 +19,9 @@ def create_user(external_id: int) -> int:
     """
     query = "INSERT INTO users (external_id) VALUES (%s)"
     logger.debug(f"Executing query: {query} with external_id: {external_id}")
-    return execute_query(query, (external_id,))
+    ans = execute_query(query, (external_id,))
+    print(f'answer: {ans}')
+    return ans
 
 def create_survey_response(user_id: int, survey_name: str, optimal_allocation: list) -> int:
     """

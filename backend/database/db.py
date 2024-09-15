@@ -1,32 +1,38 @@
+from dotenv import load_dotenv
 import os
 import mysql.connector
 from mysql.connector import Error
-from backend.logging_config import setup_logging
 import logging
 
-setup_logging()
-
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_db_connection():
-    """
-    Establishes a connection to the MySQL database using environment variables.
-    
-    Returns:
-        mysql.connector.connection.MySQLConnection: The database connection object, or None if the connection fails.
-    """
+# Load environment variables
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+load_dotenv(dotenv_path)
+
+def get_db_connection():  
+    host = os.getenv('MYSQL_HOST', 'localhost')
+    port = int(os.getenv('MYSQL_PORT', '3307'))
+    database = os.getenv('MYSQL_DATABASE', 'survey_app_db')
+    user = os.getenv('MYSQL_USER', 'survey_user')
+    password = os.getenv('MYSQL_PASSWORD')
+
     try:
         connection = mysql.connector.connect(
-            host=os.getenv('MYSQL_HOST'),
-            database=os.getenv('MYSQL_DATABASE'),
-            user=os.getenv('MYSQL_USER'),
-            password=os.getenv('MYSQL_PASSWORD')
+            host=host,
+            port=port,
+            database=database,
+            user=user,
+            password=password
         )
         logger.info("Database connection established")
         return connection
     except Error as e:
         logger.error(f"Error connecting to MySQL database: {e}")
         return None
+
 
 def execute_query(query, params=None):
     """

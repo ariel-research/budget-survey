@@ -33,7 +33,7 @@ def setup_logging():
             },
         },
         'root': {
-            'level': 'DEBUG',  # Set the default logging level
+            'level': 'INFO',  # Set the default logging level
             'handlers': ['console', 'file']
         }
     })
