@@ -1,0 +1,30 @@
+<!--
+This template displays a thank you message after survey completion.
+It confirms the user's participation, explains data usage, and provides next steps.
+The template extends base.html and customizes the title and content blocks.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}תודה רבה - סקר התקציב{% endblock %}
+
+{% block content %}
+<div class="thank-you-container">
+    <h1>תודה רבה על השתתפותך!</h1>
+    
+    <div class="message-box">
+        <p class="main-message">תשובותיך לסקר התקציב נשמרו בהצלחה.</p>
+        <p class="sub-message">אנו מעריכים את הזמן והמחשבה שהשקעת בתשובותיך.</p>
+    </div>
+    
+    <div class="next-steps">
+        <h2>מה הלאה?</h2>
+        <ul>
+            <li>תשובותיך יעובדו יחד עם תשובות משתתפים אחרים.</li>
+            <li>התוצאות ישמשו לניתוח ומחקר בנושא העדפות תקציביות.</li>
+            <li>אנו לא נשתמש במידע אישי שלך מעבר למטרות המחקר.</li>
+        </ul>
+    </div>
+      
+</div>
+{% endblock %}

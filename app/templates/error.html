@@ -1,0 +1,20 @@
+<!--
+This template displays error messages to users.
+It shows a generic error heading and a specific error message passed from the backend.
+The template extends base.html and customizes the title and content blocks.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}שגיאה - סקר התקציב{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <h1>אופס! משהו השתבש</h1>
+        <div class="error-message">
+            <p>{{ message }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

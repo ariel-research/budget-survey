@@ -1,0 +1,33 @@
+<!-- 
+This template serves as the landing page for the budget survey application.
+It welcomes users, provides an overview of the survey process, and guides them to start the survey.
+The page inherits from base.html and customizes the title and content blocks.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}ברוכים הבאים לסקר התקציב{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h1>ברוכים הבאים לסקר התקציב</h1>
+    
+    <div class="intro-box">
+        <p>תודה שהסכמת להשתתף במחקר בנושא העדפות תקציביות.</p>
+    </div>
+    
+    <div class="survey-description">
+        <h2>מה מצפה לך בסקר?</h2>
+        <ol>
+            <li>תתבקש/י לחלק תקציב בגובה מאה שקלים, בקפיצות של חמש, בין שלושה משרדי ממשלה: ביטחון, חינוך ובריאות.</li>
+            <li>לאחר מכן, תוצג בפניך סדרה של אפשרויות תקציב שונות.</li>
+            <li>עבור כל זוג אפשרויות, תתבקש/י לבחור את האפשרות המועדפת עליך.</li>
+        </ol>
+    </div>
+    
+    <div class="start-survey">
+        <p>מוכנ/ה להתחיל? לחצ/י על הכפתור למטה!</p>
+        <a href="{{ url_for('main.create_vector', participant_id=participant_id) }}" class="btn">התחל סקר</a>
+    </div>
+</div>
+{% endblock %}

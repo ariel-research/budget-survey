@@ -210,4 +210,4 @@ def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)-
             for e in G.edges:
                 file.write(f"{e[0]} {e[1]}\n")
             
-    return G.edges
+    return list(G.edges)

@@ -1,0 +1,51 @@
+<!-- 
+This template allows users to create their budget vector by allocating 100 points among three government departments.
+It includes form validation to ensure the total is 100 and each value is divisible by 5.
+The page inherits from base.html and customizes the title and content blocks.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}יצירת וקטור תקציב{% endblock %}
+
+{% block content %}
+<div class="create-vector-container">
+    <h1>יצירת וקטור תקציב</h1>
+
+    <div class="instructions">
+        <p>חלק/י את התקציב של 100 נקודות בין שלושת המשרדים הבאים. וודא/י ש:</p>
+        <ul>
+            <li>הסכום הכולל הוא בדיוק 100.</li>
+            <li>כל מספר מתחלק ב-5 ללא שארית (לדוגמה: 0, 5, 10, 15, וכו').</li>
+        </ul>
+    </div>
+
+    {% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('main.create_vector', participant_id=participant_id) }}" class="vector-form" data-form-type="create-vector">
+        <div class="budget-inputs">
+            {% for subject in subjects %}
+            <div class="input-group">
+                <label for="subject_{{ loop.index0 }}">{{ subject }}:</label>
+                <input type="number" id="subject_{{ loop.index0 }}" name="subject_{{ loop.index0 }}" required min="0" max="100" step="5">
+            </div>
+            {% endfor %}
+        </div>
+    
+        <div class="total-container">
+            <span>סה"כ:</span>
+            <span id="total">0</span>
+        </div>
+    
+        <div id="error-display" class="error-message" style="display: none;"></div>
+    
+        <div class="submit-container">
+            <input type="submit" value="המשך לסקר" class="btn" id="submit-btn">
+        </div>
+    </form>
+</div>
+{% endblock %}
