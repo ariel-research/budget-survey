@@ -2,7 +2,7 @@ import networkz as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-def create_random_vector(size=3)->tuple:
+def create_random_vector(size: int=3) -> tuple:
     """
     Generate a random vector of integers that sums to 100, with each element
     being a multiple of 5.
@@ -57,8 +57,8 @@ def minimal_ratio(user_vector: tuple, generated_vector: tuple)->float:
            vector to the user vector, ignoring any divisions by zero.
 
     Example:
-    >>> minimal_ratio((10, 20, 30), (15, 25, 35))
-    0.75
+    >>> minimal_ratio((50, 30, 20), (30, 40, 30))
+    0.6
     """
     ratios = np.array(generated_vector) / np.array(user_vector)
     return np.min(ratios[np.isfinite(ratios)])  # Handle division by zero
@@ -104,8 +104,8 @@ def get_vector_sr(user_vector:tuple, v: tuple):
            - The minimal ratio of the corresponding elements of `v` to the user vector, ignoring any divisions by zero.
 
     Example:
-    >>> get_vector_sr((10, 20, 30), (15, 25, 35))
-    (15, 0.75)
+    >>> get_vector_sr((50, 30, 20), (30, 40, 30))
+    (40, 0.6)
     """
     return (sum_of_differences(user_vector, v),minimal_ratio(user_vector, v))
 
@@ -136,8 +136,8 @@ def graph_n_edges(user_vector, n: int=10, vector_size=3)->nx.Graph:
             v = create_random_vector(vector_size)
             print(v)
         vectors.add(v)
-        diff_sum, ratio = get_vector_sr(user_vector,v)
-        G.add_node(v,s=diff_sum, r=ratio, pos= (diff_sum,ratio))
+        diff_sum, ratio = get_vector_sr(user_vector, v)
+        G.add_node(v, s=diff_sum, r=ratio, pos=(diff_sum, ratio))
         for u in G.nodes(data=True):
             if u[0] == v:
                 continue
@@ -202,7 +202,7 @@ def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)-
         plt.figure(figsize=(8, 6))
         nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10, font_color='black')
         plt.title('Graph Visualization')
-        plt.savefig(f'graphs/graph{user_vector_str}.png')  # Save the plot as an image file
+        plt.savefig(f'examples/graph{user_vector_str}.png')  # Save the plot as an image file
 
     if save_txt:    
         # Save the edges to a text file
@@ -210,4 +210,4 @@ def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)-
             for e in G.edges:
                 file.write(f"{e[0]} {e[1]}\n")
             
-    return G.edges
+    return list(G.edges)

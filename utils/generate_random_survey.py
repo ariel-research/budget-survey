@@ -29,7 +29,7 @@ def html_survey(user_vector, user_examples, file_name):
         html += '<input type="radio" name="question{}" value="Option 1">{}<br>\n'.format(i,question[0])
         html += '<input type="radio" name="question{}" value="Option 2">{}<br>\n'.format(i,question[1])
     html += "</body></html>"
-    with open(f"surveys/{file_name}.html", "w") as file:
+    with open(f"examples/{file_name}.html", "w") as file:
         file.write(html)
 
 def survey(user_vector, html):
