@@ -47,32 +47,23 @@ function handleFormSubmission(e) {
 
 /**
  * Validates the create vector form.
- * Checks if the total is 100 and all inputs are multiples of 5.
+ * Checks if the total is 100.
  * @returns {boolean} True if the form is valid, false otherwise.
  */
 function validateCreateVectorForm() {
-    const inputs = document.querySelectorAll('input[type="number"]');
+    const selects = document.querySelectorAll('select');
     let total = 0;
-    let isValid = true;
 
-    inputs.forEach(input => {
-        const value = parseInt(input.value) || 0;
-        total += value;
-        
-        if (value % 5 !== 0) {
-            isValid = false;
-        }
+    selects.forEach(select => {
+        total += parseInt(select.value) || 0;
     });
 
     if (total !== 100) {
-        isValid = false;
+        alert('נא לוודא שהסכום הכולל הוא 100.');
+        return false;
     }
 
-    if (!isValid) {
-        alert('נא לוודא שהסכום הכולל הוא 100 וכל הערכים מתחלקים ב-5.');
-    }
-
-    return isValid;
+    return true;
 }
 
 /**
@@ -94,38 +85,33 @@ function validateSurveyForm() {
  * This includes real-time total calculation and input validation.
  */
 function setupBudgetVectorCreation() {
-    const inputs = document.querySelectorAll('input[type="number"]');
+    const selects = document.querySelectorAll('select');
     const totalDisplay = document.getElementById('total');
     const submitBtn = document.getElementById('submit-btn');
     const errorDisplay = document.getElementById('error-display');
 
-    if (inputs.length === 3 && totalDisplay && submitBtn && errorDisplay) {
-        inputs.forEach(input => {
-            input.addEventListener('input', () => updateTotal(inputs, totalDisplay, submitBtn, errorDisplay));
+    if (selects.length === 3 && totalDisplay && submitBtn && errorDisplay) {
+        selects.forEach(select => {
+            select.addEventListener('change', () => updateTotal(selects, totalDisplay, submitBtn, errorDisplay));
         });
     }
 }
 
 /**
- * Updates the total budget allocation and validates inputs in real-time.
- * @param {NodeList} inputs - The list of number input elements.
+ * Updates the total budget allocation and validates selects in real-time.
+ * @param {NodeList} selects - The list of number select elements.
  * @param {HTMLElement} totalDisplay - The element to display the total.
  * @param {HTMLElement} submitBtn - The submit button element.
  * @param {HTMLElement} errorDisplay - The element to display error messages.
  */
-function updateTotal(inputs, totalDisplay, submitBtn, errorDisplay) {
+function updateTotal(selects, totalDisplay, submitBtn, errorDisplay) {
     let total = 0;
     let isValid = true;
     let errorMessage = '';
 
-    inputs.forEach(input => {
-        const value = parseInt(input.value) || 0;
+    selects.forEach(select => {
+        const value = parseInt(select.value) || 0;
         total += value;
-        
-        if (value % 5 !== 0) {
-            isValid = false;
-            errorMessage = 'כל המספרים חייבים להתחלק ב-5.';
-        }
     });
 
     totalDisplay.textContent = total;

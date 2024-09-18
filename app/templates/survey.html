@@ -18,7 +18,7 @@ and collects the user's preferences through a form submission.
 
     <p>עבור כל אחד מזוגות התקציבים הבאים, בחר את הזוג הקרוב ביותר לתקציב האידיאלי שלך.</p>
 
-    <form method="POST" action="{{ url_for('main.survey', userid=user_id, surveyid=survey_id) }}" data-form-type="survey">
+    <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
         
         {% for pair in comparison_pairs %}
