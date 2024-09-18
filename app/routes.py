@@ -6,6 +6,7 @@ from utils.generate_examples import generate_user_example
 main = Blueprint('main', __name__)
 
 SUBJECTS = ["ביטחון", "חינוך", "בריאות"]
+SURVEY_ID = 1
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ def survey():
             db_user_id = create_user(int(participant_id))
             logger.info(f"User created in database with ID: {db_user_id}")
             
-            survey_response_id = create_survey_response(db_user_id, "Budget Survey", user_vector)
+            survey_response_id = create_survey_response(db_user_id, SURVEY_ID, user_vector)
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
             for i in range(10):

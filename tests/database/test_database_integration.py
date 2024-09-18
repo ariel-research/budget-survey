@@ -66,11 +66,11 @@ def test_create_survey_response(cleanup_db):
     """
     external_id = generate_unique_id()  # Generate a unique external ID for a new user
     user_id = create_user(external_id)  # Insert the user into the database
-    survey_name = "Test Survey"  # Sample survey name
+    survey_id = 1  # Sample survey ID
     optimal_allocation = [10, 20, 30]  # Sample optimal allocation
 
     # Insert a survey response for the user
-    survey_response_id = create_survey_response(user_id, survey_name, optimal_allocation)
+    survey_response_id = create_survey_response(user_id, survey_id, optimal_allocation)
     assert survey_response_id is not None  # Ensure that the survey response was inserted
 
     # Verify the inserted survey response by querying the database
@@ -78,7 +78,7 @@ def test_create_survey_response(cleanup_db):
     result = execute_query(query, (survey_response_id,))
     assert len(result) == 1  # Ensure one result is returned
     assert result[0]['user_id'] == user_id  # Check that the user ID matches
-    assert result[0]['survey_name'] == survey_name  # Check that the survey name matches
+    assert result[0]['survey_id'] == survey_id  # Check that the survey id matches
 
 def test_create_comparison_pair(cleanup_db):
     """
@@ -87,7 +87,7 @@ def test_create_comparison_pair(cleanup_db):
     """
     external_id = generate_unique_id()  # Generate a unique external ID for a new user
     user_id = create_user(external_id)  # Insert the user into the database
-    survey_response_id = create_survey_response(user_id, "Test Survey 2", [5, 15, 25])  # Create a new survey response
+    survey_response_id = create_survey_response(user_id, 2, [5, 15, 25])  # Create a new survey response
 
     pair_number = 1  # Define a pair number for comparison
     option_1 = [10, 20]  # First set of options
@@ -113,7 +113,7 @@ def test_mark_survey_as_completed(cleanup_db):
     """
     external_id = generate_unique_id()  # Generate a unique external ID for a new user
     user_id = create_user(external_id)  # Insert the user into the database
-    survey_response_id = create_survey_response(user_id, "Test Survey 3", [15, 25, 35])  # Create a new survey response
+    survey_response_id = create_survey_response(user_id, 3, [15, 25, 35])  # Create a new survey response
 
     # Mark the survey as completed
     result = mark_survey_as_completed(survey_response_id)

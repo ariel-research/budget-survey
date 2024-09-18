@@ -6,3 +6,5 @@
 * Dockerize the application.
 * Add API tests.
 * Add client tests.
+
+https://csariel.xyz?userid=123abc&surveyid=123abc
