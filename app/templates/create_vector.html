@@ -5,12 +5,11 @@ The page inherits from base.html and customizes the title and content blocks.
 -->
 
 {% extends "base.html" %}
-
 {% block title %}יצירת וקטור תקציב{% endblock %}
-
 {% block content %}
+
 <div class="create-vector-container">
-    <h1>יצירת וקטור תקציב</h1>
+    <h1>בחירת תקציב אופטימלי</h1>
 
     <div class="instructions">
         <p>חלק/י את התקציב של 100 נקודות בין שלושת המשרדים הבאים. וודא/י ש:</p>
@@ -26,25 +25,30 @@ The page inherits from base.html and customizes the title and content blocks.
     </div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('main.create_vector', userid=user_id, surveyid=survey_id) }}" class="vector-form" data-form-type="create-vector">
+    <form class="vector-form" method="POST" data-form-type="create-vector">
+        <input type="hidden" name="userid" value="{{ user_id }}">
+        <input type="hidden" name="surveyid" value="{{ survey_id }}">
         <div class="budget-inputs">
             {% for subject in subjects %}
             <div class="input-group">
-                <label for="subject_{{ loop.index0 }}">{{ subject }}:</label>
-                <input type="number" id="subject_{{ loop.index0 }}" name="subject_{{ loop.index0 }}" required min="0" max="100" step="5">
+                <label for="{{ subject }}">{{ subject }}:</label>
+                <select id="{{ subject }}" name="{{ subject }}" required>
+                    {% for value in range(0, 105, 5) %}
+                        <option value="{{ value }}" {% if value == 0 %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
             </div>
             {% endfor %}
         </div>
     
         <div class="total-container">
-            <span>סה"כ:</span>
-            <span id="total">0</span>
+            סה"כ: <span id="total">0</span>
         </div>
     
         <div id="error-display" class="error-message" style="display: none;"></div>
     
         <div class="submit-container">
-            <input type="submit" value="המשך לסקר" class="btn" id="submit-btn">
+            <button type="submit" id="submit-btn" class="btn">שלח</button>
         </div>
     </form>
 </div>

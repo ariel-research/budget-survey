@@ -53,7 +53,6 @@ h4 { font-size: 1.3em; }
     background: #2980b9;
 }
 
-/* Center the submit button */
 /* Center the submit and start survey buttons */
 .submit-container,
 .start-survey {
@@ -94,12 +93,24 @@ h4 { font-size: 1.3em; }
     font-size: 1.1em;
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
     flex: 0 0 120px;
     padding: 10px;
     border: 1px solid #bdc3c7;
     border-radius: 4px;
     font-size: 1.1em;
+}
+
+.input-group select {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.input-group select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
 
 /* Survey specific styles */

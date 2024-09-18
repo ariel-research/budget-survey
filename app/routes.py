@@ -30,9 +30,9 @@ def create_vector():
     """Handle the creation of a budget vector."""
     user_id = get_required_param('userid')
     survey_id = get_required_param('surveyid')
-
+   
     if request.method == 'POST':
-        user_vector = [int(request.form.get(f'subject_{i}', 0)) for i in range(3)]
+        user_vector = [int(request.form.get(subject, 0)) for subject in SUBJECTS]
         logger.debug(f"User {user_id} submitted vector: {user_vector}")
         
         if sum(user_vector) != 100 or any(v % 5 != 0 for v in user_vector):
