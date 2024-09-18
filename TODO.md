@@ -3,8 +3,5 @@
 * Add a bonus question during the survey to check if the user is answering honestly.
 * Add another survey.
 * Add the survey ID as a parameter to the URL query.
-* Dockerize the application.
-* Add API tests.
-* Add client tests.
-
 https://csariel.xyz?userid=123abc&surveyid=123abc
+* Dockerize the application.

@@ -26,7 +26,7 @@ The page inherits from base.html and customizes the title and content blocks.
     </div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('main.create_vector', participant_id=participant_id) }}" class="vector-form" data-form-type="create-vector">
+    <form method="POST" action="{{ url_for('main.create_vector', userid=userid) }}" class="vector-form" data-form-type="create-vector">
         <div class="budget-inputs">
             {% for subject in subjects %}
             <div class="input-group">
