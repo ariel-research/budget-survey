@@ -10,6 +10,10 @@ The page inherits from base.html and customizes the title and content blocks.
 
 {% block content %}
 <div class="welcome-container">
+    <div class="participant-info">
+        מספר משתתף: <span class="highlight">{{ user_id }}</span>
+    </div>
+
     <h1>ברוכים הבאים לסקר התקציב</h1>
     
     <div class="intro-box">
@@ -27,7 +31,7 @@ The page inherits from base.html and customizes the title and content blocks.
     
     <div class="start-survey">
         <p>מוכנ/ה להתחיל? לחצ/י על הכפתור למטה!</p>
-        <a href="{{ url_for('main.create_vector', participant_id=participant_id) }}" class="btn">התחל סקר</a>
+        <a href="{{ url_for('main.create_vector', userid=user_id, surveyid=survey_id) }}" class="btn">התחל סקר</a>
     </div>
 </div>
 {% endblock %}

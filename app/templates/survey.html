@@ -9,10 +9,6 @@ and collects the user's preferences through a form submission.
 <div class="survey-container">
     <h1>סקר התקציב</h1>
     
-    <div class="participant-info">
-        מספר משתתף: <span class="highlight">{{ participant_id }}</span>
-    </div>
-
     <div class="ideal-budget">
         <h2>התקציב האידיאלי שבחרת:</h2>
         {% for subject, value in zip(subjects, user_vector) %}
@@ -22,7 +18,7 @@ and collects the user's preferences through a form submission.
 
     <p>עבור כל אחד מזוגות התקציבים הבאים, בחר את הזוג הקרוב ביותר לתקציב האידיאלי שלך.</p>
 
-    <form method="POST" action="{{ url_for('main.survey', participant_id=participant_id) }}" data-form-type="survey">
+    <form method="POST" action="{{ url_for('main.survey', userid=user_id, surveyid=survey_id) }}" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
         
         {% for pair in comparison_pairs %}
