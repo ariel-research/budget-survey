@@ -1,4 +1,15 @@
-from app import create_app
+from flask import Flask
+from app.routes import main as main_blueprint
+from logging_config import setup_logging
+
+def create_app():
+    app = Flask(__name__, 
+                template_folder='app/templates',
+                static_folder='app/static')
+    setup_logging()
+    app.register_blueprint(main_blueprint)
+    
+    return app
 
 app = create_app()
 
