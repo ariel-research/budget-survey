@@ -7,7 +7,7 @@ CREATE TABLE users (
 CREATE TABLE survey_responses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
-  survey_name VARCHAR(255) NOT NULL,
+  survey_id INT NOT NULL,
   optimal_allocation JSON NOT NULL,
   completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
