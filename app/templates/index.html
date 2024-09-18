@@ -10,6 +10,10 @@ The page inherits from base.html and customizes the title and content blocks.
 
 {% block content %}
 <div class="welcome-container">
+    <div class="participant-info">
+        מספר משתתף: <span class="highlight">{{ user_id }}</span>
+    </div>
+
     <h1>ברוכים הבאים לסקר התקציב</h1>
     
     <div class="intro-box">

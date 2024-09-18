@@ -1,7 +1,10 @@
 * Check if the user has already answered the survey.
-* Add a new table to make the vector size, the survey name and the subjects more dynamic. 
 * Add a bonus question during the survey to check if the user is answering honestly.
 * Add another survey.
+* Dockerize the application.
+
+
+DONE:
 * Add the survey ID as a parameter to the URL query.
 https://csariel.xyz?userid=123abc&surveyid=123abc
-* Dockerize the application.
+* Modify schema 
