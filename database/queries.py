@@ -102,7 +102,7 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
         logger.error("Error marking survey as completed: %s", str(e))
         return 0  # Return 0 to indicate no rows affected
 
-def does_user_exist(user_id: int) -> bool:
+def user_exists(user_id: int) -> bool:
     """
     Checks if the user already exists in the database.
 
