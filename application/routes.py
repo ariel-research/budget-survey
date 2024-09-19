@@ -1,8 +1,10 @@
 import logging
-import random
+from typing import List
 from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
 from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed
 from utils.generate_examples import generate_user_example
+from utils.survey_utils import is_valid_vector, generate_awareness_check
+from application.messages import ERROR_MESSAGES
 
 main = Blueprint('main', __name__)
 
@@ -10,7 +12,7 @@ SUBJECTS = ["ביטחון", "חינוך", "בריאות"]
 
 logger = logging.getLogger(__name__)
 
-def get_required_param(param_name):
+def get_required_param(param_name: str) -> str:
     """Get a required parameter from the request arguments."""
     value = request.args.get(param_name)
     if not value:
@@ -36,10 +38,9 @@ def create_vector():
         user_vector = [int(request.form.get(subject, 0)) for subject in SUBJECTS]
         logger.debug(f"User {user_id} submitted vector: {user_vector}")
         
-        if sum(user_vector) != 100 or any(v % 5 != 0 for v in user_vector):
-            error_message = "הסכום חייב להיות 100 וכל מספר חייב להתחלק ב-5."
+        if not is_valid_vector(user_vector):
             logger.warning(f"Invalid vector submitted by user {user_id}: {user_vector}")
-            return render_template('create_vector.html', error=error_message, subjects=SUBJECTS, user_id=user_id, survey_id=survey_id)
+            return render_template('create_vector.html', error=ERROR_MESSAGES['invalid_vector'], subjects=SUBJECTS, user_id=user_id, survey_id=survey_id)
         
         logger.info(f"Valid vector created by user {user_id}: {user_vector}")
         return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
@@ -54,26 +55,23 @@ def survey():
     survey_id = get_required_param('surveyid')
 
     if request.method == 'GET':
-        user_vector = tuple(map(int, request.args.get('vector', '').split(',')))
+        user_vector = list(map(int, request.args.get('vector', '').split(',')))
         logger.debug(f"Survey accessed by user {user_id} with vector: {user_vector}")
         if len(user_vector) != 3 or sum(user_vector) != 100:
             logger.warning(f"Invalid vector in survey GET for user {user_id}: {user_vector}")
             return redirect(url_for('main.create_vector', userid=user_id, surveyid=survey_id))
         
-        edge_view = generate_user_example(user_vector, n=10)
-        comparison_pairs = list(edge_view)
-
-        # Generate awareness check question
+        comparison_pairs = list(generate_user_example(tuple(user_vector), n=10))
         awareness_check = generate_awareness_check(user_vector)
         
         logger.info(f"Survey generated for user {user_id} with vector: {user_vector}")
         return render_template('survey.html', 
-                               user_vector=user_vector, 
-                               comparison_pairs=comparison_pairs, 
+                               user_vector=user_vector,
+                               comparison_pairs=comparison_pairs,
+                               awareness_check=awareness_check,
                                subjects=SUBJECTS,
                                user_id=user_id,
                                survey_id=survey_id,
-                               awareness_check=awareness_check,
                                zip=zip)
     
     elif request.method == 'POST':
@@ -85,7 +83,7 @@ def survey():
         awareness_answer = int(data.get('awareness_check', 0))
         if awareness_answer != 2:
             logger.warning(f"User {user_id} failed awareness check")
-            flash("נכשל בבדיקת ערנות. אנא נסה שוב ושים לב לשאלות.", "error")
+            flash(ERROR_MESSAGES['failed_awareness'], "error")
             return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
 
         try:
@@ -106,7 +104,7 @@ def survey():
             logger.info(f"Survey marked as completed for user {user_id}: {survey_response_id}")
         except Exception as e:
             logger.error(f"Error processing survey submission for user {user_id}: {str(e)}", exc_info=True)
-            return render_template('error.html', message="אירעה שגיאה במהלך עיבוד הסקר. אנא נסה שוב.")
+            return render_template('error.html', message=ERROR_MESSAGES['survey_processing_error'])
 
         return redirect(url_for('main.thank_you'))
 
@@ -118,18 +116,3 @@ def thank_you():
 @main.errorhandler(400)
 def bad_request(e):
     return render_template('error.html', message=e.description), 400
-
-
-def generate_awareness_check(user_vector):
-    """Generate an awareness check question."""
-    # Create a different valid vector
-    while True:
-        fake_vector = [random.choice(range(0, 101, 5)) for _ in range(3)]
-        if sum(fake_vector) == 100 and fake_vector != list(user_vector):
-            break
-    
-    return {
-        'option1': fake_vector,
-        'option2': user_vector,
-        'correct_answer': 2
-    }
