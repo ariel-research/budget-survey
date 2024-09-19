@@ -12,7 +12,7 @@ load_dotenv(dotenv_path)
 
 def get_db_connection():  
     host = os.getenv('MYSQL_HOST', 'localhost')
-    port = int(os.getenv('MYSQL_PORT', '3307'))
+    port = int(os.getenv('MYSQL_PORT', '3306'))
     database = os.getenv('MYSQL_DATABASE', 'survey_app_db')
     user = os.getenv('MYSQL_USER', 'survey_user')
     password = os.getenv('MYSQL_PASSWORD')

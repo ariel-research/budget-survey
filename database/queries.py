@@ -83,3 +83,22 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
     """
     logger.debug(f"Executing query: {query} with survey_response_id: {survey_response_id}")
     return execute_query(query, (survey_response_id,))
+
+def does_user_exist(user_id: int) -> bool:
+    """
+    Checks if the user already exists in the database.
+
+    Args:
+        user_id (int): The external ID of the user.
+
+    Returns:
+        bool: True if the user already exists in the database, False otherwise.
+    """
+    query = """
+        SELECT external_id FROM users WHERE external_user_id = %s
+    """
+    
+    logger.debug("Executing query to check if user exists with user_id: %s", user_id)
+    result = execute_query(query, (user_id,))
+    return bool(result)
+

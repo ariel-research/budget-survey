@@ -26,6 +26,9 @@ def index():
     user_id = get_required_param('userid')
     survey_id = get_required_param('surveyid')
     logger.info(f"Index page accessed by user_id {user_id} for survey_id {survey_id}")
+
+    
+
     return render_template('index.html', user_id=user_id, survey_id=survey_id)
 
 @main.route('/create_vector', methods=['GET', 'POST'])
