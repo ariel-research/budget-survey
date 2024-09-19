@@ -1,5 +1,6 @@
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+import random
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
 from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed
 from utils.generate_examples import generate_user_example
 
@@ -61,6 +62,10 @@ def survey():
         
         edge_view = generate_user_example(user_vector, n=10)
         comparison_pairs = list(edge_view)
+
+        # Generate awareness check question
+        awareness_check = generate_awareness_check(user_vector)
+        
         logger.info(f"Survey generated for user {user_id} with vector: {user_vector}")
         return render_template('survey.html', 
                                user_vector=user_vector, 
@@ -68,6 +73,7 @@ def survey():
                                subjects=SUBJECTS,
                                user_id=user_id,
                                survey_id=survey_id,
+                               awareness_check=awareness_check,
                                zip=zip)
     
     elif request.method == 'POST':
@@ -75,6 +81,13 @@ def survey():
         user_vector = list(map(int, data.get('user_vector').split(',')))
         logger.debug(f"Survey submission received from user {user_id}. User vector: {user_vector}")
         
+        # Check awareness question
+        awareness_answer = int(data.get('awareness_check', 0))
+        if awareness_answer != 2:
+            logger.warning(f"User {user_id} failed awareness check")
+            flash("נכשל בבדיקת ערנות. אנא נסה שוב ושים לב לשאלות.", "error")
+            return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
+
         try:
             db_user_id = create_user(int(user_id))
             logger.info(f"User created in database with ID: {db_user_id}")
@@ -83,8 +96,8 @@ def survey():
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
             for i in range(10):
-                option_1 = list(map(int, data.get(f'option1_{i}').split(',')))
-                option_2 = list(map(int, data.get(f'option2_{i}').split(',')))
+                option_1 = list(map(int, data.get(f'option1_{i}', '').split(',')))
+                option_2 = list(map(int, data.get(f'option2_{i}', '').split(',')))
                 user_choice = int(data.get(f'choice_{i}'))
                 comparison_pair_id = create_comparison_pair(survey_response_id, i+1, option_1, option_2, user_choice)
                 logger.debug(f"Comparison pair created: ID {comparison_pair_id}, Pair {i+1}, Choice: {user_choice}")
@@ -105,3 +118,18 @@ def thank_you():
 @main.errorhandler(400)
 def bad_request(e):
     return render_template('error.html', message=e.description), 400
+
+
+def generate_awareness_check(user_vector):
+    """Generate an awareness check question."""
+    # Create a different valid vector
+    while True:
+        fake_vector = [random.choice(range(0, 101, 5)) for _ in range(3)]
+        if sum(fake_vector) == 100 and fake_vector != list(user_vector):
+            break
+    
+    return {
+        'option1': fake_vector,
+        'option2': user_vector,
+        'correct_answer': 2
+    }

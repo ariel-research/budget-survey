@@ -1,12 +1,18 @@
 from flask import Flask
-from app.routes import main as main_blueprint
+from dotenv import load_dotenv
+import os
+
+from application.routes import main as main_blueprint
 from logging_config import setup_logging
+
+load_dotenv()
 
 def create_app():
     app = Flask(__name__, 
-                template_folder='app/templates',
-                static_folder='app/static')
+                template_folder='application/templates',
+                static_folder='application/static')
     setup_logging()
+    app.secret_key = os.environ.get('FLASK_SECRET_KEY')
     app.register_blueprint(main_blueprint)
     
     return app

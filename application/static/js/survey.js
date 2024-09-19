@@ -73,7 +73,7 @@ function validateCreateVectorForm() {
  */
 function validateSurveyForm() {
     const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
-    if (radioGroups.length !== 10) {
+    if (radioGroups.length !== 11) { // 10 comparison pairs + 1 awareness check
         alert('נא לבחור אפשרות אחת עבור כל זוג.');
         return false;
     }

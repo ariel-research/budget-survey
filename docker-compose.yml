@@ -15,18 +15,19 @@ services:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
-  app:
-    build: .
-    container_name: flask_app
-    environment:
-      - FLASK_ENV=development
-      - FLASK_APP=app.py
-    ports:
-      - "5001:5001"
-    volumes:
-      - .:/app
-    depends_on:
-      - db
+  # app:
+  #   build: .
+  #   container_name: flask_app
+  #   environment:
+  #     - FLASK_ENV=production
+  #     - FLASK_APP=app.py
+  #     - PYTHONUNBUFFERED=1
+  #   ports:
+  #     - "5001:5001"
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - db
 
 volumes:
   db_data:

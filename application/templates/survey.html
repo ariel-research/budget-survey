@@ -1,0 +1,100 @@
+<!--
+This template displays a budget allocation survey to users.
+It shows the user's ideal budget, presents pairs of alternative allocations for comparison,
+and collects the user's preferences through a form submission.
+-->
+
+{% extends "base.html" %}
+{% block content %}
+<div class="survey-container">
+    <h1>סקר התקציב</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="ideal-budget">
+        <h2>התקציב האידיאלי שבחרת:</h2>
+        {% for subject, value in zip(subjects, user_vector) %}
+        <div>
+            <span class="subject">{{ subject }}:</span>
+            <span class="value">{{ value }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <p>עבור כל אחד מזוגות התקציבים הבאים, בחר את הזוג הקרוב ביותר לתקציב האידיאלי שלך.</p>
+
+    <form method="POST" data-form-type="survey">
+        <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
+        
+        {% for pair in comparison_pairs %}
+        <div class="pair-container">
+            <h3>זוג {{ loop.index }}</h3>
+            <div class="options-container">
+                <div class="option">
+                    <h4>אפשרות 1:</h4>
+                    {% for subject, value in zip(subjects, pair[0]) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                    <input type="radio" name="choice_{{ loop.index0 }}" value="1" required>
+                    <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair[0]|join(',') }}">
+                </div>
+                <div class="option">
+                    <h4>אפשרות 2:</h4>
+                    {% for subject, value in zip(subjects, pair[1]) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                    <input type="radio" name="choice_{{ loop.index0 }}" value="2" required>
+                    <input type="hidden" name="option2_{{ loop.index0 }}" value="{{ pair[1]|join(',') }}">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Awareness Check Question -->
+        <div class="pair-container awareness-check">
+            <h3>שאלת בדיקה</h3>
+            <p>איזו מהאפשרויות הבאות מייצגת את התקציב האידיאלי שבחרת בתחילת הסקר?</p>
+            <div class="options-container">
+                <div class="option">
+                    <h4>אפשרות 1:</h4>
+                    {% for subject, value in zip(subjects, awareness_check['option1']) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                    <input type="radio" name="awareness_check" value="1" required>
+                </div>
+                <div class="option">
+                    <h4>אפשרות 2:</h4>
+                    {% for subject, value in zip(subjects, awareness_check['option2']) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                    <input type="radio" name="awareness_check" value="2" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="submit-container">
+            <button type="submit" class="btn" id="submit-btn">שלח סקר</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
