@@ -10,18 +10,21 @@ logger = logging.getLogger(__name__)
 def create_user(external_id: int) -> int:
     """
     Inserts a new user into the users table and returns the new user's ID.
-
+    
     Args:
         external_id (int): The external ID of the new user.
-
+    
     Returns:
         The ID of the newly created user, or None if an error occurs.
     """
     query = "INSERT INTO users (external_id) VALUES (%s)"
-    logger.debug(f"Executing query: {query} with external_id: {external_id}")
-    ans = execute_query(query, (external_id,))
-    print(f'answer: {ans}')
-    return ans
+    logger.debug("Inserting new user with external_id: %s", external_id)
+    
+    try:
+        return execute_query(query, (external_id,))
+    except Exception as e:
+        logger.error("Error inserting new user: %s", str(e))
+        return None
 
 def create_survey_response(user_id: int, survey_id: int, optimal_allocation: list) -> int:
     """
@@ -40,8 +43,13 @@ def create_survey_response(user_id: int, survey_id: int, optimal_allocation: lis
         VALUES (%s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
-    logger.debug(f"Executing query: {query} with user_id: {user_id}, survey_id: {survey_id}, optimal_allocation: {optimal_allocation_json}")
-    return execute_query(query, (user_id, survey_id, optimal_allocation_json))
+    logger.debug("Inserting survey response for user_id: %s, survey_id: %s", user_id, survey_id)
+    
+    try:
+        return execute_query(query, (user_id, survey_id, optimal_allocation_json))
+    except Exception as e:
+        logger.error("Error inserting survey response: %s", str(e))
+        return None
 
 def create_comparison_pair(survey_response_id: int, pair_number: int, option_1: list, option_2: list, user_choice: int) -> int:
     """
@@ -63,8 +71,13 @@ def create_comparison_pair(survey_response_id: int, pair_number: int, option_1: 
     """
     option_1_json = json.dumps(option_1)
     option_2_json = json.dumps(option_2)
-    logger.debug(f"Executing query: {query} with survey_response_id: {survey_response_id}, pair_number: {pair_number}, option_1: {option_1_json}, option_2: {option_2_json}, user_choice: {user_choice}")
-    return execute_query(query, (survey_response_id, pair_number, option_1_json, option_2_json, user_choice))
+    logger.debug("Inserting comparison pair for survey_response_id: %s, pair_number: %s", survey_response_id, pair_number)
+    
+    try:
+        return execute_query(query, (survey_response_id, pair_number, option_1_json, option_2_json, user_choice))
+    except Exception as e:
+        logger.error("Error inserting comparison pair: %s", str(e))
+        return None
 
 def mark_survey_as_completed(survey_response_id: int) -> int:
     """
@@ -81,8 +94,13 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
         SET completed = True
         WHERE id = %s
     """
-    logger.debug(f"Executing query: {query} with survey_response_id: {survey_response_id}")
-    return execute_query(query, (survey_response_id,))
+    logger.debug("Marking survey as completed for survey_response_id: %s", survey_response_id)
+    
+    try:
+        return execute_query(query, (survey_response_id,))
+    except Exception as e:
+        logger.error("Error marking survey as completed: %s", str(e))
+        return 0  # Return 0 to indicate no rows affected
 
 def does_user_exist(user_id: int) -> bool:
     """
@@ -95,10 +113,13 @@ def does_user_exist(user_id: int) -> bool:
         bool: True if the user already exists in the database, False otherwise.
     """
     query = """
-        SELECT external_id FROM users WHERE external_user_id = %s
+        SELECT external_id FROM users WHERE external_id = %s
     """
+    logger.debug("Checking if user exists with user_id: %s", user_id)
     
-    logger.debug("Executing query to check if user exists with user_id: %s", user_id)
-    result = execute_query(query, (user_id,))
-    return bool(result)
-
+    try:
+        result = execute_query(query, (user_id,))
+        return bool(result)
+    except Exception as e:
+        logger.error("Error checking if user exists: %s", str(e))
+        return False

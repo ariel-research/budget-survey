@@ -7,7 +7,7 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.db import get_db_connection, execute_query
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, does_user_exist
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -124,3 +124,25 @@ def test_mark_survey_as_completed(cleanup_db):
     result = execute_query(query, (survey_response_id,))
     assert len(result) == 1  # Ensure one result is returned
     assert result[0]['completed'] == 1  # Check that the 'completed' field is set to 1
+
+def test_does_user_exist(cleanup_db):
+    """
+    Test the functionality to check if a user exists in the database.
+    Verifies that the function correctly identifies existing and non-existing users.
+    """
+    # Generate a unique external ID for a new user
+    external_id = generate_unique_id()
+
+    # Check that the user doesn't exist initially
+    assert not does_user_exist(external_id)
+
+    # Create the user
+    user_id = create_user(external_id)
+    assert user_id is not None
+
+    # Check that the user now exists
+    assert does_user_exist(external_id)
+
+    # Check for a non-existing user
+    non_existing_id = generate_unique_id()
+    assert not does_user_exist(non_existing_id)
