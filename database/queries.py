@@ -7,21 +7,21 @@ setup_logging()
 
 logger = logging.getLogger(__name__)
 
-def create_user(external_id: int) -> int:
+def create_user(user_id: int) -> int:
     """
-    Inserts a new user into the users table and returns the new user's ID.
+    Inserts a new user into the users table.
     
     Args:
-        external_id (int): The external ID of the new user.
+        user_id (int): The ID of the new user.
     
     Returns:
         The ID of the newly created user, or None if an error occurs.
     """
-    query = "INSERT INTO users (external_id) VALUES (%s)"
-    logger.debug("Inserting new user with external_id: %s", external_id)
+    query = "INSERT INTO users (id) VALUES (%s)"
+    logger.debug("Inserting new user with id: %s", user_id)
     
     try:
-        return execute_query(query, (external_id,))
+        return execute_query(query, (user_id,))
     except Exception as e:
         logger.error("Error inserting new user: %s", str(e))
         return None
@@ -31,7 +31,7 @@ def create_survey_response(user_id: int, survey_id: int, optimal_allocation: lis
     Inserts a new survey response into the survey_responses table.
 
     Args:
-        user_id (int): The internal ID of the user submitting the survey.
+        user_id (int): The ID of the user submitting the survey.
         survey_id (int): The ID of the survey.
         optimal_allocation (list): The user optimal allocation in JSON format.
 
@@ -102,24 +102,22 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
         logger.error("Error marking survey as completed: %s", str(e))
         return 0  # Return 0 to indicate no rows affected
 
-def does_user_exist(user_id: int) -> bool:
+def user_exists(user_id: int) -> bool:
     """
     Checks if the user already exists in the database.
 
     Args:
-        user_id (int): The external ID of the user.
+        user_id (int): The ID of the user.
 
     Returns:
         bool: True if the user already exists in the database, False otherwise.
     """
-    query = """
-        SELECT external_id FROM users WHERE external_id = %s
-    """
+    query = "SELECT EXISTS(SELECT 1 FROM users WHERE id = %s) as user_exists"
     logger.debug("Checking if user exists with user_id: %s", user_id)
     
     try:
         result = execute_query(query, (user_id,))
-        return bool(result)
+        return bool(result[0]['user_exists'])
     except Exception as e:
         logger.error("Error checking if user exists: %s", str(e))
         return False

@@ -7,7 +7,7 @@ import random
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.db import get_db_connection, execute_query
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, does_user_exist
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -22,7 +22,7 @@ def db_connection():
 
 def generate_unique_id():
     """
-    Helper function to generate a random unique external ID for users.
+    Helper function to generate a random unique ID for users.
     This ensures that each test works with unique data.
     """
     return random.randint(100000, 999999)
@@ -50,22 +50,22 @@ def test_create_user(cleanup_db):
     Test the creation of a user in the 'users' table.
     Verify that the user is correctly inserted and can be retrieved.
     """
-    external_id = generate_unique_id()  # Generate a unique external ID for the user
-    user_id = create_user(external_id)  # Insert the user into the database
-    assert user_id is not None  # Check that the user ID was generated (insert succeeded)
+    user_id = generate_unique_id()
+    result = create_user(user_id)
+    assert result is not None  # Check that the user was inserted successfully
 
     # Verify the inserted user by querying the database
     query = "SELECT * FROM users WHERE id = %s"
     result = execute_query(query, (user_id,))
     assert len(result) == 1  # Ensure one result is returned
-    assert result[0]['external_id'] == external_id  # Check that the external ID matches
+    assert result[0]['id'] == user_id  # Check that the ID matches
 
 def test_create_survey_response(cleanup_db):
     """
     Test the creation of a survey response and ensure it is correctly inserted into the 'survey_responses' table.
     """
-    external_id = generate_unique_id()  # Generate a unique external ID for a new user
-    user_id = create_user(external_id)  # Insert the user into the database
+    user_id = generate_unique_id()
+    create_user(user_id)  # Insert the user into the database
     survey_id = 1  # Sample survey ID
     optimal_allocation = [10, 20, 30]  # Sample optimal allocation
 
@@ -85,8 +85,8 @@ def test_create_comparison_pair(cleanup_db):
     Test the creation of a comparison pair for a survey response.
     Verifies that the comparison pair is inserted into the 'comparison_pairs' table.
     """
-    external_id = generate_unique_id()  # Generate a unique external ID for a new user
-    user_id = create_user(external_id)  # Insert the user into the database
+    user_id = generate_unique_id()
+    create_user(user_id)  # Insert the user into the database
     survey_response_id = create_survey_response(user_id, 2, [5, 15, 25])  # Create a new survey response
 
     pair_number = 1  # Define a pair number for comparison
@@ -111,8 +111,8 @@ def test_mark_survey_as_completed(cleanup_db):
     Test the functionality to mark a survey as completed.
     Verifies that the 'completed' field is updated in the 'survey_responses' table.
     """
-    external_id = generate_unique_id()  # Generate a unique external ID for a new user
-    user_id = create_user(external_id)  # Insert the user into the database
+    user_id = generate_unique_id()
+    create_user(user_id)  # Insert the user into the database
     survey_response_id = create_survey_response(user_id, 3, [15, 25, 35])  # Create a new survey response
 
     # Mark the survey as completed
@@ -125,24 +125,22 @@ def test_mark_survey_as_completed(cleanup_db):
     assert len(result) == 1  # Ensure one result is returned
     assert result[0]['completed'] == 1  # Check that the 'completed' field is set to 1
 
-def test_does_user_exist(cleanup_db):
+def test_user_exists(cleanup_db):
     """
     Test the functionality to check if a user exists in the database.
     Verifies that the function correctly identifies existing and non-existing users.
     """
-    # Generate a unique external ID for a new user
-    external_id = generate_unique_id()
+    user_id = generate_unique_id()
 
     # Check that the user doesn't exist initially
-    assert not does_user_exist(external_id)
+    assert not user_exists(user_id)
 
     # Create the user
-    user_id = create_user(external_id)
-    assert user_id is not None
+    create_user(user_id)
 
     # Check that the user now exists
-    assert does_user_exist(external_id)
+    assert user_exists(user_id)
 
     # Check for a non-existing user
     non_existing_id = generate_unique_id()
-    assert not does_user_exist(non_existing_id)
+    assert not user_exists(non_existing_id)
