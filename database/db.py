@@ -11,12 +11,10 @@ load_dotenv()
 
 def get_db_connection():  
     host = os.getenv('MYSQL_HOST', 'localhost')
-    port = int(os.getenv('MYSQL_PORT', '3307'))
-    database = os.getenv('MYSQL_DATABASE', 'survey_app_db')
-    user = os.getenv('MYSQL_USER', 'survey_user')
+    port = int(os.getenv('MYSQL_PORT', '330'))
+    database = os.getenv('MYSQL_DATABASE', 'survey')
+    user = os.getenv('MYSQL_USER', 'survey')
     password = os.getenv('MYSQL_PASSWORD')
-
-    print(f'########### {port} #####################')
 
     try:
         connection = mysql.connector.connect(

@@ -1,5 +1,9 @@
 # Budget Survey
 
+## Website
+
+https://survey.csariel.xyz/thank_you
+
 ## Prerequisites
 
 - python >= 3.8

@@ -121,3 +121,15 @@ def user_exists(user_id: int) -> bool:
     except Exception as e:
         logger.error("Error checking if user exists: %s", str(e))
         return False
+    
+# def survey_exists(survey_id: int) -> bool:
+#     """
+#     Checks if the survey already exists in the database.
+
+#     Args:
+#         survey_id (int) The ID of the survey.
+
+#     Returns:
+#         bool: True if the survey already exists in the database, False otherwise.
+#     """
+#     pass
