@@ -8,7 +8,16 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.db import get_db_connection, execute_query
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects, get_survey_name
+from database.queries import (
+    create_user,
+    create_survey_response,
+    create_comparison_pair,
+    mark_survey_as_completed,
+    user_exists,
+    get_subjects,
+    get_survey_name,
+    check_user_participation,
+)
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -208,3 +217,39 @@ def test_get_survey_name(cleanup_db):
     execute_query(insert_survey_query, (inactive_survey_id, inactive_survey_name, json.dumps(["Subject"]), False))
     inactive_name = get_survey_name(inactive_survey_id)
     assert inactive_name == "", f"Expected empty string for inactive survey, but got '{inactive_name}'"
+
+def test_check_user_participation(cleanup_db):
+    """
+    Test the check_user_participation function.
+    Verifies that the function correctly identifies user participation in surveys.
+    """
+    user_id = generate_unique_id()
+    create_user(user_id)
+
+    survey_id = 1
+    insert_survey_query = """
+    INSERT INTO surveys (id, name, subjects, active)
+    VALUES (%s, %s, %s, %s)
+    """
+    execute_query(insert_survey_query, (survey_id, "Test Survey", json.dumps(["Subject1", "Subject2"]), True))
+
+    # Initially, the user shouldn't have participated
+    assert not check_user_participation(user_id, survey_id), "User shouldn't have participated initially"
+
+    survey_response_id = create_survey_response(user_id, survey_id, [50, 50])
+
+    # User still shouldn't be marked as participated (survey not completed)
+    assert not check_user_participation(user_id, survey_id), "User shouldn't be marked as participated before completion"
+
+    mark_survey_as_completed(survey_response_id)
+
+    # Now the user should be marked as participated
+    assert check_user_participation(user_id, survey_id), "User should be marked as participated after completion"
+
+    # Check for a different survey
+    different_survey_id = 2
+    assert not check_user_participation(user_id, different_survey_id), "User shouldn't be marked as participated in a different survey"
+
+    # Check for a different user
+    different_user_id = generate_unique_id()
+    assert not check_user_participation(different_user_id, survey_id), "Different user shouldn't be marked as participated"

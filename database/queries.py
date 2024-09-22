@@ -173,3 +173,29 @@ def get_subjects(survey_id: int) -> list:
     except Exception as e:
         logger.error(f"Error retrieving subjects for survey {survey_id}: {str(e)}")
         return []
+
+def check_user_participation(user_id: int, survey_id: int) -> bool:
+    """
+    Checks if a user has participated in a specific survey.
+
+    Args:
+        user_id (int): The ID of the user.
+        survey_id (int): The ID of the survey.
+
+    Returns:
+        bool: True if the user has participated in the survey, False otherwise.
+    """
+    query = """
+    SELECT EXISTS(
+        SELECT 1 FROM survey_responses
+        WHERE user_id = %s AND survey_id = %s AND completed = TRUE
+    ) as participated
+    """
+    logger.debug(f"Checking participation for user_id: {user_id}, survey_id: {survey_id}")
+    
+    try:
+        result = execute_query(query, (user_id, survey_id))
+        return bool(result[0]['participated'])
+    except Exception as e:
+        logger.error(f"Error checking user participation: {str(e)}")
+        return False
