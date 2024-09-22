@@ -87,10 +87,10 @@ def survey():
             return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
 
         try:
-            db_user_id = create_user(int(user_id))
-            logger.info(f"User created in database with ID: {db_user_id}")
+            create_user(int(user_id))
+            logger.info(f"User created in database with ID: {user_id}")
             
-            survey_response_id = create_survey_response(db_user_id, int(survey_id), user_vector)
+            survey_response_id = create_survey_response(user_id, int(survey_id), user_vector)
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
             for i in range(10):

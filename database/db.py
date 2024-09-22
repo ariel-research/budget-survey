@@ -7,15 +7,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Load environment variables
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-load_dotenv(dotenv_path)
+load_dotenv()
 
 def get_db_connection():  
     host = os.getenv('MYSQL_HOST', 'localhost')
-    port = int(os.getenv('MYSQL_PORT', '3306'))
+    port = int(os.getenv('MYSQL_PORT', '3307'))
     database = os.getenv('MYSQL_DATABASE', 'survey_app_db')
     user = os.getenv('MYSQL_USER', 'survey_user')
     password = os.getenv('MYSQL_PASSWORD')
+
+    print(f'########### {port} #####################')
 
     try:
         connection = mysql.connector.connect(
