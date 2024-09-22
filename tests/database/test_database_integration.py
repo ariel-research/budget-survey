@@ -2,12 +2,13 @@ import pytest
 import sys
 import os
 import random
+import json
 
 # Add the parent directory to the system path to allow importing from the backend module.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.db import get_db_connection, execute_query
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -37,6 +38,7 @@ def cleanup_db():
     execute_query("DELETE FROM comparison_pairs")
     execute_query("DELETE FROM survey_responses")
     execute_query("DELETE FROM users")
+    execute_query("DELETE FROM surveys")
 
 def test_database_connection(db_connection):
     """
@@ -144,3 +146,34 @@ def test_user_exists(cleanup_db):
     # Check for a non-existing user
     non_existing_id = generate_unique_id()
     assert not user_exists(non_existing_id)
+
+def test_get_subjects(cleanup_db):
+    """
+    Test the retrieval of subjects for a survey.
+    Verifies that the function correctly fetches and decodes subjects for an existing survey.
+    """
+    # Insert a test survey
+    test_subjects = ["ביטחון", "חינוך", "בריאות"]
+    survey_id = 1  
+    insert_survey_query = """
+    INSERT INTO surveys (id, name, subjects, active)
+    VALUES (%s, %s, %s, %s)
+    """
+    execute_query(insert_survey_query, (survey_id, "Test Survey", json.dumps(test_subjects), True))
+
+    # Test the get_subjects function
+    retrieved_subjects = get_subjects(survey_id)
+
+    # Verify the results
+    assert retrieved_subjects == test_subjects, f"Expected {test_subjects}, but got {retrieved_subjects}"
+
+    # Test with a non-existent survey ID
+    non_existent_id = 9999
+    empty_subjects = get_subjects(non_existent_id)
+    assert empty_subjects == [], f"Expected empty list for non-existent survey, but got {empty_subjects}"
+
+    # Test with an inactive survey
+    inactive_survey_id = 2
+    execute_query(insert_survey_query, (inactive_survey_id, "Inactive Survey", json.dumps(["Test"]), False))
+    inactive_subjects = get_subjects(inactive_survey_id)
+    assert inactive_subjects == [], f"Expected empty list for inactive survey, but got {inactive_subjects}"

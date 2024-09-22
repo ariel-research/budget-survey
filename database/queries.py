@@ -122,14 +122,30 @@ def user_exists(user_id: int) -> bool:
         logger.error("Error checking if user exists: %s", str(e))
         return False
     
-# def survey_exists(survey_id: int) -> bool:
-#     """
-#     Checks if the survey already exists in the database.
+def get_subjects(survey_id: int) -> list:
+    """
+    Retrieves the subjects for a given survey from the database.
 
-#     Args:
-#         survey_id (int) The ID of the survey.
+    Args:
+        survey_id (int): The ID of the survey.
 
-#     Returns:
-#         bool: True if the survey already exists in the database, False otherwise.
-#     """
-#     pass
+    Returns:
+        list: A list of subjects for the survey, or an empty list if the survey doesn't exist or an error occurs.
+    """
+    query = "SELECT subjects FROM surveys WHERE id = %s AND active = TRUE"
+    logger.debug("Retrieving subjects for survey_id: %s", survey_id)
+    
+    try:
+        result = execute_query(query, (survey_id,))
+        if result and len(result) > 0:
+            subjects_json = result[0]['subjects']
+            return json.loads(subjects_json)
+        else:
+            logger.warning(f"No active survey found with id: {survey_id}")
+            return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding JSON for survey {survey_id}: {str(e)}")
+        return []
+    except Exception as e:
+        logger.error(f"Error retrieving subjects for survey {survey_id}: {str(e)}")
+        return []

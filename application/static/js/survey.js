@@ -90,7 +90,7 @@ function setupBudgetVectorCreation() {
     const submitBtn = document.getElementById('submit-btn');
     const errorDisplay = document.getElementById('error-display');
 
-    if (selects.length === 3 && totalDisplay && submitBtn && errorDisplay) {
+    if (selects.length > 0 && totalDisplay && submitBtn && errorDisplay) {
         selects.forEach(select => {
             select.addEventListener('change', () => updateTotal(selects, totalDisplay, submitBtn, errorDisplay));
         });
