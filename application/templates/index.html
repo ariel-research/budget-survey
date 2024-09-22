@@ -6,7 +6,7 @@ The page inherits from base.html and customizes the title and content blocks.
 
 {% extends "base.html" %}
 
-{% block title %}ברוכים הבאים לסקר התקציב{% endblock %}
+{% block title %}ברוכים הבאים לסקר {{ survey_name }}{% endblock %}
 
 {% block content %}
 <div class="welcome-container">
@@ -14,7 +14,7 @@ The page inherits from base.html and customizes the title and content blocks.
         מספר משתתף: <span class="highlight">{{ user_id }}</span>
     </div>
 
-    <h1>ברוכים הבאים לסקר התקציב</h1>
+    <h1>ברוכים הבאים לסקר {{ survey_name }}</h1>
     
     <div class="intro-box">
         <p>תודה שהסכמת להשתתף במחקר בנושא העדפות תקציביות.</p>
@@ -23,7 +23,7 @@ The page inherits from base.html and customizes the title and content blocks.
     <div class="survey-description">
         <h2>מה מצפה לך בסקר?</h2>
         <ol>
-            <li>תתבקש/י לחלק תקציב בגובה מאה שקלים, בקפיצות של חמש, בין שלושה משרדי ממשלה: ביטחון, חינוך ובריאות.</li>
+            <li>תתבקש/י לחלק תקציב בגובה מאה שקלים, בקפיצות של חמש, בין מספר גופים שונים.</li>
             <li>לאחר מכן, תוצג בפניך סדרה של אפשרויות תקציב שונות.</li>
             <li>עבור כל זוג אפשרויות, תתבקש/י לבחור את האפשרות המועדפת עליך.</li>
         </ol>
