@@ -1,7 +1,7 @@
 import logging
 from typing import List
 from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects, get_survey_name
 from utils.generate_examples import generate_user_example
 from utils.survey_utils import is_valid_vector, generate_awareness_check
 from application.messages import ERROR_MESSAGES
@@ -23,8 +23,14 @@ def index():
     """Render the index page."""
     user_id = get_required_param('userid')
     survey_id = get_required_param('surveyid')
+    survey_name = get_survey_name(int(survey_id))
+    
+    if not survey_name:
+        logger.error(f"No survey found for survey_id {survey_id}")
+        abort(404, description="Survey not found")
+    
     logger.info(f"Index page accessed by user_id {user_id} for survey_id {survey_id}")
-    return render_template('index.html', user_id=user_id, survey_id=survey_id)
+    return render_template('index.html', user_id=user_id, survey_id=survey_id, survey_name=survey_name)
 
 @main.route('/create_vector', methods=['GET', 'POST'])
 def create_vector():

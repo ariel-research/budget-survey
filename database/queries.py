@@ -122,6 +122,30 @@ def user_exists(user_id: int) -> bool:
         logger.error("Error checking if user exists: %s", str(e))
         return False
     
+def get_survey_name(survey_id: int) -> str:
+    """
+    Retrieves the name of a survey given its ID.
+
+    Args:
+        survey_id (int): The ID of the survey.
+
+    Returns:
+        str: The name of the survey, or an empty string if the survey doesn't exist or an error occurs.
+    """
+    query = "SELECT name FROM surveys WHERE id = %s AND active = TRUE"
+    logger.debug(f"Retrieving name for survey_id: {survey_id}")
+    
+    try:
+        result = execute_query(query, (survey_id,))
+        if result and len(result) > 0:
+            return result[0]['name']
+        else:
+            logger.warning(f"No active survey found with id: {survey_id}")
+            return ""
+    except Exception as e:
+        logger.error(f"Error retrieving name for survey {survey_id}: {str(e)}")
+        return ""
+    
 def get_subjects(survey_id: int) -> list:
     """
     Retrieves the subjects for a given survey from the database.

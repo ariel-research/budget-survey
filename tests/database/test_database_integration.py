@@ -8,7 +8,7 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from database.db import get_db_connection, execute_query
-from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects
+from database.queries import create_user, create_survey_response, create_comparison_pair, mark_survey_as_completed, user_exists, get_subjects, get_survey_name
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -177,3 +177,34 @@ def test_get_subjects(cleanup_db):
     execute_query(insert_survey_query, (inactive_survey_id, "Inactive Survey", json.dumps(["Test"]), False))
     inactive_subjects = get_subjects(inactive_survey_id)
     assert inactive_subjects == [], f"Expected empty list for inactive survey, but got {inactive_subjects}"
+
+def test_get_survey_name(cleanup_db):
+    """
+    Test the retrieval of a survey name.
+    Verifies that the function correctly fetches the name for an existing survey
+    and returns an empty string for a non-existent survey.
+    """
+    # Insert a test survey
+    test_survey_id = 1
+    test_survey_name = "טסט תקציב המדינה"
+    insert_survey_query = """
+    INSERT INTO surveys (id, name, subjects, active)
+    VALUES (%s, %s, %s, %s)
+    """
+    execute_query(insert_survey_query, (test_survey_id, test_survey_name, json.dumps(["Subject1", "Subject2"]), True))
+
+    # Test retrieving the name of the existing survey
+    retrieved_name = get_survey_name(test_survey_id)
+    assert retrieved_name == test_survey_name, f"Expected '{test_survey_name}', but got '{retrieved_name}'"
+
+    # Test with a non-existent survey ID
+    non_existent_id = 9999
+    empty_name = get_survey_name(non_existent_id)
+    assert empty_name == "", f"Expected empty string for non-existent survey, but got '{empty_name}'"
+
+    # Test with an inactive survey
+    inactive_survey_id = 2
+    inactive_survey_name = "Inactive Survey"
+    execute_query(insert_survey_query, (inactive_survey_id, inactive_survey_name, json.dumps(["Subject"]), False))
+    inactive_name = get_survey_name(inactive_survey_id)
+    assert inactive_name == "", f"Expected empty string for inactive survey, but got '{inactive_name}'"

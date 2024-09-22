@@ -7,8 +7,6 @@ and collects the user's preferences through a form submission.
 {% extends "base.html" %}
 {% block content %}
 <div class="survey-container">
-    <h1>סקר התקציב</h1>
-
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
