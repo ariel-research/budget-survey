@@ -1,17 +1,38 @@
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py312']
 include = '\.pyi?$'
 
 [tool.ruff]
-# Select the rules to be enforced
-# E: Style errors (pycodestyle)
-# F: Code errors (pyflakes)
-# I: Import sorting (isort)
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Also enable isort (`I`) for import sorting.
 lint.select = ["E", "F", "I"]
-# Ignore specific rules. E501 is ignored because Black handles line length
+
+# Ignore `E501` (line length violations).
 lint.ignore = ["E501"]
-# Set the maximum line length (should match Black's setting)
+
+# Same as Black.
 line-length = 88
-# Specify the minimum Python version for compatibility
-target-version = "py38"
+indent-width = 4
+
+# Target Python 3.12
+target-version = "py312"
+
+# Allow fixes for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Use double quotes for strings.
+quote-style = "double"
+
+# Use spaces for indentation.
+indent-style = "space"
+
+# Respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Automatically detect the appropriate line ending.
+line-ending = "auto"
