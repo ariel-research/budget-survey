@@ -4,7 +4,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE surveys (
-  id INT NOT NULL PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   subjects JSON NOT NULL,
