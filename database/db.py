@@ -1,28 +1,18 @@
-from dotenv import load_dotenv
-import os
+from flask import current_app as app
 import mysql.connector
 from mysql.connector import Error
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
-def get_db_connection():  
-    host = os.getenv('MYSQL_HOST', 'localhost')
-    port = int(os.getenv('MYSQL_PORT', '330'))
-    database = os.getenv('MYSQL_DATABASE', 'survey')
-    user = os.getenv('MYSQL_USER', 'survey')
-    password = os.getenv('MYSQL_PASSWORD')
-
+def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host=host,
-            port=port,
-            database=database,
-            user=user,
-            password=password
+            host=app.config['MYSQL_HOST'],
+            port=app.config['MYSQL_PORT'],
+            database=app.config['MYSQL_DATABASE'],
+            user=app.config['MYSQL_USER'],
+            password=app.config['MYSQL_PASSWORD']
         )
         logger.info("Database connection established")
         return connection
