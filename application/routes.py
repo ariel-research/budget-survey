@@ -18,6 +18,9 @@ main = Blueprint('main', __name__)
 
 logger = logging.getLogger(__name__)
 
+# Modify to the current survey ID
+SURVEY_ID = 2
+
 def get_required_param(param_name: str) -> str:
     """Get a required parameter from the request arguments."""
     value = request.args.get(param_name)
@@ -30,35 +33,32 @@ def get_required_param(param_name: str) -> str:
 def index():
     """Render the index page or redirect to thank you page if survey is already completed."""
     user_id = get_required_param('userid')
-    survey_id = get_required_param('surveyid')
     
-    # Convert to integers for database queries
+    # Convert to integer for database queries
     user_id_int = int(user_id)
-    survey_id_int = int(survey_id)
     
     # Check if the survey exists
-    survey_name = get_survey_name(survey_id_int)
+    survey_name = get_survey_name(SURVEY_ID)
     if not survey_name:
-        logger.error(f"No survey found for survey_id {survey_id}")
+        logger.error(f"No survey found for survey_id {SURVEY_ID}")
         abort(404, description="Survey not found")
     
     # Check if the user has already participated
-    if check_user_participation(user_id_int, survey_id_int):
-        logger.info(f"User {user_id} has already completed survey {survey_id}. Redirecting to thank you page.")
+    if check_user_participation(user_id_int, SURVEY_ID):
+        logger.info(f"User {user_id} has already completed survey {SURVEY_ID}. Redirecting to thank you page.")
         return redirect(url_for('main.thank_you'))
     
-    logger.info(f"Index page accessed by user_id {user_id} for survey_id {survey_id}")
-    return render_template('index.html', user_id=user_id, survey_id=survey_id, survey_name=survey_name)
+    logger.info(f"Index page accessed by user_id {user_id} for survey_id {SURVEY_ID}")
+    return render_template('index.html', user_id=user_id, survey_id=SURVEY_ID, survey_name=survey_name)
 
 @main.route('/create_vector', methods=['GET', 'POST'])
 def create_vector():
     """Handle the creation of a budget vector."""
     user_id = get_required_param('userid')
-    survey_id = get_required_param('surveyid')
-    subjects = get_subjects(int(survey_id))
+    subjects = get_subjects(SURVEY_ID)
     
     if not subjects:
-        logger.error(f"No subjects found for survey_id {survey_id}")
+        logger.error(f"No subjects found for survey_id {SURVEY_ID}")
         abort(404, description="Survey not found or has no subjects")
    
     if request.method == 'POST':
@@ -67,23 +67,22 @@ def create_vector():
         
         if not is_valid_vector(user_vector):
             logger.warning(f"Invalid vector submitted by user {user_id}: {user_vector}")
-            return render_template('create_vector.html', error=ERROR_MESSAGES['invalid_vector'], subjects=subjects, user_id=user_id, survey_id=survey_id)
+            return render_template('create_vector.html', error=ERROR_MESSAGES['invalid_vector'], subjects=subjects, user_id=user_id, survey_id=SURVEY_ID)
         
         logger.info(f"Valid vector created by user {user_id}: {user_vector}")
-        return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
+        return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id))
     
     logger.debug(f"Create vector page accessed by user {user_id}")
-    return render_template('create_vector.html', subjects=subjects, user_id=user_id, survey_id=survey_id)
+    return render_template('create_vector.html', subjects=subjects, user_id=user_id, survey_id=SURVEY_ID)
 
 @main.route('/survey', methods=['GET', 'POST'])
 def survey():
     """Handle the survey process."""
     user_id = get_required_param('userid')
-    survey_id = get_required_param('surveyid')
-    subjects = get_subjects(int(survey_id))
+    subjects = get_subjects(SURVEY_ID)
     
     if not subjects:
-        logger.error(f"No subjects found for survey_id {survey_id}")
+        logger.error(f"No subjects found for survey_id {SURVEY_ID}")
         abort(404, description="Survey not found or has no subjects")
 
     if request.method == 'GET':
@@ -91,7 +90,7 @@ def survey():
         logger.debug(f"Survey accessed by user {user_id} with vector: {user_vector}")
         if len(user_vector) != len(subjects) or sum(user_vector) != 100:
             logger.warning(f"Invalid vector in survey GET for user {user_id}: {user_vector}")
-            return redirect(url_for('main.create_vector', userid=user_id, surveyid=survey_id))
+            return redirect(url_for('main.create_vector', userid=user_id))
         
         comparison_pairs = list(generate_user_example(tuple(user_vector), n=10))
         awareness_check = generate_awareness_check(user_vector)
@@ -103,7 +102,7 @@ def survey():
                                awareness_check=awareness_check,
                                subjects=subjects,
                                user_id=user_id,
-                               survey_id=survey_id,
+                               survey_id=SURVEY_ID,
                                zip=zip)
     
     elif request.method == 'POST':
@@ -116,7 +115,7 @@ def survey():
         if awareness_answer != 2:
             logger.warning(f"User {user_id} failed awareness check")
             flash(ERROR_MESSAGES['failed_awareness'], "error")
-            return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id, surveyid=survey_id))
+            return redirect(url_for('main.survey', vector=','.join(map(str, user_vector)), userid=user_id))
 
         try:
             # Check if user already exists
@@ -126,7 +125,7 @@ def survey():
             else:
                 logger.info(f"User with ID {user_id} already exists")
             
-            survey_response_id = create_survey_response(user_id, int(survey_id), user_vector)
+            survey_response_id = create_survey_response(user_id, SURVEY_ID, user_vector)
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
             for i in range(10):
