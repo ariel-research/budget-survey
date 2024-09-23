@@ -1,14 +1,25 @@
 # Budget Survey Application
 
 ## Table of Contents
+
 - [Overview](#overview)
+
 - [Prerequisites](#prerequisites)
+
 - [Installation](#installation)
+
+- [Database Setup](#database-setup)
+
 - [Running the Application](#running-the-application)
+
 - [Endpoints](#endpoints)
+
 - [Database](#database)
+
 - [Modifying the Survey](#modifying-the-survey)
+
 - [Algorithm](#algorithm)
+
 - [Development](#development)
 
 ## Overview
@@ -19,6 +30,7 @@ This project aims to collect data for developing an algorithm for optimal budget
 - MySQL 8.0+
 - pip
 - virtualenv
+- Docker (optional, only if you prefer to use Docker for database setup)
 
 ## Installation
 
@@ -42,6 +54,50 @@ This project aims to collect data for developing an algorithm for optimal budget
 4. Set up the MySQL database (see Database section below)
 
 5. Create a `.env` file in the project root and add the necessary environment variables (see `.env.example` for reference)
+
+## Database Setup
+
+You can set up the database using one of two methods:
+
+### Method 1: Manual Setup using MySQL Client
+
+1. Connect to your MySQL server using the MySQL client.
+
+2. Create a new database:
+
+   ```sql
+
+   CREATE DATABASE survey;
+
+   ```
+
+3. Use the newly created database:
+
+   ```sql
+
+   USE survey;
+
+   ```
+
+4. Run the SQL commands from the database/schema.sql file to create the necessary tables and structure.
+
+### Method 2: Using Docker Compose
+
+1. Ensure you have Docker and Docker Compose installed on your system.
+
+2. Navigate to the project root directory where the docker-compose.yml file is located.
+
+3. Run the following command to start the MySQL container and set up the database:
+
+   ```
+
+   docker-compose up -d db
+
+   ```
+
+This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
+
+Note: Make sure your .env file is properly configured with the correct database connection details before running either method.
 
 ## Running the Application
 
