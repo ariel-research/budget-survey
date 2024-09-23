@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 import networkz as nx
 import numpy as np
-import matplotlib.pyplot as plt
 
-def create_random_vector(size: int=3) -> tuple:
+
+def create_random_vector(size: int = 3) -> tuple:
     """
     Generate a random vector of integers that sums to 100, with each element
     being a multiple of 5.
@@ -11,7 +12,7 @@ def create_random_vector(size: int=3) -> tuple:
     size (int): The number of elements in the vector. Default is 3.
 
     Returns:
-    tuple: A tuple containing `size` integers that sum to 100, with each 
+    tuple: A tuple containing `size` integers that sum to 100, with each
            element being a multiple of 5.
     """
     vector = np.random.rand(size)
@@ -23,7 +24,8 @@ def create_random_vector(size: int=3) -> tuple:
     vector = vector * 5
     return tuple(vector)
 
-def sum_of_differences(user_vector: tuple, generated_vector:tuple)->int:
+
+def sum_of_differences(user_vector: tuple, generated_vector: tuple) -> int:
     """
     Compute the sum of absolute differences between the user-provided vector
     and the generated vector.
@@ -43,10 +45,10 @@ def sum_of_differences(user_vector: tuple, generated_vector:tuple)->int:
     return np.sum(np.abs(np.array(user_vector) - np.array(generated_vector)))
 
 
-def minimal_ratio(user_vector: tuple, generated_vector: tuple)->float:
+def minimal_ratio(user_vector: tuple, generated_vector: tuple) -> float:
     """
-    Compute the minimal ratio between the corresponding elements of the 
-    user-provided vector and the generated vector. 
+    Compute the minimal ratio between the corresponding elements of the
+    user-provided vector and the generated vector.
 
     Parameters:
     user_vector (tuple): The user-provided vector.
@@ -63,7 +65,8 @@ def minimal_ratio(user_vector: tuple, generated_vector: tuple)->float:
     ratios = np.array(generated_vector) / np.array(user_vector)
     return np.min(ratios[np.isfinite(ratios)])  # Handle division by zero
 
-def should_add_edge(n1: tuple, s: int, r: float)->bool:
+
+def should_add_edge(n1: tuple, s: int, r: float) -> bool:
     """
     Determine whether an edge should be added based on the attributes of the
     given node and the provided sum of differences and minimal ratio.
@@ -82,14 +85,14 @@ def should_add_edge(n1: tuple, s: int, r: float)->bool:
     >>> should_add_edge(node, 12, 0.9)
     True
     """
-    n1r = n1[1]['r']  # node1 ratio
-    n1s = n1[1]['s']  # node1 diff sum
+    n1r = n1[1]["r"]  # node1 ratio
+    n1s = n1[1]["s"]  # node1 diff sum
     if (n1r <= r and n1s <= s) or (n1r >= r and n1s >= s):
         return True
     return False
 
 
-def get_vector_sr(user_vector:tuple, v: tuple):
+def get_vector_sr(user_vector: tuple, v: tuple):
     """
     Calculate the sum of differences and the minimal ratio between the user-provided vector
     and another vector.
@@ -107,15 +110,15 @@ def get_vector_sr(user_vector:tuple, v: tuple):
     >>> get_vector_sr((50, 30, 20), (30, 40, 30))
     (40, 0.6)
     """
-    return (sum_of_differences(user_vector, v),minimal_ratio(user_vector, v))
+    return (sum_of_differences(user_vector, v), minimal_ratio(user_vector, v))
 
 
-def graph_n_edges(user_vector, n: int=10, vector_size=3)->nx.Graph:
+def graph_n_edges(user_vector, n: int = 10, vector_size=3) -> nx.Graph:
     """
     Create a graph with up to `n` edges based on the user vector. Edges are added
     only between nodes where one node has both a smaller sum of differences
     and minimal ratio than the other node.
-    
+
     Parameters:
     user_vector (tuple): The user-provided vector to compare against.
     n (int): The number of edges in the graph. Default is 10.
@@ -143,12 +146,12 @@ def graph_n_edges(user_vector, n: int=10, vector_size=3)->nx.Graph:
                 continue
             if should_add_edge(u, diff_sum, ratio):
                 G.add_edge(u[0], v)
-                if len(G.edges)>=n:
+                if len(G.edges) >= n:
                     break
     return G
 
 
-def get_user_vector_str(user_vector: tuple)->str:
+def get_user_vector_str(user_vector: tuple) -> str:
     """
     Convert a user-provided vector into a string representation where each element
     is prefixed with a dash ('-').
@@ -168,8 +171,10 @@ def get_user_vector_str(user_vector: tuple)->str:
         user_vector_str += f"-{i}"
     return user_vector_str
 
- 
-def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)->list[tuple[tuple]]:
+
+def generate_user_example(
+    user_vector: tuple, n=10, plot=False, save_txt=False
+) -> list[tuple[tuple]]:
     """
     Generate a graph based on the user vector and optionally visualize it, save the plot,
     and save the edges to a text file. Returns a list of tuples representing the edges
@@ -198,16 +203,27 @@ def generate_user_example(user_vector: tuple, n=10, plot=False, save_txt=False)-
 
     if plot:
         # Draw the graph and save it
-        pos = nx.get_node_attributes(G, 'pos')
+        pos = nx.get_node_attributes(G, "pos")
         plt.figure(figsize=(8, 6))
-        nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray', font_size=10, font_color='black')
-        plt.title('Graph Visualization')
-        plt.savefig(f'examples/graph{user_vector_str}.png')  # Save the plot as an image file
+        nx.draw(
+            G,
+            pos,
+            with_labels=True,
+            node_color="skyblue",
+            node_size=500,
+            edge_color="gray",
+            font_size=10,
+            font_color="black",
+        )
+        plt.title("Graph Visualization")
+        plt.savefig(
+            f"examples/graph{user_vector_str}.png"
+        )  # Save the plot as an image file
 
-    if save_txt:    
+    if save_txt:
         # Save the edges to a text file
-        with open(f'examples/example{user_vector_str}.txt', 'w') as file:
+        with open(f"examples/example{user_vector_str}.txt", "w") as file:
             for e in G.edges:
                 file.write(f"{e[0]} {e[1]}\n")
-            
+
     return list(G.edges)

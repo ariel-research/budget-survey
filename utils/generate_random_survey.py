@@ -1,11 +1,16 @@
-from generate_examples import generate_user_example, create_random_vector, get_user_vector_str
+from generate_examples import (
+    create_random_vector,
+    generate_user_example,
+    get_user_vector_str,
+)
+
 
 def html_survey(user_vector, user_examples, file_name):
     user_vector_html = "<h4>"
     subjects = ["ביטחון", "חינוך", "בריאות"]
     for i in range(len(user_vector)):
         user_vector_html += f"{user_vector[i]} - {subjects[i]}\n"
-    user_vector_html += '</h4>'
+    user_vector_html += "</h4>"
     html = """
     <html dir='rtl' style='font-family:"Noto Sans Hebrew", sans-serif;'>
     <head>
@@ -22,15 +27,26 @@ def html_survey(user_vector, user_examples, file_name):
         <h3 dir='ltr' style='text-align: right;'>{user_vector}</h3>
         {user_vector_html}
         <h3>אנא ענה/עני על השאלות הבאות:</h3>
-    """.format(user_vector=user_vector, user_vector_html=user_vector_html)
+    """.format(
+        user_vector=user_vector, user_vector_html=user_vector_html
+    )
 
     for i, question in enumerate(user_examples, start=1):
         html += f"<p>{i}. מבין שתי חלוקות התקציב הבאות, איזו עדיפה לדעתך?</p>\n"
-        html += '<input type="radio" name="question{}" value="Option 1">{}<br>\n'.format(i,question[0])
-        html += '<input type="radio" name="question{}" value="Option 2">{}<br>\n'.format(i,question[1])
+        html += (
+            '<input type="radio" name="question{}" value="Option 1">{}<br>\n'.format(
+                i, question[0]
+            )
+        )
+        html += (
+            '<input type="radio" name="question{}" value="Option 2">{}<br>\n'.format(
+                i, question[1]
+            )
+        )
     html += "</body></html>"
     with open(f"examples/{file_name}.html", "w") as file:
         file.write(html)
+
 
 def survey(user_vector, html):
     """
@@ -43,11 +59,12 @@ def survey(user_vector, html):
     Returns:
     list[tuple[tuple]]: A list of tuples representing the edges of the generated graph.
     """
-    file_name =  f"user{get_user_vector_str(user_vector)}"
+    file_name = f"user{get_user_vector_str(user_vector)}"
     user_examples = generate_user_example(user_vector)
     if html:
         html_survey(user_vector, user_examples, file_name)
     return user_examples
+
 
 def n_surveys(n=1, html=False):
     """
@@ -70,11 +87,11 @@ def n_surveys(n=1, html=False):
     >>> print(surveys)
     """
     users = dict()
-    while (len(users)<n):
+    while len(users) < n:
         user_vector = create_random_vector()
         while user_vector in users:
             user_vector = create_random_vector()
         user_examples = survey(user_vector, html)
         users[user_vector] = list(user_examples)
-    
+
     return users

@@ -1,18 +1,20 @@
-from flask import current_app as app
-import mysql.connector
-from mysql.connector import Error
 import logging
 
+import mysql.connector
+from flask import current_app as app
+from mysql.connector import Error
+
 logger = logging.getLogger(__name__)
+
 
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host=app.config['MYSQL_HOST'],
-            port=app.config['MYSQL_PORT'],
-            database=app.config['MYSQL_DATABASE'],
-            user=app.config['MYSQL_USER'],
-            password=app.config['MYSQL_PASSWORD']
+            host=app.config["MYSQL_HOST"],
+            port=app.config["MYSQL_PORT"],
+            database=app.config["MYSQL_DATABASE"],
+            user=app.config["MYSQL_USER"],
+            password=app.config["MYSQL_PASSWORD"],
         )
         logger.info("Database connection established")
         return connection
@@ -24,7 +26,7 @@ def get_db_connection():
 def execute_query(query, params=None):
     """
     Executes a SQL query against the MySQL database.
-    
+
     Args:
         query (str): The SQL query to execute.
         params (tuple, optional): Parameters to pass with the query.
@@ -44,7 +46,7 @@ def execute_query(query, params=None):
         else:
             cursor.execute(query)
 
-        if query.strip().upper().startswith('SELECT'):
+        if query.strip().upper().startswith("SELECT"):
             result = cursor.fetchall()  # Fetch all rows if it's a SELECT query
             logger.info(f"Query result: {result}")
         else:

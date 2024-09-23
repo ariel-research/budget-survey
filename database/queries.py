@@ -1,32 +1,38 @@
 import json
-from logging_config import setup_logging
 import logging
+
+from logging_config import setup_logging
+
 from .db import execute_query
 
 setup_logging()
 
 logger = logging.getLogger(__name__)
 
+
 def create_user(user_id: int) -> int:
     """
     Inserts a new user into the users table.
-    
+
     Args:
         user_id (int): The ID of the new user.
-    
+
     Returns:
         The ID of the newly created user, or None if an error occurs.
     """
     query = "INSERT INTO users (id) VALUES (%s)"
     logger.debug("Inserting new user with id: %s", user_id)
-    
+
     try:
         return execute_query(query, (user_id,))
     except Exception as e:
         logger.error("Error inserting new user: %s", str(e))
         return None
 
-def create_survey_response(user_id: int, survey_id: int, optimal_allocation: list) -> int:
+
+def create_survey_response(
+    user_id: int, survey_id: int, optimal_allocation: list
+) -> int:
     """
     Inserts a new survey response into the survey_responses table.
 
@@ -43,15 +49,24 @@ def create_survey_response(user_id: int, survey_id: int, optimal_allocation: lis
         VALUES (%s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
-    logger.debug("Inserting survey response for user_id: %s, survey_id: %s", user_id, survey_id)
-    
+    logger.debug(
+        "Inserting survey response for user_id: %s, survey_id: %s", user_id, survey_id
+    )
+
     try:
         return execute_query(query, (user_id, survey_id, optimal_allocation_json))
     except Exception as e:
         logger.error("Error inserting survey response: %s", str(e))
         return None
 
-def create_comparison_pair(survey_response_id: int, pair_number: int, option_1: list, option_2: list, user_choice: int) -> int:
+
+def create_comparison_pair(
+    survey_response_id: int,
+    pair_number: int,
+    option_1: list,
+    option_2: list,
+    user_choice: int,
+) -> int:
     """
     Inserts a new comparison pair into the comparison_pairs table.
 
@@ -71,13 +86,27 @@ def create_comparison_pair(survey_response_id: int, pair_number: int, option_1: 
     """
     option_1_json = json.dumps(option_1)
     option_2_json = json.dumps(option_2)
-    logger.debug("Inserting comparison pair for survey_response_id: %s, pair_number: %s", survey_response_id, pair_number)
-    
+    logger.debug(
+        "Inserting comparison pair for survey_response_id: %s, pair_number: %s",
+        survey_response_id,
+        pair_number,
+    )
+
     try:
-        return execute_query(query, (survey_response_id, pair_number, option_1_json, option_2_json, user_choice))
+        return execute_query(
+            query,
+            (
+                survey_response_id,
+                pair_number,
+                option_1_json,
+                option_2_json,
+                user_choice,
+            ),
+        )
     except Exception as e:
         logger.error("Error inserting comparison pair: %s", str(e))
         return None
+
 
 def mark_survey_as_completed(survey_response_id: int) -> int:
     """
@@ -94,13 +123,16 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
         SET completed = True
         WHERE id = %s
     """
-    logger.debug("Marking survey as completed for survey_response_id: %s", survey_response_id)
-    
+    logger.debug(
+        "Marking survey as completed for survey_response_id: %s", survey_response_id
+    )
+
     try:
         return execute_query(query, (survey_response_id,))
     except Exception as e:
         logger.error("Error marking survey as completed: %s", str(e))
         return 0  # Return 0 to indicate no rows affected
+
 
 def user_exists(user_id: int) -> bool:
     """
@@ -114,14 +146,15 @@ def user_exists(user_id: int) -> bool:
     """
     query = "SELECT EXISTS(SELECT 1 FROM users WHERE id = %s) as user_exists"
     logger.debug("Checking if user exists with user_id: %s", user_id)
-    
+
     try:
         result = execute_query(query, (user_id,))
-        return bool(result[0]['user_exists'])
+        return bool(result[0]["user_exists"])
     except Exception as e:
         logger.error("Error checking if user exists: %s", str(e))
         return False
-    
+
+
 def get_survey_name(survey_id: int) -> str:
     """
     Retrieves the name of a survey given its ID.
@@ -134,18 +167,19 @@ def get_survey_name(survey_id: int) -> str:
     """
     query = "SELECT name FROM surveys WHERE id = %s AND active = TRUE"
     logger.debug(f"Retrieving name for survey_id: {survey_id}")
-    
+
     try:
         result = execute_query(query, (survey_id,))
         if result and len(result) > 0:
-            return result[0]['name']
+            return result[0]["name"]
         else:
             logger.warning(f"No active survey found with id: {survey_id}")
             return ""
     except Exception as e:
         logger.error(f"Error retrieving name for survey {survey_id}: {str(e)}")
         return ""
-    
+
+
 def get_subjects(survey_id: int) -> list:
     """
     Retrieves the subjects for a given survey from the database.
@@ -158,11 +192,11 @@ def get_subjects(survey_id: int) -> list:
     """
     query = "SELECT subjects FROM surveys WHERE id = %s AND active = TRUE"
     logger.debug("Retrieving subjects for survey_id: %s", survey_id)
-    
+
     try:
         result = execute_query(query, (survey_id,))
         if result and len(result) > 0:
-            subjects_json = result[0]['subjects']
+            subjects_json = result[0]["subjects"]
             return json.loads(subjects_json)
         else:
             logger.warning(f"No active survey found with id: {survey_id}")
@@ -173,6 +207,7 @@ def get_subjects(survey_id: int) -> list:
     except Exception as e:
         logger.error(f"Error retrieving subjects for survey {survey_id}: {str(e)}")
         return []
+
 
 def check_user_participation(user_id: int, survey_id: int) -> bool:
     """
@@ -191,11 +226,13 @@ def check_user_participation(user_id: int, survey_id: int) -> bool:
         WHERE user_id = %s AND survey_id = %s AND completed = TRUE
     ) as participated
     """
-    logger.debug(f"Checking participation for user_id: {user_id}, survey_id: {survey_id}")
-    
+    logger.debug(
+        f"Checking participation for user_id: {user_id}, survey_id: {survey_id}"
+    )
+
     try:
         result = execute_query(query, (user_id, survey_id))
-        return bool(result[0]['participated'])
+        return bool(result[0]["participated"])
     except Exception as e:
         logger.error(f"Error checking user participation: {str(e)}")
         return False

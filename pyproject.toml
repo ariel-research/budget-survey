@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.ruff]
+# Select the rules to be enforced
+# E: Style errors (pycodestyle)
+# F: Code errors (pyflakes)
+# I: Import sorting (isort)
+lint.select = ["E", "F", "I"]
+# Ignore specific rules. E501 is ignored because Black handles line length
+lint.ignore = ["E501"]
+# Set the maximum line length (should match Black's setting)
+line-length = 88
+# Specify the minimum Python version for compatibility
+target-version = "py38"

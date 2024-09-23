@@ -1,23 +1,27 @@
-import pytest
-import sys
+import json
 import os
 import random
-import json
+import sys
+
+import pytest
 
 # Add the parent directory to the system path to allow importing from the backend module.
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
-from database.db import get_db_connection, execute_query
+from database.db import execute_query, get_db_connection
 from database.queries import (
-    create_user,
-    create_survey_response,
+    check_user_participation,
     create_comparison_pair,
-    mark_survey_as_completed,
-    user_exists,
+    create_survey_response,
+    create_user,
     get_subjects,
     get_survey_name,
-    check_user_participation,
+    mark_survey_as_completed,
+    user_exists,
 )
+
 
 @pytest.fixture(scope="module")
 def db_connection():
@@ -30,12 +34,14 @@ def db_connection():
     if conn:
         conn.close()
 
+
 def generate_unique_id():
     """
     Helper function to generate a random unique ID for users.
     This ensures that each test works with unique data.
     """
     return random.randint(100000, 999999)
+
 
 @pytest.fixture(scope="function")
 def cleanup_db():
@@ -49,12 +55,14 @@ def cleanup_db():
     execute_query("DELETE FROM users")
     execute_query("DELETE FROM surveys")
 
+
 def test_database_connection(db_connection):
     """
     Ensure that a connection to the database can be established and is active.
     """
     assert db_connection is not None
     assert db_connection.is_connected()
+
 
 def test_create_user(cleanup_db):
     """
@@ -69,7 +77,8 @@ def test_create_user(cleanup_db):
     query = "SELECT * FROM users WHERE id = %s"
     result = execute_query(query, (user_id,))
     assert len(result) == 1  # Ensure one result is returned
-    assert result[0]['id'] == user_id  # Check that the ID matches
+    assert result[0]["id"] == user_id  # Check that the ID matches
+
 
 def test_create_survey_response(cleanup_db):
     """
@@ -82,14 +91,17 @@ def test_create_survey_response(cleanup_db):
 
     # Insert a survey response for the user
     survey_response_id = create_survey_response(user_id, survey_id, optimal_allocation)
-    assert survey_response_id is not None  # Ensure that the survey response was inserted
+    assert (
+        survey_response_id is not None
+    )  # Ensure that the survey response was inserted
 
     # Verify the inserted survey response by querying the database
     query = "SELECT * FROM survey_responses WHERE id = %s"
     result = execute_query(query, (survey_response_id,))
     assert len(result) == 1  # Ensure one result is returned
-    assert result[0]['user_id'] == user_id  # Check that the user ID matches
-    assert result[0]['survey_id'] == survey_id  # Check that the survey id matches
+    assert result[0]["user_id"] == user_id  # Check that the user ID matches
+    assert result[0]["survey_id"] == survey_id  # Check that the survey id matches
+
 
 def test_create_comparison_pair(cleanup_db):
     """
@@ -98,7 +110,9 @@ def test_create_comparison_pair(cleanup_db):
     """
     user_id = generate_unique_id()
     create_user(user_id)  # Insert the user into the database
-    survey_response_id = create_survey_response(user_id, 2, [5, 15, 25])  # Create a new survey response
+    survey_response_id = create_survey_response(
+        user_id, 2, [5, 15, 25]
+    )  # Create a new survey response
 
     pair_number = 1  # Define a pair number for comparison
     option_1 = [10, 20]  # First set of options
@@ -106,16 +120,25 @@ def test_create_comparison_pair(cleanup_db):
     user_choice = 2  # User's selected option
 
     # Insert the comparison pair
-    comparison_pair_id = create_comparison_pair(survey_response_id, pair_number, option_1, option_2, user_choice)
-    assert comparison_pair_id is not None  # Ensure that the comparison pair was inserted
+    comparison_pair_id = create_comparison_pair(
+        survey_response_id, pair_number, option_1, option_2, user_choice
+    )
+    assert (
+        comparison_pair_id is not None
+    )  # Ensure that the comparison pair was inserted
 
     # Verify the inserted comparison pair by querying the database
     query = "SELECT * FROM comparison_pairs WHERE id = %s"
     result = execute_query(query, (comparison_pair_id,))
     assert len(result) == 1  # Ensure one result is returned
-    assert result[0]['survey_response_id'] == survey_response_id  # Check that the survey response ID matches
-    assert result[0]['pair_number'] == pair_number  # Check that the pair number matches
-    assert result[0]['user_choice'] == user_choice  # Check that the user's choice matches
+    assert (
+        result[0]["survey_response_id"] == survey_response_id
+    )  # Check that the survey response ID matches
+    assert result[0]["pair_number"] == pair_number  # Check that the pair number matches
+    assert (
+        result[0]["user_choice"] == user_choice
+    )  # Check that the user's choice matches
+
 
 def test_mark_survey_as_completed(cleanup_db):
     """
@@ -124,7 +147,9 @@ def test_mark_survey_as_completed(cleanup_db):
     """
     user_id = generate_unique_id()
     create_user(user_id)  # Insert the user into the database
-    survey_response_id = create_survey_response(user_id, 3, [15, 25, 35])  # Create a new survey response
+    survey_response_id = create_survey_response(
+        user_id, 3, [15, 25, 35]
+    )  # Create a new survey response
 
     # Mark the survey as completed
     result = mark_survey_as_completed(survey_response_id)
@@ -134,7 +159,8 @@ def test_mark_survey_as_completed(cleanup_db):
     query = "SELECT completed FROM survey_responses WHERE id = %s"
     result = execute_query(query, (survey_response_id,))
     assert len(result) == 1  # Ensure one result is returned
-    assert result[0]['completed'] == 1  # Check that the 'completed' field is set to 1
+    assert result[0]["completed"] == 1  # Check that the 'completed' field is set to 1
+
 
 def test_user_exists(cleanup_db):
     """
@@ -156,6 +182,7 @@ def test_user_exists(cleanup_db):
     non_existing_id = generate_unique_id()
     assert not user_exists(non_existing_id)
 
+
 def test_get_subjects(cleanup_db):
     """
     Test the retrieval of subjects for a survey.
@@ -163,29 +190,41 @@ def test_get_subjects(cleanup_db):
     """
     # Insert a test survey
     test_subjects = ["ביטחון", "חינוך", "בריאות"]
-    survey_id = 1  
+    survey_id = 1
     insert_survey_query = """
     INSERT INTO surveys (id, name, subjects, active)
     VALUES (%s, %s, %s, %s)
     """
-    execute_query(insert_survey_query, (survey_id, "Test Survey", json.dumps(test_subjects), True))
+    execute_query(
+        insert_survey_query, (survey_id, "Test Survey", json.dumps(test_subjects), True)
+    )
 
     # Test the get_subjects function
     retrieved_subjects = get_subjects(survey_id)
 
     # Verify the results
-    assert retrieved_subjects == test_subjects, f"Expected {test_subjects}, but got {retrieved_subjects}"
+    assert (
+        retrieved_subjects == test_subjects
+    ), f"Expected {test_subjects}, but got {retrieved_subjects}"
 
     # Test with a non-existent survey ID
     non_existent_id = 9999
     empty_subjects = get_subjects(non_existent_id)
-    assert empty_subjects == [], f"Expected empty list for non-existent survey, but got {empty_subjects}"
+    assert (
+        empty_subjects == []
+    ), f"Expected empty list for non-existent survey, but got {empty_subjects}"
 
     # Test with an inactive survey
     inactive_survey_id = 2
-    execute_query(insert_survey_query, (inactive_survey_id, "Inactive Survey", json.dumps(["Test"]), False))
+    execute_query(
+        insert_survey_query,
+        (inactive_survey_id, "Inactive Survey", json.dumps(["Test"]), False),
+    )
     inactive_subjects = get_subjects(inactive_survey_id)
-    assert inactive_subjects == [], f"Expected empty list for inactive survey, but got {inactive_subjects}"
+    assert (
+        inactive_subjects == []
+    ), f"Expected empty list for inactive survey, but got {inactive_subjects}"
+
 
 def test_get_survey_name(cleanup_db):
     """
@@ -200,23 +239,36 @@ def test_get_survey_name(cleanup_db):
     INSERT INTO surveys (id, name, subjects, active)
     VALUES (%s, %s, %s, %s)
     """
-    execute_query(insert_survey_query, (test_survey_id, test_survey_name, json.dumps(["Subject1", "Subject2"]), True))
+    execute_query(
+        insert_survey_query,
+        (test_survey_id, test_survey_name, json.dumps(["Subject1", "Subject2"]), True),
+    )
 
     # Test retrieving the name of the existing survey
     retrieved_name = get_survey_name(test_survey_id)
-    assert retrieved_name == test_survey_name, f"Expected '{test_survey_name}', but got '{retrieved_name}'"
+    assert (
+        retrieved_name == test_survey_name
+    ), f"Expected '{test_survey_name}', but got '{retrieved_name}'"
 
     # Test with a non-existent survey ID
     non_existent_id = 9999
     empty_name = get_survey_name(non_existent_id)
-    assert empty_name == "", f"Expected empty string for non-existent survey, but got '{empty_name}'"
+    assert (
+        empty_name == ""
+    ), f"Expected empty string for non-existent survey, but got '{empty_name}'"
 
     # Test with an inactive survey
     inactive_survey_id = 2
     inactive_survey_name = "Inactive Survey"
-    execute_query(insert_survey_query, (inactive_survey_id, inactive_survey_name, json.dumps(["Subject"]), False))
+    execute_query(
+        insert_survey_query,
+        (inactive_survey_id, inactive_survey_name, json.dumps(["Subject"]), False),
+    )
     inactive_name = get_survey_name(inactive_survey_id)
-    assert inactive_name == "", f"Expected empty string for inactive survey, but got '{inactive_name}'"
+    assert (
+        inactive_name == ""
+    ), f"Expected empty string for inactive survey, but got '{inactive_name}'"
+
 
 def test_check_user_participation(cleanup_db):
     """
@@ -231,25 +283,38 @@ def test_check_user_participation(cleanup_db):
     INSERT INTO surveys (id, name, subjects, active)
     VALUES (%s, %s, %s, %s)
     """
-    execute_query(insert_survey_query, (survey_id, "Test Survey", json.dumps(["Subject1", "Subject2"]), True))
+    execute_query(
+        insert_survey_query,
+        (survey_id, "Test Survey", json.dumps(["Subject1", "Subject2"]), True),
+    )
 
     # Initially, the user shouldn't have participated
-    assert not check_user_participation(user_id, survey_id), "User shouldn't have participated initially"
+    assert not check_user_participation(
+        user_id, survey_id
+    ), "User shouldn't have participated initially"
 
     survey_response_id = create_survey_response(user_id, survey_id, [50, 50])
 
     # User still shouldn't be marked as participated (survey not completed)
-    assert not check_user_participation(user_id, survey_id), "User shouldn't be marked as participated before completion"
+    assert not check_user_participation(
+        user_id, survey_id
+    ), "User shouldn't be marked as participated before completion"
 
     mark_survey_as_completed(survey_response_id)
 
     # Now the user should be marked as participated
-    assert check_user_participation(user_id, survey_id), "User should be marked as participated after completion"
+    assert check_user_participation(
+        user_id, survey_id
+    ), "User should be marked as participated after completion"
 
     # Check for a different survey
     different_survey_id = 2
-    assert not check_user_participation(user_id, different_survey_id), "User shouldn't be marked as participated in a different survey"
+    assert not check_user_participation(
+        user_id, different_survey_id
+    ), "User shouldn't be marked as participated in a different survey"
 
     # Check for a different user
     different_user_id = generate_unique_id()
-    assert not check_user_participation(different_user_id, survey_id), "Different user shouldn't be marked as participated"
+    assert not check_user_participation(
+        different_user_id, survey_id
+    ), "Different user shouldn't be marked as participated"
