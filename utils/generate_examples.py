@@ -173,7 +173,7 @@ def get_user_vector_str(user_vector: tuple) -> str:
 
 
 def generate_user_example(
-    user_vector: tuple, n=10, plot=False, save_txt=False
+    user_vector: tuple, n=10, vector_size=3, plot=False, save_txt=False
 ) -> list[tuple[tuple]]:
     """
     Generate a graph based on the user vector and optionally visualize it, save the plot,
@@ -183,6 +183,7 @@ def generate_user_example(
     Parameters:
     user_vector (tuple): The user-provided vector to use as a basis for the graph.
     n (int): The number of edges in the graph. Default is 10.
+    vector_size (int): The size of the generated vectors. Default is 3.
     plot (bool): If True, visualizes the graph and saves the plot as an image file. Default is False.
     save_txt (bool): If True, saves the edges of the graph to a text file. Default is False.
 
@@ -198,7 +199,7 @@ def generate_user_example(
     Example:
     >>> generate_user_example((10, 20, 30))
     """
-    G = graph_n_edges(user_vector, n)
+    G = graph_n_edges(user_vector, n, vector_size)
     user_vector_str = get_user_vector_str(user_vector)
 
     if plot:

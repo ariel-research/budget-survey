@@ -60,7 +60,7 @@ def survey(user_vector, html):
     list[tuple[tuple]]: A list of tuples representing the edges of the generated graph.
     """
     file_name = f"user{get_user_vector_str(user_vector)}"
-    user_examples = generate_user_example(user_vector)
+    user_examples = generate_user_example(user_vector, vector_size=len(user_vector))
     if html:
         html_survey(user_vector, user_examples, file_name)
     return user_examples

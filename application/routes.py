@@ -130,8 +130,10 @@ def survey():
             )
             return redirect(url_for("main.create_vector", userid=user_id))
 
-        comparison_pairs = list(generate_user_example(tuple(user_vector), n=10))
-        awareness_check = generate_awareness_check(user_vector)
+        comparison_pairs = list(
+            generate_user_example(tuple(user_vector), n=10, vector_size=len(subjects))
+        )
+        awareness_check = generate_awareness_check(user_vector, len(subjects))
 
         logger.info(f"Survey generated for user {user_id} with vector: {user_vector}")
         return render_template(

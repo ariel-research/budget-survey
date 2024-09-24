@@ -117,7 +117,7 @@ Notes:
 
 - Both 'userid' and 'surveyid' parameters are required in the URL.
 
-- The 'userid' parameter is used to obtain the user_id for tracking and data collection purposes.
+- The 'userid' parameter is used to obtain the user_id.
 
 - While the 'surveyid' parameter is required in the URL, it is not actually used by the application. Instead, the survey ID is hardcoded in the config file.
 
