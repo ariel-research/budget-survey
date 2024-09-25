@@ -10,6 +10,7 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from app import create_app
 from database.queries import get_subjects
 from utils.generate_examples import create_random_vector
 
@@ -17,13 +18,22 @@ logger = logging.getLogger(__name__)
 
 
 class SurveyUser(HttpUser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.app = create_app()
+        self.app_context = self.app.app_context()
+
     def on_start(self):
+        self.app_context.push()
         self.user_id = random.randint(1, 10000)
         self.survey_id = 1
         self.subjects = get_subjects(self.survey_id)
         logger.info(
             f"Starting new user session with user_id: {self.user_id}, subjects: {self.subjects}"
         )
+
+    def on_stop(self):
+        self.app_context.pop()
 
     @task
     def complete_survey(self):
