@@ -3,23 +3,15 @@
 ## Table of Contents
 
 - [Overview](#overview)
-
 - [Prerequisites](#prerequisites)
-
 - [Installation](#installation)
-
 - [Database Setup](#database-setup)
-
 - [Running the Application](#running-the-application)
-
 - [Endpoints](#endpoints)
-
 - [Database](#database)
-
 - [Modifying the Survey](#modifying-the-survey)
-
 - [Algorithm](#algorithm)
-
+- [Testing](#testing)
 - [Development](#development)
 
 ## Overview
@@ -66,17 +58,13 @@ You can set up the database using one of two methods:
 2. Create a new database:
 
    ```sql
-
    CREATE DATABASE survey;
-
    ```
 
 3. Use the newly created database:
 
    ```sql
-
    USE survey;
-
    ```
 
 4. Run the SQL commands from the database/schema.sql file to create the necessary tables and structure.
@@ -90,9 +78,7 @@ You can set up the database using one of two methods:
 3. Run the following command to start the MySQL container and set up the database:
 
    ```
-
    docker-compose up -d db
-
    ```
 
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
@@ -116,9 +102,7 @@ https://survey.csariel.xyz/?userid=105&surveyid=1
 Notes: 
 
 - Both 'userid' and 'surveyid' parameters are required in the URL.
-
 - The 'userid' parameter is used to obtain the user_id.
-
 - While the 'surveyid' parameter is required in the URL, it is not actually used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
@@ -183,6 +167,60 @@ Remember to update the `SURVEY_ID` in `config.py` after adding or modifying surv
 
 ## Algorithm
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.
+
+## Testing
+
+The project includes various types of tests to ensure the reliability and performance of the application. To run the tests, make sure you have activated your virtual environment and installed the required dependencies.
+
+### Unit Tests
+
+To run the unit tests, use the following command:
+
+```
+pytest tests/unit
+```
+
+These tests cover individual components and functions of the application.
+
+### Database Integration Tests
+
+To run the database integration tests, use the following command:
+
+```
+pytest tests/database/test_database_integration.py
+```
+
+These tests verify the interaction between the application and the database, ensuring that database operations work as expected.
+
+### API Tests
+
+To run the API tests, use the following command:
+
+```
+pytest tests/api/test_routes.py
+```
+
+These tests check the functionality of the application's API endpoints.
+
+### Load Testing
+
+For load testing, we use Locust. Before running the load test, ensure that your application server is up and running.
+
+To run the load test, follow these steps:
+
+1. Start your application server if it's not already running.
+
+2. In a new terminal window, activate your virtual environment and run the following command:
+
+```
+locust -f tests/performance/load_test.py --host=[your host]
+```
+
+Replace `[your host]` with the appropriate host address (e.g., `http://localhost:5001`).
+
+3. After running this command, open a web browser and go to `http://localhost:8089` to access the Locust web interface. From there, you can configure and start the load test.
+
+Note: It's crucial to have your application server running before starting the Locust test. The load test will attempt to interact with your live application, so an active server is necessary for accurate results.
 
 ## Development
 - Use the provided `.pre-commit-config.yaml` for code formatting and linting
