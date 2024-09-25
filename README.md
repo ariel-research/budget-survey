@@ -210,15 +210,25 @@ To run the load test, follow these steps:
 
 1. Start your application server if it's not already running.
 
-2. In a new terminal window, activate your virtual environment and run the following command:
+2. Run Locust in headless mode using the following command:
 
 ```
-locust -f tests/performance/load_test.py --host=[your host]
+locust -f tests/performance/load_test.py --headless -u 100 -r 2 -t 1m --host=[your host]
 ```
 
 Replace `[your host]` with the appropriate host address (e.g., `http://localhost:5001`).
 
-3. After running this command, open a web browser and go to `http://localhost:8089` to access the Locust web interface. From there, you can configure and start the load test.
+This command does the following:
+- `-f tests/performance/load_test.py`: Specifies the Locust file to use
+- `--headless`: Runs Locust in headless mode (no web UI)
+- `-u 100`: Simulates 100 users
+- `-r 10`: Spawns 2 users per second
+- `-t 5m`: Runs the test for 1 minute
+- `--host=[your host]`: Specifies the host to load test
+
+3. Locust will run the test and output the results to the console. You'll see real-time statistics including request counts, response times, and failure rates.
+
+4. After the test completes, Locust will generate a summary of the test results in the console output.
 
 Note: It's crucial to have your application server running before starting the Locust test. The load test will attempt to interact with your live application, so an active server is necessary for accurate results.
 
