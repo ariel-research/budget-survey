@@ -10,6 +10,7 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+from app import create_app
 from database.db import execute_query, get_db_connection
 from database.queries import (
     check_user_participation,
@@ -24,7 +25,27 @@ from database.queries import (
 
 
 @pytest.fixture(scope="module")
-def db_connection():
+def app():
+    """Create a new app instance for each test."""
+    app = create_app()
+    yield app
+
+
+@pytest.fixture(scope="module")
+def client(app):
+    """A test client for the app."""
+    return app.test_client()
+
+
+@pytest.fixture(scope="module")
+def app_context(app):
+    """Create an application context for tests."""
+    with app.app_context():
+        yield
+
+
+@pytest.fixture(scope="module")
+def db_connection(app_context):
     """
     Establish a connection to the database for the entire module.
     Closes the connection after all tests in this module are complete.
@@ -44,7 +65,7 @@ def generate_unique_id():
 
 
 @pytest.fixture(scope="function")
-def cleanup_db():
+def cleanup_db(app_context):
     """
     Cleanup function that deletes entries from all relevant tables after each test.
     Ensures tests are independent by resetting the database state after each test.
