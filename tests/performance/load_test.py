@@ -34,6 +34,9 @@ class SurveyUser(HttpUser):
 
     def on_stop(self):
         self.app_context.pop()
+        total_requests = self.environment.stats.total.num_requests
+        total_failures = self.environment.stats.total.num_failures
+        print(f"Total Requests: {total_requests}, Failed Requests: {total_failures}")
 
     @task
     def complete_survey(self):
