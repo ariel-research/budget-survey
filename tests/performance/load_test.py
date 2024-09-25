@@ -44,7 +44,7 @@ class SurveyUser(HttpUser):
     def complete_survey(self):
         try:
             # Step 1: Access the index page
-            logger.info(f"User {self.user_id}: Accessing index page")
+            logger.debug(f"User {self.user_id}: Accessing index page")
             with self.client.get(
                 f"/?userid={self.user_id}&surveyid={self.survey_id}",
                 catch_response=True,
@@ -58,7 +58,7 @@ class SurveyUser(HttpUser):
                     response.success()
 
             # Step 2: Create vector
-            logger.info(f"User {self.user_id}: Creating vector")
+            logger.debug(f"User {self.user_id}: Creating vector")
             vector = create_random_vector(len(self.subjects))
             with self.client.post(
                 f"/create_vector?userid={self.user_id}&surveyid={self.survey_id}",
@@ -75,7 +75,7 @@ class SurveyUser(HttpUser):
                     response.success()
 
             # Step 3: Complete survey
-            logger.info(f"User {self.user_id}: Accessing survey page")
+            logger.debug(f"User {self.user_id}: Accessing survey page")
             vector_str = ",".join(map(str, vector))
             with self.client.get(
                 f"/survey?vector={vector_str}&userid={self.user_id}",
@@ -89,7 +89,7 @@ class SurveyUser(HttpUser):
                 else:
                     response.success()
 
-            logger.info(f"User {self.user_id}: Submitting survey")
+            logger.debug(f"User {self.user_id}: Submitting survey")
             survey_data = {
                 "user_vector": vector_str,
                 "awareness_check": "2",
@@ -118,7 +118,7 @@ class SurveyUser(HttpUser):
                     response.success()
 
             # Step 4: Thank you page
-            logger.info(f"User {self.user_id}: Accessing thank you page")
+            logger.debug(f"User {self.user_id}: Accessing thank you page")
             with self.client.get("/thank_you", catch_response=True) as response:
                 if response.status_code != 200:
                     logger.error(
@@ -128,7 +128,7 @@ class SurveyUser(HttpUser):
                 else:
                     response.success()
 
-            logger.info(f"User {self.user_id}: Completed survey process successfully")
+            logger.debug(f"User {self.user_id}: Completed survey process successfully")
 
         except Exception as e:
             logger.error(f"User {self.user_id}: An error occurred: {str(e)}")

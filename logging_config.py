@@ -44,7 +44,7 @@ def setup_logging():
                     },
                 },
                 "root": {
-                    "level": "DEBUG",  # Set to DEBUG to capture all levels of logs
+                    "level": "INFO",  # Set to DEBUG to capture all levels of logs
                     "handlers": ["console", "file"],
                 },
             }
