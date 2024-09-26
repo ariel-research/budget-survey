@@ -10,7 +10,7 @@ from logging_config import setup_logging
 load_dotenv()
 
 
-def create_app():
+def create_app(config_class=None):
     app = Flask(
         __name__,
         template_folder="application/templates",
@@ -19,7 +19,10 @@ def create_app():
     setup_logging()
 
     # Load the configuration
-    app.config.from_object(get_config())
+    if config_class is None:
+        app.config.from_object(get_config())
+    else:
+        app.config.from_object(config_class)
 
     app.secret_key = os.environ.get("FLASK_SECRET_KEY")
     app.register_blueprint(main_blueprint)
