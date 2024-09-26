@@ -97,7 +97,7 @@ Note: Make sure your .env file is properly configured with the correct database 
 3. Access the application at `http://localhost:5001`
 
 The live version of the application can be accessed at:
-https://survey.csariel.xyz/?userid=105&surveyid=1
+https://survey.csariel.xyz/?userid=...&surveyid=...
 
 Notes: 
 
@@ -106,10 +106,10 @@ Notes:
 - While the 'surveyid' parameter is required in the URL, it is not actually used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
-- `/`: Index page
-- `/create_vector`: Page for creating budget allocation
-- `/survey`: Main survey page
-- `/thank_you`: Thank you page after survey completion
+- `/`: first survey page, shows introduction to the survey and consent form. 
+- `/create_vector`: second survey page, asks the user for his ideal budget.
+- `/survey`: third suvrey page, asks the user to compare between pairs of non-ideal budgets.
+- `/thank_you`: Thank you page, shown after survey completion.
 
 ## Database
 The application uses a MySQL database. Here's the schema:
@@ -119,7 +119,7 @@ The application uses a MySQL database. Here's the schema:
 ## Modifying the Survey
 
 ### Changing the Active Survey
-To modify the survey that users will get, you need to manually update the `SURVEY_ID` value in the `config.py` file. Look for the following line and change the number to the desired survey ID:
+To modify the survey that users will get, you need to manually update the `SURVEY_ID` value in the file [`config.py`](config.py). Look for the following line and change the number to the desired survey ID:
 
 ```python
 SURVEY_ID = 1  # Change this to the desired survey ID
