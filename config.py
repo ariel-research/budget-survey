@@ -12,6 +12,7 @@ class Config:
     MYSQL_USER = os.getenv("MYSQL_USER", "survey")
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
     SURVEY_ID = 1  # Change this to the desired survey ID
+    PORT = 5001
     DEBUG = os.getenv("FLASK_ENV", "development") == "development"
 
 
