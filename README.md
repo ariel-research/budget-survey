@@ -119,7 +119,7 @@ The application uses a MySQL database. Here's the schema:
 ## Modifying the Survey
 
 ### Changing the Active Survey
-To modify the survey that users will get, you need to manually update the `SURVEY_ID` value in the `config.py` file. Look for the following line and change the number to the desired survey ID:
+To modify the survey that users will get, you need to manually update the `SURVEY_ID` value in the file [`config.py`](config.py). Look for the following line and change the number to the desired survey ID:
 
 ```python
 SURVEY_ID = 1  # Change this to the desired survey ID
