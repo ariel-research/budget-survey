@@ -1,4 +1,9 @@
+import json
+import logging
+
 from utils.generate_examples import sum_of_differences
+
+logger = logging.getLogger(__name__)
 
 
 def is_sum_optimized(
@@ -31,3 +36,48 @@ def is_sum_optimized(
     optimal_choice = 1 if sum_diff_1 > sum_diff_2 else 2
 
     return optimal_choice == user_choice
+
+
+def process_survey_responses(raw_results):
+    """
+    Processes raw survey response data into a structured format.
+
+    Args:
+        raw_results (list): A list of dictionaries containing raw survey response data.
+
+    Returns:
+        list: A list of dictionaries containing processed survey response data.
+    """
+    processed_results = []
+    current_response = None
+
+    for row in raw_results:
+        if (
+            not current_response
+            or current_response["survey_response_id"] != row["survey_response_id"]
+        ):
+            if current_response:
+                processed_results.append(current_response)
+            current_response = {
+                "survey_response_id": row["survey_response_id"],
+                "user_id": row["user_id"],
+                "survey_id": row["survey_id"],
+                "optimal_allocation": json.loads(row["optimal_allocation"]),
+                "completed": row["completed"],
+                "response_created_at": row["response_created_at"],
+                "comparisons": [],
+            }
+        current_response["comparisons"].append(
+            {
+                "pair_number": row["pair_number"],
+                "option_1": json.loads(row["option_1"]),
+                "option_2": json.loads(row["option_2"]),
+                "user_choice": row["user_choice"],
+            }
+        )
+
+    if current_response:
+        processed_results.append(current_response)
+
+    logger.info(f"Processed {len(processed_results)} survey responses")
+    return processed_results

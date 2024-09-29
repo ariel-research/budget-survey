@@ -1,5 +1,9 @@
+import logging
+
 from app import create_app
 from database.db import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 app = create_app()
 
