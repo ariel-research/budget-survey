@@ -236,3 +236,46 @@ def check_user_participation(user_id: int, survey_id: int) -> bool:
     except Exception as e:
         logger.error(f"Error checking user participation: {str(e)}")
         return False
+
+
+def retrieve_completed_survey_responses():
+    """
+    Retrieves all completed survey responses, including user choices and both options for each comparison.
+
+    Returns:
+        list: A list of dictionaries containing raw survey response data, or an empty list if an error occurs.
+    """
+    query = """
+    SELECT 
+        sr.id AS survey_response_id,
+        sr.user_id,
+        sr.survey_id,
+        sr.optimal_allocation,
+        sr.completed,
+        sr.created_at AS response_created_at,
+        cp.pair_number,
+        cp.option_1,
+        cp.option_2,
+        cp.user_choice
+    FROM 
+        survey_responses sr
+    JOIN 
+        comparison_pairs cp ON sr.id = cp.survey_response_id
+    WHERE
+        sr.completed = TRUE
+    ORDER BY 
+        sr.id, cp.pair_number
+    """
+    logger.debug("Retrieving all completed survey responses and comparison pairs")
+
+    try:
+        results = execute_query(query)
+        if results:
+            logger.info(f"Retrieved {len(results)} rows of completed survey data")
+            return results
+        else:
+            logger.warning("No completed survey responses found")
+            return []
+    except Exception as e:
+        logger.error(f"Error retrieving completed survey responses: {str(e)}")
+        return []
