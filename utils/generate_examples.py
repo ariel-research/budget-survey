@@ -135,6 +135,7 @@ def graph_n_edges(user_vector, n: int = 10, vector_size=3) -> nx.Graph:
     while len(G.edges) < n:
         v = create_random_vector(vector_size)
         print(v)
+        # Ensures the generated vector is unique
         while v in vectors:
             v = create_random_vector(vector_size)
             print(v)
