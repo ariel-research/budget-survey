@@ -8,6 +8,7 @@
 - [Database Setup](#database-setup)
 - [Running the Application](#running-the-application)
 - [Endpoints](#endpoints)
+- [Screen Text Locations](#screen-text-locations)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
 - [Algorithm](#algorithm)
@@ -15,7 +16,7 @@
 - [Development](#development)
 
 ## Overview
-This project aims to collect data for developing an algorithm for optimal budget calculations, considering the votes of many users. Users allocate money among a few subjects, creating their optimal allocation. They then compare ten pairs of options, optimizing for difference and ratio against their optimal allocation.
+This project aims to collect data to develop an algorithm for optimal budget calculations, considering the votes of many users. Users allocate money among a few subjects, creating their optimal allocation. They then compare ten pairs of options, optimizing for difference and ratio against their optimal allocation.
 
 ## Prerequisites
 - Python 3.8+
@@ -103,13 +104,37 @@ Notes:
 
 - Both 'userid' and 'surveyid' parameters are required in the URL.
 - The 'userid' parameter is used to obtain the user_id.
-- While the 'surveyid' parameter is required in the URL, it is not actually used by the application. Instead, the survey ID is hardcoded in the config file.
+- While the 'surveyid' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
-- `/`: first survey page, shows introduction to the survey and consent form. 
+- `/`: The first survey page, shows an introduction to the survey and consent form. 
 - `/create_vector`: second survey page, asks the user for his ideal budget.
-- `/survey`: third suvrey page, asks the user to compare between pairs of non-ideal budgets.
+- `/survey`: The third survey page, asks the user to compare pairs of non-ideal budgets.
 - `/thank_you`: Thank you page, shown after survey completion.
+
+## Screen Text Locations
+To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
+1. **Index Page (Introduction and Consent)**
+   - File: `application/templates/index.html`
+   - This file contains the introductory text on the first page of the survey.
+2. **Create Vector Page (Ideal Budget Input)**
+   - File: `application/templates/create_vector.html`
+   - This file includes the text and instructions for users to input their ideal budget allocation.
+3. **Survey Page (Budget Comparison)**
+   - File: `application/templates/survey.html`
+   - Contains the text for the main survey page where users compare pairs of budget allocations.
+4. **Thank You Page**
+   - File: `application/templates/thank_you.html`
+   - Includes the text shown on the completion page after the survey is finished.
+5. **Error Page**
+   - File: `application/templates/error.html`
+   - Contains text displayed when an error occurs during the survey process.
+     
+Note: Some dynamic error messages are defined in:
+
+- `application/messages.py`: Contains error messages used throughout the application.
+
+**Important**: The survey name and subjects are dynamically loaded from the `surveys` table in the database. These are not hardcoded in any template file but are retrieved and displayed based on the current survey ID.
 
 ## Database
 The application uses a MySQL database. Here's the schema:
@@ -228,7 +253,7 @@ This command does the following:
 
 3. Locust will run the test and output the results to the console. You'll see real-time statistics including request counts, response times, and failure rates.
 
-4. After the test completes, Locust will generate a summary of the test results in the console output.
+4. After the test is completed, Locust will generate a summary of the test results in the console output.
 
 Note: It's crucial to have your application server running before starting the Locust test. The load test will attempt to interact with your live application, so an active server is necessary for accurate results.
 
