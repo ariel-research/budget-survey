@@ -8,7 +8,7 @@ sys.path.append(
 
 import pytest
 
-from utils.analyzer_utils import is_sum_optimized
+from analysis.analysis_utils import is_sum_optimized
 
 
 def test_is_sum_optimized():
