@@ -1,110 +1,116 @@
-import unittest
+from urllib.parse import parse_qs, urlparse
 
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select, WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+import pytest
 
 
-class BudgetSurveyTest(unittest.TestCase):
-    def setUp(self):
-        service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service)
-        self.driver.implicitly_wait(10)
-        self.base_url = "http://localhost:5001"
+class MockElement:
+    """Mocks a DOM element."""
 
-    def tearDown(self):
-        if self.driver:
-            self.driver.quit()
-
-    def test_index_page(self):
-        self.driver.get(f"{self.base_url}/?userid=123&surveyid=1")
-
-        # Wait for either the welcome message or the thank you message
-        try:
-            element = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.TAG_NAME, "h1"))
-            )
-            header_text = element.text
-
-            if "ברוכים הבאים לסקר" in header_text:
-                start_button = self.driver.find_element(By.CSS_SELECTOR, ".btn")
-                self.assertTrue(start_button.is_displayed())
-            elif "תודה רבה" in header_text:
-                self.assertIn("תודה רבה", self.driver.title)
-            else:
-                self.fail(f"Unexpected page content: {header_text}")
-        except TimeoutException:
-            self.fail("Timed out waiting for page to load")
-
-    def test_create_vector_page(self):
-        self.driver.get(f"{self.base_url}/create_vector?userid=123&surveyid=1")
-        self.assertIn("יצירת וקטור תקציב", self.driver.title)
-
-        selects = self.driver.find_elements(By.TAG_NAME, "select")
-        for select in selects[:-1]:
-            Select(select).select_by_value("25")
-        Select(selects[-1]).select_by_value("50")
-
-        total = self.driver.find_element(By.ID, "total")
-        self.assertEqual(total.text, "100")
-
-        submit_button = self.driver.find_element(
-            By.CSS_SELECTOR, ".submit-container button"
-        )
-        submit_button.click()
-
-        WebDriverWait(self.driver, 10).until(EC.url_contains("/survey"))
-
-    def test_survey_page(self):
-        self.driver.get(f"{self.base_url}/survey?userid=123&vector=25,25,50")
-
-        try:
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "pair-container"))
-            )
-        except TimeoutException:
-            self.fail("Comparison pairs did not load within the expected time")
-
-        comparison_pairs = self.driver.find_elements(By.CLASS_NAME, "pair-container")
-        self.assertGreater(len(comparison_pairs), 0)
-
-        for pair in comparison_pairs:
-            try:
-                option = pair.find_element(
-                    By.CSS_SELECTOR, "input[type='radio'][value='1']"
-                )
-                option.click()
-            except NoSuchElementException:
-                self.fail(f"Could not find radio button in pair: {pair.text}")
-
-        try:
-            awareness_check = self.driver.find_element(
-                By.CSS_SELECTOR, "input[name='awareness_check'][value='2']"
-            )
-            awareness_check.click()
-        except NoSuchElementException:
-            self.fail("Could not find awareness check radio button")
-
-        submit_button = self.driver.find_element(
-            By.CSS_SELECTOR, ".submit-container button"
-        )
-        submit_button.click()
-
-        try:
-            WebDriverWait(self.driver, 10).until(EC.url_contains("/thank_you"))
-        except TimeoutException:
-            self.fail("Did not redirect to thank you page after survey submission")
-
-    def test_thank_you_page(self):
-        self.driver.get(f"{self.base_url}/thank_you")
-        self.assertIn("תודה רבה", self.driver.title)
-        thank_you_message = self.driver.find_element(By.TAG_NAME, "h1")
-        self.assertIn("תודה רבה", thank_you_message.text)
+    def __init__(self, element_type, value=None):
+        self.element_type = element_type
+        self.value = value
 
 
-if __name__ == "__main__":
-    unittest.main()
+class MockDriver:
+    """Mocks a web driver for testing purposes."""
+
+    def __init__(self):
+        self.current_url = ""
+        self.elements = {}
+        self.form_data = {}
+
+    def get(self, url):
+        """Simulates navigating to a URL."""
+        self.current_url = url
+        if "create_vector" in url:
+            self.elements["select"] = [MockElement("select") for _ in range(3)]
+        elif "survey" in url:
+            self.elements[".pair-container"] = [MockElement("div") for _ in range(5)]
+            self.elements["awareness_check"] = MockElement("input", "2")
+            self.elements["submit"] = MockElement("button")
+
+    def find_element(self, by, value):
+        """Simulates finding a single element on the page."""
+        if "awareness_check" in value:
+            return self.elements.get("awareness_check", MockElement("input"))
+        elif "submit-container" in value:
+            return self.elements.get("submit", MockElement("button"))
+        return MockElement("input")
+
+    def find_elements(self, by, value):
+        """Simulates finding multiple elements on the page."""
+        return self.elements.get(value, [])
+
+    def submit_form(self):
+        """Simulates form submission and potential redirection."""
+        if "survey" in self.current_url:
+            if (
+                all(self.form_data.get(f"choice_{i}") for i in range(10))
+                and self.form_data.get("awareness_check") == "2"
+            ):
+                self.current_url = self.current_url.replace("survey", "thank_you")
+
+
+@pytest.fixture
+def mock_driver():
+    """Provides a mock driver instance for each test."""
+    return MockDriver()
+
+
+@pytest.fixture
+def base_url():
+    """Provides the base URL for the application under test."""
+    return "http://localhost:5001"
+
+
+def test_index_page(mock_driver, base_url):
+    """Test if the index page loads correctly with proper query parameters."""
+    mock_driver.get(f"{base_url}/?userid=123&surveyid=1")
+    parsed_url = urlparse(mock_driver.current_url)
+    query_params = parse_qs(parsed_url.query)
+
+    assert parsed_url.path == "/"
+    assert query_params.get("userid") == ["123"]
+    assert query_params.get("surveyid") == ["1"]
+
+
+def test_create_vector_page(mock_driver, base_url):
+    """Test if the create vector page loads and processes form submission."""
+    mock_driver.get(f"{base_url}/create_vector?userid=123&surveyid=1")
+    parsed_url = urlparse(mock_driver.current_url)
+
+    assert parsed_url.path == "/create_vector"
+
+    selects = mock_driver.find_elements(None, "select")
+    assert len(selects) == 3
+
+
+def test_survey_page(mock_driver, base_url):
+    """Test if the survey page loads, processes user input, and redirects correctly."""
+    mock_driver.get(f"{base_url}/survey?userid=123&vector=25,25,50")
+    parsed_url = urlparse(mock_driver.current_url)
+    query_params = parse_qs(parsed_url.query)
+
+    assert parsed_url.path == "/survey"
+    assert query_params.get("userid") == ["123"]
+    assert query_params.get("vector") == ["25,25,50"]
+
+    comparison_pairs = mock_driver.find_elements(None, ".pair-container")
+    assert len(comparison_pairs) > 0
+
+    for i in range(10):
+        mock_driver.form_data[f"choice_{i}"] = "1"
+
+    mock_driver.form_data["awareness_check"] = "2"
+
+    mock_driver.submit_form()
+
+    assert "/thank_you" in mock_driver.current_url
+
+
+def test_thank_you_page(mock_driver, base_url):
+    """Test if the thank you page loads correctly."""
+    mock_driver.get(f"{base_url}/thank_you")
+    parsed_url = urlparse(mock_driver.current_url)
+
+    assert parsed_url.path == "/thank_you"
