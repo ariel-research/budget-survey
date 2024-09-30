@@ -271,7 +271,7 @@ def retrieve_completed_survey_responses():
     try:
         results = execute_query(query)
         if results:
-            logger.info(f"Retrieved {len(results)} rows of completed survey data")
+            logger.debug(f"Retrieved {len(results)} rows of completed survey data")
             return results
         else:
             logger.warning("No completed survey responses found")

@@ -26,7 +26,7 @@ def is_sum_optimized(
     user_choice: The option chosen by the user (1 or 2).
 
     Returns:
-    True if the user's choice optimized for sum difference, False otherwise.
+    True if the user's choice optimized for sum difference, False otherwise (ratio optimized).
     """
     if user_choice not in [1, 2]:
         raise ValueError("user_choice must be either 1 or 2")

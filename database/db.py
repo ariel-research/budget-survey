@@ -48,11 +48,11 @@ def execute_query(query, params=None):
 
         if query.strip().upper().startswith("SELECT"):
             result = cursor.fetchall()  # Fetch all rows if it's a SELECT query
-            logger.info(f"Query result: {result}")
+            logger.debug(f"Query result: {result}")
         else:
             connection.commit()  # Commit changes if it's an INSERT or UPDATE query
             result = cursor.lastrowid
-            logger.info(f"Last inserted row ID: {result}")
+            logger.debug(f"Last inserted row ID: {result}")
 
         return result
     except Error as e:
