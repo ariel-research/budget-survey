@@ -10,7 +10,6 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
-from analysis.survey_processor import retrieve_completed_survey_responses
 from app import create_app
 from database.db import execute_query, get_db_connection
 from database.queries import (
@@ -21,6 +20,7 @@ from database.queries import (
     get_subjects,
     get_survey_name,
     mark_survey_as_completed,
+    retrieve_completed_survey_responses,
     user_exists,
 )
 

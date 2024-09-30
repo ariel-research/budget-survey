@@ -12,6 +12,7 @@ sys.path.append(
 )
 
 from analysis.analysis_utils import (
+    calculate_optimization_stats,
     ensure_directory_exists,
     is_sum_optimized,
     process_survey_responses,
@@ -106,3 +107,58 @@ def test_ensure_directory_exists(mock_makedirs, mock_exists):
     mock_makedirs.reset_mock()
     ensure_directory_exists("/path/to/another_file.csv")
     mock_makedirs.assert_not_called()
+
+
+def test_calculate_optimization_stats():
+    """
+    Test calculate_optimization_stats for sum, ratio, and equal optimization scenarios.
+    """
+    # Test case 1: More sum optimized choices
+    row1 = pd.Series(
+        {
+            "optimal_allocation": [50, 30, 20],
+            "comparisons": [
+                {"option_1": [40, 35, 25], "option_2": [45, 30, 25], "user_choice": 1},
+                {"option_1": [50, 20, 20], "option_2": [45, 35, 20], "user_choice": 2},
+                {"option_1": [50, 30, 20], "option_2": [45, 25, 20], "user_choice": 1},
+            ],
+        }
+    )
+    result1 = calculate_optimization_stats(row1)
+    assert result1["num_of_answers"] == 3
+    assert result1["sum_optimized"] == 2
+    assert result1["ratio_optimized"] == 1
+    assert result1["result"] == "sum"
+
+    # Test case 2: More ratio optimized choices
+    row2 = pd.Series(
+        {
+            "optimal_allocation": [50, 30, 20],
+            "comparisons": [
+                {"option_1": [40, 35, 25], "option_2": [45, 30, 25], "user_choice": 2},
+                {"option_1": [50, 20, 20], "option_2": [45, 35, 20], "user_choice": 1},
+                {"option_1": [50, 30, 20], "option_2": [45, 25, 20], "user_choice": 2},
+            ],
+        }
+    )
+    result2 = calculate_optimization_stats(row2)
+    assert result2["num_of_answers"] == 3
+    assert result2["sum_optimized"] == 1
+    assert result2["ratio_optimized"] == 2
+    assert result2["result"] == "ratio"
+
+    # Test case 3: Equal sum and ratio optimized choices
+    row3 = pd.Series(
+        {
+            "optimal_allocation": [50, 30, 20],
+            "comparisons": [
+                {"option_1": [40, 35, 25], "option_2": [45, 30, 25], "user_choice": 1},
+                {"option_1": [55, 25, 20], "option_2": [90, 10, 0], "user_choice": 1},
+            ],
+        }
+    )
+    result3 = calculate_optimization_stats(row3)
+    assert result3["num_of_answers"] == 2
+    assert result3["sum_optimized"] == 1
+    assert result3["ratio_optimized"] == 1
+    assert result3["result"] == "equal"
