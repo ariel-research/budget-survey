@@ -125,3 +125,44 @@ def ensure_directory_exists(file_path: str) -> None:
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
         logger.info(f"Created directory: {directory}")
+
+
+def calculate_optimization_stats(row: pd.Series) -> pd.Series:
+    """
+    Calculate optimization statistics for a single survey response.
+
+    Args:
+        row (pd.Series): A row from the survey response DataFrame.
+
+    Returns:
+        pd.Series: Statistics including number of answers, sum and ratio optimized choices, and overall result.
+    """
+    sum_optimized_choices = 0
+    ratio_optimized_choices = 0
+    total_comparisons = len(row["comparisons"])
+
+    for comparison in row["comparisons"]:
+        if is_sum_optimized(
+            row["optimal_allocation"],
+            comparison["option_1"],
+            comparison["option_2"],
+            comparison["user_choice"],
+        ):
+            sum_optimized_choices += 1
+        else:
+            ratio_optimized_choices += 1
+
+    result = (
+        "sum"
+        if sum_optimized_choices > ratio_optimized_choices
+        else "ratio" if sum_optimized_choices < ratio_optimized_choices else "equal"
+    )
+
+    return pd.Series(
+        {
+            "num_of_answers": total_comparisons,
+            "sum_optimized": sum_optimized_choices,
+            "ratio_optimized": ratio_optimized_choices,
+            "result": result,
+        }
+    )
