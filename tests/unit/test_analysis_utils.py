@@ -14,29 +14,26 @@ sys.path.append(
 from analysis.analysis_utils import (
     ensure_directory_exists,
     is_sum_optimized,
-    process_data_to_dataframe,
     process_survey_responses,
+    save_dataframe_to_csv,
 )
 
 
 def test_is_sum_optimized():
-    # User optimizes for sum difference
+    """Test is_sum_optimized function for correct optimization detection."""
     assert is_sum_optimized((50, 30, 20), (40, 35, 25), (45, 30, 25), 1)
-
-    # User does not optimize for sum difference
     assert not is_sum_optimized((50, 30, 20), (40, 35, 25), (45, 30, 25), 2)
-
-    # User does not optimize for sum difference
     assert not is_sum_optimized((50, 30, 20), (45, 30, 25), (40, 35, 25), 1)
 
 
 def test_is_sum_optimized_invalid_input():
-    # Invalid user choice
+    """Test is_sum_optimized function with invalid input."""
     with pytest.raises(ValueError):
         is_sum_optimized((50, 30, 20), (40, 35, 25), (45, 30, 25), 3)
 
 
 def test_process_survey_responses():
+    """Test process_survey_responses function for correct data processing."""
     raw_results = [
         {
             "survey_response_id": 1,
@@ -75,42 +72,36 @@ def test_process_survey_responses():
     assert processed_results[0]["comparisons"][1]["pair_number"] == 2
 
 
-def test_process_data_to_dataframe():
-    data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+def test_save_dataframe_to_csv():
+    """Test save_dataframe_to_csv function for successful CSV saving."""
+    df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [30, 25]})
+    filename = "test_output.csv"
 
-    df = process_data_to_dataframe(data)
+    with patch("analysis.analysis_utils.ensure_directory_exists") as mock_ensure_dir:
+        with patch("pandas.DataFrame.to_csv") as mock_to_csv:
+            save_dataframe_to_csv(df, filename)
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == (2, 2)
-    assert list(df.columns) == ["name", "age"]
-    assert df.iloc[0]["name"] == "Alice"
-    assert df.iloc[1]["age"] == 25
-
-
-def test_process_data_to_dataframe_empty_input():
-    with pytest.raises(ValueError, match="Input data is empty"):
-        process_data_to_dataframe([])
+    mock_ensure_dir.assert_called_once_with(filename)
+    mock_to_csv.assert_called_once_with(filename, index=False)
 
 
-@patch("pandas.DataFrame.to_csv")
-def test_process_data_to_dataframe_with_csv(mock_to_csv):
-    data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+def test_save_dataframe_to_csv_empty_dataframe():
+    """Test save_dataframe_to_csv function with an empty DataFrame."""
+    df = pd.DataFrame()
+    filename = "empty_output.csv"
 
-    df = process_data_to_dataframe(data, csv_filename="test.csv")
-
-    assert isinstance(df, pd.DataFrame)
-    mock_to_csv.assert_called_once_with("test.csv", index=False)
+    with pytest.raises(ValueError, match="Input DataFrame is empty"):
+        save_dataframe_to_csv(df, filename)
 
 
 @patch("os.path.exists")
 @patch("os.makedirs")
 def test_ensure_directory_exists(mock_makedirs, mock_exists):
-    # Test when directory doesn't exist
+    """Test ensure_directory_exists function for directory creation."""
     mock_exists.return_value = False
     ensure_directory_exists("/path/to/file.csv")
     mock_makedirs.assert_called_once_with("/path/to")
 
-    # Test when directory already exists
     mock_exists.return_value = True
     mock_makedirs.reset_mock()
     ensure_directory_exists("/path/to/another_file.csv")

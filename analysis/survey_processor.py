@@ -1,6 +1,8 @@
 import logging
 
-from analysis.analysis_utils import process_data_to_dataframe, process_survey_responses
+import pandas as pd
+
+from analysis.analysis_utils import process_survey_responses, save_dataframe_to_csv
 from app import create_app
 from database.queries import retrieve_completed_survey_responses
 
@@ -29,11 +31,19 @@ def get_all_completed_survey_responses():
         raise
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """
+    Main function to run the survey processor process.
+    """
     try:
-        results = get_all_completed_survey_responses()
-        df = process_data_to_dataframe(results, "data/results.csv")
+        all_completed_survey_responses = get_all_completed_survey_responses()
+        df = pd.DataFrame(all_completed_survey_responses)
+        save_dataframe_to_csv(df, "data/all_completed_survey_responses.csv")
         print(df.head())
         logger.info("Survey processing completed successfully")
     except Exception as e:
         logger.error(f"Error in main execution: {e}")
+
+
+if __name__ == "__main__":
+    main()

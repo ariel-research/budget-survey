@@ -84,48 +84,32 @@ def process_survey_responses(raw_results: List[Dict]) -> List[Dict]:
     return processed_results
 
 
-def process_data_to_dataframe(
-    data: List[Dict], csv_filename: str = None
-) -> pd.DataFrame:
+def save_dataframe_to_csv(df: pd.DataFrame, csv_filename: str) -> None:
     """
-    Convert a list of dictionaries to a pandas DataFrame and optionally save to a CSV file.
+    Save a pandas DataFrame to a CSV file.
 
     Args:
-        data: A list of dictionaries. Each dictionary should have the same keys.
-        csv_filename: Optional; if provided, the DataFrame will be saved to this CSV file.
-
-    Returns:
-        pd.DataFrame: A pandas DataFrame created from the input data.
+        df: A pandas DataFrame to be saved.
+        csv_filename: The filename (including path) where the CSV will be saved.
 
     Raises:
-        ValueError: If the input data is empty.
+        ValueError: If the DataFrame is empty.
 
     Example:
-        >>> data = [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]
-        >>> df = process_data_to_dataframe(data, 'output.csv')
-        >>> print(df)
-           name  age
-        0  Alice   30
-        1    Bob   25
+        >>> df = pd.DataFrame({'name': ['Alice', 'Bob'], 'age': [30, 25]})
+        >>> save_dataframe_to_csv(df, 'output.csv')
     """
-    if not data:
-        logger.error("Input data is empty")
-        raise ValueError("Input data is empty")
+    if df.empty:
+        logger.error("Input DataFrame is empty")
+        raise ValueError("Input DataFrame is empty")
 
     try:
-        logger.info(f"Converting list of {len(data)} dictionaries to DataFrame")
-        df = pd.DataFrame(data)
-        logger.info(f"Successfully created DataFrame with shape {df.shape}")
-
-        if csv_filename:
-            ensure_directory_exists(csv_filename)
-            logger.info(f"Writing DataFrame to {csv_filename}")
-            df.to_csv(csv_filename, index=False)
-            logger.info(f"Successfully wrote data to {csv_filename}")
-
-        return df
+        ensure_directory_exists(csv_filename)
+        logger.info(f"Writing DataFrame to {csv_filename}")
+        df.to_csv(csv_filename, index=False)
+        logger.info(f"Successfully wrote data to {csv_filename}")
     except Exception as e:
-        logger.error(f"Error occurred while processing data: {e}")
+        logger.error(f"Error occurred while saving DataFrame to CSV: {e}")
         raise
 
 

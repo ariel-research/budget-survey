@@ -2,11 +2,8 @@ import logging
 
 import pandas as pd
 
-from analysis.analysis_utils import is_sum_optimized
-from analysis.survey_processor import (
-    get_all_completed_survey_responses,
-    process_data_to_dataframe,
-)
+from analysis.analysis_utils import is_sum_optimized, save_dataframe_to_csv
+from analysis.survey_processor import get_all_completed_survey_responses
 
 logger = logging.getLogger(__name__)
 
@@ -62,22 +59,100 @@ def generate_survey_optimization_stats(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame with survey response IDs and optimization statistics.
     """
+    logger.info(f"Generating optimization stats for {len(df)} survey responses")
     stats = df.apply(calculate_optimization_stats, axis=1)
 
-    result_df = pd.concat([df[["survey_response_id", "user_id"]], stats], axis=1)
+    result_df = pd.concat([df[["survey_id", "user_id"]], stats], axis=1)
+    logger.info(f"Optimization stats generated. Result shape: {result_df.shape}")
 
-    print(result_df.head())
     return result_df
+
+
+def summarize_stats_by_survey(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Summarize statistics by survey_id.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing survey results.
+
+    Returns:
+        pd.DataFrame: Summarized statistics by survey_id.
+    """
+    grouped = (
+        df.groupby("survey_id")
+        .agg(
+            {
+                "user_id": "nunique",
+                "num_of_answers": "sum",
+                "sum_optimized": "sum",
+                "ratio_optimized": "sum",
+                "result": lambda x: x.value_counts().to_dict(),
+            }
+        )
+        .reset_index()
+    )
+
+    # Rename columns for clarity
+    grouped.columns = [
+        "survey_id",
+        "unique_users",
+        "total_answers",
+        "sum_optimized",
+        "ratio_optimized",
+        "result_counts",
+    ]
+
+    # Calculate percentages
+    grouped["sum_optimized_percentage"] = (
+        grouped["sum_optimized"] / grouped["total_answers"]
+    ) * 100
+    grouped["ratio_optimized_percentage"] = (
+        grouped["ratio_optimized"] / grouped["total_answers"]
+    ) * 100
+
+    # Extract individual result counts
+    grouped["sum_count"] = grouped["result_counts"].apply(lambda x: x.get("sum", 0))
+    grouped["ratio_count"] = grouped["result_counts"].apply(lambda x: x.get("ratio", 0))
+    grouped["equal_count"] = grouped["result_counts"].apply(lambda x: x.get("equal", 0))
+
+    # Calculate result percentages
+    total_results = (
+        grouped["sum_count"] + grouped["ratio_count"] + grouped["equal_count"]
+    )
+    grouped["sum_percentage"] = (grouped["sum_count"] / total_results) * 100
+    grouped["ratio_percentage"] = (grouped["ratio_count"] / total_results) * 100
+    grouped["equal_percentage"] = (grouped["equal_count"] / total_results) * 100
+
+    # Drop the intermediate 'result_counts' column
+    grouped = grouped.drop("result_counts", axis=1)
+
+    return grouped
 
 
 def main() -> None:
     """
     Main function to run the survey analysis process.
     """
+    logger.info("Starting survey analysis process")
     try:
         results = get_all_completed_survey_responses()
-        df = process_data_to_dataframe(results)
-        generate_survey_optimization_stats(df)
+        logger.info(f"Retrieved {len(results)} completed survey responses")
+
+        df = pd.DataFrame(results)
+        logger.info(f"Processed survey data to DataFrame. Shape: {df.shape}")
+
+        survey_optimization_stats_df = generate_survey_optimization_stats(df)
+        save_dataframe_to_csv(
+            survey_optimization_stats_df, "data/survey_optimization_stats.csv"
+        )
+
+        summarize_stats_by_survey_df = summarize_stats_by_survey(
+            survey_optimization_stats_df
+        )
+        save_dataframe_to_csv(
+            summarize_stats_by_survey_df, "data/summarize_stats_by_survey.csv"
+        )
+
         logger.info("Survey analysis completed successfully")
     except Exception as e:
         logger.error(f"Error in main execution: {e}", exc_info=True)

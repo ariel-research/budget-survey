@@ -1,0 +1,7 @@
+survey_id,user_id,num_of_answers,sum_optimized,ratio_optimized,result
+1,123,10,2,8,ratio
+1,123,10,3,7,ratio
+1,123,10,4,6,ratio
+2,123,10,4,6,ratio
+2,200,10,8,2,sum
+2,300,10,10,0,sum
