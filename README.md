@@ -2,17 +2,32 @@
 
 ## Table of Contents
 
+## Table of Contents
+
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Database Setup](#database-setup)
+  - [Method 1: Manual Setup using MySQL Client](#method-1-manual-setup-using-mysql-client)
+  - [Method 2: Using Docker Compose](#method-2-using-docker-compose)
 - [Running the Application](#running-the-application)
 - [Endpoints](#endpoints)
 - [Screen Text Locations](#screen-text-locations)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
+  - [Changing the Active Survey](#changing-the-active-survey)
+  - [Adding or Modifying Surveys](#adding-or-modifying-surveys)
 - [Algorithm](#algorithm)
+- [Analysis](#analysis)
+  - [Running the Analysis](#running-the-analysis)
+  - [Main Functions](#main-functions)
+  - [Generated Tables](#generated-tables)
+  - [Table Explanations](#table-explanations)
 - [Testing](#testing)
+  - [Unit Tests](#unit-tests)
+  - [Database Integration Tests](#database-integration-tests)
+  - [API Tests](#api-tests)
+  - [Load Testing](#load-testing)
 - [Development](#development)
 
 ## Overview
@@ -192,6 +207,64 @@ Remember to update the `SURVEY_ID` in `config.py` after adding or modifying surv
 
 ## Algorithm
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.
+
+## Analysis
+
+The project includes an 'analysis' package that processes the collected survey data and generates insightful statistics. This package is crucial for understanding user responses and deriving meaningful conclusions from the survey data.
+
+### Running the Analysis
+
+To run the survey analysis, use the following command from the project root directory:
+
+```
+python -m analysis.survey_analysis
+```
+
+### Main Functions
+
+The analysis package contains several key functions:
+
+1. `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
+2. `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
+3. `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
+
+### Generated Tables
+
+The analysis script generates three CSV files, all saved in the `data` directory:
+
+1. **all_completed_survey_responses.csv**
+   - Location: `data/all_completed_survey_responses.csv`
+   - Content: Raw data of all completed survey responses, including user choices for each comparison pair.
+   - Use: Provides a comprehensive view of all survey data for detailed analysis.
+
+2. **survey_optimization_stats.csv**
+   - Location: `data/survey_optimization_stats.csv`
+   - Content: Optimization statistics for each survey response, including the number of sum-optimized and ratio-optimized choices.
+   - Use: Helps in understanding individual user tendencies towards sum or ratio optimization.
+
+3. **summarize_stats_by_survey.csv**
+   - Location: `data/summarize_stats_by_survey.csv`
+   - Content: Aggregated statistics for each survey, including total responses, optimization percentages, and a summary row for overall statistics.
+   - Use: Provides a high-level overview of survey results and overall optimization trends.
+
+### Table Explanations
+
+1. **All Completed Survey Responses**
+   - Each row represents a single comparison pair from a completed survey.
+   - Includes survey ID, user ID, optimal allocation, and details of each comparison pair.
+   - Useful for in-depth analysis of individual responses and patterns.
+
+2. **Survey Optimization Stats**
+   - Each row represents a completed survey response.
+   - Shows the number of sum-optimized and ratio-optimized choices for each response.
+   - Helps identify whether users tend to optimize for sum differences or ratios.
+
+3. **Summarize Stats by Survey**
+   - Each row represents aggregate data for a single survey, with a final row summarizing across all surveys.
+   - Includes metrics such as unique users, total answers, and percentages of sum/ratio optimized choices.
+   - Provides a quick overview of survey performance and user tendencies across different surveys.
+
+Remember to regularly run the analysis script to keep these statistics up-to-date as new survey responses are collected.
 
 ## Testing
 
