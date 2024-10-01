@@ -41,7 +41,7 @@ and collects the user's preferences through a form submission.
             <h3>זוג {{ loop.index }}</h3>
             <div class="options-container">
                 <div class="option">
-                    <h4>אפשרות 1:</h4>
+                    <h4>חלוקה 1:</h4>
                     {% for subject, value in zip(subjects, pair[0]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
@@ -52,7 +52,7 @@ and collects the user's preferences through a form submission.
                     <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair[0]|join(',') }}">
                 </div>
                 <div class="option">
-                    <h4>אפשרות 2:</h4>
+                    <h4>חלוקה 2:</h4>
                     {% for subject, value in zip(subjects, pair[1]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
