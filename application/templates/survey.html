@@ -18,7 +18,7 @@ and collects the user's preferences through a form submission.
     {% endwith %}
 
     <div class="ideal-budget">
-        <h2>התקציב האידיאלי שבחרת:</h2>
+        <h2>חלוקת התקציב האידיאלית לדעתך היא:</h2>
         {% for subject, value in zip(subjects, user_vector) %}
         <div>
             <span class="subject">{{ subject }}:</span>
@@ -27,7 +27,11 @@ and collects the user's preferences through a form submission.
         {% endfor %}
     </div>
 
-    <p>עבור כל אחד מזוגות התקציבים הבאים, בחר את הזוג הקרוב ביותר לתקציב האידיאלי שלך.</p>
+    <p>
+        אבל במציאות, חלוקת התקציב לא זהה לחלוקה האידיאלית שלך.
+        בהמשך נציג לפניך עשרה זוגות של חלוקות-תקציב לא אידיאליות.
+        עבור כל אחד מהזוגות, עליך לבחור איזו מבין שתי החלוקות טובה יותר בעיניך.
+    </p>
 
     <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
