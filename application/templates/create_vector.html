@@ -9,13 +9,15 @@ The page inherits from base.html and customizes the title and content blocks.
 {% block content %}
 
 <div class="create-vector-container">
-    <h1>בחירת תקציב אופטימלי</h1>
+    <h1>מהי חלוקת התקציב האידיאלית לדעתכם?</h1>
 
     <div class="instructions">
-        <p>חלק/י את התקציב של 100 נקודות בין הגופים הבאים. וודא/י ש:</p>
+        <p>
+            הניחו שאתם יכולים לחלק תקציב של 100 מיליאדר ש"ח בין שלושה משרדים: {{ subjects }}.
+            כמה הייתם נותנים לכל משרד?
+            :</p>
         <ul>
-            <li>הסכום הכולל הוא בדיוק 100.</li>
-            <li>כל מספר מתחלק ב-5 ללא שארית (לדוגמה: 0, 5, 10, 15, וכו').</li>
+            <li>שימו לב: הסכום הכולל צריך להיות בדיוק 100.</li>
         </ul>
     </div>
 
