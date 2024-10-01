@@ -1,3 +1,4 @@
 survey_id,unique_users,total_answers,sum_optimized,ratio_optimized,sum_optimized_percentage,ratio_optimized_percentage,sum_count,ratio_count,equal_count,sum_percentage,ratio_percentage,equal_percentage
 1,1,30,9,21,30.0,70.0,0,3,0,0.0,100.0,0.0
 2,3,30,22,8,73.33333333333333,26.666666666666668,2,1,0,66.66666666666666,33.33333333333333,0.0
+Total,4,60,31,29,51.66666666666667,48.333333333333336,2,4,0,33.333333333333336,66.66666666666667,0.0

@@ -5,10 +5,8 @@ import sys
 
 from locust import HttpUser, task
 
-# Add the project root to the Python path
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
 
 from app import create_app
 from database.queries import get_subjects

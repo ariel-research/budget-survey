@@ -111,7 +111,44 @@ def summarize_stats_by_survey(df: pd.DataFrame) -> pd.DataFrame:
     # Drop the intermediate 'result_counts' column
     grouped = grouped.drop("result_counts", axis=1)
 
-    return grouped
+    # Create a summary row
+    summary = pd.DataFrame(
+        {
+            "survey_id": ["Total"],
+            "unique_users": [grouped["unique_users"].sum()],
+            "total_answers": [grouped["total_answers"].sum()],
+            "sum_optimized": [grouped["sum_optimized"].sum()],
+            "ratio_optimized": [grouped["ratio_optimized"].sum()],
+            "sum_optimized_percentage": [
+                (grouped["sum_optimized"].sum() / grouped["total_answers"].sum()) * 100
+            ],
+            "ratio_optimized_percentage": [
+                (grouped["ratio_optimized"].sum() / grouped["total_answers"].sum())
+                * 100
+            ],
+            "sum_count": [grouped["sum_count"].sum()],
+            "ratio_count": [grouped["ratio_count"].sum()],
+            "equal_count": [grouped["equal_count"].sum()],
+            "sum_percentage": [
+                (grouped["sum_count"].sum() / grouped["total_answers"].sum()) * 100 * 10
+            ],
+            "ratio_percentage": [
+                (grouped["ratio_count"].sum() / grouped["total_answers"].sum())
+                * 100
+                * 10
+            ],
+            "equal_percentage": [
+                (grouped["equal_count"].sum() / grouped["total_answers"].sum())
+                * 100
+                * 10
+            ],
+        }
+    )
+
+    # Concatenate the grouped data with the summary row
+    result = pd.concat([grouped, summary], ignore_index=True)
+    print(result)
+    return result
 
 
 def main() -> None:
