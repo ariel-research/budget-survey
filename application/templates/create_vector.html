@@ -14,11 +14,9 @@ The page inherits from base.html and customizes the title and content blocks.
     <div class="instructions">
         <p>
             הניחו שאתם יכולים לחלק תקציב של 100 מיליארד ש"ח בין שלושה משרדים: {{ ", ".join(subjects) }}.
-            כמה הייתם נותנים לכל משרד?
-            :</p>
-        <ul>
-            <li>שימו לב: הסכום הכולל צריך להיות בדיוק 100.</li>
-        </ul>
+            כמה הייתם נותנים לכל משרד?</p>
+        <p>
+        שימו לב: הסכום הכולל צריך להיות בדיוק 100.</p>
     </div>
 
     {% if error %}
