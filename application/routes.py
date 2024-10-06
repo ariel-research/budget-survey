@@ -208,20 +208,24 @@ def survey():
 
 @main.route("/thank_you")
 def thank_you():
+    """Render the thank you page."""
     logger.info("Thank you page accessed")
     return render_template("thank_you.html")
 
 
 @main.errorhandler(400)
 def bad_request(e):
+    """Handle 400 Bad Request errors."""
     return render_template("error.html", message=e.description), 400
 
 
 @main.errorhandler(404)
 def not_found(e):
+    """Handle 404 Not Found errors."""
     return render_template("error.html", message=e.description), 404
 
 
 @main.route("/get_messages")
 def get_messages():
+    """Serve error messages as JSON."""
     return jsonify(ERROR_MESSAGES)
