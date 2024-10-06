@@ -5,10 +5,8 @@ import sys
 
 import pytest
 
-# Add the parent directory to the system path to allow importing from the backend module.
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
 
 from app import create_app
 from database.db import execute_query, get_db_connection
@@ -20,6 +18,7 @@ from database.queries import (
     get_subjects,
     get_survey_name,
     mark_survey_as_completed,
+    retrieve_completed_survey_responses,
     user_exists,
 )
 
@@ -334,6 +333,72 @@ def test_check_user_participation(app_context, setup_test_data, cleanup_db):
     assert not check_user_participation(
         different_user_id, survey_id
     ), "Different user shouldn't be marked as participated"
+
+
+def test_retrieve_completed_survey_responses(app_context, setup_test_data, cleanup_db):
+    """
+    Test the retrieval of completed survey responses.
+    Verifies that the function correctly fetches all completed survey responses with their comparison pairs.
+    """
+    # Create a user and a survey response
+    user_id = generate_unique_id()
+    create_user(user_id)
+
+    # Fetch an existing survey ID
+    survey_query = "SELECT id FROM surveys LIMIT 1"
+    result = execute_query(survey_query)
+    assert result, "No surveys found in the database"
+    survey_id = result[0]["id"]
+
+    # Create a survey response
+    optimal_allocation = [30, 30, 40]
+    survey_response_id = create_survey_response(user_id, survey_id, optimal_allocation)
+    assert survey_response_id is not None, "Failed to create survey response"
+
+    # Create comparison pairs
+    pair_1 = create_comparison_pair(
+        survey_response_id, 1, [25, 25, 50], [35, 35, 30], 2
+    )
+    pair_2 = create_comparison_pair(
+        survey_response_id, 2, [20, 40, 40], [40, 20, 40], 1
+    )
+    assert (
+        pair_1 is not None and pair_2 is not None
+    ), "Failed to create comparison pairs"
+
+    # Mark the survey as completed
+    mark_survey_as_completed(survey_response_id)
+
+    # Retrieve completed survey responses
+    completed_responses = retrieve_completed_survey_responses()
+
+    # Verify the retrieved data
+    assert completed_responses, "No completed survey responses retrieved"
+    assert (
+        len(completed_responses) == 2
+    ), f"Expected 2 rows (2 comparison pairs), got {len(completed_responses)}"
+
+    # Check the contents of the retrieved data
+    for response in completed_responses:
+        assert response["survey_response_id"] == survey_response_id
+        assert response["user_id"] == user_id
+        assert response["survey_id"] == survey_id
+        assert json.loads(response["optimal_allocation"]) == optimal_allocation
+        assert response["completed"] == 1
+        assert "response_created_at" in response
+        assert response["pair_number"] in [1, 2]
+        assert "option_1" in response and "option_2" in response
+        assert "user_choice" in response
+
+    # Verify that incomplete survey responses are not retrieved
+    incomplete_survey_id = create_survey_response(user_id, survey_id, [10, 20, 70])
+    create_comparison_pair(incomplete_survey_id, 1, [15, 25, 60], [25, 15, 60], 1)
+
+    completed_responses = retrieve_completed_survey_responses()
+    assert all(
+        response["survey_response_id"] != incomplete_survey_id
+        for response in completed_responses
+    ), "Incomplete survey response was incorrectly retrieved"
 
 
 if __name__ == "__main__":
