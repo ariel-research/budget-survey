@@ -142,8 +142,11 @@ def test_create_survey_response(app_context, setup_test_data, cleanup_db):
     survey_id = result[0]["id"]
 
     optimal_allocation = [10, 20, 70]
+    user_comment = "This is a test comment"
 
-    survey_response_id = create_survey_response(user_id, survey_id, optimal_allocation)
+    survey_response_id = create_survey_response(
+        user_id, survey_id, optimal_allocation, user_comment
+    )
     assert survey_response_id is not None, "Failed to create survey response"
 
     # Verify the insertion
@@ -166,7 +169,9 @@ def test_create_comparison_pair(app_context, setup_test_data, cleanup_db):
     assert result, "No surveys found in the database"
     survey_id = result[0]["id"]
 
-    survey_response_id = create_survey_response(user_id, survey_id, [5, 15, 80])
+    survey_response_id = create_survey_response(
+        user_id, survey_id, [5, 15, 80], "Test comment"
+    )
     assert survey_response_id is not None, "Failed to create survey response"
 
     pair_number = 1
@@ -199,7 +204,9 @@ def test_mark_survey_as_completed(app_context, setup_test_data, cleanup_db):
     assert result, "No surveys found in the database"
     survey_id = result[0]["id"]
 
-    survey_response_id = create_survey_response(user_id, survey_id, [15, 25, 60])
+    survey_response_id = create_survey_response(
+        user_id, survey_id, [15, 25, 60], "Completion test comment"
+    )
     assert survey_response_id is not None, "Failed to create survey response"
 
     result = mark_survey_as_completed(survey_response_id)
@@ -307,7 +314,7 @@ def test_check_user_participation(app_context, setup_test_data, cleanup_db):
         user_id, survey_id
     ), "User shouldn't have participated initially"
 
-    survey_response_id = create_survey_response(user_id, survey_id, [50, 50])
+    survey_response_id = create_survey_response(user_id, survey_id, [50, 50], "")
     assert survey_response_id is not None, "Failed to create survey response"
 
     # User still shouldn't be marked as participated (survey not completed)
@@ -352,7 +359,10 @@ def test_retrieve_completed_survey_responses(app_context, setup_test_data, clean
 
     # Create a survey response
     optimal_allocation = [30, 30, 40]
-    survey_response_id = create_survey_response(user_id, survey_id, optimal_allocation)
+    user_comment = "Retrieval test comment"
+    survey_response_id = create_survey_response(
+        user_id, survey_id, optimal_allocation, user_comment
+    )
     assert survey_response_id is not None, "Failed to create survey response"
 
     # Create comparison pairs
@@ -391,7 +401,9 @@ def test_retrieve_completed_survey_responses(app_context, setup_test_data, clean
         assert "user_choice" in response
 
     # Verify that incomplete survey responses are not retrieved
-    incomplete_survey_id = create_survey_response(user_id, survey_id, [10, 20, 70])
+    incomplete_survey_id = create_survey_response(
+        user_id, survey_id, [10, 20, 70], "Incomplete comment"
+    )
     create_comparison_pair(incomplete_survey_id, 1, [15, 25, 60], [25, 15, 60], 1)
 
     completed_responses = retrieve_completed_survey_responses()
