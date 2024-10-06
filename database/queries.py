@@ -31,7 +31,7 @@ def create_user(user_id: int) -> int:
 
 
 def create_survey_response(
-    user_id: int, survey_id: int, optimal_allocation: list
+    user_id: int, survey_id: int, optimal_allocation: list, user_comment: str
 ) -> int:
     """
     Inserts a new survey response into the survey_responses table.
@@ -40,13 +40,14 @@ def create_survey_response(
         user_id (int): The ID of the user submitting the survey.
         survey_id (int): The ID of the survey.
         optimal_allocation (list): The user optimal allocation in JSON format.
+        user_comment (str): The user's comment on the survey.
 
     Returns:
         int: The ID of the newly created survey response, or None if an error occurs.
     """
     query = """
-        INSERT INTO survey_responses (user_id, survey_id, optimal_allocation)
-        VALUES (%s, %s, %s)
+        INSERT INTO survey_responses (user_id, survey_id, optimal_allocation, user_comment)
+        VALUES (%s, %s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
     logger.debug(
@@ -54,7 +55,9 @@ def create_survey_response(
     )
 
     try:
-        return execute_query(query, (user_id, survey_id, optimal_allocation_json))
+        return execute_query(
+            query, (user_id, survey_id, optimal_allocation_json, user_comment)
+        )
     except Exception as e:
         logger.error("Error inserting survey response: %s", str(e))
         return None

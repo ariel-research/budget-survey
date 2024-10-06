@@ -18,6 +18,7 @@ CREATE TABLE survey_responses (
   user_id INT NOT NULL,
   survey_id INT NOT NULL,
   optimal_allocation JSON NOT NULL,
+  user_comment TEXT,
   completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),

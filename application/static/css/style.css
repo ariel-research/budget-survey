@@ -277,3 +277,15 @@ input[type="radio"] {
 #alertClose:hover {
     background-color: #45a049;
 }
+
+.comment-section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.comment-section textarea {
+    width: 97%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}

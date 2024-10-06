@@ -151,8 +151,9 @@ def survey():
     elif request.method == "POST":
         data = request.form
         user_vector = list(map(int, data.get("user_vector").split(",")))
+        user_comment = request.form.get("user_comment", "")
         logger.debug(
-            f"Survey submission received from user {user_id}. User vector: {user_vector}"
+            f"Survey submission received from user {user_id}. User vector: {user_vector}, Comment: {user_comment}"
         )
 
         # Check awareness question
@@ -176,7 +177,9 @@ def survey():
             else:
                 logger.info(f"User with ID {user_id} already exists")
 
-            survey_response_id = create_survey_response(user_id, survey_id, user_vector)
+            survey_response_id = create_survey_response(
+                user_id, survey_id, user_vector, user_comment
+            )
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
             for i in range(10):
