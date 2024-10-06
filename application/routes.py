@@ -5,6 +5,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -219,3 +220,8 @@ def bad_request(e):
 @main.errorhandler(404)
 def not_found(e):
     return render_template("error.html", message=e.description), 404
+
+
+@main.route("/get_messages")
+def get_messages():
+    return jsonify(ERROR_MESSAGES)

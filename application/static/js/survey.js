@@ -3,15 +3,31 @@
  * This script handles client-side interactions for the budget survey application.
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', handleFormSubmission);
-    }
+let messages = {};
 
-    setupBudgetVectorCreation();
-    createAlertElement();
+document.addEventListener('DOMContentLoaded', function() {
+    loadMessages().then(() => {
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', handleFormSubmission);
+        }
+
+        setupBudgetVectorCreation();
+        createAlertElement();
+    });
 });
+
+/**
+ * Loads error messages from the server.
+ */
+async function loadMessages() {
+    try {
+        const response = await fetch('/get_messages');
+        messages = await response.json();
+    } catch (error) {
+        console.error('Failed to load messages:', error);
+    }
+}
 
 /**
  * Handles form submission, preventing default action and validating based on form type.
@@ -39,7 +55,7 @@ function validateCreateVectorForm() {
     let total = Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
 
     if (total !== 100) {
-        showAlert('נא לוודא שהסכום הכולל הוא 100.');
+        showAlert(messages.total_not_100);
         return false;
     }
     return true;
@@ -52,7 +68,7 @@ function validateCreateVectorForm() {
 function validateSurveyForm() {
     const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
     if (radioGroups.length !== 11) { // 10 comparison pairs + 1 awareness check
-        showAlert('נא לבחור אפשרות אחת עבור כל זוג.');
+        showAlert(messages.choose_all_pairs);
         return false;
     }
     return true;
@@ -75,7 +91,7 @@ function setupBudgetVectorCreation() {
             let isValid = total === 100;
             submitBtn.disabled = !isValid;
             totalDisplay.style.color = isValid ? '#27ae60' : '#e74c3c';
-            errorDisplay.textContent = isValid ? '' : 'נא לוודא שהסכום הכולל הוא 100.';
+            errorDisplay.textContent = isValid ? '' : (messages.total_not_100 || 'נא לוודא שהסכום הכולל הוא 100.');
             errorDisplay.style.display = isValid ? 'none' : 'block';
         };
 
