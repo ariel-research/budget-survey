@@ -1,29 +1,20 @@
 /**
  * survey.js
  * This script handles client-side interactions for the budget survey application.
- * It manages form submission validation, real-time budget allocation calculations,
- * and error displays for the create vector and survey pages.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    setupFormSubmission();
-    setupBudgetVectorCreation();
-});
-
-/**
- * Sets up the form submission event listener.
- * This function is used on both the create vector and survey pages.
- */
-function setupFormSubmission() {
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', handleFormSubmission);
     }
-}
+
+    setupBudgetVectorCreation();
+    createAlertElement();
+});
 
 /**
- * Handles the form submission event.
- * Validates the form based on its type (create vector or survey).
+ * Handles form submission, preventing default action and validating based on form type.
  * @param {Event} e - The submit event object.
  */
 function handleFormSubmission(e) {
@@ -32,13 +23,7 @@ function handleFormSubmission(e) {
     const form = e.target;
     const formType = form.getAttribute('data-form-type');
     
-    let isValid = false;
-    
-    if (formType === 'create-vector') {
-        isValid = validateCreateVectorForm();
-    } else if (formType === 'survey') {
-        isValid = validateSurveyForm();
-    }
+    let isValid = formType === 'create-vector' ? validateCreateVectorForm() : validateSurveyForm();
 
     if (isValid) {
         form.submit();
@@ -46,43 +31,35 @@ function handleFormSubmission(e) {
 }
 
 /**
- * Validates the create vector form.
- * Checks if the total is 100.
+ * Validates the create vector form, ensuring the total is exactly 100.
  * @returns {boolean} True if the form is valid, false otherwise.
  */
 function validateCreateVectorForm() {
     const selects = document.querySelectorAll('select');
-    let total = 0;
-
-    selects.forEach(select => {
-        total += parseInt(select.value) || 0;
-    });
+    let total = Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
 
     if (total !== 100) {
-        alert('נא לוודא שהסכום הכולל הוא 100.');
+        showAlert('נא לוודא שהסכום הכולל הוא 100.');
         return false;
     }
-
     return true;
 }
 
 /**
- * Validates the survey form.
- * Checks if all radio button groups have a selected option.
+ * Validates the survey form, ensuring all radio button groups are answered.
  * @returns {boolean} True if the form is valid, false otherwise.
  */
 function validateSurveyForm() {
     const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
     if (radioGroups.length !== 11) { // 10 comparison pairs + 1 awareness check
-        alert('נא לבחור אפשרות אחת עבור כל זוג.');
+        showAlert('נא לבחור אפשרות אחת עבור כל זוג.');
         return false;
     }
     return true;
 }
 
 /**
- * Sets up the budget vector creation functionality.
- * This includes real-time total calculation and input validation.
+ * Sets up real-time budget vector creation and validation.
  */
 function setupBudgetVectorCreation() {
     const selects = document.querySelectorAll('select');
@@ -91,43 +68,54 @@ function setupBudgetVectorCreation() {
     const errorDisplay = document.getElementById('error-display');
 
     if (selects.length > 0 && totalDisplay && submitBtn && errorDisplay) {
-        selects.forEach(select => {
-            select.addEventListener('change', () => updateTotal(selects, totalDisplay, submitBtn, errorDisplay));
-        });
+        const updateTotal = () => {
+            let total = Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
+            totalDisplay.textContent = total;
+            
+            let isValid = total === 100;
+            submitBtn.disabled = !isValid;
+            totalDisplay.style.color = isValid ? '#27ae60' : '#e74c3c';
+            errorDisplay.textContent = isValid ? '' : 'נא לוודא שהסכום הכולל הוא 100.';
+            errorDisplay.style.display = isValid ? 'none' : 'block';
+        };
+
+        selects.forEach(select => select.addEventListener('change', updateTotal));
+        updateTotal(); // Initial update
     }
 }
 
 /**
- * Updates the total budget allocation and validates selects in real-time.
- * @param {NodeList} selects - The list of number select elements.
- * @param {HTMLElement} totalDisplay - The element to display the total.
- * @param {HTMLElement} submitBtn - The submit button element.
- * @param {HTMLElement} errorDisplay - The element to display error messages.
+ * Creates and appends the custom alert element to the document body.
  */
-function updateTotal(selects, totalDisplay, submitBtn, errorDisplay) {
-    let total = 0;
-    let isValid = true;
-    let errorMessage = '';
+function createAlertElement() {
+    const alertHTML = `
+        <div id="customAlert" class="custom-alert">
+            <div class="alert-content">
+                <p id="alertMessage"></p>
+                <button id="alertClose">אישור</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
 
-    selects.forEach(select => {
-        const value = parseInt(select.value) || 0;
-        total += value;
-    });
+    const alert = document.getElementById('customAlert');
+    const closeBtn = document.getElementById('alertClose');
 
-    totalDisplay.textContent = total;
-    
-    if (total !== 100) {
-        isValid = false;
-        errorMessage = 'הסכום הכולל חייב להיות בדיוק 100.';
-    }
+    closeBtn.onclick = () => alert.style.display = "none";
+    window.onclick = (event) => {
+        if (event.target == alert) {
+            alert.style.display = "none";
+        }
+    };
+}
 
-    submitBtn.disabled = !isValid;
-    totalDisplay.style.color = isValid ? '#27ae60' : '#e74c3c';
-
-    if (!isValid) {
-        errorDisplay.textContent = errorMessage;
-        errorDisplay.style.display = 'block';
-    } else {
-        errorDisplay.style.display = 'none';
-    }
+/**
+ * Displays a custom alert with the given message.
+ * @param {string} message - The message to display in the alert.
+ */
+function showAlert(message) {
+    const alert = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    alertMessage.textContent = message;
+    alert.style.display = "block";
 }
