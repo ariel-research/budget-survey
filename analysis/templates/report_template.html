@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Analysis Report</title>
+</head>
+<body>
+    <h1>Survey Analysis Report</h1>
+    <p>Report generated on: {{ generated_date }}</p>
+
+    {% if overall_stats %}
+        {{ overall_stats | safe }}
+    {% endif %}
+
+    {% if survey_analysis %}
+        {{ survey_analysis | safe }}
+    {% endif %}
+
+    {% if visualization %}
+        <h2>Visualization of Sum vs Ratio Optimization</h2>
+        <img src="data:image/png;base64,{{ visualization }}" alt="Sum vs Ratio Optimization">
+    {% endif %}
+
+    {% if overall_trends %}
+        {{ overall_trends | safe }}
+    {% endif %}
+
+    {% if individual_analysis %}
+        {{ individual_analysis | safe }}
+    {% endif %}
+
+    {% if key_findings %}
+        {{ key_findings | safe }}
+    {% endif %}
+</body>
+</html>

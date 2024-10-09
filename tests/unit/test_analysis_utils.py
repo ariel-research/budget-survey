@@ -8,8 +8,7 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-
-from analysis.analysis_utils import (
+from analysis.utils import (
     calculate_optimization_stats,
     ensure_directory_exists,
     is_sum_optimized,
@@ -76,7 +75,7 @@ def test_save_dataframe_to_csv():
     df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [30, 25]})
     filename = "test_output.csv"
 
-    with patch("analysis.analysis_utils.ensure_directory_exists") as mock_ensure_dir:
+    with patch("analysis.utils.file_utils.ensure_directory_exists") as mock_ensure_dir:
         with patch("pandas.DataFrame.to_csv") as mock_to_csv:
             save_dataframe_to_csv(df, filename)
 

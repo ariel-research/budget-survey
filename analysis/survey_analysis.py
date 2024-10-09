@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-from analysis.analysis_utils import (
+from analysis.utils import (
     calculate_optimization_stats,
     process_survey_responses,
     save_dataframe_to_csv,

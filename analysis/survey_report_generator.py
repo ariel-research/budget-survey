@@ -1,64 +1,96 @@
-import base64
+import logging
 import os
 from datetime import datetime
-from io import BytesIO
-from typing import Dict
 
-import matplotlib.pyplot as plt
 import pandas as pd
+from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS, HTML
 from weasyprint.text.fonts import FontConfiguration
 
+from analysis.utils import (
+    encode_image_base64,
+    ensure_directory_exists,
+    generate_visualization,
+    load_data,
+)
 
-def get_latest_csv_files(directory: str = "data") -> Dict[str, str]:
-    """
-    Get the latest CSV files from the specified directory.
+logger = logging.getLogger(__name__)
 
-    Args:
-        directory (str): The directory to search for CSV files.
 
-    Returns:
-        Dict[str, str]: A dictionary of the latest CSV files.
-    """
-    csv_files = {
-        f: os.path.getmtime(os.path.join(directory, f))
-        for f in os.listdir(directory)
-        if f.endswith(".csv")
-    }
+def generate_report():
+    """Generate and save the survey analysis report as a PDF."""
+    logger.info("Starting report generation process")
 
-    return (
-        {
-            "responses": "all_completed_survey_responses.csv",
-            "summary": "summarize_stats_by_survey.csv",
-            "optimization": "survey_optimization_stats.csv",
+    try:
+        data = load_data()
+        logger.info("Data loaded successfully")
+
+        # Get the directory of the current script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Construct the path to the templates directory
+        templates_dir = os.path.join(current_dir, "templates")
+        # Set up Jinja2 environment
+        env = Environment(loader=FileSystemLoader(templates_dir))
+        template = env.get_template("report_template.html")
+        logger.info("Jinja2 template loaded")
+
+        report_data = {
+            "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "overall_stats": None,
+            "survey_analysis": None,
+            "overall_trends": None,
+            "individual_analysis": None,
+            "key_findings": None,
+            "visualization": None,
         }
-        if all(
-            f in csv_files
-            for f in [
-                "all_completed_survey_responses.csv",
-                "summarize_stats_by_survey.csv",
-                "survey_optimization_stats.csv",
-            ]
+
+        if "summary" in data:
+            logger.info("Generating summary statistics")
+            report_data["overall_stats"] = generate_overall_stats(data["summary"])
+            report_data["survey_analysis"] = generate_survey_analysis(data["summary"])
+            report_data["overall_trends"] = generate_overall_trends(data["summary"])
+
+            logger.info("Generating visualization")
+            img_data = generate_visualization(data["summary"])
+            report_data["visualization"] = encode_image_base64(img_data)
+        else:
+            logger.warning("Summary data not available")
+
+        if "optimization" in data:
+            logger.info("Generating individual analysis")
+            report_data["individual_analysis"] = generate_individual_analysis(
+                data["optimization"]
+            )
+        else:
+            logger.warning("Optimization data not available")
+
+        if "summary" in data and "optimization" in data:
+            logger.info("Generating key findings")
+            report_data["key_findings"] = generate_key_findings(
+                data["summary"], data["optimization"]
+            )
+        else:
+            logger.warning("Insufficient data to generate key findings")
+
+        logger.info("Rendering HTML template")
+        html_content = template.render(report_data)
+
+        logger.info("Generating PDF")
+        css_path = os.path.join(templates_dir, "report_style.css")
+        css = CSS(filename=css_path)
+        font_config = FontConfiguration()
+        output_file = "data/survey_analysis_report.pdf"
+        ensure_directory_exists(output_file)
+        HTML(string=html_content).write_pdf(
+            output_file, stylesheets=[css], font_config=font_config
         )
-        else {}
-    )
 
-
-def load_data(directory: str = "data") -> Dict[str, pd.DataFrame]:
-    """
-    Load data from CSV files into pandas DataFrames.
-
-    Args:
-        directory (str): The directory containing the CSV files.
-
-    Returns:
-        Dict[str, pd.DataFrame]: A dictionary of loaded DataFrames.
-    """
-    files = get_latest_csv_files(directory)
-    return {
-        key: pd.read_csv(os.path.join(directory, filename))
-        for key, filename in files.items()
-    }
+        logger.info(f"PDF Report generated successfully. Saved as {output_file}")
+    except Exception as e:
+        logger.error(
+            f"Error occurred during report generation: {str(e)}", exc_info=True
+        )
+        raise
 
 
 def generate_overall_stats(summary_stats: pd.DataFrame) -> str:
@@ -71,6 +103,7 @@ def generate_overall_stats(summary_stats: pd.DataFrame) -> str:
     Returns:
         str: HTML-formatted overall statistics.
     """
+    logger.info("Generating overall statistics")
     total_row = summary_stats.iloc[-1]
     return f"""
     <h2>Overall Survey Participation</h2>
@@ -92,6 +125,7 @@ def generate_survey_analysis(summary_stats: pd.DataFrame) -> str:
     Returns:
         str: HTML-formatted survey analysis.
     """
+    logger.info("Generating survey-wise analysis")
     report = "<h2>Survey-wise Analysis</h2>"
     for _, row in summary_stats[summary_stats["survey_id"] != "Total"].iterrows():
         report += f"""
@@ -123,6 +157,7 @@ def generate_overall_trends(summary_stats: pd.DataFrame) -> str:
     Returns:
         str: HTML-formatted overall trends.
     """
+    logger.info("Generating overall trends")
     total_row = summary_stats.iloc[-1]
     return f"""
     <h2>Overall Optimization Trends</h2>
@@ -149,6 +184,7 @@ def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
     Returns:
         str: HTML-formatted individual analysis.
     """
+    logger.info("Generating individual participant analysis")
     report = "<h2>Individual Participant Analysis</h2>"
     for survey_id in optimization_stats["survey_id"].unique():
         report += f"<h3>Survey {survey_id}</h3><ul>"
@@ -157,80 +193,6 @@ def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
             report += f"<li>User {row['user_id']}: {row['sum_optimized'] / row['num_of_answers'] * 100}% sum optimized, {row['ratio_optimized'] / row['num_of_answers'] * 100}% ratio optimized</li>"
         report += "</ul>"
     return report
-
-
-def generate_visualization(summary_stats: pd.DataFrame) -> bytes:
-    """
-    Generate a visualization of sum vs ratio optimization.
-
-    Args:
-        summary_stats (pd.DataFrame): The summary statistics DataFrame.
-
-    Returns:
-        bytes: PNG image data of the visualization.
-    """
-    plt.figure(figsize=(12, 6))
-    surveys = summary_stats[summary_stats["survey_id"] != "Total"]["survey_id"]
-    sum_opt = summary_stats[summary_stats["survey_id"] != "Total"][
-        "sum_optimized_percentage"
-    ]
-    ratio_opt = summary_stats[summary_stats["survey_id"] != "Total"][
-        "ratio_optimized_percentage"
-    ]
-
-    x = range(len(surveys))
-    plt.bar(
-        [i - 0.2 for i in x],
-        sum_opt,
-        width=0.4,
-        label="Sum Optimization",
-        color="#4C72B0",
-    )
-    plt.bar(
-        [i + 0.2 for i in x],
-        ratio_opt,
-        width=0.4,
-        label="Ratio Optimization",
-        color="#55A868",
-    )
-
-    plt.xlabel("Survey ID", fontsize=12)
-    plt.ylabel("Percentage", fontsize=12)
-    plt.title("Sum vs Ratio Optimization by Survey", fontsize=16)
-    plt.xticks(x, surveys, fontsize=10)
-    plt.yticks(fontsize=10)
-    plt.legend(fontsize=10)
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-
-    img = BytesIO()
-    plt.savefig(img, format="png", dpi=300, bbox_inches="tight")
-    img.seek(0)
-    return img.getvalue()
-
-
-def html_to_pdf(html_content: str, output_filename: str):
-    """
-    Convert HTML content to a PDF file.
-
-    Args:
-        html_content (str): The HTML content to convert.
-        output_filename (str): The name of the output PDF file.
-    """
-    css = CSS(
-        string="""
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        h1 { color: #2C3E50; }
-        h2 { color: #34495E; border-bottom: 1px solid #34495E; padding-bottom: 10px; }
-        h3 { color: #2980B9; }
-        ul { padding-left: 20px; }
-        li { margin-bottom: 5px; }
-        img { max-width: 100%; height: auto; }
-    """
-    )
-    font_config = FontConfiguration()
-    HTML(string=html_content).write_pdf(
-        output_filename, stylesheets=[css], font_config=font_config
-    )
 
 
 def generate_key_findings(
@@ -246,7 +208,13 @@ def generate_key_findings(
     Returns:
         str: HTML-formatted key findings.
     """
+    logger.info("Generating key findings and conclusions")
     findings = "<h2>Key Findings and Conclusions</h2>"
+
+    # Debug: Print DataFrame info
+    logger.info(f"optimization_stats shape: {optimization_stats.shape}")
+    logger.info(f"optimization_stats columns: {optimization_stats.columns}")
+    logger.info(f"optimization_stats sample:\n{optimization_stats.head().to_string()}")
 
     total_row = summary_stats.iloc[-1]
     overall_preference = (
@@ -260,75 +228,40 @@ def generate_key_findings(
         </li>
     """
 
-    def check_consistency(group):
+    try:
+        # Calculate consistency for each user across all surveys
+        user_consistency = optimization_stats.groupby("user_id")["result"].agg(
+            lambda x: "consistent" if x.nunique() == 1 else "varied"
+        )
+
+        consistent_percent = (user_consistency == "consistent").mean() * 100
+        findings += f"""
+            <li>
+                <strong>Individual Consistency:</strong> {consistent_percent:.2f}% of participants showed consistent optimization preferences across surveys, 
+                while others varied their strategies.
+            </li>
         """
-        Check if a user's optimization preferences are consistent across surveys.
 
-        Args:
-        group (pd.DataFrame): Survey results for a single user.
-
-        Returns:
-        str: 'consistent' if all choices are the same, 'varied' otherwise.
+        # Additional analysis: Most common result
+        most_common_result = optimization_stats["result"].mode().iloc[0]
+        result_counts = optimization_stats["result"].value_counts(normalize=True) * 100
+        findings += f"""
+            <li>
+                <strong>Most Common Preference:</strong> The most common optimization preference was "{most_common_result}" 
+                (Sum: {result_counts.get('sum', 0):.2f}%, Ratio: {result_counts.get('ratio', 0):.2f}%, Equal: {result_counts.get('equal', 0):.2f}%).
+            </li>
         """
-        return "consistent" if len(set(group["result"])) == 1 else "varied"
 
-    # Analyze consistency of optimization preferences for each user
-    user_consistency = optimization_stats.groupby("user_id").apply(check_consistency)
-    # Calculate the percentage of users with consistent optimization preferences
-    consistent_percent = (user_consistency == "consistent").mean() * 100
-    findings += f"""
-        <li>
-            <strong>Individual Consistency:</strong> {consistent_percent:.2f}% of participants showed consistent optimization preferences across surveys, 
-            while others varied their strategies.
-        </li>
-    """
+    except Exception as e:
+        logger.error(f"Error in calculating key findings: {str(e)}", exc_info=True)
+        findings += """
+            <li>
+                <strong>Data Analysis:</strong> Unable to calculate detailed statistics due to data processing error.
+            </li>
+        """
 
     findings += "</ol>"
     return findings
-
-
-def generate_report():
-    """Generate and save the survey analysis report as a PDF."""
-    data = load_data()
-
-    report = f"""
-    <h1>Survey Analysis Report</h1>
-    <p>Report generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    """
-
-    if "summary" in data:
-        summary_stats = data["summary"]
-        report += generate_overall_stats(summary_stats)
-        report += generate_survey_analysis(summary_stats)
-
-        report += "<h2>Visualization of Sum vs Ratio Optimization</h2>"
-        # Generate the visualization and encode it as base64
-        img_data = generate_visualization(summary_stats)
-        img_base64 = base64.b64encode(img_data).decode("utf-8")
-        # Embed the image directly in the HTML using a data URL
-        report += f"<img src='data:image/png;base64,{img_base64}' alt='Sum vs Ratio Optimization'>"
-
-        report += generate_overall_trends(summary_stats)
-    else:
-        report += (
-            "<p><strong>Warning:</strong> Summary statistics data not available.</p>"
-        )
-
-    if "optimization" in data:
-        optimization_stats = data["optimization"]
-        report += generate_individual_analysis(optimization_stats)
-    else:
-        report += "<p><strong>Warning:</strong> Optimization statistics data not available.</p>"
-
-    if "summary" in data and "optimization" in data:
-        report += generate_key_findings(data["summary"], data["optimization"])
-    else:
-        report += "<p><strong>Warning:</strong> Insufficient data to generate key findings.</p>"
-
-    # Generate the PDF report
-    html_to_pdf(report, "data/survey_analysis_report.pdf")
-
-    print("PDF Report generated successfully. Check 'data/survey_analysis_report.pdf'")
 
 
 if __name__ == "__main__":
