@@ -2,8 +2,6 @@
 
 ## Table of Contents
 
-## Table of Contents
-
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -20,8 +18,9 @@
 - [Algorithm](#algorithm)
 - [Analysis](#analysis)
   - [Running the Analysis](#running-the-analysis)
+  - [Generating the Survey Report](#generating-the-survey-report)
   - [Main Functions](#main-functions)
-  - [Generated Tables](#generated-tables)
+  - [Generated Files](#generated-files)
   - [Table Explanations](#table-explanations)
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
@@ -210,7 +209,7 @@ The core algorithm of this application is implemented in the `generate_user_exam
 
 ## Analysis
 
-The project includes an 'analysis' package that processes the collected survey data and generates insightful statistics. This package is crucial for understanding user responses and deriving meaningful conclusions from the survey data.
+The project includes an 'analysis' package that processes the collected survey data and generates insightful statistics and reports. This package is crucial for understanding user responses and deriving meaningful conclusions from the survey data.
 
 ### Running the Analysis
 
@@ -220,6 +219,23 @@ To run the survey analysis, use the following command from the project root dire
 python -m analysis.survey_analysis
 ```
 
+### Generating the Survey Report
+
+To generate a comprehensive PDF report of the survey results, use the following command from the project root directory:
+
+```
+python -m analysis.survey_report_generator
+```
+
+This command will create a PDF report named 'survey_analysis_report.pdf' in the 'data' directory. The report includes:
+
+- Overall survey participation statistics
+- Survey-wise analysis
+- Visualization of sum vs ratio optimization
+- Overall optimization trends
+- Individual participant analysis
+- Key findings and conclusions
+
 ### Main Functions
 
 The analysis package contains several key functions:
@@ -228,43 +244,39 @@ The analysis package contains several key functions:
 2. `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
 3. `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
 
-### Generated Tables
+The survey report generator includes functions for:
 
-The analysis script generates three CSV files, all saved in the `data` directory:
+1. `generate_overall_stats(summary_stats)`: Generates overall survey participation statistics.
+2. `generate_survey_analysis(summary_stats)`: Provides a detailed analysis for each survey.
+3. `generate_overall_trends(summary_stats)`: Summarizes optimization trends across all surveys.
+4. `generate_individual_analysis(optimization_stats)`: Analyzes individual participant responses.
+5. `generate_visualization(summary_stats)`: Creates a bar chart comparing sum vs ratio optimization across surveys.
+6. `generate_key_findings(summary_stats, optimization_stats)`: Produces key insights and conclusions from the data.
 
-1. **all_completed_survey_responses.csv**
-   - Location: `data/all_completed_survey_responses.csv`
-   - Content: Raw data of all completed survey responses, including user choices for each comparison pair.
-   - Use: Provides a comprehensive view of all survey data for detailed analysis.
+### Generated Files
 
-2. **survey_optimization_stats.csv**
-   - Location: `data/survey_optimization_stats.csv`
-   - Content: Optimization statistics for each survey response, including the number of sum-optimized and ratio-optimized choices.
-   - Use: Helps in understanding individual user tendencies towards sum or ratio optimization.
+The analysis scripts generate the following files in the `data` directory:
 
-3. **summarize_stats_by_survey.csv**
-   - Location: `data/summarize_stats_by_survey.csv`
-   - Content: Aggregated statistics for each survey, including total responses, optimization percentages, and a summary row for overall statistics.
-   - Use: Provides a high-level overview of survey results and overall optimization trends.
+1. **all_completed_survey_responses.csv**: Raw data of all completed survey responses.
+2. **survey_optimization_stats.csv**: Optimization statistics for each survey response.
+3. **summarize_stats_by_survey.csv**: Aggregated statistics for each survey and overall summary.
+4. **survey_analysis_report.pdf**: Comprehensive PDF report of survey results and analysis.
 
 ### Table Explanations
 
 1. **All Completed Survey Responses**
    - Each row represents a single comparison pair from a completed survey.
    - Includes survey ID, user ID, optimal allocation, and details of each comparison pair.
-   - Useful for in-depth analysis of individual responses and patterns.
 
 2. **Survey Optimization Stats**
    - Each row represents a completed survey response.
    - Shows the number of sum-optimized and ratio-optimized choices for each response.
-   - Helps identify whether users tend to optimize for sum differences or ratios.
 
 3. **Summarize Stats by Survey**
    - Each row represents aggregate data for a single survey, with a final row summarizing across all surveys.
    - Includes metrics such as unique users, total answers, and percentages of sum/ratio optimized choices.
-   - Provides a quick overview of survey performance and user tendencies across different surveys.
 
-Remember to regularly run the analysis script to keep these statistics up-to-date as new survey responses are collected.
+Remember to regularly run both the analysis script and the report generator to keep these statistics and reports up-to-date as new survey responses are collected.
 
 ## Testing
 

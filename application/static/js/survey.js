@@ -3,18 +3,25 @@
  * This script handles client-side interactions for the budget survey application.
  */
 
+// Constants
+const TOTAL_EXPECTED = 100;
+const TOTAL_RADIO_GROUPS = 11; // 10 comparison pairs + 1 awareness check
+
+// The error messages
 let messages = {};
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadMessages().then(() => {
-        const form = document.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', handleFormSubmission);
-        }
-
+/**
+ * Initializes the survey application when the DOM is fully loaded.
+ */
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        await loadMessages();
+        initializeForm();
         setupBudgetVectorCreation();
         createAlertElement();
-    });
+    } catch (error) {
+        console.error('Initialization failed:', error);
+    }
 });
 
 /**
@@ -23,9 +30,28 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadMessages() {
     try {
         const response = await fetch('/get_messages');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         messages = await response.json();
     } catch (error) {
         console.error('Failed to load messages:', error);
+        messages = {
+            total_not_100: "נא לוודא שהסכום הכולל הוא 100.",
+            choose_all_pairs: "נא לבחור אפשרות אחת עבור כל זוג.",
+        };
+    }
+}
+
+/**
+ * Initializes the form event listener.
+ */
+function initializeForm() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmission);
+    } else {
+        console.warn('Form element not found');
     }
 }
 
@@ -39,7 +65,7 @@ function handleFormSubmission(e) {
     const form = e.target;
     const formType = form.getAttribute('data-form-type');
     
-    let isValid = formType === 'create-vector' ? validateCreateVectorForm() : validateSurveyForm();
+    const isValid = formType === 'create-vector' ? validateCreateVectorForm() : validateSurveyForm();
 
     if (isValid) {
         form.submit();
@@ -47,14 +73,14 @@ function handleFormSubmission(e) {
 }
 
 /**
- * Validates the create vector form, ensuring the total is exactly 100.
+ * Validates the create vector form, ensuring the total is exactly TOTAL_EXPECTED.
  * @returns {boolean} True if the form is valid, false otherwise.
  */
 function validateCreateVectorForm() {
     const selects = document.querySelectorAll('select');
-    let total = Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
+    const total = calculateTotal(selects);
 
-    if (total !== 100) {
+    if (total !== TOTAL_EXPECTED) {
         showAlert(messages.total_not_100);
         return false;
     }
@@ -67,7 +93,7 @@ function validateCreateVectorForm() {
  */
 function validateSurveyForm() {
     const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
-    if (radioGroups.length !== 11) { // 10 comparison pairs + 1 awareness check
+    if (radioGroups.length !== TOTAL_RADIO_GROUPS) {
         showAlert(messages.choose_all_pairs);
         return false;
     }
@@ -85,19 +111,40 @@ function setupBudgetVectorCreation() {
 
     if (selects.length > 0 && totalDisplay && submitBtn && errorDisplay) {
         const updateTotal = () => {
-            let total = Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
-            totalDisplay.textContent = total;
-            
-            let isValid = total === 100;
-            submitBtn.disabled = !isValid;
-            totalDisplay.style.color = isValid ? '#27ae60' : '#e74c3c';
-            errorDisplay.textContent = isValid ? '' : (messages.total_not_100 || 'נא לוודא שהסכום הכולל הוא 100.');
-            errorDisplay.style.display = isValid ? 'none' : 'block';
+            const total = calculateTotal(selects);
+            updateUI(total, totalDisplay, submitBtn, errorDisplay);
         };
 
         selects.forEach(select => select.addEventListener('change', updateTotal));
         updateTotal(); // Initial update
+    } else {
+        console.warn('Required elements for budget vector creation not found');
     }
+}
+
+/**
+ * Calculates the total from select elements.
+ * @param {NodeList} selects - The select elements.
+ * @returns {number} The calculated total.
+ */
+function calculateTotal(selects) {
+    return Array.from(selects).reduce((sum, select) => sum + (parseInt(select.value) || 0), 0);
+}
+
+/**
+ * Updates the UI based on the current total.
+ * @param {number} total - The current total.
+ * @param {HTMLElement} totalDisplay - The element to display the total.
+ * @param {HTMLElement} submitBtn - The submit button element.
+ * @param {HTMLElement} errorDisplay - The element to display error messages.
+ */
+function updateUI(total, totalDisplay, submitBtn, errorDisplay) {
+    const isValid = total === TOTAL_EXPECTED;
+    totalDisplay.textContent = total;
+    submitBtn.disabled = !isValid;
+    totalDisplay.style.color = isValid ? '#27ae60' : '#e74c3c';
+    errorDisplay.textContent = isValid ? '' : (messages.total_not_100 || 'נא לוודא שהסכום הכולל הוא 100.');
+    errorDisplay.style.display = isValid ? 'none' : 'block';
 }
 
 /**
@@ -132,6 +179,10 @@ function createAlertElement() {
 function showAlert(message) {
     const alert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
-    alertMessage.textContent = message;
-    alert.style.display = "block";
+    if (alert && alertMessage) {
+        alertMessage.textContent = message;
+        alert.style.display = "block";
+    } else {
+        console.error('Custom alert elements not found');
+    }
 }

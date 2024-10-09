@@ -10,6 +10,57 @@ from utils.generate_examples import sum_of_differences
 logger = logging.getLogger(__name__)
 
 
+def get_latest_csv_files(directory: str = "data") -> Dict[str, str]:
+    """
+    Get the latest CSV files from the specified directory.
+
+    Args:
+        directory (str): The directory to search for CSV files.
+
+    Returns:
+        Dict[str, str]: A dictionary of the latest CSV files.
+    """
+    csv_files = {
+        f: os.path.getmtime(os.path.join(directory, f))
+        for f in os.listdir(directory)
+        if f.endswith(".csv")
+    }
+
+    return (
+        {
+            "responses": "all_completed_survey_responses.csv",
+            "summary": "summarize_stats_by_survey.csv",
+            "optimization": "survey_optimization_stats.csv",
+        }
+        if all(
+            f in csv_files
+            for f in [
+                "all_completed_survey_responses.csv",
+                "summarize_stats_by_survey.csv",
+                "survey_optimization_stats.csv",
+            ]
+        )
+        else {}
+    )
+
+
+def load_data(directory: str = "data") -> Dict[str, pd.DataFrame]:
+    """
+    Load data from CSV files into pandas DataFrames.
+
+    Args:
+        directory (str): The directory containing the CSV files.
+
+    Returns:
+        Dict[str, pd.DataFrame]: A dictionary of loaded DataFrames.
+    """
+    files = get_latest_csv_files(directory)
+    return {
+        key: pd.read_csv(os.path.join(directory, filename))
+        for key, filename in files.items()
+    }
+
+
 def is_sum_optimized(
     optimal_vector: Tuple[int, ...],
     option_1: Tuple[int, ...],
