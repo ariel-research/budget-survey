@@ -1,6 +1,7 @@
 from .analysis_utils import (
     calculate_optimization_stats,
     is_sum_optimized,
+    load_data,
     process_survey_responses,
 )
 from .file_utils import (
@@ -20,4 +21,5 @@ __all__ = [
     "save_dataframe_to_csv",
     "generate_visualization",
     "encode_image_base64",
+    "load_data",
 ]
