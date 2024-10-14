@@ -9,8 +9,10 @@ from .file_utils import (
     save_dataframe_to_csv,
 )
 from .visualization_utils import (
-    encode_image_base64,
-    generate_visualization,
+    visualize_overall_majority_choice_distribution,
+    visualize_per_survey_answer_percentages,
+    visualize_total_answer_percentage_distribution,
+    visualize_user_survey_majority_choices,
 )
 
 __all__ = [
@@ -19,7 +21,9 @@ __all__ = [
     "process_survey_responses",
     "ensure_directory_exists",
     "save_dataframe_to_csv",
-    "generate_visualization",
-    "encode_image_base64",
+    visualize_overall_majority_choice_distribution,
+    visualize_per_survey_answer_percentages,
+    visualize_total_answer_percentage_distribution,
+    visualize_user_survey_majority_choices,
     "load_data",
 ]
