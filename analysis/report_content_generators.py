@@ -230,4 +230,22 @@ def generate_key_findings(
 
 
 def generate_methodology_description() -> str:
-    pass
+    """Generate a description of the methodology used in the analysis."""
+    methodology = """
+    <p>This analysis was conducted using the following steps:</p>
+    <ol>
+        <li>Data Collection: Survey responses were collected from participants across multiple surveys.</li>
+        <li>Data Processing: Responses were processed to calculate optimization preferences (sum vs ratio) for each user in each survey.</li>
+        <li>Analysis:
+            <ul>
+                <li>Overall preferences were calculated by aggregating responses across all surveys.</li>
+                <li>Individual survey analysis was performed to identify trends within each survey.</li>
+                <li>User consistency was evaluated for participants who completed multiple surveys.</li>
+            </ul>
+        </li>
+        <li>Visualization: Various charts and tables were generated to represent the findings visually.</li>
+        <li>Reporting: This automated report was generated to summarize the key findings and present the analysis results.</li>
+    </ol>
+    <p>Note: The analysis considers a user's preference as consistent if they show the same optimization preference in at least 80% of the surveys they participated in, given they participated in at least half of the total surveys and at least two surveys.</p>
+    """
+    return methodology
