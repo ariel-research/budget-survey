@@ -17,10 +17,13 @@ def get_summary_value(df: pd.DataFrame, column: str) -> float:
     Returns:
         float: The value from the specified column in the 'Total' row.
     """
+    logger.debug(f"Retrieving summary value for column: {column}")
     return df.loc[df["survey_id"] == "Total", column].values[0]
 
 
-def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
+def calculate_user_consistency(
+    optimization_stats: pd.DataFrame, consistency_threshold: float = 0.8
+) -> tuple[float, int, int, int, int]:
     """
     Calculate the percentage of users with consistent preferences across surveys.
 
@@ -45,6 +48,8 @@ def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
         - min_surveys: Minimum number of surveys required for consistency analysis.
         - total_surveys: Total number of unique surveys in the dataset.
     """
+    logger.info(f"Calculating user consistency with threshold {consistency_threshold}")
+
     total_surveys = optimization_stats["survey_id"].nunique()
 
     # Set minimum surveys to the max of: 2 or half the total surveys (rounded up)
@@ -74,6 +79,9 @@ def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
         else 0
     )
 
+    logger.info(
+        f"User consistency calculation completed. Consistent users: {consistent_users}, Total qualified users: {total_qualified_users}"
+    )
     return (
         consistent_percentage,
         total_qualified_users,
@@ -86,7 +94,21 @@ def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
 def generate_executive_summary(
     summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
 ) -> str:
-    """Generate an executive summary of the survey analysis."""
+    """
+    Generate an executive summary of the survey analysis.
+
+    This function creates a high-level overview of the survey results,
+    including total surveys, users, answers, overall preferences,
+    and user consistency across surveys.
+
+    Args:
+        summary_stats (pd.DataFrame): DataFrame containing overall survey statistics.
+        optimization_stats (pd.DataFrame): DataFrame containing user optimization preferences.
+
+    Returns:
+        str: HTML-formatted string containing the executive summary.
+    """
+    logger.info("Generating executive summary")
     total_surveys = len(summary_stats) - 1  # Excluding the "Total" row
     total_users = get_summary_value(summary_stats, "unique_users")
     total_answers = get_summary_value(summary_stats, "total_answers")
@@ -112,12 +134,21 @@ def generate_executive_summary(
     highlighting both overall trends and individual consistency in decision-making.</p>
     """
 
+    logger.info("Executive summary generation completed")
     return content
 
 
 def generate_overall_stats(summary_stats: pd.DataFrame) -> str:
-    """Generate overall survey participation statistics."""
-    logger.debug("Generating overall statistics")
+    """
+    Generate a string containing overall survey participation statistics.
+
+    Args:
+        summary_stats (pd.DataFrame): DataFrame containing summary statistics.
+
+    Returns:
+        str: HTML-formatted string with overall statistics.
+    """
+    logger.info("Generating overall statistics")
     total_row = summary_stats.iloc[-1]
     content = f"""
     <ul>
@@ -126,12 +157,21 @@ def generate_overall_stats(summary_stats: pd.DataFrame) -> str:
         <li>Total answers collected: {total_row['total_answers']}</li>
     </ul>
     """
+    logger.info("Overall statistics generation completed")
     return content
 
 
 def generate_survey_analysis(summary_stats: pd.DataFrame) -> str:
-    """Generate survey-wise analysis."""
-    logger.debug("Generating survey-wise analysis")
+    """
+    Generate a detailed analysis for each survey.
+
+    Args:
+        summary_stats (pd.DataFrame): DataFrame containing summary statistics.
+
+    Returns:
+        str: HTML-formatted string with survey-wise analysis.
+    """
+    logger.info("Generating survey-wise analysis")
     content = ""
     for _, row in summary_stats[summary_stats["survey_id"] != "Total"].iterrows():
         preference = (
@@ -165,12 +205,21 @@ def generate_survey_analysis(summary_stats: pd.DataFrame) -> str:
             <li>{row['equal_count']} users showed no clear preference</li>
         </ul>
         """
+    logger.info("Survey-wise analysis generation completed")
     return content
 
 
 def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
-    """Generate individual participant analysis."""
-    logger.debug("Generating individual participant analysis")
+    """
+    Generate an analysis of individual participant preferences for each survey.
+
+    Args:
+        optimization_stats (pd.DataFrame): DataFrame containing optimization statistics.
+
+    Returns:
+        str: HTML-formatted string with individual participant analysis.
+    """
+    logger.info("Generating individual participant analysis")
     content = ""
     for survey_id in optimization_stats["survey_id"].unique():
         content += f"<h3>Survey {survey_id}</h3><ul>"
@@ -178,14 +227,24 @@ def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
         for _, row in survey_data.iterrows():
             content += f"<li>User {row['user_id']}: {row['sum_optimized'] / row['num_of_answers'] * 100:.1f}% sum optimized, {row['ratio_optimized'] / row['num_of_answers'] * 100:.1f}% ratio optimized</li>"
         content += "</ul>"
+    logger.info("Individual participant analysis generation completed")
     return content
 
 
 def generate_key_findings(
     summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
 ) -> str:
-    """Generate key findings and conclusions."""
-    logger.debug("Generating key findings and conclusions")
+    """
+    Generate key findings and conclusions from the survey analysis.
+
+    Args:
+        summary_stats (pd.DataFrame): DataFrame containing summary statistics.
+        optimization_stats (pd.DataFrame): DataFrame containing optimization statistics.
+
+    Returns:
+        str: HTML-formatted string with key findings and conclusions.
+    """
+    logger.info("Generating key findings and conclusions")
     total_row = summary_stats.iloc[-1]
     overall_preference = (
         "sum" if total_row["sum_optimized"] > total_row["ratio_optimized"] else "ratio"
@@ -226,11 +285,13 @@ def generate_key_findings(
         """
 
     content += "</ol>"
+    logger.info("Key findings and conclusions generation completed")
     return content
 
 
 def generate_methodology_description() -> str:
     """Generate a description of the methodology used in the analysis."""
+    logger.info("Generating methodology description")
     methodology = """
     <p>This analysis was conducted using the following steps:</p>
     <ol>
@@ -248,4 +309,5 @@ def generate_methodology_description() -> str:
     </ol>
     <p>Note: The analysis considers a user's preference as consistent if they show the same optimization preference in at least 80% of the surveys they participated in, given they participated in at least half of the total surveys and at least two surveys.</p>
     """
+    logger.info("Methodology description generation completed")
     return methodology
