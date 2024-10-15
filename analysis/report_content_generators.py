@@ -6,24 +6,92 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
+def get_summary_value(df: pd.DataFrame, column: str) -> float:
+    """
+    Retrieve a specific value from the 'Total' row of a summary DataFrame.
+
+    Args:
+        df (pd.DataFrame): The summary DataFrame containing a 'Total' row.
+        column (str): The name of the column from which to retrieve the value.
+
+    Returns:
+        float: The value from the specified column in the 'Total' row.
+    """
+    return df.loc[df["survey_id"] == "Total", column].values[0]
+
+
+def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
+    """
+    Calculate the percentage of users with consistent preferences across surveys.
+
+    Methodology:
+    1. Determine the minimum number of surveys required for analysis (min_surveys).
+    2. Identify users who have completed at least min_surveys (qualified users).
+    3. For each qualified user, calculate their consistency ratio:
+       - Count the occurrences of each unique result (sum/ratio/equal).
+       - Divide the count of the most frequent result by the total number of surveys taken.
+    4. Users with a consistency ratio >= consistency_threshold are considered consistent.
+    5. Calculate the percentage of consistent users among qualified users.
+
+    Args:
+    optimization_stats (pd.DataFrame): DataFrame containing user survey results.
+    consistency_threshold (float): Minimum consistency ratio to be considered consistent (default: 0.8).
+
+    Returns:
+    tuple: (consistent_percentage, total_qualified_users, total_users, min_surveys, total_surveys)
+        - consistent_percentage: Percentage of users with consistent preferences.
+        - total_qualified_users: Number of users who completed the minimum required surveys.
+        - total_users: Total number of users in the dataset.
+        - min_surveys: Minimum number of surveys required for consistency analysis.
+        - total_surveys: Total number of unique surveys in the dataset.
+    """
+    total_surveys = optimization_stats["survey_id"].nunique()
+
+    # Set minimum surveys to the max of: 2 or half the total surveys (rounded up)
+    min_surveys = max(2, math.ceil(total_surveys / 2))
+
+    # Count surveys per user
+    survey_counts = optimization_stats.groupby("user_id")["survey_id"].nunique()
+
+    # Filter users with at least min_surveys
+    qualified_users = survey_counts[survey_counts >= min_surveys].index
+
+    # Calculate consistency for qualified users
+    user_consistency = (
+        optimization_stats[optimization_stats["user_id"].isin(qualified_users)]
+        .groupby("user_id")["result"]
+        .agg(lambda x: x.value_counts().iloc[0] / len(x))
+    )
+
+    # Count users above the consistency threshold
+    consistent_users = (user_consistency >= consistency_threshold).sum()
+    total_qualified_users = len(qualified_users)
+
+    # Calculate percentage of consistent users
+    consistent_percentage = (
+        (consistent_users / total_qualified_users) * 100
+        if total_qualified_users > 0
+        else 0
+    )
+
+    return (
+        consistent_percentage,
+        total_qualified_users,
+        len(survey_counts),
+        min_surveys,
+        total_surveys,
+    )
+
+
 def generate_executive_summary(
     summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
 ) -> str:
     """Generate an executive summary of the survey analysis."""
     total_surveys = len(summary_stats) - 1  # Excluding the "Total" row
-    total_users = summary_stats.loc[
-        summary_stats["survey_id"] == "Total", "unique_users"
-    ].values[0]
-    total_answers = summary_stats.loc[
-        summary_stats["survey_id"] == "Total", "total_answers"
-    ].values[0]
-
-    overall_sum_pref = summary_stats.loc[
-        summary_stats["survey_id"] == "Total", "sum_optimized_percentage"
-    ].values[0]
-    overall_ratio_pref = summary_stats.loc[
-        summary_stats["survey_id"] == "Total", "ratio_optimized_percentage"
-    ].values[0]
+    total_users = get_summary_value(summary_stats, "unique_users")
+    total_answers = get_summary_value(summary_stats, "total_answers")
+    overall_sum_pref = get_summary_value(summary_stats, "sum_optimized_percentage")
+    overall_ratio_pref = get_summary_value(summary_stats, "ratio_optimized_percentage")
 
     consistency_percentage, qualified_users, _, min_surveys, _ = (
         calculate_user_consistency(optimization_stats)
@@ -159,67 +227,6 @@ def generate_key_findings(
 
     content += "</ol>"
     return content
-
-
-def calculate_user_consistency(optimization_stats, consistency_threshold=0.8):
-    """
-    Calculate the percentage of users with consistent preferences across surveys.
-
-    Methodology:
-    1. Determine the minimum number of surveys required for analysis (min_surveys).
-    2. Identify users who have completed at least min_surveys (qualified users).
-    3. For each qualified user, calculate their consistency ratio:
-       - Count the occurrences of each unique result (sum/ratio/equal).
-       - Divide the count of the most frequent result by the total number of surveys taken.
-    4. Users with a consistency ratio >= consistency_threshold are considered consistent.
-    5. Calculate the percentage of consistent users among qualified users.
-
-    Args:
-    optimization_stats (pd.DataFrame): DataFrame containing user survey results.
-    consistency_threshold (float): Minimum consistency ratio to be considered consistent (default: 0.8).
-
-    Returns:
-    tuple: (consistent_percentage, total_qualified_users, total_users, min_surveys, total_surveys)
-        - consistent_percentage: Percentage of users with consistent preferences.
-        - total_qualified_users: Number of users who completed the minimum required surveys.
-        - total_users: Total number of users in the dataset.
-        - min_surveys: Minimum number of surveys required for consistency analysis.
-        - total_surveys: Total number of unique surveys in the dataset.
-    """
-    total_surveys = optimization_stats["survey_id"].nunique()
-
-    # Set minimum surveys to the max of: 2 or half the total surveys (rounded up)
-    min_surveys = max(2, math.ceil(total_surveys / 2))
-    # Count surveys per user
-    survey_counts = optimization_stats.groupby("user_id")["survey_id"].nunique()
-
-    # Filter users with at least min_surveys
-    qualified_users = survey_counts[survey_counts >= min_surveys].index
-
-    # Calculate consistency for qualified users
-    user_consistency = (
-        optimization_stats[optimization_stats["user_id"].isin(qualified_users)]
-        .groupby("user_id")["result"]
-        .agg(lambda x: x.value_counts().iloc[0] / len(x))
-    )
-
-    # Count users above the consistency threshold
-    consistent_users = (user_consistency >= consistency_threshold).sum()
-    total_qualified_users = len(qualified_users)
-
-    consistent_percentage = (
-        (consistent_users / total_qualified_users) * 100
-        if total_qualified_users > 0
-        else 0
-    )
-
-    return (
-        consistent_percentage,
-        total_qualified_users,
-        len(survey_counts),
-        min_surveys,
-        total_surveys,
-    )
 
 
 def generate_methodology_description() -> str:
