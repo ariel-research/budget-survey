@@ -19,7 +19,7 @@
 - [Analysis](#analysis)
   - [Running the Analysis](#running-the-analysis)
   - [Generating the Survey Report](#generating-the-survey-report)
-  - [Main Functions](#main-functions)
+  - [Key Components and Functions](#key-components-and-functions)
   - [Generated Files](#generated-files)
   - [Table Explanations](#table-explanations)
 - [Testing](#testing)
@@ -229,30 +229,37 @@ python -m analysis.survey_report_generator
 
 This command will create a PDF report named 'survey_analysis_report.pdf' in the 'data' directory. The report includes:
 
+- Executive summary
 - Overall survey participation statistics
-- Survey-wise analysis
-- Visualization of sum vs ratio optimization
-- Overall optimization trends
+- Visualizations of algorithm preferences:
+  - Per-survey answer percentages
+  - User survey majority choices
+  - Overall majority choice distribution
+  - Total answer percentage distribution
+- Detailed survey-wise analysis
 - Individual participant analysis
 - Key findings and conclusions
+- Methodology description
 
-### Main Functions
+### Key Components and Functions
 
-The analysis package contains several key functions:
+The analysis package consists of several key components:
 
-1. `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
-2. `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
-3. `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
+1. Data Retrieval and Processing:
+   - `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
 
-The survey report generator includes functions for:
+2. Statistical Analysis:
+   - `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
+   - `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
 
-1. `generate_overall_stats(summary_stats)`: Generates overall survey participation statistics.
-2. `generate_survey_analysis(summary_stats)`: Provides a detailed analysis for each survey.
-3. `generate_overall_trends(summary_stats)`: Summarizes optimization trends across all surveys.
-4. `generate_individual_analysis(optimization_stats)`: Analyzes individual participant responses.
-5. `generate_visualization(summary_stats)`: Creates a bar chart comparing sum vs ratio optimization across surveys.
-6. `generate_key_findings(summary_stats, optimization_stats)`: Produces key insights and conclusions from the data.
+3. Report Generation:
+   - `generate_report()`: Orchestrates the entire report generation process, including data loading, analysis, visualization, and PDF creation.
+   - Various functions for generating specific report sections (e.g., executive summary, survey analysis, visualizations).
 
+4. Visualization:
+   - Multiple functions for creating charts and graphs to visualize survey results and trends.
+
+For a complete list of functions and their descriptions, please refer to the source code in the `analysis` directory.
 ### Generated Files
 
 The analysis scripts generate the following files in the `data` directory:
