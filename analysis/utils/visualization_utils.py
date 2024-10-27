@@ -35,6 +35,25 @@ def save_plot_to_base64(fig: plt.Figure) -> str:
     return img_str
 
 
+def validate_dataframe(df: pd.DataFrame, required_columns: list) -> None:
+    """
+    Validate that DataFrame has required columns.
+
+    Args:
+        df: DataFrame to validate
+        required_columns: List of required column names
+
+    Raises:
+        ValueError: If DataFrame is empty or missing required columns
+    """
+    if df.empty:
+        raise ValueError("Input DataFrame is empty")
+
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"DataFrame missing required columns: {missing_columns}")
+
+
 def visualize_per_survey_answer_percentages(summary_stats: pd.DataFrame) -> str:
     """
     Generate a bar chart comparing sum and ratio optimization answer percentages across surveys.
@@ -45,6 +64,13 @@ def visualize_per_survey_answer_percentages(summary_stats: pd.DataFrame) -> str:
     Returns:
         str: Base64 encoded string of the chart image.
     """
+    required_columns = [
+        "survey_id",
+        "sum_optimized_percentage",
+        "ratio_optimized_percentage",
+    ]
+    validate_dataframe(summary_stats, required_columns)
+
     # Create figure and axis with a specific size
     fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -125,6 +151,9 @@ def visualize_user_survey_majority_choices(optimization_stats: pd.DataFrame) -> 
     Returns:
         str: Base64 encoded string of the heatmap image.
     """
+    required_columns = ["survey_id", "user_id", "result"]
+    validate_dataframe(optimization_stats, required_columns)
+
     # Pivot the data
     pivot_df = optimization_stats.pivot(
         index="user_id", columns="survey_id", values="result"
@@ -203,6 +232,9 @@ def visualize_overall_majority_choice_distribution(summary_stats: pd.DataFrame) 
     Returns:
         str: Base64 encoded string of the pie chart image.
     """
+    required_columns = ["sum_count", "ratio_count", "equal_count"]
+    validate_dataframe(summary_stats, required_columns)
+
     total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
 
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -233,6 +265,9 @@ def visualize_total_answer_percentage_distribution(summary_stats: pd.DataFrame) 
     Returns:
         str: Base64 encoded string of the pie chart image.
     """
+    required_columns = ["sum_optimized_percentage", "ratio_optimized_percentage"]
+    validate_dataframe(summary_stats, required_columns)
+
     total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
     sum_percentage = total_row["sum_optimized_percentage"]
     ratio_percentage = total_row["ratio_optimized_percentage"]
