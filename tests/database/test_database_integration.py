@@ -15,6 +15,7 @@ from database.queries import (
     create_comparison_pair,
     create_survey_response,
     create_user,
+    get_latest_survey_timestamp,
     get_subjects,
     get_survey_name,
     mark_survey_as_completed,
@@ -411,6 +412,63 @@ def test_retrieve_completed_survey_responses(app_context, setup_test_data, clean
         response["survey_response_id"] != incomplete_survey_id
         for response in completed_responses
     ), "Incomplete survey response was incorrectly retrieved"
+
+
+def test_get_latest_survey_timestamp(app_context, setup_test_data, cleanup_db):
+    """
+    Test retrieval of latest survey response timestamp.
+    """
+    # Create a user and survey response
+    user_id = generate_unique_id()
+    create_user(user_id)
+
+    # Fetch an existing survey ID
+    survey_query = "SELECT id FROM surveys LIMIT 1"
+    result = execute_query(survey_query)
+    survey_id = result[0]["id"]
+
+    # Create and complete a survey response
+    survey_response_id = create_survey_response(
+        user_id, survey_id, [30, 30, 40], "Test comment"
+    )
+    mark_survey_as_completed(survey_response_id)
+
+    # Add a small delay to ensure different timestamps
+    import time
+
+    time.sleep(1)
+
+    # Create another survey response but don't complete it
+    create_survey_response(user_id, survey_id, [40, 30, 30], "Test comment 2")
+
+    # Test getting latest timestamp
+    latest_timestamp = get_latest_survey_timestamp()
+
+    # Verify results
+    assert latest_timestamp is not None, "Should return a timestamp"
+
+    # Verify by direct query
+    query = """
+        SELECT created_at 
+        FROM survey_responses 
+        WHERE completed = TRUE 
+        ORDER BY created_at DESC 
+        LIMIT 1
+    """
+    result = execute_query(query)
+    expected_timestamp = result[0]["created_at"].timestamp()
+
+    assert latest_timestamp == expected_timestamp, "Timestamps don't match"
+
+
+def test_get_latest_survey_timestamp_no_surveys(app_context, cleanup_db):
+    """
+    Test retrieval of latest survey response timestamp when no surveys exist.
+    """
+    from database.queries import get_latest_survey_timestamp
+
+    latest_timestamp = get_latest_survey_timestamp()
+    assert latest_timestamp == 0, "Should return 0 when no completed surveys exist"
 
 
 if __name__ == "__main__":
