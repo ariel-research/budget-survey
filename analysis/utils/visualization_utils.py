@@ -1,6 +1,10 @@
 import base64
 import io
 
+import matplotlib
+
+# Use non-interactive backend to avoid GUI issues
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

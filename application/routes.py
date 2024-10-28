@@ -9,9 +9,11 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     url_for,
 )
 
+from analysis.utils.report_utils import ensure_fresh_report
 from application.messages import ERROR_MESSAGES
 from database.queries import (
     check_user_participation,
@@ -214,6 +216,28 @@ def thank_you():
     """Render the thank you page."""
     logger.info("Thank you page accessed")
     return render_template("thank_you.html")
+
+
+@main.route("/report")
+def view_report():
+    """Display the analysis report."""
+    try:
+        # Ensure CSV files and PDF report are up to date with database
+        ensure_fresh_report()
+
+        return send_file(
+            "data/survey_analysis_report.pdf",
+            mimetype="application/pdf",  # Explicitly tell browser this is a PDF file
+            as_attachment=False,  # Display in browser instead of downloading
+            download_name="survey_analysis_report.pdf",  # Name used if user chooses to download
+        )
+
+    except Exception as e:
+        logger.error(f"Error serving report: {e}")
+        return render_template(
+            "error.html",
+            message="Error generating or serving the report. Please try again later.",
+        )
 
 
 @main.errorhandler(400)

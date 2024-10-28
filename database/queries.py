@@ -282,3 +282,30 @@ def retrieve_completed_survey_responses():
     except Exception as e:
         logger.error(f"Error retrieving completed survey responses: {str(e)}")
         return []
+
+
+def get_latest_survey_timestamp() -> float:
+    """
+    Retrieves the timestamp of the latest completed survey response.
+
+    Returns:
+        float: Unix timestamp of the latest completed survey response,
+              or 0 if no completed surveys exist or if an error occurs.
+    """
+    query = """
+        SELECT MAX(created_at) as latest
+        FROM survey_responses 
+        WHERE completed = TRUE
+    """
+    logger.debug("Retrieving timestamp of latest completed survey response")
+
+    try:
+        result = execute_query(query)
+        if result and result[0]["latest"]:
+            return result[0]["latest"].timestamp()
+        else:
+            logger.warning("No completed survey responses found")
+            return 0
+    except Exception as e:
+        logger.error(f"Error retrieving latest survey timestamp: {str(e)}")
+        return 0
