@@ -33,26 +33,44 @@ main = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
 
 
-def get_survey_id():
-    """Get the current survey ID"""
+def get_survey_id() -> int:
+    """
+    Get the current survey ID from application config.
+
+    Returns:
+        int: The configured survey ID for the application.
+    """
     return current_app.config["SURVEY_ID"]
 
 
 def get_required_param(param_name: str) -> str:
-    """Get a required parameter from the request arguments."""
+    """
+    Get a required parameter from the request arguments.
+
+    Args:
+        param_name (str): Name of the parameter to retrieve.
+
+    Returns:
+        str: The value of the requested parameter.
+
+    Raises:
+        400: If the parameter is missing from the request.
+    """
     value = request.args.get(param_name)
     if not value:
         logger.warning(f"Required parameter '{param_name}' not found in request")
-        abort(400, description=f"Missing required parameter: {param_name}")
+        abort(
+            400,
+            description=ERROR_MESSAGES["missing_parameter"].format(param=param_name),
+        )
     return value
 
 
+# Core page routes
 @main.route("/")
 def index():
     """Render the index page or redirect to thank you page if survey is already completed."""
     user_id = get_required_param("userid")
-
-    # Convert to integer for database queries
     user_id_int = int(user_id)
 
     # Check if the survey exists
@@ -60,7 +78,7 @@ def index():
     survey_name = get_survey_name(survey_id)
     if not survey_name:
         logger.error(f"No survey found for survey_id {survey_id}")
-        abort(404, description="Survey not found")
+        abort(404, description=ERROR_MESSAGES["survey_not_found"])
 
     # Check if the user has already participated
     if check_user_participation(user_id_int, survey_id):
@@ -84,7 +102,7 @@ def create_vector():
 
     if not subjects:
         logger.error(f"No subjects found for survey_id {survey_id}")
-        abort(404, description="Survey not found or has no subjects")
+        abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
 
     if request.method == "POST":
         user_vector = [int(request.form.get(subject, 0)) for subject in subjects]
@@ -122,7 +140,7 @@ def survey():
 
     if not subjects:
         logger.error(f"No subjects found for survey_id {survey_id}")
-        abort(404, description="Survey not found or has no subjects")
+        abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
 
     if request.method == "GET":
         user_vector = list(map(int, request.args.get("vector", "").split(",")))
@@ -234,25 +252,44 @@ def view_report():
 
     except Exception as e:
         logger.error(f"Error serving report: {e}")
-        return render_template(
-            "error.html",
-            message="Error generating or serving the report. Please try again later.",
-        )
+        return render_template("error.html", message=ERROR_MESSAGES["report_error"])
+
+
+# Utility routes
+@main.route("/get_messages")
+def get_messages():
+    """
+    Serve error messages as JSON.
+
+    Returns:
+        JSON: Dictionary of all error messages used in the application.
+    """
+    return jsonify(ERROR_MESSAGES)
 
 
 @main.errorhandler(400)
 def bad_request(e):
-    """Handle 400 Bad Request errors."""
+    """
+    Handle 400 Bad Request errors.
+
+    Args:
+        e: The error object containing the description.
+
+    Returns:
+        tuple: Template and status code.
+    """
     return render_template("error.html", message=e.description), 400
 
 
 @main.errorhandler(404)
 def not_found(e):
-    """Handle 404 Not Found errors."""
+    """
+    Handle 404 Not Found errors.
+
+    Args:
+        e: The error object containing the description.
+
+    Returns:
+        tuple: Template and status code.
+    """
     return render_template("error.html", message=e.description), 404
-
-
-@main.route("/get_messages")
-def get_messages():
-    """Serve error messages as JSON."""
-    return jsonify(ERROR_MESSAGES)
