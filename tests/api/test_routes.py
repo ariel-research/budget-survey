@@ -1,7 +1,7 @@
 import os
 import sys
 
-# Add the parent directory to the system path to allow importing from the backend module.
+# Add the parent directory to the system path to allow importing from the backend module
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
@@ -100,3 +100,14 @@ def test_thank_you(client):
     response = client.get("/thank_you")
     assert response.status_code == 200
     assert b"thank" in response.data.lower()  # Check for 'thank' in any case
+
+
+def test_report_route(client):
+    """Test the report route when report exists."""
+    with patch("application.routes.send_file") as mock_send_file:
+        response = client.get("/report")
+        assert response.status_code == 200
+        mock_send_file.assert_called_once()
+        args = mock_send_file.call_args[0]
+        assert args[0] == "data/survey_analysis_report.pdf"
+        assert mock_send_file.call_args[1]["mimetype"] == "application/pdf"
