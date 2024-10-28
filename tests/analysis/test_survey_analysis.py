@@ -4,9 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
-# Add the project root directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from analysis.survey_analysis import (
@@ -14,41 +12,6 @@ from analysis.survey_analysis import (
     get_all_completed_survey_responses,
     summarize_stats_by_survey,
 )
-
-
-@pytest.fixture
-def sample_survey_responses():
-    """Provide a sample DataFrame of survey responses for testing."""
-    return pd.DataFrame(
-        {
-            "survey_id": [1, 1, 2],
-            "user_id": [101, 102, 103],
-            "optimal_allocation": [[50, 30, 20], [40, 40, 20], [60, 20, 20]],
-            "comparisons": [
-                [
-                    {
-                        "option_1": [40, 35, 25],
-                        "option_2": [45, 30, 25],
-                        "user_choice": 1,
-                    }
-                ],
-                [
-                    {
-                        "option_1": [35, 40, 25],
-                        "option_2": [45, 35, 20],
-                        "user_choice": 2,
-                    }
-                ],
-                [
-                    {
-                        "option_1": [55, 25, 20],
-                        "option_2": [65, 15, 20],
-                        "user_choice": 1,
-                    }
-                ],
-            ],
-        }
-    )
 
 
 @patch("analysis.survey_analysis.retrieve_completed_survey_responses")
