@@ -25,10 +25,16 @@
   - [Generated Files](#generated-files)
   - [Table Explanations](#table-explanations)
 - [Testing](#testing)
-  - [Unit Tests](#unit-tests)
-  - [Database Integration Tests](#database-integration-tests)
-  - [API Tests](#api-tests)
-  - [Load Testing](#load-testing)
+  - [Test Structure](#test-structure)
+  - [Running Tests](#running-tests)
+    - [Quick Start](#quick-start)
+    - [Test Categories](#test-categories)
+      - [Analysis Tests](#analysis-tests)
+      - [API Tests](#api-tests)
+      - [Database Tests](#database-tests)
+      - [Unit Tests](#unit-tests)
+      - [UI Tests](#ui-tests)
+      - [Load Testing](#load-testing)
 - [Development](#development)
 
 ## Overview
@@ -305,41 +311,80 @@ Remember to regularly run both the analysis script and the report generator to k
 
 ## Testing
 
-The project includes various types of tests to ensure the reliability and performance of the application. To run the tests, make sure you have activated your virtual environment and installed the required dependencies.
+The project includes comprehensive test coverage across multiple testing domains. All tests are located in the `tests/` directory.
 
-### Unit Tests
 
-To run the unit tests, use the following command:
+## Testing
 
+The project includes comprehensive test coverage across multiple testing domains. All tests are located in the `tests/` directory.
+
+### Test Structure
+```python
+tests/
+├── analysis/                  # Data analysis and reporting tests
+│   ├── utils/                
+│   │   ├── test_analysis_utils.py
+│   │   ├── test_file_utils.py
+│   │   └── test_visualization_utils.py
+│   ├── test_report_content_generators.py
+│   ├── test_survey_analysis.py
+│   └── test_survey_report_generator.py
+├── api/                      # API endpoint tests
+│   └── test_routes.py
+├── database/                 # Database integration tests
+│   └── test_database_integration.py
+├── performance/              # Load and performance tests
+│   └── load_test.py
+├── UI/                      # Frontend/UI tests
+│   └── test_client_side.py
+└── unit/                    # Core functionality tests
+    ├── test_generate_examples.py
+    └── test_survey_utils.py
 ```
-pytest tests/unit
+
+### Running Tests
+
+#### Quick Start
+Run all tests:
+```bash
+pytest
 ```
 
-These tests cover individual components and functions of the application.
+#### Test Categories
 
-### Database Integration Tests
-
-To run the database integration tests, use the following command:
-
-```
-pytest tests/database/test_database_integration.py
+##### Analysis Tests
+**Description:** Data processing and reporting
+```bash
+pytest tests/analysis/
 ```
 
-These tests verify the interaction between the application and the database, ensuring that database operations work as expected.
-
-### API Tests
-
-To run the API tests, use the following command:
-
-```
-pytest tests/api/test_routes.py
+##### API Tests
+**Description:** Endpoint functionality and error handling
+```bash
+pytest tests/api/
 ```
 
-These tests check the functionality of the application's API endpoints.
+##### Database Tests
+**Description:** Data persistence and integrity
+```bash
+pytest tests/database/
+```
 
-### Load Testing
+##### Unit Tests
+**Description:** Core algorithms and utilities
+```bash
+pytest tests/unit/
+```
 
-For load testing, we use Locust. Before running the load test, ensure that your application server is up and running.
+##### UI Tests
+**Description:** Frontend functionality
+```bash
+pytest tests/UI/
+```
+
+##### Load Testing
+**Description:** Performance and scalability testing
+We use Locust for performance testing. The load tests simulate realistic user behavior patterns.
 
 To run the load test, follow these steps:
 
