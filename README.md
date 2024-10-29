@@ -10,6 +10,8 @@
   - [Method 2: Using Docker Compose](#method-2-using-docker-compose)
 - [Running the Application](#running-the-application)
 - [Endpoints](#endpoints)
+  - [Main Routes](#main-routes)
+  - [API Endpoints](#api-endpoints)
 - [Screen Text Locations](#screen-text-locations)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
@@ -121,10 +123,26 @@ Notes:
 - While the 'surveyid' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
+
+### Main Routes
 - `/`: The first survey page, shows an introduction to the survey and consent form. 
 - `/create_vector`: second survey page, asks the user for his ideal budget.
 - `/survey`: The third survey page, asks the user to compare pairs of non-ideal budgets.
 - `/thank_you`: Thank you page, shown after survey completion.
+- `/report`: Displays the survey analysis report in PDF format. This endpoint:
+  - Automatically ensures the report is up-to-date with the latest survey data
+  - Shows the PDF directly in the browser
+  - Allows downloading the report
+
+Note: The `/report` endpoint includes an automatic refresh mechanism that:
+1. Checks if the CSV files are up-to-date with the database
+2. Regenerates CSVs if they're outdated or missing
+3. Checks if the PDF report is up-to-date with the CSVs
+4. Regenerates the PDF if needed
+This ensures that the report always reflects the most recent survey data without manual intervention.
+
+### API Endpoints
+- `/get_messages`: Returns a JSON dictionary of all error messages used in the application. This endpoint is used by the frontend to display localized error messages to users.
 
 ## Screen Text Locations
 To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
