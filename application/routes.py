@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 
 from flask import (
     Blueprint,
@@ -64,6 +65,22 @@ def get_required_param(param_name: str) -> str:
             description=ERROR_MESSAGES["missing_parameter"].format(param=param_name),
         )
     return value
+
+
+def redirect_to_panel4all(user_id, survey_id):
+    """
+    Generate the Panel4All redirect URL with the required parameters.
+
+    Args:
+        user_id (str): The user ID from the survey
+        survey_id (str): The survey ID
+
+    Returns:
+        str: The complete Panel4All URL for redirection
+    """
+    base_url = "http://www.panel4all.co.il/survey_runtime/external_survey_status.php"
+    params = {"surveyID": survey_id, "userID": user_id, "status": "finish"}
+    return f"{base_url}?{urlencode(params)}"
 
 
 # Core page routes
@@ -226,7 +243,9 @@ def survey():
                 "error.html", message=ERROR_MESSAGES["survey_processing_error"]
             )
 
-        return redirect(url_for("main.thank_you"))
+        panel4all_url = redirect_to_panel4all(user_id, survey_id)
+        logger.info(f"Redirecting user {user_id} to Panel4All: {panel4all_url}")
+        return redirect(panel4all_url)
 
 
 @main.route("/thank_you")
