@@ -48,7 +48,8 @@ def test_create_vector_post_valid(client):
     """Test the POST request to create_vector route with valid data."""
     with patch("application.routes.get_subjects", return_value=["Health", "Education"]):
         response = client.post(
-            "/create_vector?userid=1", data={"Health": "50", "Education": "50"}
+            "/create_vector?userid=1&surveyid=123",
+            data={"Health": "50", "Education": "50"},
         )
         assert response.status_code == 302  # Redirect
 
@@ -57,7 +58,8 @@ def test_create_vector_post_invalid(client):
     """Test the POST request to create_vector route with invalid data."""
     with patch("application.routes.get_subjects", return_value=["Health", "Education"]):
         response = client.post(
-            "/create_vector?userid=1", data={"Health": "60", "Education": "60"}
+            "/create_vector?userid=1&surveyid=123",
+            data={"Health": "60", "Education": "60"},
         )
         assert response.status_code == 200
         # Check for the presence of an error message, not the specific text
@@ -68,7 +70,7 @@ def test_survey_get(client):
     """Test the GET request to survey route."""
     with patch("application.routes.get_subjects", return_value=["Health", "Education"]):
         with patch("application.routes.generate_user_example", return_value=[]):
-            response = client.get("/survey?userid=1&vector=50,50")
+            response = client.get("/survey?userid=1&surveyid=123&vector=50,50")
             assert response.status_code == 200
 
 
@@ -80,7 +82,7 @@ def test_survey_post_valid(client):
                 with patch("application.routes.create_comparison_pair", return_value=1):
                     with patch("application.routes.mark_survey_as_completed"):
                         response = client.post(
-                            "/survey?userid=1",
+                            "/survey?userid=1&surveyid=123",
                             data={
                                 "user_vector": "50,50",
                                 "awareness_check": "2",
