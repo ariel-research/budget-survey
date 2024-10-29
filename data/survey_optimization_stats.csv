@@ -11,3 +11,7 @@ survey_id,user_id,num_of_answers,sum_optimized,ratio_optimized,result
 1,888,10,0,10,ratio
 1,777,10,10,0,sum
 1,756,10,5,5,equal
+1,1,10,2,8,ratio
+1,81,10,4,6,ratio
+1,810,10,4,6,ratio
+1,8100,10,3,7,ratio

@@ -34,14 +34,26 @@ main = Blueprint("main", __name__)
 logger = logging.getLogger(__name__)
 
 
-def get_survey_id() -> int:
+def get_internal_survey_id() -> int:
     """
-    Get the current survey ID from application config.
+    Get the internal survey ID from application config.
+    This is the ID used for database operations.
 
     Returns:
         int: The configured survey ID for the application.
     """
     return current_app.config["SURVEY_ID"]
+
+
+def get_external_survey_id() -> str:
+    """
+    Get the external survey ID from the URL parameters.
+    This is the ID used for Panel4All integration.
+
+    Returns:
+        str: The external survey ID from the URL parameters
+    """
+    return get_required_param("surveyid")
 
 
 def get_required_param(param_name: str) -> str:
@@ -88,25 +100,31 @@ def redirect_to_panel4all(user_id, survey_id):
 def index():
     """Render the index page or redirect to thank you page if survey is already completed."""
     user_id = get_required_param("userid")
+    external_survey_id = get_external_survey_id()
+    internal_survey_id = get_internal_survey_id()
     user_id_int = int(user_id)
 
     # Check if the survey exists
-    survey_id = get_survey_id()
-    survey_name = get_survey_name(survey_id)
+    survey_name = get_survey_name(internal_survey_id)
     if not survey_name:
-        logger.error(f"No survey found for survey_id {survey_id}")
+        logger.error(f"No survey found for survey_id {internal_survey_id}")
         abort(404, description=ERROR_MESSAGES["survey_not_found"])
 
-    # Check if the user has already participated
-    if check_user_participation(user_id_int, survey_id):
+    # Check if the user has already participated using internal ID
+    if check_user_participation(user_id_int, internal_survey_id):
         logger.info(
-            f"User {user_id} has already completed survey {survey_id}. Redirecting to thank you page."
+            f"User {user_id} has already completed survey {internal_survey_id}. Redirecting to thank you page."
         )
         return redirect(url_for("main.thank_you"))
 
-    logger.info(f"Index page accessed by user_id {user_id} for survey_id {survey_id}")
+    logger.info(
+        f"Index page accessed by user_id {user_id}, internal_survey_id {internal_survey_id}, external_survey_id {external_survey_id}"
+    )
     return render_template(
-        "index.html", user_id=user_id, survey_id=survey_id, survey_name=survey_name
+        "index.html",
+        user_id=user_id,
+        external_survey_id=external_survey_id,
+        survey_name=survey_name,
     )
 
 
@@ -114,11 +132,12 @@ def index():
 def create_vector():
     """Handle the creation of a budget vector."""
     user_id = get_required_param("userid")
-    survey_id = get_survey_id()
-    subjects = get_subjects(survey_id)
+    external_survey_id = get_external_survey_id()
+    internal_survey_id = get_internal_survey_id()
+    subjects = get_subjects(internal_survey_id)
 
     if not subjects:
-        logger.error(f"No subjects found for survey_id {survey_id}")
+        logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
         abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
 
     if request.method == "POST":
@@ -132,19 +151,28 @@ def create_vector():
                 error=ERROR_MESSAGES["invalid_vector"],
                 subjects=subjects,
                 user_id=user_id,
-                survey_id=survey_id,
+                external_survey_id=external_survey_id,
             )
 
         logger.info(f"Valid vector created by user {user_id}: {user_vector}")
         return redirect(
             url_for(
-                "main.survey", vector=",".join(map(str, user_vector)), userid=user_id
+                "main.survey",
+                vector=",".join(map(str, user_vector)),
+                userid=user_id,
+                surveyid=external_survey_id,
             )
         )
 
-    logger.debug(f"Create vector page accessed by user {user_id}")
+    logger.debug(
+        f"Create vector page accessed by user {user_id}, internal_survey_id {internal_survey_id}, external_survey_id {external_survey_id}"
+    )
     return render_template(
-        "create_vector.html", subjects=subjects, user_id=user_id, survey_id=survey_id
+        "create_vector.html",
+        subjects=subjects,
+        user_id=user_id,
+        internal_survey_id=internal_survey_id,
+        external_survey_id=external_survey_id,
     )
 
 
@@ -152,11 +180,12 @@ def create_vector():
 def survey():
     """Handle the survey process."""
     user_id = get_required_param("userid")
-    survey_id = get_survey_id()
-    subjects = get_subjects(survey_id)
+    external_survey_id = get_external_survey_id()
+    internal_survey_id = get_internal_survey_id()
+    subjects = get_subjects(internal_survey_id)
 
     if not subjects:
-        logger.error(f"No subjects found for survey_id {survey_id}")
+        logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
         abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
 
     if request.method == "GET":
@@ -166,7 +195,11 @@ def survey():
             logger.warning(
                 f"Invalid vector in survey GET for user {user_id}: {user_vector}"
             )
-            return redirect(url_for("main.create_vector", userid=user_id))
+            return redirect(
+                url_for(
+                    "main.create_vector", userid=user_id, surveyid=external_survey_id
+                )
+            )
 
         comparison_pairs = list(
             generate_user_example(tuple(user_vector), n=10, vector_size=len(subjects))
@@ -181,7 +214,8 @@ def survey():
             awareness_check=awareness_check,
             subjects=subjects,
             user_id=user_id,
-            survey_id=survey_id,
+            internal_survey_id=internal_survey_id,
+            external_survey_id=external_survey_id,
             zip=zip,
         )
 
@@ -203,6 +237,7 @@ def survey():
                     "main.survey",
                     vector=",".join(map(str, user_vector)),
                     userid=user_id,
+                    surveyid=external_survey_id,
                 )
             )
 
@@ -214,8 +249,9 @@ def survey():
             else:
                 logger.info(f"User with ID {user_id} already exists")
 
+            # Use internal survey ID for database operations
             survey_response_id = create_survey_response(
-                user_id, survey_id, user_vector, user_comment
+                user_id, internal_survey_id, user_vector, user_comment
             )
             logger.info(f"Survey response created with ID: {survey_response_id}")
 
@@ -243,8 +279,11 @@ def survey():
                 "error.html", message=ERROR_MESSAGES["survey_processing_error"]
             )
 
-        panel4all_url = redirect_to_panel4all(user_id, survey_id)
-        logger.info(f"Redirecting user {user_id} to Panel4All: {panel4all_url}")
+        # Use external survey ID for Panel4All redirect
+        panel4all_url = redirect_to_panel4all(user_id, external_survey_id)
+        logger.info(
+            f"Redirecting user {user_id} to Panel4All with external_survey_id {external_survey_id}"
+        )
         return redirect(panel4all_url)
 
 

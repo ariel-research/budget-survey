@@ -26,8 +26,8 @@ The page inherits from base.html and customizes the title and content blocks.
     {% endif %}
 
     <form class="vector-form" method="POST" data-form-type="create-vector">
-        <input type="hidden" name="userid" value="{{ user_id }}">
-        <input type="hidden" name="surveyid" value="{{ survey_id }}">
+        <!-- <input type="hidden" name="userid" value="{{ user_id }}">
+        <input type="hidden" name="surveyid" value="{{ survey_id }}"> -->
         <div class="budget-inputs">
             {% for subject in subjects %}
             <div class="input-group">
