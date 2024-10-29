@@ -10,6 +10,57 @@ from utils.generate_examples import sum_of_differences
 logger = logging.getLogger(__name__)
 
 
+def get_latest_csv_files(directory: str = "data") -> Dict[str, str]:
+    """
+    Get the latest CSV files from the specified directory.
+
+    Args:
+        directory (str): The directory to search for CSV files.
+
+    Returns:
+        Dict[str, str]: A dictionary of the latest CSV files.
+    """
+    csv_files = {
+        f: os.path.getmtime(os.path.join(directory, f))
+        for f in os.listdir(directory)
+        if f.endswith(".csv")
+    }
+
+    return (
+        {
+            "responses": "all_completed_survey_responses.csv",
+            "summary": "summarize_stats_by_survey.csv",
+            "optimization": "survey_optimization_stats.csv",
+        }
+        if all(
+            f in csv_files
+            for f in [
+                "all_completed_survey_responses.csv",
+                "summarize_stats_by_survey.csv",
+                "survey_optimization_stats.csv",
+            ]
+        )
+        else {}
+    )
+
+
+def load_data(directory: str = "data") -> Dict[str, pd.DataFrame]:
+    """
+    Load data from CSV files into pandas DataFrames.
+
+    Args:
+        directory (str): The directory containing the CSV files.
+
+    Returns:
+        Dict[str, pd.DataFrame]: A dictionary of loaded DataFrames.
+    """
+    files = get_latest_csv_files(directory)
+    return {
+        key: pd.read_csv(os.path.join(directory, filename))
+        for key, filename in files.items()
+    }
+
+
 def is_sum_optimized(
     optimal_vector: Tuple[int, ...],
     option_1: Tuple[int, ...],
@@ -82,49 +133,6 @@ def process_survey_responses(raw_results: List[Dict]) -> List[Dict]:
 
     logger.info(f"Processed {len(processed_results)} survey responses")
     return processed_results
-
-
-def save_dataframe_to_csv(df: pd.DataFrame, csv_filename: str) -> None:
-    """
-    Save a pandas DataFrame to a CSV file.
-
-    Args:
-        df: A pandas DataFrame to be saved.
-        csv_filename: The filename (including path) where the CSV will be saved.
-
-    Raises:
-        ValueError: If the DataFrame is empty.
-
-    Example:
-        >>> df = pd.DataFrame({'name': ['Alice', 'Bob'], 'age': [30, 25]})
-        >>> save_dataframe_to_csv(df, 'output.csv')
-    """
-    if df.empty:
-        logger.error("Input DataFrame is empty")
-        raise ValueError("Input DataFrame is empty")
-
-    try:
-        ensure_directory_exists(csv_filename)
-        logger.info(f"Writing DataFrame to {csv_filename}")
-        df.to_csv(csv_filename, index=False)
-        logger.info(f"Successfully wrote data to {csv_filename}")
-    except Exception as e:
-        logger.error(f"Error occurred while saving DataFrame to CSV: {e}")
-        raise
-
-
-def ensure_directory_exists(file_path: str) -> None:
-    """
-    Ensure that the directory for the given file path exists.
-    If it doesn't exist, create it.
-
-    Args:
-        file_path: The full path of the file, including filename.
-    """
-    directory = os.path.dirname(file_path)
-    if directory and not os.path.exists(directory):
-        os.makedirs(directory)
-        logger.info(f"Created directory: {directory}")
 
 
 def calculate_optimization_stats(row: pd.Series) -> pd.Series:

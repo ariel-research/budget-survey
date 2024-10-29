@@ -2,8 +2,6 @@
 
 ## Table of Contents
 
-## Table of Contents
-
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -12,6 +10,8 @@
   - [Method 2: Using Docker Compose](#method-2-using-docker-compose)
 - [Running the Application](#running-the-application)
 - [Endpoints](#endpoints)
+  - [Main Routes](#main-routes)
+  - [API Endpoints](#api-endpoints)
 - [Screen Text Locations](#screen-text-locations)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
@@ -20,8 +20,9 @@
 - [Algorithm](#algorithm)
 - [Analysis](#analysis)
   - [Running the Analysis](#running-the-analysis)
-  - [Main Functions](#main-functions)
-  - [Generated Tables](#generated-tables)
+  - [Generating the Survey Report](#generating-the-survey-report)
+  - [Key Components and Functions](#key-components-and-functions)
+  - [Generated Files](#generated-files)
   - [Table Explanations](#table-explanations)
 - [Testing](#testing)
   - [Unit Tests](#unit-tests)
@@ -122,10 +123,26 @@ Notes:
 - While the 'surveyid' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
+
+### Main Routes
 - `/`: The first survey page, shows an introduction to the survey and consent form. 
 - `/create_vector`: second survey page, asks the user for his ideal budget.
 - `/survey`: The third survey page, asks the user to compare pairs of non-ideal budgets.
 - `/thank_you`: Thank you page, shown after survey completion.
+- `/report`: Displays the survey analysis report in PDF format. This endpoint:
+  - Automatically ensures the report is up-to-date with the latest survey data
+  - Shows the PDF directly in the browser
+  - Allows downloading the report
+
+Note: The `/report` endpoint includes an automatic refresh mechanism that:
+1. Checks if the CSV files are up-to-date with the database
+2. Regenerates CSVs if they're outdated or missing
+3. Checks if the PDF report is up-to-date with the CSVs
+4. Regenerates the PDF if needed
+This ensures that the report always reflects the most recent survey data without manual intervention.
+
+### API Endpoints
+- `/get_messages`: Returns a JSON dictionary of all error messages used in the application. This endpoint is used by the frontend to display localized error messages to users.
 
 ## Screen Text Locations
 To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
@@ -210,7 +227,7 @@ The core algorithm of this application is implemented in the `generate_user_exam
 
 ## Analysis
 
-The project includes an 'analysis' package that processes the collected survey data and generates insightful statistics. This package is crucial for understanding user responses and deriving meaningful conclusions from the survey data.
+The project includes an 'analysis' package that processes the collected survey data and generates insightful statistics and reports. This package is crucial for understanding user responses and deriving meaningful conclusions from the survey data.
 
 ### Running the Analysis
 
@@ -220,51 +237,71 @@ To run the survey analysis, use the following command from the project root dire
 python -m analysis.survey_analysis
 ```
 
-### Main Functions
+### Generating the Survey Report
 
-The analysis package contains several key functions:
+To generate a comprehensive PDF report of the survey results, use the following command from the project root directory:
 
-1. `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
-2. `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
-3. `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
+```
+python -m analysis.survey_report_generator
+```
 
-### Generated Tables
+This command will create a PDF report named 'survey_analysis_report.pdf' in the 'data' directory. The report includes:
 
-The analysis script generates three CSV files, all saved in the `data` directory:
+- Executive summary
+- Overall survey participation statistics
+- Visualizations of algorithm preferences:
+  - Per-survey answer percentages
+  - User survey majority choices
+  - Overall majority choice distribution
+  - Total answer percentage distribution
+- Detailed survey-wise analysis
+- Individual participant analysis
+- Key findings and conclusions
+- Methodology description
 
-1. **all_completed_survey_responses.csv**
-   - Location: `data/all_completed_survey_responses.csv`
-   - Content: Raw data of all completed survey responses, including user choices for each comparison pair.
-   - Use: Provides a comprehensive view of all survey data for detailed analysis.
+### Key Components and Functions
 
-2. **survey_optimization_stats.csv**
-   - Location: `data/survey_optimization_stats.csv`
-   - Content: Optimization statistics for each survey response, including the number of sum-optimized and ratio-optimized choices.
-   - Use: Helps in understanding individual user tendencies towards sum or ratio optimization.
+The analysis package consists of several key components:
 
-3. **summarize_stats_by_survey.csv**
-   - Location: `data/summarize_stats_by_survey.csv`
-   - Content: Aggregated statistics for each survey, including total responses, optimization percentages, and a summary row for overall statistics.
-   - Use: Provides a high-level overview of survey results and overall optimization trends.
+1. Data Retrieval and Processing:
+   - `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
+
+2. Statistical Analysis:
+   - `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
+   - `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
+
+3. Report Generation:
+   - `generate_report()`: Orchestrates the entire report generation process, including data loading, analysis, visualization, and PDF creation.
+   - Various functions for generating specific report sections (e.g., executive summary, survey analysis, visualizations).
+
+4. Visualization:
+   - Multiple functions for creating charts and graphs to visualize survey results and trends.
+
+For a complete list of functions and their descriptions, please refer to the source code in the `analysis` directory.
+### Generated Files
+
+The analysis scripts generate the following files in the `data` directory:
+
+1. **all_completed_survey_responses.csv**: Raw data of all completed survey responses.
+2. **survey_optimization_stats.csv**: Optimization statistics for each survey response.
+3. **summarize_stats_by_survey.csv**: Aggregated statistics for each survey and overall summary.
+4. **survey_analysis_report.pdf**: Comprehensive PDF report of survey results and analysis.
 
 ### Table Explanations
 
 1. **All Completed Survey Responses**
    - Each row represents a single comparison pair from a completed survey.
    - Includes survey ID, user ID, optimal allocation, and details of each comparison pair.
-   - Useful for in-depth analysis of individual responses and patterns.
 
 2. **Survey Optimization Stats**
    - Each row represents a completed survey response.
    - Shows the number of sum-optimized and ratio-optimized choices for each response.
-   - Helps identify whether users tend to optimize for sum differences or ratios.
 
 3. **Summarize Stats by Survey**
    - Each row represents aggregate data for a single survey, with a final row summarizing across all surveys.
    - Includes metrics such as unique users, total answers, and percentages of sum/ratio optimized choices.
-   - Provides a quick overview of survey performance and user tendencies across different surveys.
 
-Remember to regularly run the analysis script to keep these statistics up-to-date as new survey responses are collected.
+Remember to regularly run both the analysis script and the report generator to keep these statistics and reports up-to-date as new survey responses are collected.
 
 ## Testing
 

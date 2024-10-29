@@ -44,11 +44,16 @@ def setup_logging():
                     },
                 },
                 "root": {
-                    "level": "INFO",  # Set to DEBUG to capture all levels of logs
+                    "level": "INFO",
                     "handlers": ["console", "file"],
                 },
             }
         )
+
+        # Silence specific loggers
+        logging.getLogger("__init__").setLevel(logging.WARNING)
+        logging.getLogger("weasyprint").setLevel(logging.WARNING)
+        logging.getLogger("fontTools").setLevel(logging.WARNING)
 
     except Exception as e:
         print(f"Error setting up logging: {e}")

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Analysis Report</title>
+    <link rel="stylesheet" href="report_style.css">
+</head>
+<body>
+    <h1>Survey Analysis Report</h1>
+    <p>Generated on: {{ generated_date }}</p>
+
+    <div class="summary">
+        <h2>Executive Summary</h2>
+        {{ executive_summary | safe }}
+    </div>
+
+    <h2>Overall Statistics</h2>
+    {{ overall_stats | safe }}
+
+    <h2>Algorithm Preference Visualizations</h2>
+
+    <h3>Percentage of Sum vs Ratio Optimized Answers per Survey</h3>
+    <p>This chart shows the percentage breakdown of sum vs ratio optimized answers for each individual survey.</p>
+    <img src="data:image/png;base64,{{ per_survey_answer_percentages }}" alt="Per Survey Answer Percentages" class="chart">
+    
+    <h3>User Majority Choice Matrix by Survey</h3>
+    <p>This color-coded matrix displays the majority choice (sum, ratio, or equal) for each user across different surveys. Each cell represents a user's preference for a specific survey, with colors indicating different choices.</p>
+    <img src="data:image/png;base64,{{ user_survey_majority_choices }}" alt="User Uurvey Majority Choices" class="chart">
+    
+    <h3>Distribution of Majority Choices Across All User-Survey Combinations</h3>
+    <p>This pie chart shows the overall distribution of majority choices (sum, ratio, or equal) across all user-survey combinations.</p>
+    <img src="data:image/png;base64,{{ overall_majority_choice_distribution }}" alt="Overall Majority Choice Distribution" class="chart">
+    
+    <h3>Overall Distribution of Sum vs Ratio Optimized Answers</h3>
+    <p>This pie chart presents the overall percentage distribution of sum vs ratio optimized answers across all surveys and users.</p>
+    <img src="data:image/png;base64,{{ total_answer_percentage_distribution }}" alt="Total Answer Percentage Distribution" class="chart">
+
+    <h2>Detailed Survey Analysis</h2>
+    {{ survey_analysis | safe }}
+
+    <h2>Individual User Analysis</h2>
+    {{ individual_analysis | safe }}
+
+    <h2>Key Findings</h2>
+    {{ key_findings | safe }}
+
+    <h2>Methodology</h2>
+    {{ methodology | safe }}
+</body>
+</html>
+
+<!-- The image tag embeds a base64-encoded PNG image directly in the HTML -->
+<!-- Note: The `| safe` filter is used to render HTML content safely -->
+<!-- This template uses Jinja2 templating language for dynamic content insertion -->
