@@ -10,12 +10,12 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-def create_user(user_id: int) -> int:
+def create_user(user_id: str) -> str:
     """
     Inserts a new user into the users table.
 
     Args:
-        user_id (int): The ID of the new user.
+        user_id (str): The ID of the new user.
 
     Returns:
         The ID of the newly created user, or None if an error occurs.
@@ -137,12 +137,12 @@ def mark_survey_as_completed(survey_response_id: int) -> int:
         return 0  # Return 0 to indicate no rows affected
 
 
-def user_exists(user_id: int) -> bool:
+def user_exists(user_id: str) -> bool:
     """
     Checks if the user already exists in the database.
 
     Args:
-        user_id (int): The ID of the user.
+        user_id (str): The ID of the user.
 
     Returns:
         bool: True if the user already exists in the database, False otherwise.
