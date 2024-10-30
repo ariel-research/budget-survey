@@ -5,7 +5,6 @@ CREATE TABLE users (
 
 CREATE TABLE surveys (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  -- external_id VARCHAR(128),
   name VARCHAR(255) NOT NULL,
   description TEXT,
   subjects JSON NOT NULL,
@@ -24,8 +23,6 @@ CREATE TABLE survey_responses (
   user_comment TEXT,
   completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  -- FOREIGN KEY (user_id) REFERENCES users(id),
-  -- FOREIGN KEY (survey_id) REFERENCES surveys(id)
 );
 
 CREATE TABLE comparison_pairs (

@@ -53,7 +53,7 @@ def get_external_survey_id() -> str:
     Returns:
         str: The external survey ID from the URL parameters
     """
-    return get_required_param("surveyid")
+    return get_required_param("surveyID")
 
 
 def get_user_id() -> str:
@@ -64,7 +64,7 @@ def get_user_id() -> str:
     Returns:
         str: The user ID from the URL parameters
     """
-    return get_required_param("userid")
+    return get_required_param("userID")
 
 
 def get_required_param(param_name: str) -> str:
@@ -169,8 +169,8 @@ def create_vector():
             url_for(
                 "main.survey",
                 vector=",".join(map(str, user_vector)),
-                userid=user_id,
-                surveyid=external_survey_id,
+                userID=user_id,
+                surveyID=external_survey_id,
             )
         )
 
@@ -207,7 +207,7 @@ def survey():
             )
             return redirect(
                 url_for(
-                    "main.create_vector", userid=user_id, surveyid=external_survey_id
+                    "main.create_vector", userID=user_id, surveyID=external_survey_id
                 )
             )
 
@@ -246,8 +246,8 @@ def survey():
                 url_for(
                     "main.survey",
                     vector=",".join(map(str, user_vector)),
-                    userid=user_id,
-                    surveyid=external_survey_id,
+                    userID=user_id,
+                    surveyID=external_survey_id,
                 )
             )
 

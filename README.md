@@ -120,13 +120,13 @@ Note: Make sure your .env file is properly configured with the correct database 
 3. Access the application at `http://localhost:5001`
 
 The live version of the application can be accessed at:
-https://survey.csariel.xyz/?userid=...&surveyid=...
+https://survey.csariel.xyz/?userID=...&surveyID=...
 
 Notes: 
 
-- Both 'userid' and 'surveyid' parameters are required in the URL.
-- The 'userid' parameter is used to obtain the user_id.
-- While the 'surveyid' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
+- Both 'userID' and 'surveyID' parameters are required in the URL.
+- The 'userID' parameter is used to obtain the user_id.
+- While the 'surveyID' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
 
 ## Endpoints
 
