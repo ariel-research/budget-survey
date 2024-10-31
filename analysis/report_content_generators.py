@@ -115,6 +115,7 @@ def generate_executive_summary(
     overall_sum_pref = get_summary_value(summary_stats, "sum_optimized_percentage")
     overall_ratio_pref = get_summary_value(summary_stats, "ratio_optimized_percentage")
 
+    # Calculate consistency metrics
     consistency_percentage, qualified_users, _, min_surveys, _ = (
         calculate_user_consistency(optimization_stats)
     )
@@ -126,12 +127,9 @@ def generate_executive_summary(
     <ol>
         <li>Overall, users showed a {'sum' if overall_sum_pref > overall_ratio_pref else 'ratio'} optimization preference 
            ({overall_sum_pref:.2f}% sum vs {overall_ratio_pref:.2f}% ratio).</li>
-        <li>{consistency_percentage:.2f}% of users who participated in at least {min_surveys} surveys showed consistent optimization preferences (80% or more consistent).</li>
+        <li>{consistency_percentage:.2f}% of users who participated in at least {min_surveys} surveys consistently preferred the same optimization method (sum or ratio) across surveys (80% or more of their responses).</li>
         <li>The consistency analysis considered {qualified_users} out of {total_users} total users.</li>
     </ol>
-    
-    <p>These findings provide insights into user preferences for optimization strategies across multiple surveys, 
-    highlighting both overall trends and individual consistency in decision-making.</p>
     """
 
     logger.info("Executive summary generation completed")
