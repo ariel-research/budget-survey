@@ -74,7 +74,7 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
     try:
         report_data = {
             "metadata": {
-                "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "total_surveys": data["responses"]["survey_id"].nunique(),
                 "total_participants": data["responses"]["user_id"].nunique(),
                 "total_survey_responses": len(data["responses"]),
