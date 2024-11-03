@@ -8,26 +8,28 @@
 </head>
 <body>
     <header>
-        <h1>Survey Analysis Report</h1>
-        <div class="metadata-container">
-            <div class="metadata-item">
-                <span class="metadata-label">Generated on:</span>
-                <span class="metadata-value">{{ metadata.generated_date }}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Total Surveys:</span>
-                <span class="metadata-value">{{ metadata.total_surveys }}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Total Unique Participants:</span>
-                <span class="metadata-value">{{ metadata.total_participants }}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Total Survey Responses:</span>
-                <span class="metadata-value">{{ metadata.total_responses }}</span>
+        <div class="report-header">
+            <h1>Survey Analysis Report</h1>
+        
+            <div class="metadata-container">
+                <div class="metadata-item">
+                    <span class="metadata-label">Generated on:</span>
+                    <span class="metadata-value">{{ metadata.generated_date }}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Total Surveys:</span>
+                    <span class="metadata-value">{{ metadata.total_surveys }}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Unique Users:</span>
+                    <span class="metadata-value">{{ metadata.total_participants }}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Total total_survey_responses:</span>
+                    <span class="metadata-value">{{ metadata.total_survey_responses }}</span>
+                </div>
             </div>
         </div>
-    </div>
     </header>
 
     <main>
@@ -41,46 +43,43 @@
             {{ sections.overall_stats | safe }}
         </section>
 
-        <section id="visualizations">
+
+        <section id="visualizations" class="section">
             <h2>Algorithm Preference Visualizations</h2>
 
             <div class="visualization-container">
-                <h3>User Choice Analysis</h3>
-                <p>Detailed breakdown of individual user choices across all surveys.</p>
-                <img src="data:image/png;base64,{{ sections.visualizations.user_choices }}" 
-                     alt="User Choices Analysis" 
-                     class="chart full-width">
+                <div class="viz-header">
+                    <h3>User Choice Analysis</h3>
+                    <p class="viz-description">Detailed breakdown of individual user choices across all surveys.</p>
+                </div>
+                <img src="data:image/png;base64,{{ sections.visualizations.user_choices }}" alt="User Choices Analysis" class="chart full-width">
             </div>
 
             <div class="visualization-container">
                 <h3>Survey Answer Distribution</h3>
-                <p>Distribution of sum vs ratio optimized answers per survey.</p>
-                <img src="data:image/png;base64,{{ sections.visualizations.per_survey_percentages }}" 
-                     alt="Per Survey Answer Percentages" 
-                     class="chart">
+                <div class="visualization-content">
+                    <p class="visualization-description">Distribution of sum vs ratio optimized answers per survey.</p>
+                    <img src="data:image/png;base64,{{ sections.visualizations.per_survey_percentages }}" alt="Per Survey Answer Percentages" class="chart">
+                </div>
             </div>
 
             <div class="visualization-container">
                 <h3>User Preference Matrix</h3>
-                <p>User majority choices across different surveys.</p>
-                <img src="data:image/png;base64,{{ sections.visualizations.user_majority_choices }}" 
-                     alt="User Survey Majority Choices" 
-                     class="chart">
+                <div class="visualization-content">
+                    <p class="visualization-description">User majority choices across different surveys.</p>
+                    <img src="data:image/png;base64,{{ sections.visualizations.user_majority_choices }}" alt="User Survey Majority Choices" class="chart">
+                </div>
             </div>
 
             <div class="visualization-grid">
                 <div class="visualization-item">
                     <h3>Overall Choice Distribution</h3>
-                    <img src="data:image/png;base64,{{ sections.visualizations.overall_distribution }}" 
-                         alt="Overall Majority Choice Distribution" 
-                         class="chart">
+                    <img src="data:image/png;base64,{{ sections.visualizations.overall_distribution }}" alt="Overall Majority Choice Distribution" class="chart">
                 </div>
 
                 <div class="visualization-item">
                     <h3>Answer Type Distribution</h3>
-                    <img src="data:image/png;base64,{{ sections.visualizations.answer_distribution }}" 
-                         alt="Total Answer Percentage Distribution" 
-                         class="chart">
+                    <img src="data:image/png;base64,{{ sections.visualizations.answer_distribution }}" alt="Total Answer Percentage Distribution" class="chart">
                 </div>
             </div>
         </section>

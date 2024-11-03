@@ -304,24 +304,18 @@ def visualize_total_answer_percentage_distribution(summary_stats: pd.DataFrame) 
 def visualize_user_choices(query_results: List[Dict]) -> str:
     """
     Creates a clean visualization showing user choices across surveys.
-
-    Args:
-        query_results: List of dictionaries containing survey response data
-
-    Returns:
-        str: Base64 encoded string of the visualization
     """
     try:
         if not query_results:
             logger.warning("No data available for visualization")
-            fig, ax = plt.subplots(figsize=(8, 4))
+            fig, ax = plt.subplots(figsize=(12, 6))
             ax.text(
                 0.5,
                 0.5,
                 "No survey data available",
                 ha="center",
                 va="center",
-                fontsize=12,
+                fontsize=14,
             )
             ax.axis("off")
             return save_plot_to_base64(fig)
@@ -332,12 +326,12 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
             key = (str(row["user_id"]), str(row["survey_id"]))
             if key not in user_survey_map:
                 user_survey_map[key] = {
-                    "choices": [0] * 10,  # Initialize array for 10 questions
+                    "choices": [0] * 10,
                     "total_opt1": 0,
                     "total_opt2": 0,
                 }
 
-            pair_idx = row["pair_number"] - 1  # Convert to 0-based index
+            pair_idx = row["pair_number"] - 1
             choice = row["user_choice"]
             user_survey_map[key]["choices"][pair_idx] = choice
             if choice == 1:
@@ -365,14 +359,18 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
                 ]
             )
 
-        # Create figure with larger size
-        fig = plt.figure(figsize=(15, max(8, len(stats_data) * 0.8)))  # Increased size
+        # Create figure with optimized size
+        rows = len(stats_data)
+        fig_height = max(12, min(24, rows * 0.9))
 
-        # Create main axis for the table with specific size and position
-        ax = plt.axes([0.05, 0.1, 0.9, 0.85])  # [left, bottom, width, height]
+        # Create figure without extra space
+        fig = plt.figure(figsize=(18, fig_height), constrained_layout=True)
+
+        # Create a single subplot that fills the figure
+        ax = fig.add_subplot(111)
         ax.axis("off")
 
-        # Define column labels with question numbers
+        # Define column labels
         column_labels = [
             "User ID",
             "Survey ID",
@@ -384,61 +382,74 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
 
         # Create and style the table
         table = ax.table(
-            cellText=stats_data, colLabels=column_labels, loc="center", cellLoc="center"
+            cellText=stats_data,
+            colLabels=column_labels,
+            loc="center",
+            cellLoc="center",
+            bbox=[0, 0, 0.95, 1],
         )
 
-        # Style the table
+        # Style improvements
         table.auto_set_font_size(False)
-        table.set_fontsize(11)  # Increased font size
+        table.set_fontsize(12)
 
-        # Set specific column widths
-        col_widths = [0.15, 0.1, 0.35, 0.13, 0.13, 0.14]
+        # Optimized column widths
+        col_widths = [0.17, 0.11, 0.25, 0.11, 0.11, 0.11]
         for idx, width in enumerate(col_widths):
-            table.auto_set_column_width([idx])
             for cell in table._cells:
-                if cell[1] == idx:  # if this cell is in the current column
+                if cell[1] == idx:
                     table._cells[cell].set_width(width)
 
-        # Scale table to fill figure
-        table.scale(1.0, 2.2)  # Increased row height
+        # Increased row height scaling
+        table.scale(1.0, 2.4)
 
-        # Style header
+        # Enhanced header styling
         for j, cell in enumerate(
             table._cells[(0, j)] for j in range(len(column_labels))
         ):
-            cell.set_facecolor("#4472C4")
-            cell.set_text_props(color="white", weight="bold")
+            cell.set_facecolor("#2C3E50")
+            cell.set_text_props(color="white", weight="bold", fontsize=13)
 
-        # Style choices column to make it more readable
+        # Enhanced row styling
         for i in range(len(stats_data)):
+            # Style choices column
             cell = table._cells[(i + 1, 2)]
-            cell.set_text_props(
-                family="monospace", fontsize=12
-            )  # Increased size for choices
+            cell.set_text_props(family="monospace", fontsize=13)
 
-            # Add alternating row colors
+            # Alternating row colors
             for j in range(len(column_labels)):
                 cell = table._cells[(i + 1, j)]
                 if i % 2 == 0:
-                    cell.set_facecolor("#E9EEF6")
+                    cell.set_facecolor("#EDF2F7")
                 else:
                     cell.set_facecolor("#FFFFFF")
 
-        plt.title(
-            "Detailed Survey Choices Analysis", pad=20, fontsize=16, weight="bold"
+        # Use figure suptitle for the main title with minimal spacing
+        plt.suptitle(
+            "Detailed Survey Choices Analysis",
+            y=0.99,  # Move title very close to top
+            fontsize=18,
+            weight="bold",
         )
 
-        # Add legend/explanation with larger font
+        # Add note at the bottom with minimal spacing
         fig.text(
             0.05,
-            0.02,
+            0.01,
             "Note: Choices show selected option (1 or 2) for each question Q1-Q10",
-            fontsize=10,
+            fontsize=11,
             style="italic",
+            color="#666666",
         )
+
+        # Ensure tight layout and save
+        plt.tight_layout(
+            rect=[0, 0.02, 1, 0.98]
+        )  # Adjust layout while preserving small space for title and note
 
         return save_plot_to_base64(fig)
 
     except Exception as e:
         logger.error(f"Error creating visualization: {str(e)}", exc_info=True)
+        logger.exception("Full traceback:")
         return ""

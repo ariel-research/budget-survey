@@ -147,7 +147,6 @@ def summarize_stats_by_survey(df: pd.DataFrame) -> pd.DataFrame:
 
     # Concatenate the grouped data with the summary row
     result = pd.concat([grouped, summary], ignore_index=True)
-    print(result)
     return result
 
 

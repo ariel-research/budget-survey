@@ -77,7 +77,7 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                 "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "total_surveys": data["responses"]["survey_id"].nunique(),
                 "total_participants": data["responses"]["user_id"].nunique(),
-                "total_responses": len(data["responses"]),
+                "total_survey_responses": len(data["responses"]),
             },
             "sections": {
                 "executive_summary": generate_executive_summary(
@@ -87,6 +87,9 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                     data["summary"], data["optimization"]
                 ),
                 "visualizations": {
+                    "user_choices": visualize_user_choices(
+                        retrieve_user_survey_choices()
+                    ),
                     "per_survey_percentages": visualize_per_survey_answer_percentages(
                         data["summary"]
                     ),
@@ -98,9 +101,6 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                     ),
                     "answer_distribution": visualize_total_answer_percentage_distribution(
                         data["summary"]
-                    ),
-                    "user_choices": visualize_user_choices(
-                        retrieve_user_survey_choices()
                     ),
                 },
                 "analysis": {
