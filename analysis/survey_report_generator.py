@@ -20,9 +20,15 @@ from analysis.utils import (
     visualize_overall_majority_choice_distribution,
     visualize_per_survey_answer_percentages,
     visualize_total_answer_percentage_distribution,
+    visualize_user_choices,
     visualize_user_survey_majority_choices,
 )
+from app import create_app
+from database.queries import retrieve_user_survey_choices
 from logging_config import setup_logging
+
+app = create_app()
+
 
 pd.set_option("future.no_silent_downcasting", True)
 
@@ -78,6 +84,9 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         ),
         "total_answer_percentage_distribution": visualize_total_answer_percentage_distribution(
             data["summary"]
+        ),
+        "user_choices_visualization": visualize_user_choices(
+            retrieve_user_survey_choices()
         ),
         "survey_analysis": generate_survey_analysis(data["summary"]),
         "individual_analysis": generate_individual_analysis(data["optimization"]),

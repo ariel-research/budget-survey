@@ -5,11 +5,16 @@ import matplotlib
 
 # Use non-interactive backend to avoid GUI issues
 matplotlib.use("Agg")
+import logging
+from typing import Dict, List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.colors import ListedColormap
+
+logger = logging.getLogger(__name__)
 
 
 def save_plot_to_base64(fig: plt.Figure) -> str:
@@ -294,3 +299,146 @@ def visualize_total_answer_percentage_distribution(summary_stats: pd.DataFrame) 
     )
 
     return save_plot_to_base64(fig)
+
+
+def visualize_user_choices(query_results: List[Dict]) -> str:
+    """
+    Creates a clean visualization showing user choices across surveys.
+
+    Args:
+        query_results: List of dictionaries containing survey response data
+
+    Returns:
+        str: Base64 encoded string of the visualization
+    """
+    try:
+        if not query_results:
+            logger.warning("No data available for visualization")
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.text(
+                0.5,
+                0.5,
+                "No survey data available",
+                ha="center",
+                va="center",
+                fontsize=12,
+            )
+            ax.axis("off")
+            return save_plot_to_base64(fig)
+
+        # Process data
+        user_survey_map = {}
+        for row in query_results:
+            key = (str(row["user_id"]), str(row["survey_id"]))
+            if key not in user_survey_map:
+                user_survey_map[key] = {
+                    "choices": [0] * 10,  # Initialize array for 10 questions
+                    "total_opt1": 0,
+                    "total_opt2": 0,
+                }
+
+            pair_idx = row["pair_number"] - 1  # Convert to 0-based index
+            choice = row["user_choice"]
+            user_survey_map[key]["choices"][pair_idx] = choice
+            if choice == 1:
+                user_survey_map[key]["total_opt1"] += 1
+            else:
+                user_survey_map[key]["total_opt2"] += 1
+
+        # Prepare data for table
+        stats_data = []
+        for (user_id, survey_id), data in user_survey_map.items():
+            choices_str = " ".join([str(c) for c in data["choices"]])
+            total_choices = data["total_opt1"] + data["total_opt2"]
+            opt1_percentage = (
+                (data["total_opt1"] / total_choices * 100) if total_choices > 0 else 0
+            )
+
+            stats_data.append(
+                [
+                    str(user_id),
+                    str(survey_id),
+                    choices_str,
+                    str(data["total_opt1"]),
+                    str(data["total_opt2"]),
+                    f"{opt1_percentage:.1f}%",
+                ]
+            )
+
+        # Create figure with larger size
+        fig = plt.figure(figsize=(15, max(8, len(stats_data) * 0.8)))  # Increased size
+
+        # Create main axis for the table with specific size and position
+        ax = plt.axes([0.05, 0.1, 0.9, 0.85])  # [left, bottom, width, height]
+        ax.axis("off")
+
+        # Define column labels with question numbers
+        column_labels = [
+            "User ID",
+            "Survey ID",
+            "Choices (Q1-Q10)",
+            "Option 1\nTotal",
+            "Option 2\nTotal",
+            "Option 1\nPercentage",
+        ]
+
+        # Create and style the table
+        table = ax.table(
+            cellText=stats_data, colLabels=column_labels, loc="center", cellLoc="center"
+        )
+
+        # Style the table
+        table.auto_set_font_size(False)
+        table.set_fontsize(11)  # Increased font size
+
+        # Set specific column widths
+        col_widths = [0.15, 0.1, 0.35, 0.13, 0.13, 0.14]
+        for idx, width in enumerate(col_widths):
+            table.auto_set_column_width([idx])
+            for cell in table._cells:
+                if cell[1] == idx:  # if this cell is in the current column
+                    table._cells[cell].set_width(width)
+
+        # Scale table to fill figure
+        table.scale(1.0, 2.2)  # Increased row height
+
+        # Style header
+        for j, cell in enumerate(
+            table._cells[(0, j)] for j in range(len(column_labels))
+        ):
+            cell.set_facecolor("#4472C4")
+            cell.set_text_props(color="white", weight="bold")
+
+        # Style choices column to make it more readable
+        for i in range(len(stats_data)):
+            cell = table._cells[(i + 1, 2)]
+            cell.set_text_props(
+                family="monospace", fontsize=12
+            )  # Increased size for choices
+
+            # Add alternating row colors
+            for j in range(len(column_labels)):
+                cell = table._cells[(i + 1, j)]
+                if i % 2 == 0:
+                    cell.set_facecolor("#E9EEF6")
+                else:
+                    cell.set_facecolor("#FFFFFF")
+
+        plt.title(
+            "Detailed Survey Choices Analysis", pad=20, fontsize=16, weight="bold"
+        )
+
+        # Add legend/explanation with larger font
+        fig.text(
+            0.05,
+            0.02,
+            "Note: Choices show selected option (1 or 2) for each question Q1-Q10",
+            fontsize=10,
+            style="italic",
+        )
+
+        return save_plot_to_base64(fig)
+
+    except Exception as e:
+        logger.error(f"Error creating visualization: {str(e)}", exc_info=True)
+        return ""

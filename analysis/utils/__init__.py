@@ -13,6 +13,7 @@ from .visualization_utils import (
     visualize_overall_majority_choice_distribution,
     visualize_per_survey_answer_percentages,
     visualize_total_answer_percentage_distribution,
+    visualize_user_choices,
     visualize_user_survey_majority_choices,
 )
 
@@ -26,6 +27,7 @@ __all__ = [
     "visualize_per_survey_answer_percentages",
     "visualize_total_answer_percentage_distribution",
     "visualize_user_survey_majority_choices",
+    "visualize_user_choices",
     "load_data",
     "get_latest_csv_files",
 ]
