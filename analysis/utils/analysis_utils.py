@@ -20,28 +20,38 @@ def get_latest_csv_files(directory: str = "data") -> Dict[str, str]:
     Returns:
         Dict[str, str]: A dictionary of the latest CSV files.
     """
-    csv_files = {
-        f: os.path.getmtime(os.path.join(directory, f))
-        for f in os.listdir(directory)
-        if f.endswith(".csv")
-    }
+    logger.debug(f"Searching for CSV files in directory: {directory}")
 
-    return (
-        {
+    try:
+        # Check if directory exists
+        if not os.path.exists(directory):
+            logger.error(f"Directory not found: {directory}")
+            return {}
+
+        required_files = {
             "responses": "all_completed_survey_responses.csv",
             "summary": "summarize_stats_by_survey.csv",
             "optimization": "survey_optimization_stats.csv",
         }
-        if all(
-            f in csv_files
-            for f in [
-                "all_completed_survey_responses.csv",
-                "summarize_stats_by_survey.csv",
-                "survey_optimization_stats.csv",
-            ]
-        )
-        else {}
-    )
+
+        csv_files = {
+            f: os.path.getmtime(os.path.join(directory, f))
+            for f in os.listdir(directory)
+            if f.endswith(".csv")
+        }
+
+        # Check if all required files exist
+        if all(f in csv_files for f in required_files.values()):
+            logger.debug("All required CSV files found")
+            return required_files
+        else:
+            missing_files = [f for f in required_files.values() if f not in csv_files]
+            logger.warning(f"Missing required CSV files: {missing_files}")
+            return {}
+
+    except Exception as e:
+        logger.error(f"Error checking CSV files: {str(e)}", exc_info=True)
+        return {}
 
 
 def load_data(directory: str = "data") -> Dict[str, pd.DataFrame]:
@@ -54,11 +64,29 @@ def load_data(directory: str = "data") -> Dict[str, pd.DataFrame]:
     Returns:
         Dict[str, pd.DataFrame]: A dictionary of loaded DataFrames.
     """
-    files = get_latest_csv_files(directory)
-    return {
-        key: pd.read_csv(os.path.join(directory, filename))
-        for key, filename in files.items()
-    }
+    try:
+        files = get_latest_csv_files(directory)
+        if not files:
+            logger.error("No CSV files found to load")
+            raise ValueError("Required CSV files not found")
+
+        data = {}
+        for key, filename in files.items():
+            try:
+                file_path = os.path.join(directory, filename)
+                data[key] = pd.read_csv(file_path)
+                logger.debug(
+                    f"Successfully loaded {filename} with {len(data[key])} rows"
+                )
+            except Exception as e:
+                logger.error(f"Error loading {filename}: {str(e)}")
+                raise
+
+        return data
+
+    except Exception as e:
+        logger.error(f"Error in load_data: {str(e)}", exc_info=True)
+        raise
 
 
 def is_sum_optimized(

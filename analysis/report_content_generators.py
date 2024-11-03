@@ -41,10 +41,10 @@ def calculate_user_consistency(
     consistency_threshold (float): Minimum consistency ratio to be considered consistent (default: 0.8).
 
     Returns:
-    tuple: (consistent_percentage, total_qualified_users, total_users, min_surveys, total_surveys)
+    tuple: (consistent_percentage, total_qualified_users, total_survey_responses, min_surveys, total_surveys)
         - consistent_percentage: Percentage of users with consistent preferences.
         - total_qualified_users: Number of users who completed the minimum required surveys.
-        - total_users: Total number of users in the dataset.
+        - total_survey_responses: Total number of surveys in the dataset.
         - min_surveys: Minimum number of surveys required for consistency analysis.
         - total_surveys: Total number of unique surveys in the dataset.
     """
@@ -92,7 +92,9 @@ def calculate_user_consistency(
 
 
 def generate_executive_summary(
-    summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
+    summary_stats: pd.DataFrame,
+    optimization_stats: pd.DataFrame,
+    responses_Stats: pd.DataFrame,
 ) -> str:
     """
     Generate an executive summary of the survey analysis.
@@ -104,14 +106,16 @@ def generate_executive_summary(
     Args:
         summary_stats (pd.DataFrame): DataFrame containing overall survey statistics.
         optimization_stats (pd.DataFrame): DataFrame containing user optimization preferences.
+        responses_Stats (pd.DataFrame): DataFrame containing survey responses summarization.
 
     Returns:
         str: HTML-formatted string containing the executive summary.
     """
     logger.info("Generating executive summary")
     total_surveys = len(summary_stats) - 1  # Excluding the "Total" row
-    total_users = get_summary_value(summary_stats, "unique_users")
+    total_survey_responses = get_summary_value(summary_stats, "total_survey_responses")
     total_answers = get_summary_value(summary_stats, "total_answers")
+    total_uniqe_users = responses_Stats["user_id"].nunique()
     overall_sum_pref = get_summary_value(summary_stats, "sum_optimized_percentage")
     overall_ratio_pref = get_summary_value(summary_stats, "ratio_optimized_percentage")
 
@@ -121,14 +125,14 @@ def generate_executive_summary(
     )
 
     content = f"""
-    <p>This report analyzes {total_surveys} surveys completed by {total_users} unique users, totaling {total_answers} answers.</p>
+    <p>This report analyzes {total_surveys} surveys completed by {total_survey_responses} users ({total_uniqe_users} of them are unique users), totaling {total_answers} answers.</p>
     
     <p>Key findings:</p>
     <ol>
         <li>Overall, users showed a {'sum' if overall_sum_pref > overall_ratio_pref else 'ratio'} optimization preference 
            ({overall_sum_pref:.2f}% sum vs {overall_ratio_pref:.2f}% ratio).</li>
         <li>{consistency_percentage:.2f}% of users who participated in at least {min_surveys} surveys consistently preferred the same optimization method (sum or ratio) across surveys (80% or more of their responses).</li>
-        <li>The consistency analysis considered {qualified_users} out of {total_users} total users.</li>
+        <li>The consistency analysis considered {qualified_users} out of {total_survey_responses} survey responses.</li>
     </ol>
     """
 
@@ -136,25 +140,60 @@ def generate_executive_summary(
     return content
 
 
-def generate_overall_stats(summary_stats: pd.DataFrame) -> str:
+def generate_overall_stats(
+    summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
+) -> str:
     """
     Generate a string containing overall survey participation statistics.
 
     Args:
-        summary_stats (pd.DataFrame): DataFrame containing summary statistics.
+        summary_stats (pd.DataFrame): DataFrame containing summary statistics
+        optimization_stats (pd.DataFrame): DataFrame containing optimization statistics
 
     Returns:
         str: HTML-formatted string with overall statistics.
     """
     logger.info("Generating overall statistics")
-    total_row = summary_stats.iloc[-1]
+
+    total_surveys = len(summary_stats) - 1  # Excluding the 'Total' row
+    total_survey_responses = summary_stats.iloc[-1][
+        "total_survey_responses"
+    ]  # Total participant entries
+    unique_users = optimization_stats["user_id"].nunique()  # Actual unique participants
+    total_answers = summary_stats.iloc[-1]["total_answers"]
+    avg_answers_per_user = total_answers / total_survey_responses
+
     content = f"""
-    <ul>
-        <li>Total number of surveys: {len(summary_stats) - 1}</li>
-        <li>Total number of participants: {total_row['unique_users']}</li>
-        <li>Total answers collected: {total_row['total_answers']}</li>
-    </ul>
+    <div class="statistics-container">
+        <div class="statistic-group">
+            <h3>Survey Overview</h3>
+            <ul>
+                <li>Number of different surveys conducted: {total_surveys}</li>
+            </ul>
+        </div>
+
+        <div class="statistic-group">
+            <h3>Participation Statistics</h3>
+            <ul>
+                <li>Total survey responses: {total_survey_responses}
+                    <ul>
+                        <li>Unique participants: {unique_users}</li>
+                        <li>Participants who took multiple surveys: {total_survey_responses - unique_users}</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="statistic-group">
+            <h3>Response Details</h3>
+            <ul>
+                <li>Total answers collected: {total_answers}</li>
+                <li>Average answers per survey response: {avg_answers_per_user:.1f}</li>
+            </ul>
+        </div>
+    </div>
     """
+
     logger.info("Overall statistics generation completed")
     return content
 
@@ -190,7 +229,7 @@ def generate_survey_analysis(summary_stats: pd.DataFrame) -> str:
 
         content += f"""
         <h3>Survey {row['survey_id']}</h3>
-        <p>This survey had {row['unique_users']} participants who provided a total of {row['total_answers']} answers.</p>
+        <p>This survey had {row['total_survey_responses']} participants who provided a total of {row['total_answers']} answers.</p>
         <p>The results show {interpretation}:</p>
         <ul>
             <li>Sum optimization: {row['sum_optimized_percentage']:.2f}%</li>
@@ -256,13 +295,17 @@ def generate_key_findings(
     """
 
     try:
-        consistency_percentage, qualified_users, total_users, min_surveys, _ = (
-            calculate_user_consistency(optimization_stats)
-        )
+        (
+            consistency_percentage,
+            qualified_users,
+            total_survey_responses,
+            min_surveys,
+            _,
+        ) = calculate_user_consistency(optimization_stats)
         content += f"""
             <li>
                 <strong>Individual Consistency:</strong> {consistency_percentage:.2f}% of users who participated in at least {min_surveys} surveys 
-                showed consistent optimization preferences (80% or more consistent). This analysis considered {qualified_users} out of {total_users} total users.
+                showed consistent optimization preferences (80% or more consistent). This analysis considered {qualified_users} out of {total_survey_responses} total survey responses.
             </li>
         """
 

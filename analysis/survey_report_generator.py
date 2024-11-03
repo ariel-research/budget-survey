@@ -61,38 +61,65 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
     Prepare all the data needed for the report.
 
     Args:
-        data (Dict[str, pd.DataFrame]): Dictionary containing 'summary' and 'optimization' DataFrames.
+        data (Dict[str, pd.DataFrame]): Dictionary containing:
+            - 'summary': summarize_stats_by_survey.csv data
+            - 'optimization': survey_optimization_stats.csv data
+            - 'responses': all_completed_survey_responses.csv data
 
     Returns:
         Dict[str, Any]: Prepared data for the report template.
     """
     logger.info("Preparing report data")
-    return {
-        "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "executive_summary": generate_executive_summary(
-            data["summary"], data["optimization"]
-        ),
-        "overall_stats": generate_overall_stats(data["summary"]),
-        "per_survey_answer_percentages": visualize_per_survey_answer_percentages(
-            data["summary"]
-        ),
-        "user_survey_majority_choices": visualize_user_survey_majority_choices(
-            data["optimization"]
-        ),
-        "overall_majority_choice_distribution": visualize_overall_majority_choice_distribution(
-            data["summary"]
-        ),
-        "total_answer_percentage_distribution": visualize_total_answer_percentage_distribution(
-            data["summary"]
-        ),
-        "user_choices_visualization": visualize_user_choices(
-            retrieve_user_survey_choices()
-        ),
-        "survey_analysis": generate_survey_analysis(data["summary"]),
-        "individual_analysis": generate_individual_analysis(data["optimization"]),
-        "key_findings": generate_key_findings(data["summary"], data["optimization"]),
-        "methodology": generate_methodology_description(),
-    }
+
+    try:
+        report_data = {
+            "metadata": {
+                "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "total_surveys": data["responses"]["survey_id"].nunique(),
+                "total_participants": data["responses"]["user_id"].nunique(),
+                "total_responses": len(data["responses"]),
+            },
+            "sections": {
+                "executive_summary": generate_executive_summary(
+                    data["summary"], data["optimization"], data["responses"]
+                ),
+                "overall_stats": generate_overall_stats(
+                    data["summary"], data["optimization"]
+                ),
+                "visualizations": {
+                    "per_survey_percentages": visualize_per_survey_answer_percentages(
+                        data["summary"]
+                    ),
+                    "user_majority_choices": visualize_user_survey_majority_choices(
+                        data["optimization"]
+                    ),
+                    "overall_distribution": visualize_overall_majority_choice_distribution(
+                        data["summary"]
+                    ),
+                    "answer_distribution": visualize_total_answer_percentage_distribution(
+                        data["summary"]
+                    ),
+                    "user_choices": visualize_user_choices(
+                        retrieve_user_survey_choices()
+                    ),
+                },
+                "analysis": {
+                    "survey": generate_survey_analysis(data["summary"]),
+                    "individual": generate_individual_analysis(data["optimization"]),
+                    "findings": generate_key_findings(
+                        data["summary"], data["optimization"]
+                    ),
+                    "methodology": generate_methodology_description(),
+                },
+            },
+        }
+
+        logger.info("Report data preparation completed successfully")
+        return report_data
+
+    except Exception as e:
+        logger.error(f"Error preparing report data: {str(e)}", exc_info=True)
+        raise
 
 
 def render_html_template(report_data: Dict[str, Any]) -> str:

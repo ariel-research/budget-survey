@@ -80,7 +80,7 @@ def summarize_stats_by_survey(df: pd.DataFrame) -> pd.DataFrame:
     # Rename columns for clarity
     grouped.columns = [
         "survey_id",
-        "unique_users",
+        "total_survey_responses",
         "total_answers",
         "sum_optimized",
         "ratio_optimized",
@@ -115,7 +115,7 @@ def summarize_stats_by_survey(df: pd.DataFrame) -> pd.DataFrame:
     summary = pd.DataFrame(
         {
             "survey_id": ["Total"],
-            "unique_users": [grouped["unique_users"].sum()],
+            "total_survey_responses": [grouped["total_survey_responses"].sum()],
             "total_answers": [grouped["total_answers"].sum()],
             "sum_optimized": [grouped["sum_optimized"].sum()],
             "ratio_optimized": [grouped["ratio_optimized"].sum()],

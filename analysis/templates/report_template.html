@@ -7,53 +7,107 @@
     <link rel="stylesheet" href="report_style.css">
 </head>
 <body>
-    <h1>Survey Analysis Report</h1>
-    <p>Generated on: {{ generated_date }}</p>
-
-    <div class="summary">
-        <h2>Executive Summary</h2>
-        {{ executive_summary | safe }}
+    <header>
+        <h1>Survey Analysis Report</h1>
+        <div class="metadata-container">
+            <div class="metadata-item">
+                <span class="metadata-label">Generated on:</span>
+                <span class="metadata-value">{{ metadata.generated_date }}</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Total Surveys:</span>
+                <span class="metadata-value">{{ metadata.total_surveys }}</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Total Unique Participants:</span>
+                <span class="metadata-value">{{ metadata.total_participants }}</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Total Survey Responses:</span>
+                <span class="metadata-value">{{ metadata.total_responses }}</span>
+            </div>
+        </div>
     </div>
+    </header>
 
-    <h2>Overall Statistics</h2>
-    {{ overall_stats | safe }}
+    <main>
+        <section id="executive-summary">
+            <h2>Executive Summary</h2>
+            {{ sections.executive_summary | safe }}
+        </section>
 
-    <h2>Algorithm Preference Visualizations</h2>
+        <section id="overall-stats">
+            <h2>Overall Statistics</h2>
+            {{ sections.overall_stats | safe }}
+        </section>
 
-    <h3>Percentage of Sum vs Ratio Optimized Answers per Survey</h3>
-    <p>This chart shows the percentage breakdown of sum vs ratio optimized answers for each individual survey.</p>
-    <img src="data:image/png;base64,{{ per_survey_answer_percentages }}" alt="Per Survey Answer Percentages" class="chart">
-    
-    <h3>User Majority Choice Matrix by Survey</h3>
-    <p>This color-coded matrix displays the majority choice (sum, ratio, or equal) for each user across different surveys. Each cell represents a user's preference for a specific survey, with colors indicating different choices.</p>
-    <img src="data:image/png;base64,{{ user_survey_majority_choices }}" alt="User Uurvey Majority Choices" class="chart">
-    
-    <h3>Distribution of Majority Choices Across All User-Survey Combinations</h3>
-    <p>This pie chart shows the overall distribution of majority choices (sum, ratio, or equal) across all user-survey combinations.</p>
-    <img src="data:image/png;base64,{{ overall_majority_choice_distribution }}" alt="Overall Majority Choice Distribution" class="chart">
-    
-    <h3>Overall Distribution of Sum vs Ratio Optimized Answers</h3>
-    <p>This pie chart presents the overall percentage distribution of sum vs ratio optimized answers across all surveys and users.</p>
-    <img src="data:image/png;base64,{{ total_answer_percentage_distribution }}" alt="Total Answer Percentage Distribution" class="chart">
+        <section id="visualizations">
+            <h2>Algorithm Preference Visualizations</h2>
 
-    <h3>user_choices_visualization</h3>
-    <p>user_choices_visualization.</p>
-    <img src="data:image/png;base64,{{ user_choices_visualization }}" alt="user_choices_visualization" class="chart">
+            <div class="visualization-container">
+                <h3>User Choice Analysis</h3>
+                <p>Detailed breakdown of individual user choices across all surveys.</p>
+                <img src="data:image/png;base64,{{ sections.visualizations.user_choices }}" 
+                     alt="User Choices Analysis" 
+                     class="chart full-width">
+            </div>
 
-    <h2>Detailed Survey Analysis</h2>
-    {{ survey_analysis | safe }}
+            <div class="visualization-container">
+                <h3>Survey Answer Distribution</h3>
+                <p>Distribution of sum vs ratio optimized answers per survey.</p>
+                <img src="data:image/png;base64,{{ sections.visualizations.per_survey_percentages }}" 
+                     alt="Per Survey Answer Percentages" 
+                     class="chart">
+            </div>
 
-    <h2>Individual User Analysis</h2>
-    {{ individual_analysis | safe }}
+            <div class="visualization-container">
+                <h3>User Preference Matrix</h3>
+                <p>User majority choices across different surveys.</p>
+                <img src="data:image/png;base64,{{ sections.visualizations.user_majority_choices }}" 
+                     alt="User Survey Majority Choices" 
+                     class="chart">
+            </div>
 
-    <h2>Key Findings</h2>
-    {{ key_findings | safe }}
+            <div class="visualization-grid">
+                <div class="visualization-item">
+                    <h3>Overall Choice Distribution</h3>
+                    <img src="data:image/png;base64,{{ sections.visualizations.overall_distribution }}" 
+                         alt="Overall Majority Choice Distribution" 
+                         class="chart">
+                </div>
 
-    <h2>Methodology</h2>
-    {{ methodology | safe }}
+                <div class="visualization-item">
+                    <h3>Answer Type Distribution</h3>
+                    <img src="data:image/png;base64,{{ sections.visualizations.answer_distribution }}" 
+                         alt="Total Answer Percentage Distribution" 
+                         class="chart">
+                </div>
+            </div>
+        </section>
+
+        <section id="detailed-analysis">
+            <h2>Detailed Survey Analysis</h2>
+            {{ sections.analysis.survey | safe }}
+        </section>
+
+        <section id="individual-analysis">
+            <h2>Individual User Analysis</h2>
+            {{ sections.analysis.individual | safe }}
+        </section>
+
+        <section id="findings">
+            <h2>Key Findings</h2>
+            {{ sections.analysis.findings | safe }}
+        </section>
+
+        <section id="methodology">
+            <h2>Methodology</h2>
+            {{ sections.analysis.methodology | safe }}
+        </section>
+    </main>
+
+    <footer>
+        <p>Generated by Survey Analysis System</p>
+    </footer>
 </body>
 </html>
-
-<!-- The image tag embeds a base64-encoded PNG image directly in the HTML -->
-<!-- Note: The `| safe` filter is used to render HTML content safely -->
-<!-- This template uses Jinja2 templating language for dynamic content insertion -->
