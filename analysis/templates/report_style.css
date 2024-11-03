@@ -73,13 +73,12 @@ h3 {
 .metadata-container {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 0.5rem 1.25rem;
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 1rem;
     margin: 1.5rem auto;
-    max-width: 1200px;
+    max-width: 90%;
     text-align: center;
     white-space: nowrap;
-    overflow-x: auto;
 }
 
 .metadata-text {
@@ -88,12 +87,12 @@ h3 {
 }
 
 .metadata-text .label {
-    color: var(--primary-color);
+    color: #2C3E50;
     font-weight: 400;
 }
 
 .metadata-text .value {
-    color: var(--secondary-color);
+    color: #3498db;
     font-weight: 400;
     margin-left: 0.2rem;
 }
@@ -104,28 +103,13 @@ h3 {
     opacity: 0.6;
 }
 
-/* Container should be wider and flatter */
-.metadata-container {
-    max-width: 90%;  /* Wider container */
-    padding: 0.4rem 1rem;  /* Reduced vertical padding */
-}
-
-/* Ensure text color matches exactly */
-.metadata-text .label {
-    color: #2C3E50;  /* Darker navy */
-}
-
-.metadata-text .value {
-    color: #3498db;  /* Brighter blue */
-}
-
 /* Content Sections */
 .content {
     background: white;
     border-radius: 8px;
     padding: 1.5rem;
     margin: 1rem 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
 }
 
 /* Visualization Styles */
@@ -139,20 +123,29 @@ h3 {
 .visualization-item {
     background: white;
     border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
     page-break-inside: avoid;
+    break-inside: avoid-page;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-container {
-    margin: 1rem 0;
+    margin-top: 0.5rem;
     text-align: center;
+    flex-grow: 1;  /* Allow container to expand */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .chart {
     max-width: 100%;
     height: auto;
     border-radius: 4px;
+    object-fit: contain;  /* Maintain aspect ratio */
 }
 
 figcaption {
@@ -169,7 +162,7 @@ table {
     border-collapse: collapse;
     margin: 1.5rem 0;
     background: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
     page-break-inside: avoid;
 }
 
@@ -203,7 +196,7 @@ li {
 /* Statistics Container */
 .statistics-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     margin: 2rem 0;
 }
@@ -212,7 +205,7 @@ li {
     background: white;
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
 }
 
 .statistic-group h3 {
@@ -255,16 +248,11 @@ footer {
     .metadata-container,
     .content,
     .visualization-item {
-        box-shadow: none;
         border: 1px solid var(--border-color);
     }
 
     .metadata-container {
         break-inside: avoid;
-    }
-
-    table {
-        box-shadow: none;
     }
 
     a {
