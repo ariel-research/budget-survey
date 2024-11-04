@@ -8,6 +8,7 @@ def sample_summary_stats():
     return pd.DataFrame(
         {
             "survey_id": ["1", "2", "Total"],
+            "total_survey_responses": [5, 3, 8],
             "unique_users": [5, 3, 8],
             "total_answers": [50, 30, 80],
             "sum_optimized": [30, 15, 45],

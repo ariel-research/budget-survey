@@ -1,29 +1,79 @@
 import base64
 import io
+import logging
+from typing import Any, Dict, List
 
 import matplotlib
 
-# Use non-interactive backend to avoid GUI issues
 matplotlib.use("Agg")
-import logging
-from typing import Dict, List
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from matplotlib.colors import ListedColormap
 
 logger = logging.getLogger(__name__)
 
 
+def get_chart_style() -> Dict[str, Dict[str, Any]]:
+    """
+    Return consistent style configuration for all charts.
+
+    Returns:
+        Dict[str, Dict[str, any]]: Dictionary containing style configurations for colors, fonts, and layout
+    """
+    return {
+        "colors": {
+            "primary": "#2563eb",  # Blue
+            "secondary": "#16a34a",  # Green
+            "tertiary": "#ca8a04",  # Yellow
+            "background": "#ffffff",
+            "grid": "#e5e7eb",
+            "text": "#1f2937",
+        },
+        "fonts": {
+            "title_size": 16,
+            "label_size": 12,
+            "tick_size": 10,
+            "annotation_size": 9,
+        },
+        "layout": {"figure_dpi": 300, "title_pad": 20, "legend_space": 0.2},
+    }
+
+
+def apply_chart_style(fig: plt.Figure, ax: plt.Axes) -> None:
+    """
+    Apply consistent styling to charts.
+
+    Args:
+        fig (plt.Figure): Matplotlib figure object
+        ax (plt.Axes): Matplotlib axes object
+    """
+    style = get_chart_style()
+
+    # Set background colors
+    fig.patch.set_facecolor(style["colors"]["background"])
+    ax.set_facecolor(style["colors"]["background"])
+
+    # Customize grid
+    ax.grid(True, linestyle="--", alpha=0.3, color=style["colors"]["grid"])
+    ax.set_axisbelow(True)
+
+    # Style spines
+    for spine in ax.spines.values():
+        spine.set_color(style["colors"]["grid"])
+        spine.set_linewidth(0.5)
+
+    # Adjust fonts
+    ax.title.set_fontsize(style["fonts"]["title_size"])
+    ax.title.set_color(style["colors"]["text"])
+    ax.xaxis.label.set_fontsize(style["fonts"]["label_size"])
+    ax.yaxis.label.set_fontsize(style["fonts"]["label_size"])
+    ax.tick_params(labelsize=style["fonts"]["tick_size"])
+
+
 def save_plot_to_base64(fig: plt.Figure) -> str:
     """
     Save a matplotlib figure to a base64 encoded string.
-
-    This utility function is used to convert matplotlib figures into a format
-    that can be easily embedded in HTML documents. Base64 encoding allows the image
-    to be included directly in the HTML without requiring separate image files.
 
     Args:
         fig (plt.Figure): The matplotlib figure to save.
@@ -31,33 +81,28 @@ def save_plot_to_base64(fig: plt.Figure) -> str:
     Returns:
         str: Base64 encoded string of the figure.
     """
-    # Create an in-memory bytes buffer
     img_buffer = io.BytesIO()
-    # Save the figure to the buffer in PNG format
-    fig.savefig(img_buffer, format="png", dpi=300, bbox_inches="tight")
-    # Reset buffer position to the beginning
-    img_buffer.seek(0)
-    # Convert buffer contents to base64 and then to UTF-8 string
-    img_str = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
-    # Close the figure to free up memory
-    plt.close(fig)
-    return img_str
+    try:
+        fig.savefig(img_buffer, format="png", dpi=300, bbox_inches="tight")
+        img_buffer.seek(0)
+        return base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+    finally:
+        img_buffer.close()
 
 
-def validate_dataframe(df: pd.DataFrame, required_columns: list) -> None:
+def validate_dataframe(df: pd.DataFrame, required_columns: List[str]) -> None:
     """
     Validate that DataFrame has required columns.
 
     Args:
-        df: DataFrame to validate
-        required_columns: List of required column names
+        df (pd.DataFrame): DataFrame to validate
+        required_columns (List[str]): List of required column names
 
     Raises:
         ValueError: If DataFrame is empty or missing required columns
     """
     if df.empty:
         raise ValueError("Input DataFrame is empty")
-
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"DataFrame missing required columns: {missing_columns}")
@@ -65,7 +110,7 @@ def validate_dataframe(df: pd.DataFrame, required_columns: list) -> None:
 
 def visualize_per_survey_answer_percentages(summary_stats: pd.DataFrame) -> str:
     """
-    Generate a bar chart comparing sum and ratio optimization answer percentages across surveys.
+    Generate a bar chart comparing sum and ratio optimization percentages across surveys.
 
     Args:
         summary_stats (pd.DataFrame): The summary statistics DataFrame.
@@ -73,6 +118,7 @@ def visualize_per_survey_answer_percentages(summary_stats: pd.DataFrame) -> str:
     Returns:
         str: Base64 encoded string of the chart image.
     """
+    logger.info("Generating per-survey answer percentages visualization")
     required_columns = [
         "survey_id",
         "sum_optimized_percentage",
@@ -80,69 +126,65 @@ def visualize_per_survey_answer_percentages(summary_stats: pd.DataFrame) -> str:
     ]
     validate_dataframe(summary_stats, required_columns)
 
-    # Create figure and axis with a specific size
+    style = get_chart_style()
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    # Set a clean, grid-based style for the plot
-    sns.set_style("whitegrid")
-
-    # Filter out the "Total" row and extract relevant data
+    # Filter out the "Total" row and extract data
     survey_data = summary_stats[summary_stats["survey_id"] != "Total"]
     surveys = survey_data["survey_id"]
     sum_opt = survey_data["sum_optimized_percentage"]
     ratio_opt = survey_data["ratio_optimized_percentage"]
 
-    # Set up x-axis range and bar width
     x = range(len(surveys))
     width = 0.35
 
-    # Create bars for sum and ratio optimization
-    ax.bar(
+    # Create bars with enhanced styling
+    bars1 = ax.bar(
         [i - width / 2 for i in x],
         sum_opt,
         width,
         label="Sum Optimization",
-        color="#1f77b4",
-        edgecolor="black",
+        color=style["colors"]["primary"],
+        edgecolor=style["colors"]["text"],
+        alpha=0.8,
     )
-    ax.bar(
+    bars2 = ax.bar(
         [i + width / 2 for i in x],
         ratio_opt,
         width,
         label="Ratio Optimization",
-        color="#2ca02c",
-        edgecolor="black",
+        color=style["colors"]["secondary"],
+        edgecolor=style["colors"]["text"],
+        alpha=0.8,
     )
 
-    # Show left and bottom grid lines
-    ax.yaxis.grid(True, linestyle="--", alpha=0.7)
-    ax.xaxis.grid(False)
+    # Add value labels
+    def add_value_labels(bars):
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height,
+                f"{height:.1f}%",
+                ha="center",
+                va="bottom",
+                fontsize=style["fonts"]["annotation_size"],
+            )
 
-    # Set labels and title
+    add_value_labels(bars1)
+    add_value_labels(bars2)
+
+    # Customize the plot
     ax.set_xlabel("Survey ID", fontweight="bold")
     ax.set_ylabel("Percentage", fontweight="bold")
-    ax.set_title(
-        "Percentage of Sum vs Ratio Optimized Answers per Survey",
-        fontsize=16,
-        fontweight="bold",
-        pad=20,
-    )
-
-    # Set x-axis ticks and labels
     ax.set_xticks(x)
-    ax.set_xticklabels(surveys, ha="center")
+    ax.set_xticklabels(surveys)
 
-    # Add value labels on top of each bar
-    for i, v in enumerate(sum_opt):
-        ax.text(i - width / 2, v, f"{v:.1f}%", ha="center", va="bottom")
-    for i, v in enumerate(ratio_opt):
-        ax.text(i + width / 2, v, f"{v:.1f}%", ha="center", va="bottom")
+    # Enhance legend
+    ax.legend(loc="upper right", framealpha=0.9, edgecolor=style["colors"]["grid"])
 
-    # Add legend
-    ax.legend(loc="upper right")
-
-    # Adjust layout
-    plt.tight_layout()
+    # Apply consistent styling
+    apply_chart_style(fig, ax)
 
     return save_plot_to_base64(fig)
 
@@ -151,70 +193,68 @@ def visualize_user_survey_majority_choices(optimization_stats: pd.DataFrame) -> 
     """
     Generate a color-coded matrix visualization showing each user's majority choice for each survey.
 
-    This function creates a categorical data visualization where each cell represents a user's
-    majority choice (sum, ratio, or equal) for a particular survey.
-
     Args:
         optimization_stats (pd.DataFrame): The optimization statistics DataFrame.
 
     Returns:
         str: Base64 encoded string of the heatmap image.
     """
+    logger.info("Generating user survey majority choices visualization")
     required_columns = ["survey_id", "user_id", "result"]
     validate_dataframe(optimization_stats, required_columns)
+
+    style = get_chart_style()
 
     # Pivot the data
     pivot_df = optimization_stats.pivot(
         index="user_id", columns="survey_id", values="result"
     )
 
-    # Create a mapping for numeric encoding and colors
+    # Create mapping for colors using style colors
     color_map = {"sum": 0, "ratio": 1, "equal": 2, "missing": 3}
-    colors = ["#4C72B0", "#55A868", "#CCB974", "lightgrey"]
+    colors = [
+        style["colors"]["primary"],
+        style["colors"]["secondary"],
+        style["colors"]["tertiary"],
+        style["colors"]["grid"],
+    ]
 
-    # Handle missing data and convert to numeric
+    # Handle missing data
     pivot_df = pivot_df.fillna("missing")
-    # Maps each value in a column to its corresponding numeric value in color_map
     numeric_df = pivot_df.apply(lambda x: x.map(color_map))
 
-    # Initialize the plot size based on the number of users
     fig, ax = plt.subplots(figsize=(10, max(6, len(pivot_df) * 0.5)))
-
-    # Create custom colormap
     cmap = ListedColormap(colors)
 
-    # Plot heatmap using imshow
+    # Create heatmap
     ax.imshow(numeric_df, cmap=cmap, aspect="auto", interpolation="nearest")
 
-    # Remove grid lines
-    ax.grid(False)
-
     # Add text annotations
-    # 'i': row index (user_id) | 'j': column index (survey_id) | 'val': value (result)
-    for (i, j), val in np.ndenumerate(pivot_df.values):
-        text_color = "black" if val != "missing" else "grey"
-        # Adds text (the value) to the center of each rectangle
-        ax.text(j, i, val, ha="center", va="center", fontsize=10, color=text_color)
+    for i in range(len(pivot_df.index)):
+        for j in range(len(pivot_df.columns)):
+            val = pivot_df.iloc[i, j]
+            text_color = "white" if val in ["sum", "ratio"] else "black"
+            ax.text(
+                j,
+                i,
+                val,
+                ha="center",
+                va="center",
+                color=text_color,
+                fontsize=style["fonts"]["annotation_size"],
+            )
 
     # Customize the plot
-    ax.set_title(
-        "User Majority Choice (Sum/Ratio/Equal) by Survey",
-        fontsize=16,
-        fontweight="bold",
-        pad=20,
-    )
-    ax.set_xlabel("Survey ID", fontsize=12, fontweight="bold")
-    ax.set_ylabel("User ID", fontsize=12, fontweight="bold")
-    ax.set_xticks(np.arange(pivot_df.shape[1]))  # The number of columns (surveys)
-    ax.set_yticks(np.arange(pivot_df.shape[0]))  # The number of rows (users)
+    ax.set_xlabel("Survey ID", fontweight="bold")
+    ax.set_ylabel("User ID", fontweight="bold")
+
+    # Set and style ticks
+    ax.set_xticks(np.arange(len(pivot_df.columns)))
+    ax.set_yticks(np.arange(len(pivot_df.index)))
     ax.set_xticklabels(pivot_df.columns)
     ax.set_yticklabels(pivot_df.index)
 
-    # Adjust plot limits
-    ax.set_xlim(-0.5, len(pivot_df.columns) - 0.5)
-    ax.set_ylim(len(pivot_df) - 0.5, -0.5)
-
-    # Create a custom legend
+    # Add legend
     legend_elements = [plt.Rectangle((0, 0), 1, 1, facecolor=color) for color in colors]
     ax.legend(
         legend_elements,
@@ -222,11 +262,11 @@ def visualize_user_survey_majority_choices(optimization_stats: pd.DataFrame) -> 
         loc="upper center",
         bbox_to_anchor=(0.5, -0.15),
         ncol=4,
-        title="Preference",
+        title="Preference Type",
     )
 
-    # Adjust layout
-    plt.tight_layout()
+    # Apply consistent styling
+    apply_chart_style(fig, ax)
 
     return save_plot_to_base64(fig)
 
@@ -241,25 +281,41 @@ def visualize_overall_majority_choice_distribution(summary_stats: pd.DataFrame) 
     Returns:
         str: Base64 encoded string of the pie chart image.
     """
+    logger.info("Generating overall majority choice distribution visualization")
     required_columns = ["sum_count", "ratio_count", "equal_count"]
     validate_dataframe(summary_stats, required_columns)
 
-    total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
-
+    style = get_chart_style()
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.pie(
-        [total_row["sum_count"], total_row["ratio_count"], total_row["equal_count"]],
-        labels=["Sum", "Ratio", "Equal"],
+
+    # Get data from total row
+    total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
+    values = [
+        total_row["sum_count"],
+        total_row["ratio_count"],
+        total_row["equal_count"],
+    ]
+    labels = ["Sum", "Ratio", "Equal"]
+
+    # Create pie chart with enhanced styling
+    wedges, texts, autotexts = ax.pie(
+        values,
+        labels=labels,
         autopct="%1.1f%%",
-        colors=["#4C72B0", "#55A868", "#CCB974"],
+        colors=[
+            style["colors"]["primary"],
+            style["colors"]["secondary"],
+            style["colors"]["tertiary"],
+        ],
+        wedgeprops={"edgecolor": "white", "linewidth": 2},
     )
 
-    ax.set_title(
-        "Distribution of Majority Choices Across All User-Survey Combinations",
-        fontsize=16,
-        fontweight="bold",
-        pad=20,
-    )
+    # Style text elements
+    plt.setp(autotexts, size=style["fonts"]["annotation_size"], weight="bold")
+    plt.setp(texts, size=style["fonts"]["label_size"])
+
+    # Apply consistent styling
+    apply_chart_style(fig, ax)
 
     return save_plot_to_base64(fig)
 
@@ -274,37 +330,53 @@ def visualize_total_answer_percentage_distribution(summary_stats: pd.DataFrame) 
     Returns:
         str: Base64 encoded string of the pie chart image.
     """
+    logger.info("Generating total answer percentage distribution visualization")
     required_columns = ["sum_optimized_percentage", "ratio_optimized_percentage"]
     validate_dataframe(summary_stats, required_columns)
 
-    total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
-    sum_percentage = total_row["sum_optimized_percentage"]
-    ratio_percentage = total_row["ratio_optimized_percentage"]
-
+    style = get_chart_style()
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    ax.pie(
-        [sum_percentage, ratio_percentage],
-        labels=["Sum Optimization", "Ratio Optimization"],
+    # Get data from total row
+    total_row = summary_stats.loc[summary_stats["survey_id"] == "Total"].iloc[0]
+    values = [
+        total_row["sum_optimized_percentage"],
+        total_row["ratio_optimized_percentage"],
+    ]
+    labels = ["Sum Optimization", "Ratio Optimization"]
+
+    # Create pie chart with enhanced styling
+    wedges, texts, autotexts = ax.pie(
+        values,
+        labels=labels,
         autopct="%1.1f%%",
-        colors=["#4C72B0", "#55A868"],
+        colors=[style["colors"]["primary"], style["colors"]["secondary"]],
+        wedgeprops={"edgecolor": "white", "linewidth": 2},
         startangle=90,
     )
 
-    ax.set_title(
-        "Overall Distribution of Sum vs Ratio Optimized Answers",
-        fontsize=16,
-        fontweight="bold",
-        pad=20,
-    )
+    # Style text elements
+    plt.setp(autotexts, size=style["fonts"]["annotation_size"], weight="bold")
+    plt.setp(texts, size=style["fonts"]["label_size"])
+
+    # Apply consistent styling
+    apply_chart_style(fig, ax)
 
     return save_plot_to_base64(fig)
 
 
 def visualize_user_choices(query_results: List[Dict]) -> str:
     """
-    Creates a clean visualization showing user choices across surveys.
+    Create a detailed visualization of user choices across surveys.
+
+    Args:
+        query_results (List[Dict]): List of dictionaries containing user survey choices.
+
+    Returns:
+        str: Base64 encoded string of the visualization.
     """
+    logger.info("Generating user choices visualization")
+
     try:
         if not query_results:
             logger.warning("No data available for visualization")
@@ -319,6 +391,8 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
             )
             ax.axis("off")
             return save_plot_to_base64(fig)
+
+        style = get_chart_style()
 
         # Process data
         user_survey_map = {}
@@ -362,15 +436,11 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
         # Create figure with optimized size
         rows = len(stats_data)
         fig_height = max(12, min(24, rows * 0.9))
-
-        # Create figure without extra space
         fig = plt.figure(figsize=(18, fig_height), constrained_layout=True)
-
-        # Create a single subplot that fills the figure
         ax = fig.add_subplot(111)
         ax.axis("off")
 
-        # Define column labels
+        # Create and style the table
         column_labels = [
             "User ID",
             "Survey ID",
@@ -380,7 +450,6 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
             "Option 1\nPercentage",
         ]
 
-        # Create and style the table
         table = ax.table(
             cellText=stats_data,
             colLabels=column_labels,
@@ -391,61 +460,52 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
 
         # Style improvements
         table.auto_set_font_size(False)
-        table.set_fontsize(12)
+        table.set_fontsize(10)
 
-        # Optimized column widths
+        # Optimized column widths based on content
         col_widths = [0.17, 0.11, 0.25, 0.11, 0.11, 0.11]
         for idx, width in enumerate(col_widths):
             for cell in table._cells:
                 if cell[1] == idx:
                     table._cells[cell].set_width(width)
 
-        # Increased row height scaling
+        # Enhanced row height scaling
         table.scale(1.0, 2.4)
 
         # Enhanced header styling
+        style = get_chart_style()
         for j, cell in enumerate(
             table._cells[(0, j)] for j in range(len(column_labels))
         ):
-            cell.set_facecolor("#2C3E50")
-            cell.set_text_props(color="white", weight="bold", fontsize=13)
+            cell.set_facecolor(style["colors"]["primary"])
+            cell.set_text_props(color="white", weight="bold", fontsize=11)
 
         # Enhanced row styling
         for i in range(len(stats_data)):
             # Style choices column
             cell = table._cells[(i + 1, 2)]
-            cell.set_text_props(family="monospace", fontsize=13)
+            cell.set_text_props(family="monospace", fontsize=10)
 
             # Alternating row colors
             for j in range(len(column_labels)):
                 cell = table._cells[(i + 1, j)]
                 if i % 2 == 0:
-                    cell.set_facecolor("#EDF2F7")
+                    cell.set_facecolor("#f8f9fa")  # Light background for even rows
                 else:
-                    cell.set_facecolor("#FFFFFF")
+                    cell.set_facecolor("#ffffff")  # White background for odd rows
 
-        # Use figure suptitle for the main title with minimal spacing
-        plt.suptitle(
-            "Detailed Survey Choices Analysis",
-            y=0.99,  # Move title very close to top
-            fontsize=18,
-            weight="bold",
-        )
-
-        # Add note at the bottom with minimal spacing
+        # Add note at the bottom
         fig.text(
             0.05,
             0.01,
             "Note: Choices show selected option (1 or 2) for each question Q1-Q10",
-            fontsize=11,
+            fontsize=style["fonts"]["annotation_size"],
             style="italic",
-            color="#666666",
+            color=style["colors"]["text"],
         )
 
-        # Ensure tight layout and save
-        plt.tight_layout(
-            rect=[0, 0.02, 1, 0.98]
-        )  # Adjust layout while preserving small space for title and note
+        # Ensure tight layout
+        plt.tight_layout(rect=[0, 0.02, 1, 0.98])
 
         return save_plot_to_base64(fig)
 

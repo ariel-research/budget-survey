@@ -8,6 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS, HTML
 
 from analysis.report_content_generators import (
+    generate_detailed_user_choices,
     generate_executive_summary,
     generate_individual_analysis,
     generate_key_findings,
@@ -74,7 +75,7 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
     try:
         report_data = {
             "metadata": {
-                "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "total_surveys": data["responses"]["survey_id"].nunique(),
                 "total_participants": data["responses"]["user_id"].nunique(),
                 "total_survey_responses": len(data["responses"]),
@@ -106,6 +107,9 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                 "analysis": {
                     "survey": generate_survey_analysis(data["summary"]),
                     "individual": generate_individual_analysis(data["optimization"]),
+                    "detailed_choices": generate_detailed_user_choices(
+                        retrieve_user_survey_choices()
+                    ),
                     "findings": generate_key_findings(
                         data["summary"], data["optimization"]
                     ),

@@ -1,7 +1,11 @@
+import json
 import logging
 import math
+from typing import Dict, List
 
 import pandas as pd
+
+from analysis.utils import is_sum_optimized
 
 logger = logging.getLogger(__name__)
 
@@ -266,6 +270,88 @@ def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
         content += "</ul>"
     logger.info("Individual participant analysis generation completed")
     return content
+
+
+def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
+    """
+    Generate detailed analysis of each user's choices for each survey.
+
+    Args:
+        user_choices (List[Dict]): List of dictionaries containing user choices data
+
+    Returns:
+        str: HTML-formatted string with detailed user choices
+    """
+    logger.info("Generating detailed user choices analysis")
+
+    if not user_choices:
+        logger.warning("No user choices data received")
+        return '<div class="detailed-choices"><p>No detailed user choice data available.</p></div>'
+
+    content = '<div class="detailed-choices">'
+
+    try:
+        current_user = None
+        current_survey = None
+
+        for choice in user_choices:
+            # Start new user section if needed
+            if current_user != choice["user_id"]:
+                if current_user is not None:
+                    content += "</div></div>"  # Close previous survey and user sections
+                current_user = choice["user_id"]
+                content += f"""
+                    <div class="user-section">
+                        <h3>User ID: {current_user}</h3>
+                """
+                current_survey = None
+
+            # Start new survey section if needed
+            if current_survey != choice["survey_id"]:
+                if current_survey is not None:
+                    content += "</div>"  # Close previous survey section
+                current_survey = choice["survey_id"]
+                optimal_allocation = json.loads(choice["optimal_allocation"])
+                content += f"""
+                    <div class="survey-section">
+                        <div class="survey-header">
+                            <h4>Survey ID: {current_survey}</h4>
+                            <div>Ideal budget: <span class="ideal-budget">{optimal_allocation}</span></div>
+                        </div>
+                """
+
+            # Add pair information with optimization type
+            option_1 = json.loads(choice["option_1"])
+            option_2 = json.loads(choice["option_2"])
+            user_choice = choice["user_choice"]
+            optimal_allocation = json.loads(choice["optimal_allocation"])
+
+            # Determine if the choice was sum-optimized
+            is_sum = is_sum_optimized(
+                tuple(optimal_allocation), tuple(option_1), tuple(option_2), user_choice
+            )
+
+            # Format the choice string
+            optimization_type = "Sum" if is_sum else "Ratio"
+            css_class = "optimization-sum" if is_sum else "optimization-ratio"
+            chosen_option = "(1)" if user_choice == 1 else "(2)"
+
+            content += f"""
+                <div class="pair-info">
+                    Pair #{choice['pair_number']}: {str(option_1)} vs {str(option_2)} → <span class="{css_class}">{optimization_type}</span> {chosen_option}
+                </div>
+            """
+
+        # Close the last sections
+        if current_user is not None:
+            content += "</div></div>"
+
+        content += "</div>"
+        return content
+
+    except Exception as e:
+        logger.error(f"Error generating detailed user choices: {str(e)}", exc_info=True)
+        return '<div class="detailed-choices"><p>Error generating detailed user choice analysis.</p></div>'
 
 
 def generate_key_findings(
