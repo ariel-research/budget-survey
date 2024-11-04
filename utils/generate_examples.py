@@ -87,7 +87,7 @@ def should_add_edge(n1: tuple, s: int, r: float) -> bool:
     """
     n1r = n1[1]["r"]  # node1 ratio
     n1s = n1[1]["s"]  # node1 diff sum
-    if (n1r <= r and n1s <= s) or (n1r >= r and n1s >= s):
+    if (n1r < r and n1s < s) or (n1r > r and n1s > s):
         return True
     return False
 

@@ -129,9 +129,11 @@ def test_generate_detailed_user_choices_single_user():
             "survey_id": 1,
             "optimal_allocation": json.dumps([50, 30, 20]),
             "pair_number": 1,
+            # Option 1: |50-60| + |30-20| + |20-20| = 20
             "option_1": json.dumps([60, 20, 20]),
+            # Option 2: |50-20| + |30-60| + |20-20| = 60
             "option_2": json.dumps([20, 60, 20]),
-            "user_choice": 1,
+            "user_choice": 2,  # Choosing option 2 (larger difference) = ratio optimization
         }
     ]
 
@@ -141,7 +143,9 @@ def test_generate_detailed_user_choices_single_user():
     assert "User ID: test123" in result
     assert "Survey ID: 1" in result
     assert 'class="ideal-budget">[50, 30, 20]' in result
-    assert '<span class="optimization-ratio">Ratio</span> (1)' in result
+    assert (
+        '<span class="optimization-ratio">Ratio</span> (2)' in result
+    )  # Changed to (2)
 
 
 def test_generate_detailed_user_choices_multiple_optimizations():
@@ -153,18 +157,22 @@ def test_generate_detailed_user_choices_multiple_optimizations():
             "survey_id": 1,
             "optimal_allocation": json.dumps(optimal),
             "pair_number": 1,
-            "option_1": json.dumps([90, 5, 5]),  # diff = 40+20+20 = 80
-            "option_2": json.dumps([40, 30, 30]),  # diff = 10+5+5 = 20
-            "user_choice": 1,  # Choosing the more different option = sum optimization
+            # Option 1: |50-40| + |25-30| + |25-30| = 20
+            "option_1": json.dumps([40, 30, 30]),
+            # Option 2: |50-90| + |25-5| + |25-5| = 80
+            "option_2": json.dumps([90, 5, 5]),
+            "user_choice": 1,  # Choosing option 1 (smaller difference) = sum optimization
         },
         {
             "user_id": "test123",
             "survey_id": 1,
             "optimal_allocation": json.dumps(optimal),
             "pair_number": 2,
-            "option_1": json.dumps([80, 10, 10]),  # diff = 30+15+15 = 60
-            "option_2": json.dumps([30, 35, 35]),  # diff = 20+10+10 = 40
-            "user_choice": 2,  # Choosing the less different option = ratio optimization
+            # Option 1: |50-30| + |25-35| + |25-35| = 40
+            "option_1": json.dumps([30, 35, 35]),
+            # Option 2: |50-80| + |25-10| + |25-10| = 60
+            "option_2": json.dumps([80, 10, 10]),
+            "user_choice": 2,  # Choosing option 2 (larger difference) = ratio optimization
         },
     ]
 
@@ -176,11 +184,11 @@ def test_generate_detailed_user_choices_multiple_optimizations():
 
     # More specific assertions
     assert (
-        'Pair #1: [90, 5, 5] vs [40, 30, 30] → <span class="optimization-sum">Sum</span> (1)'
+        'Pair #1: [40, 30, 30] vs [90, 5, 5] → <span class="optimization-sum">Sum</span> (1)'
         in result
     )
     assert (
-        'Pair #2: [80, 10, 10] vs [30, 35, 35] → <span class="optimization-ratio">Ratio</span> (2)'
+        'Pair #2: [30, 35, 35] vs [80, 10, 10] → <span class="optimization-ratio">Ratio</span> (2)'
         in result
     )
 

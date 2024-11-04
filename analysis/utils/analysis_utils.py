@@ -106,6 +106,14 @@ def is_sum_optimized(
 
     Returns:
     True if the user's choice optimized for sum difference, False otherwise (ratio optimized).
+
+    Example:
+        >>> optimal_vector = (5, 95, 0)
+        >>> opt1 = (35, 50, 15)  # sum_diff = 90
+        >>> opt2 = (0, 85, 15)   # sum_diff = 30
+        >>> user_choice = 2
+        >>> is_sum_optimized(optimal_vector, opt1, opt2, user_choice)
+        True  # User chose option 2, which has smaller sum of differences (30 < 90)
     """
     if user_choice not in [1, 2]:
         raise ValueError("user_choice must be either 1 or 2")
@@ -113,7 +121,7 @@ def is_sum_optimized(
     sum_diff_1 = sum_of_differences(optimal_vector, option_1)
     sum_diff_2 = sum_of_differences(optimal_vector, option_2)
 
-    optimal_choice = 1 if sum_diff_1 > sum_diff_2 else 2
+    optimal_choice = 1 if sum_diff_1 < sum_diff_2 else 2
 
     return optimal_choice == user_choice
 
