@@ -22,7 +22,11 @@ from analysis.survey_report_generator import (
 @patch("analysis.survey_report_generator.generate_pdf")
 def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load):
     """Test the complete report generation process."""
-    mock_load.return_value = {"summary": pd.DataFrame(), "optimization": pd.DataFrame()}
+    mock_load.return_value = {
+        "summary": pd.DataFrame(),
+        "optimization": pd.DataFrame(),
+        "responses": pd.DataFrame(),
+    }
     mock_prepare.return_value = {"key": "value"}
     mock_render.return_value = "<html>Test</html>"
 
@@ -34,27 +38,50 @@ def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load
     mock_generate_pdf.assert_called_once_with("<html>Test</html>")
 
 
-def test_prepare_report_data(sample_summary_stats, sample_optimization_stats):
+def test_prepare_report_data(
+    sample_summary_stats, sample_optimization_stats, sample_survey_responses
+):
     """Test preparation of report data using fixture data."""
     sample_data = {
         "summary": sample_summary_stats,
         "optimization": sample_optimization_stats,
+        "responses": sample_survey_responses,
     }
 
     result = prepare_report_data(sample_data)
 
     assert isinstance(result, dict)
-    assert "generated_date" in result
-    assert "executive_summary" in result
-    assert "overall_stats" in result
-    assert "per_survey_answer_percentages" in result
-    assert "user_survey_majority_choices" in result
-    assert "overall_majority_choice_distribution" in result
-    assert "total_answer_percentage_distribution" in result
-    assert "survey_analysis" in result
-    assert "individual_analysis" in result
-    assert "key_findings" in result
-    assert "methodology" in result
+    assert "metadata" in result
+    assert "sections" in result
+
+    # Check metadata
+    assert "generated_date" in result["metadata"]
+    assert isinstance(result["metadata"]["total_surveys"], int)
+    assert isinstance(result["metadata"]["total_participants"], int)
+    assert isinstance(result["metadata"]["total_survey_responses"], int)
+
+    # Check sections
+    sections = result["sections"]
+    assert "executive_summary" in sections
+    assert "overall_stats" in sections
+    assert "visualizations" in sections
+    assert "analysis" in sections
+
+    # Check visualizations
+    viz = sections["visualizations"]
+    assert "user_choices" in viz
+    assert "per_survey_percentages" in viz
+    assert "user_majority_choices" in viz
+    assert "overall_distribution" in viz
+    assert "answer_distribution" in viz
+
+    # Check analysis sections
+    analysis = sections["analysis"]
+    assert "survey" in analysis
+    assert "individual" in analysis
+    assert "detailed_choices" in analysis
+    assert "findings" in analysis
+    assert "methodology" in analysis
 
 
 def test_render_html_template():
@@ -130,6 +157,7 @@ def test_generate_report_with_empty_data(mock_load):
     empty_summary = pd.DataFrame(
         {
             "survey_id": ["Total"],
+            "total_survey_responses": [0],
             "unique_users": [0],
             "total_answers": [0],
             "sum_optimized": [0],
@@ -145,21 +173,34 @@ def test_generate_report_with_empty_data(mock_load):
     # Create empty optimization DataFrame with required structure
     empty_optimization = pd.DataFrame(
         {
-            "survey_id": [],
-            "user_id": [],
-            "result": [],
-            "num_of_answers": [],
-            "sum_optimized": [],
-            "ratio_optimized": [],
+            "survey_id": pd.Series([], dtype="int64"),
+            "user_id": pd.Series([], dtype="object"),
+            "num_of_answers": pd.Series([], dtype="int64"),
+            "sum_optimized": pd.Series([], dtype="int64"),
+            "ratio_optimized": pd.Series([], dtype="int64"),
+            "result": pd.Series([], dtype="object"),
+        }
+    )
+
+    # Create empty responses DataFrame with required structure
+    empty_responses = pd.DataFrame(
+        {
+            "survey_id": pd.Series([], dtype="int64"),
+            "user_id": pd.Series([], dtype="object"),
+            "optimal_allocation": pd.Series([], dtype="object"),
+            "comparisons": pd.Series([], dtype="object"),
         }
     )
 
     mock_load.return_value = {
         "summary": empty_summary,
         "optimization": empty_optimization,
+        "responses": empty_responses,
     }
 
+    # Generate report should raise ValueError for empty data
     with pytest.raises(ValueError) as exc_info:
         generate_report()
 
+    # Check that the error message contains 'empty'
     assert "empty" in str(exc_info.value).lower()

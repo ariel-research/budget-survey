@@ -55,7 +55,7 @@ def test_summarize_stats_by_survey():
     result = summarize_stats_by_survey(input_df)
 
     assert isinstance(result, pd.DataFrame)
-    assert "unique_users" in result.columns
+    assert "total_survey_responses" in result.columns
     assert "total_answers" in result.columns
     assert "sum_optimized_percentage" in result.columns
     assert "ratio_optimized_percentage" in result.columns
@@ -64,7 +64,7 @@ def test_summarize_stats_by_survey():
     # Check the summary row
     summary_row = result.iloc[-1]
     assert summary_row["survey_id"] == "Total"
-    assert summary_row["unique_users"] == 3
+    assert summary_row["total_survey_responses"] == 3
     assert summary_row["total_answers"] == 30
     assert summary_row["sum_optimized"] == 18
     assert summary_row["ratio_optimized"] == 12
