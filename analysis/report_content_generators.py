@@ -5,6 +5,8 @@ from typing import Dict, List
 
 import pandas as pd
 
+from analysis.utils import is_sum_optimized
+
 logger = logging.getLogger(__name__)
 
 
@@ -318,14 +320,25 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                         </div>
                 """
 
-            # Add pair information
+            # Add pair information with optimization type
             option_1 = json.loads(choice["option_1"])
             option_2 = json.loads(choice["option_2"])
-            chosen_option = 1 if choice["user_choice"] == 1 else 2
+            user_choice = choice["user_choice"]
+            optimal_allocation = json.loads(choice["optimal_allocation"])
+
+            # Determine if the choice was sum-optimized
+            is_sum = is_sum_optimized(
+                tuple(optimal_allocation), tuple(option_1), tuple(option_2), user_choice
+            )
+
+            # Format the choice string
+            optimization_type = "Sum" if is_sum else "Ratio"
+            css_class = "optimization-sum" if is_sum else "optimization-ratio"
+            chosen_option = "(1)" if user_choice == 1 else "(2)"
 
             content += f"""
                 <div class="pair-info">
-                    Pair #{choice['pair_number']}: {str(option_1)} vs {str(option_2)} → Option {chosen_option}
+                    Pair #{choice['pair_number']}: {str(option_1)} vs {str(option_2)} → <span class="{css_class}">{optimization_type}</span> {chosen_option}
                 </div>
             """
 

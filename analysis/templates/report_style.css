@@ -324,6 +324,29 @@ footer {
     position: relative;
     left: 0;
     width: calc(100% - 1.2rem);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.optimization-sum {
+    color: #2ecc71;  /* Green for Sum */
+    font-weight: bold;
+    background-color: rgba(46, 204, 113, 0.1);  /* Light green background */
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(46, 204, 113, 0.2);  /* Subtle border */
+}
+
+.optimization-ratio {
+    color: #e74c3c;  /* Red for Ratio */
+    font-weight: bold;
+    background-color: rgba(231, 76, 60, 0.1);  /* Light red background */
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(231, 76, 60, 0.2);  /* Subtle border */
+}
+
+.pair-info:nth-child(even) {
+    background-color: #f8f9fa;
 }
 
 .ideal-budget {
