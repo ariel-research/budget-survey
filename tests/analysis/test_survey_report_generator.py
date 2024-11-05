@@ -8,7 +8,7 @@ from jinja2 import Environment
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from analysis.survey_report_generator import (
+from analysis.survey_report_generator_pdf import (
     generate_pdf,
     generate_report,
     prepare_report_data,
@@ -19,7 +19,7 @@ from analysis.survey_report_generator import (
 @patch("analysis.survey_report_generator.load_data")
 @patch("analysis.survey_report_generator.prepare_report_data")
 @patch("analysis.survey_report_generator.render_html_template")
-@patch("analysis.survey_report_generator.generate_pdf")
+@patch("analysis.survey_report_generator_pdf.generate_pdf")
 def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load):
     """Test the complete report generation process."""
     mock_load.return_value = {
@@ -136,7 +136,7 @@ def test_generate_pdf_file_handling(mock_abspath, mock_file, tmp_path):
     # Create a mock HTML class that returns our mock instance
     mock_html_class = Mock(return_value=mock_html_instance)
 
-    with patch("analysis.survey_report_generator.HTML", mock_html_class):
+    with patch("analysis.survey_report_generator_pdf.HTML", mock_html_class):
         generate_pdf(html_content)
 
         # Verify HTML was created with correct parameters

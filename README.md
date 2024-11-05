@@ -248,7 +248,7 @@ python -m analysis.survey_analysis
 To generate a comprehensive PDF report of the survey results, use the following command from the project root directory:
 
 ```
-python -m analysis.survey_report_generator
+python -m analysis.survey_report_generator_pdf
 ```
 
 This command will create a PDF report named 'survey_analysis_report.pdf' in the 'data' directory. The report includes:

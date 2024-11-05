@@ -48,7 +48,7 @@ def ensure_fresh_report() -> None:
 
         # Check if PDF needs updating
         if csvs_regenerated or not os.path.exists(REPORT_PATH):
-            from analysis.survey_report_generator import generate_report
+            from analysis.survey_report_generator_pdf import generate_report
 
             generate_report()
             logger.info("Report regenerated successfully")
