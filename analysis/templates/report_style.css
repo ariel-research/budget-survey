@@ -356,6 +356,14 @@ footer {
     white-space: nowrap;
 }
 
+.better {
+    font-weight: bold;
+}
+
+.worse {
+    font-weight: normal
+}
+
 #detailed-choices {
     break-before: page;  /* Force start on new page */
     margin-top: 0;
