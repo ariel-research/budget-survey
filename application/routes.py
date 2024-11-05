@@ -323,6 +323,38 @@ def view_report():
         return render_template("error.html", message=ERROR_MESSAGES["report_error"])
 
 
+@main.route("/dev/report")
+def dev_report():
+    """
+    Development endpoint for generating and displaying a fresh analysis report.
+    Always generates a new PDF regardless of database state.
+    """
+    try:
+        # Ensure CSV files exist using existing utility
+        from analysis.utils.report_utils import ensure_fresh_csvs
+
+        ensure_fresh_csvs()
+
+        # Define development report path
+        dev_report_path = "data/survey_analysis_report_dev.pdf"
+
+        # Generate a new report with the development path
+        from analysis.survey_report_generator import generate_report
+
+        generate_report(dev_report_path)
+
+        return send_file(
+            dev_report_path,
+            mimetype="application/pdf",
+            as_attachment=False,
+            download_name="survey_analysis_report_dev.pdf",
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating development report: {e}")
+        return render_template("error.html", message=ERROR_MESSAGES["report_error"])
+
+
 # Utility routes
 @main.route("/get_messages")
 def get_messages():

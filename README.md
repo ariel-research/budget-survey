@@ -139,6 +139,11 @@ Notes:
   - Automatically ensures the report is up-to-date with the latest survey data
   - Shows the PDF directly in the browser
   - Allows downloading the report
+- `/dev/report`: Development endpoint for testing report modifications. This endpoint:
+  - Always generates a fresh PDF report regardless of database state
+  - Creates the report as 'survey_analysis_report_dev.pdf'
+  - Useful for testing report template changes without affecting the production report
+  - Does not implement the automatic refresh mechanism of the main `/report` endpoint
 
 Note: The `/report` endpoint includes an automatic refresh mechanism that:
 1. Checks if the CSV files are up-to-date with the database
@@ -146,6 +151,8 @@ Note: The `/report` endpoint includes an automatic refresh mechanism that:
 3. Checks if the PDF report is up-to-date with the CSVs
 4. Regenerates the PDF if needed
 This ensures that the report always reflects the most recent survey data without manual intervention.
+
+For development purposes, use the `/dev/report` endpoint when making changes to report templates or generation logic, as it will always create a fresh report without caching considerations.
 
 ### API Endpoints
 - `/get_messages`: Returns a JSON dictionary of all error messages used in the application. This endpoint is used by the frontend to display localized error messages to users.
