@@ -3,6 +3,7 @@ Generates the survey report in PDF format.
 """
 
 from analysis.survey_report_generator import *
+import os
 
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS, HTML
