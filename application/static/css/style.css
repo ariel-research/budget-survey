@@ -289,3 +289,200 @@ input[type="radio"] {
     border: 1px solid #ddd;
     border-radius: 4px;
 }
+
+/* RTL Support */
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Language-specific font settings */
+.rtl body {
+    font-family: 'Noto Sans Hebrew', sans-serif;
+}
+
+.ltr body {
+    font-family: 'Arial', sans-serif;
+}
+
+/* Adjust margins and paddings for RTL */
+.rtl .input-group label {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.rtl .language-switcher {
+    left: 10px;
+    right: auto;
+}
+
+/* Flip icons and directional elements */
+.rtl .arrow-icon {
+    transform: scaleX(-1);
+}
+
+/* Form elements alignment */
+.rtl input[type="radio"] {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.rtl .option {
+    text-align: right;
+}
+
+/* Navigation elements */
+.rtl .nav-previous {
+    float: right;
+}
+
+.rtl .nav-next {
+    float: left;
+}
+
+/* Modal dialogs */
+.rtl .alert-content {
+    text-align: right;
+}
+
+/* Ensure proper alignment of form validation messages */
+.rtl .error-message {
+    text-align: right;
+}
+
+/* Language switcher styling */
+.language-switcher {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+}
+
+.lang-btn {
+    padding: 5px 15px;
+    border: 1px solid #3498db;
+    border-radius: 4px;
+    color: #3498db;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.lang-btn.active {
+    background: #3498db;
+    color: white;
+}
+
+.lang-btn:hover {
+    background: #2980b9;
+    color: white;
+}
+
+/* Welcome page specific styles */
+.welcome-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.welcome-container h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.intro-box {
+    background-color: #e8f6f3;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.intro-box p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.survey-description {
+    margin: 30px 0;
+}
+
+.survey-description h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.survey-description ol {
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+.survey-description li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.consent {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+}
+
+.consent h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.consent p {
+    line-height: 1.6;
+    margin: 0;
+}
+
+.start-survey {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px 0;
+}
+
+.start-survey .consent-agreement {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.start-survey .btn {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    margin: 20px 0;
+}
+
+.start-survey .consent-disagreement {
+    margin-top: 20px;
+    color: #7f8c8d;
+}
+
+/* RTL-specific adjustments for welcome page */
+.rtl .survey-description ol {
+    padding-right: 20px;
+    padding-left: 0;
+}
+
+.rtl .consent {
+    text-align: right;
+}
+
+.rtl .start-survey {
+    direction: rtl;
+}

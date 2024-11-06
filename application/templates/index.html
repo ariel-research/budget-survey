@@ -6,36 +6,37 @@ The page inherits from base.html and customizes the title and content blocks.
 
 {% extends "base.html" %}
 
-{% block title %}ברוכים הבאים לסקר {{ survey_name }}{% endblock %}
+{% block title %}{{ get_translation('welcome') }} - {{ survey_name }}{% endblock %}
 
 {% block content %}
 <div class="welcome-container">
-    <h1>ברוכים הבאים לסקר בנושא {{ survey_name }}</h1>
-    
+    <h1>{{ get_translation('welcome') }} - {{ survey_name }}</h1>
+
     <div class="intro-box">
-    נעים מאוד, אנו פרופ' אראל סגל-הלוי ופרופ' נועם חזון  עורכים מחקר בנושא העדפות אזרחים לגבי חלוקת תקציב.
-    המחקר נערך במסגרת המחלקה למדעי המחשב באוניברסיטת אריאל.
-    אנו מזמינים אותך להשתתף במחקר שלנו על ידי מתן מענה על שאלון מקוון שאורכו כ-5 דקות. 
+        <p>{{ get_translation('intro_text') }}</p>
     </div>
-    
+
     <div class="survey-description">
-        <h2>מה מצפה לך בסקר?</h2>
+        <h2>{{ get_translation('what_to_expect') }}</h2>
         <ol>
-            <li>תתבקש/י לחלק תקציב נתון בין מספר גופים שונים.</li>
-            <li> לאחר מכן, תוצג בפניך סדרה של אפשרויות שונות לחלוקת תקציב.</li>
-            <li>עבור כל זוג אפשרויות, תתבקש/י לבחור את האפשרות המועדפת עליך.</li>
+            {% for step in get_translation('survey_steps') %}
+                <li>{{ step }}</li>
+            {% endfor %}
         </ol>
     </div>
 
     <div class="consent">
-לפני התחלת המענה על השאלון, נבקשך להצהיר/ה בזאת כי ניתן לך מידע באשר למחקר ולמטרותיו, וכי מילוי השאלון נעשה מרצונך החופשי, שהנך משתתפ/ת במחקר מתוך הסכמה מלאה,  ידוע לך כי אינך חייב/ת להשתתף במחקר וכי בכל שלב את/ה יכול/ה להפסיק לענות על השאלון.  השאלון הוא אנונימי ומובטחת לך סודיות באשר לזהותך האישית ולא יעשה כל שימוש בפרטים שמלאת מלבד לצורך מחקר זה. 
-בכל בעיה שקשורה למחקר תוכל/י לפנות אלינו להתייעצות נוספת.
+        <h2>{{ get_translation('consent_title') }}</h2>
+        <p>{{ get_translation('consent_text') }}</p>
     </div>
-        
+
     <div class="start-survey">
-        <p>אם את/ה מבין/ה ומסכים/ה להשתתף במחקר, אנא לחצ/י על הכפתור למטה.</p>
-        <a href="{{ url_for('main.create_vector', userID=user_id, surveyID=external_survey_id) }}" class="btn">התחל סקר</a>
-        <p>אם אינך מבין/ה או לא רוצה להשתתף  במחקר, אנא סגור/י את הדפדפן.</p>
+        <p class="consent-agreement">{{ get_translation('consent_agreement') }}</p>
+        
+        <a href="{{ url_for('main.create_vector', userID=user_id, surveyID=external_survey_id) }}" 
+           class="btn">{{ get_translation('start_survey') }}</a>
+        
+        <p class="consent-disagreement">{{ get_translation('consent_disagreement') }}</p>
     </div>
 </div>
 {% endblock %}

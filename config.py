@@ -15,6 +15,10 @@ class Config:
     PORT = 5001
     DEBUG = os.getenv("FLASK_ENV", "development") == "development"
 
+    # Language settings
+    LANGUAGES = ["he", "en"]
+    DEFAULT_LANGUAGE = "he"
+
 
 class TestConfig(Config):
     MYSQL_DATABASE = "test_survey"

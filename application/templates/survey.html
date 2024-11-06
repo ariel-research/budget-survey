@@ -18,7 +18,7 @@ and collects the user's preferences through a form submission.
     {% endwith %}
 
     <div class="ideal-budget">
-        <h2>חלוקת התקציב האידיאלית לדעתך היא:</h2>
+        <h2>{{ get_translation('ideal_budget') }}</h2>
         {% for subject, value in zip(subjects, user_vector) %}
         <div>
             <span class="subject">{{ subject }}:</span>
@@ -27,21 +27,17 @@ and collects the user's preferences through a form submission.
         {% endfor %}
     </div>
 
-    <p>
-        אבל במציאות, חלוקת התקציב לא זהה לחלוקה האידיאלית שלך.
-        בהמשך נציג לפניך עשרה זוגות של חלוקות-תקציב לא אידיאליות.
-        עבור כל אחד מהזוגות, עליך לבחור איזו מבין שתי החלוקות טובה יותר בעיניך.
-    </p>
+    <p>{{ get_translation('reality_explanation') }}</p>
 
     <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
         
         {% for pair in comparison_pairs %}
         <div class="pair-container">
-            <h3>זוג {{ loop.index }}</h3>
+            <h3>{{ get_translation('pair') }} {{ loop.index }}</h3>
             <div class="options-container">
                 <div class="option">
-                    <h4>חלוקה 1:</h4>
+                    <h4>{{ get_translation('option') }} 1:</h4>
                     {% for subject, value in zip(subjects, pair[0]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
@@ -52,7 +48,7 @@ and collects the user's preferences through a form submission.
                     <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair[0]|join(',') }}">
                 </div>
                 <div class="option">
-                    <h4>חלוקה 2:</h4>
+                    <h4>{{ get_translation('option') }} 2:</h4>
                     {% for subject, value in zip(subjects, pair[1]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
@@ -68,11 +64,11 @@ and collects the user's preferences through a form submission.
 
         <!-- Awareness Check Question -->
         <div class="pair-container awareness-check">
-            <h3>שאלת בדיקה</h3>
-            <p>איזו מהאפשרויות הבאות מייצגת את התקציב האידיאלי שבחרת בתחילת הסקר?</p>
+            <h3>{{ get_translation('awareness_check') }}</h3>
+            <p>{{ get_translation('awareness_question') }}</p>
             <div class="options-container">
                 <div class="option">
-                    <h4>אפשרות 1:</h4>
+                    <h4>{{ get_translation('option') }} 1:</h4>
                     {% for subject, value in zip(subjects, awareness_check['option1']) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
@@ -82,7 +78,7 @@ and collects the user's preferences through a form submission.
                     <input type="radio" name="awareness_check" value="1">
                 </div>
                 <div class="option">
-                    <h4>אפשרות 2:</h4>
+                    <h4>{{ get_translation('option') }} 2:</h4>
                     {% for subject, value in zip(subjects, awareness_check['option2']) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
@@ -95,13 +91,13 @@ and collects the user's preferences through a form submission.
         </div>
 
         <div class="comment-section">
-            <h3>הערות</h3>
-            <textarea name="user_comment" id="user_comment" rows="4" placeholder="רשום את הערותיך כאן (רשות)"></textarea>
+            <h3>{{ get_translation('comments') }}</h3>
+            <textarea name="user_comment" id="user_comment" rows="4" placeholder="{{ get_translation('comments_placeholder') }}"></textarea>
         </div>
 
         <div id="error-message" class="error-message" style="display: none;"></div>
         <div class="submit-container">
-            <button type="submit" class="btn" id="submit-btn">שלח סקר</button>
+            <button type="submit" class="btn">{{ get_translation('submit') }}</button>
         </div>
     </form>
 
