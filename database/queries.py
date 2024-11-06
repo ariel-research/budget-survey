@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict, List
 
+from application.translations import get_current_language
 from logging_config import setup_logging
 
 from .db import execute_query
@@ -161,55 +162,100 @@ def user_exists(user_id: str) -> bool:
 
 def get_survey_name(survey_id: int) -> str:
     """
-    Retrieves the name of a survey given its ID.
+    Retrieves the name of an active survey in the current language.
 
     Args:
-        survey_id (int): The ID of the survey.
+        survey_id (int): The ID of the survey to retrieve.
 
     Returns:
-        str: The name of the survey, or an empty string if the survey doesn't exist or an error occurs.
+        str: The survey name with the following language fallback logic:
+             - Returns name in current language if available
+             - Falls back to Hebrew if current language is not available
+             - Returns empty string if survey doesn't exist or on error
+
+    Examples:
+        >>> get_survey_name(1)  # Hebrew user
+        'תקציב המדינה'
+        >>> get_survey_name(1)  # English user, with both translations available
+        'State Budget'
+        >>> get_survey_name(1)  # English user, only Hebrew available
+        'תקציב המדינה'
+        >>> get_survey_name(999)  # Non-existent survey
+        ''
     """
     query = "SELECT name FROM surveys WHERE id = %s AND active = TRUE"
-    logger.debug(f"Retrieving name for survey_id: {survey_id}")
+    logger.debug("Retrieving name for survey_id: %s", survey_id)
 
     try:
-        result = execute_query(query, (survey_id,))
-        if result and len(result) > 0:
-            return result[0]["name"]
-        else:
-            logger.warning(f"No active survey found with id: {survey_id}")
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result:
+            logger.warning("No active survey found with id: %s", survey_id)
             return ""
+
+        name_column = result["name"]
+        if not name_column:
+            return ""
+
+        name_dict = json.loads(name_column)
+        current_lang = get_current_language()
+
+        # Try current language, fallback to Hebrew
+        return name_dict.get(current_lang, name_dict.get("he", ""))
+
+    except json.JSONDecodeError as e:
+        logger.error("Error decoding JSON for survey %s: %s", survey_id, str(e))
+        return ""
     except Exception as e:
-        logger.error(f"Error retrieving name for survey {survey_id}: {str(e)}")
+        logger.error("Error retrieving name for survey %s: %s", survey_id, str(e))
         return ""
 
 
-def get_subjects(survey_id: int) -> list:
+def get_subjects(survey_id: int) -> List[str]:
     """
-    Retrieves the subjects for a given survey from the database.
+    Retrieves the subjects in the current language for a given survey.
+    Falls back to Hebrew if translation not found.
 
     Args:
         survey_id (int): The ID of the survey.
 
     Returns:
-        list: A list of subjects for the survey, or an empty list if the survey doesn't exist or an error occurs.
+        List[str]: A list of subjects in the current language, falling back to Hebrew
+                  if the current language is not available. Returns an empty list if
+                  the survey doesn't exist, is inactive, or if an error occurs.
+
+    Example:
+        >>> get_subjects(1)  # When language is 'en'
+        ['Ministry of Education', 'Ministry of Health', 'Ministry of Defense']
+        >>> get_subjects(1)  # When language is 'he' or translation missing
+        ['משרד החינוך', 'משרד הבריאות', 'משרד הביטחון']
     """
     query = "SELECT subjects FROM surveys WHERE id = %s AND active = TRUE"
     logger.debug("Retrieving subjects for survey_id: %s", survey_id)
 
     try:
-        result = execute_query(query, (survey_id,))
-        if result and len(result) > 0:
-            subjects_json = result[0]["subjects"]
-            return json.loads(subjects_json)
-        else:
-            logger.warning(f"No active survey found with id: {survey_id}")
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result:
+            logger.warning("No active survey found with id: %s", survey_id)
             return []
+
+        subjects_column = result["subjects"]
+        if not subjects_column:
+            return []
+
+        subjects_array = json.loads(subjects_column)
+        current_lang = get_current_language()
+
+        return [
+            # Fallback to Hebrew
+            subject.get(current_lang, subject.get("he", ""))
+            for subject in subjects_array
+        ]
+
     except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON for survey {survey_id}: {str(e)}")
+        logger.error("Error decoding JSON for survey %s: %s", survey_id, str(e))
         return []
     except Exception as e:
-        logger.error(f"Error retrieving subjects for survey {survey_id}: {str(e)}")
+        logger.error("Error retrieving subjects for survey %s: %s", survey_id, str(e))
         return []
 
 

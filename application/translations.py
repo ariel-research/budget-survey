@@ -1,6 +1,10 @@
+import logging
 from typing import Dict, Optional
 
 from flask import session
+
+logger = logging.getLogger(__name__)
+
 
 TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
     "messages": {  # Error messages
@@ -135,6 +139,11 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "רשום את הערותיך כאן (רשות)",
             "en": "Write your comments here (optional)",
         },
+        "error_page_title": {"he": "שגיאה - סקר התקציב", "en": "Error - Budget Survey"},
+        "error_page_heading": {
+            "he": "אופס! משהו השתבש",
+            "en": "Oops! Something went wrong",
+        },
     },
 }
 
@@ -161,12 +170,23 @@ def get_translation(
     """
     lang = language or get_current_language()
     try:
+        logger.debug(
+            f"Translation request - section: {section}, key: {key}, lang: {lang}"
+        )
+        logger.debug(f"Available sections: {TRANSLATIONS.keys()}")
+        logger.debug(
+            f"Available keys in {section}: {TRANSLATIONS.get(section, {}).keys()}"
+        )
+
         text = TRANSLATIONS[section][key][lang]
         # If there are parameters, format the string with them
         if kwargs:
             text = text.format(**kwargs)
         return text
-    except KeyError:
+    except KeyError as e:
+        logger.error(
+            f"Translation not found - section: {section}, key: {key}, lang: {lang}, error: {str(e)}"
+        )
         return f"[{section}.{key}]"
 
 

@@ -131,8 +131,8 @@ def index():
     # Check if the survey exists
     survey_name = get_survey_name(internal_survey_id)
     if not survey_name:
-        logger.error(f"No survey found for survey_id {internal_survey_id}")
-        abort(404, description=get_translation("survey_not_found", "messages"))
+        error_message = get_translation("survey_not_found", section="messages")
+        abort(404, description=error_message)
 
     # Check if the user has already participated using internal ID
     if check_user_participation(user_id, internal_survey_id):
@@ -163,7 +163,8 @@ def create_vector():
 
     if not subjects:
         logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
-        abort(404, description=get_translation("survey_no_subjects", "messages"))
+        error_message = get_translation("survey_no_subjects", "messages")
+        abort(404, description=error_message)
 
     if request.method == "POST":
         user_vector = [int(request.form.get(subject, 0)) for subject in subjects]
@@ -413,7 +414,7 @@ def bad_request(e):
     return (
         render_template(
             "error.html",
-            message=get_translation(e.description, "messages"),
+            message=e.description,
             get_translation=get_translation,
         ),
         400,
@@ -434,7 +435,7 @@ def not_found(e):
     return (
         render_template(
             "error.html",
-            message=get_translation(e.description, "messages"),
+            message=e.description,
             get_translation=get_translation,
         ),
         404,

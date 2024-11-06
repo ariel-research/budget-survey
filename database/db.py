@@ -23,16 +23,21 @@ def get_db_connection():
         return None
 
 
-def execute_query(query, params=None):
+def execute_query(query, params=None, fetch_one=False):
     """
     Executes a SQL query against the MySQL database.
 
     Args:
         query (str): The SQL query to execute.
         params (tuple, optional): Parameters to pass with the query.
+        fetch_one (bool, optional): If True, returns only the first row for SELECT queries.
 
     Returns:
-        list or int or None: Query results if a SELECT statement, last row ID if an INSERT statement, or None if an error occurs.
+        dict or list or int or None:
+            - For SELECT: Single row (dict) if fetch_one=True, list of rows otherwise
+            - For INSERT: Last row ID (int)
+            - For UPDATE/DELETE: Number of affected rows
+            - None if an error occurs
     """
     logger.debug(f"Executing query: {query} with params: {params}")
     connection = get_db_connection()
@@ -42,17 +47,24 @@ def execute_query(query, params=None):
     try:
         cursor = connection.cursor(dictionary=True)
         if params:
-            cursor.execute(query, params)  # Execute query with parameters if provided
+            cursor.execute(query, params)
         else:
             cursor.execute(query)
 
+        # Handle different query types
         if query.strip().upper().startswith("SELECT"):
-            result = cursor.fetchall()  # Fetch all rows if it's a SELECT query
+            if fetch_one:
+                result = cursor.fetchone()  # Fetch single row
+            else:
+                result = cursor.fetchall()  # Fetch all rows
             logger.debug(f"Query result: {result}")
         else:
-            connection.commit()  # Commit changes if it's an INSERT or UPDATE query
-            result = cursor.lastrowid
-            logger.debug(f"Last inserted row ID: {result}")
+            connection.commit()  # Commit changes for INSERT/UPDATE/DELETE
+            if query.strip().upper().startswith("INSERT"):
+                result = cursor.lastrowid  # Return last inserted ID
+            else:
+                result = cursor.rowcount  # Return number of affected rows
+            logger.debug(f"Query affected rows/last ID: {result}")
 
         return result
     except Error as e:
