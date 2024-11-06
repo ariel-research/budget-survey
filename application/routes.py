@@ -15,7 +15,12 @@ from flask import (
 )
 
 from analysis.utils.report_utils import ensure_fresh_report
-from application.messages import ERROR_MESSAGES
+from application.translations import (
+    TRANSLATIONS,
+    get_current_language,
+    get_translation,
+    set_language,
+)
 from database.queries import (
     check_user_participation,
     create_comparison_pair,
@@ -32,6 +37,15 @@ from utils.survey_utils import generate_awareness_check, is_valid_vector
 main = Blueprint("main", __name__)
 
 logger = logging.getLogger(__name__)
+
+
+@main.context_processor
+def inject_template_globals():
+    """Make translation functions available to all templates."""
+    return {
+        "get_translation": get_translation,
+        "get_current_language": get_current_language,
+    }
 
 
 def get_internal_survey_id() -> int:
@@ -83,10 +97,10 @@ def get_required_param(param_name: str) -> str:
     value = request.args.get(param_name)
     if not value:
         logger.warning(f"Required parameter '{param_name}' not found in request")
-        abort(
-            400,
-            description=ERROR_MESSAGES["missing_parameter"].format(param=param_name),
+        error_message = get_translation("missing_parameter", "messages").format(
+            param=param_name
         )
+        abort(400, description=error_message)
     return value
 
 
@@ -117,8 +131,8 @@ def index():
     # Check if the survey exists
     survey_name = get_survey_name(internal_survey_id)
     if not survey_name:
-        logger.error(f"No survey found for survey_id {internal_survey_id}")
-        abort(404, description=ERROR_MESSAGES["survey_not_found"])
+        error_message = get_translation("survey_not_found", section="messages")
+        abort(404, description=error_message)
 
     # Check if the user has already participated using internal ID
     if check_user_participation(user_id, internal_survey_id):
@@ -148,7 +162,8 @@ def create_vector():
 
     if not subjects:
         logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
-        abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
+        error_message = get_translation("survey_no_subjects", "messages")
+        abort(404, description=error_message)
 
     if request.method == "POST":
         user_vector = [int(request.form.get(subject, 0)) for subject in subjects]
@@ -158,7 +173,7 @@ def create_vector():
             logger.warning(f"Invalid vector submitted by user {user_id}: {user_vector}")
             return render_template(
                 "create_vector.html",
-                error=ERROR_MESSAGES["invalid_vector"],
+                error=get_translation("invalid_vector", "messages"),
                 subjects=subjects,
                 user_id=user_id,
                 external_survey_id=external_survey_id,
@@ -196,7 +211,7 @@ def survey():
 
     if not subjects:
         logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
-        abort(404, description=ERROR_MESSAGES["survey_no_subjects"])
+        abort(404, description=get_translation("survey_no_subjects", "messages"))
 
     if request.method == "GET":
         user_vector = list(map(int, request.args.get("vector", "").split(",")))
@@ -241,7 +256,7 @@ def survey():
         awareness_answer = int(data.get("awareness_check", 0))
         if awareness_answer != 2:
             logger.warning(f"User {user_id} failed awareness check")
-            flash(ERROR_MESSAGES["failed_awareness"], "error")
+            flash(get_translation("failed_awareness", "messages"), "error")
             return redirect(
                 url_for(
                     "main.survey",
@@ -286,7 +301,8 @@ def survey():
                 exc_info=True,
             )
             return render_template(
-                "error.html", message=ERROR_MESSAGES["survey_processing_error"]
+                "error.html",
+                message=get_translation("survey_processing_error", "messages"),
             )
 
         # Use external survey ID for Panel4All redirect
@@ -320,7 +336,10 @@ def view_report():
 
     except Exception as e:
         logger.error(f"Error serving report: {e}")
-        return render_template("error.html", message=ERROR_MESSAGES["report_error"])
+        return render_template(
+            "error.html",
+            message=get_translation("report_error", "messages"),
+        )
 
 
 @main.route("/dev/report")
@@ -352,19 +371,26 @@ def dev_report():
 
     except Exception as e:
         logger.error(f"Error generating development report: {e}")
-        return render_template("error.html", message=ERROR_MESSAGES["report_error"])
+    return render_template(
+        "error.html",
+        message=get_translation("report_error", "messages"),
+    )
 
 
 # Utility routes
 @main.route("/get_messages")
 def get_messages():
     """
-    Serve error messages as JSON.
-
-    Returns:
-        JSON: Dictionary of all error messages used in the application.
+    Serve all translated messages based on current language.
+    Returns all messages from the 'messages' section in the current language.
     """
-    return jsonify(ERROR_MESSAGES)
+    current_lang = get_current_language()
+    return jsonify(
+        {
+            key: get_translation(key, "messages", current_lang)
+            for key in TRANSLATIONS["messages"].keys()
+        }
+    )
 
 
 @main.errorhandler(400)
@@ -378,7 +404,13 @@ def bad_request(e):
     Returns:
         tuple: Template and status code.
     """
-    return render_template("error.html", message=e.description), 400
+    return (
+        render_template(
+            "error.html",
+            message=e.description,
+        ),
+        400,
+    )
 
 
 @main.errorhandler(404)
@@ -392,4 +424,20 @@ def not_found(e):
     Returns:
         tuple: Template and status code.
     """
-    return render_template("error.html", message=e.description), 404
+    return (
+        render_template(
+            "error.html",
+            message=e.description,
+        ),
+        404,
+    )
+
+
+# Language switching
+@main.route("/set_language")
+def change_language():
+    """Handle language change requests."""
+    lang = request.args.get("lang", "he")
+    set_language(lang)
+    # Redirect back to the page user came from, or index if not available
+    return redirect(request.referrer or url_for("main.index"))

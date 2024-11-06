@@ -4,16 +4,25 @@ It defines the common elements and layout that will be inherited by other templa
 -->
 
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="{{ get_current_language() }}" dir="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Budget Survey{% endblock %}</title>
+    <title>{% block title %}{{ get_translation('welcome') }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;700&display=swap" rel="stylesheet">
+    {% if get_current_language() == 'he' %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap">
+    {% endif %}
 </head>
-<body>
-    <div class="container">
+<body class="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
+    <div class="language-switcher">
+        <a href="{{ url_for('main.change_language', lang='he') }}" 
+           class="lang-btn {{ 'active' if get_current_language() == 'he' }}">עברית</a>
+        <a href="{{ url_for('main.change_language', lang='en') }}" 
+           class="lang-btn {{ 'active' if get_current_language() == 'en' }}">English</a>
+    </div>
+    
+    <div class="container {% if get_current_language() == 'he' %}rtl{% endif %}">
         {% block content %}{% endblock %}
     </div>
     {% block scripts %}

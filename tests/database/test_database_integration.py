@@ -2,8 +2,10 @@ import json
 import os
 import random
 import sys
+import time
 
 import pytest
+from flask import session
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -33,39 +35,49 @@ def app():
     return app
 
 
+@pytest.fixture
+def mock_language():
+    """Mock the language setting for tests."""
+
+    def _set_language(app, lang="he"):
+        with app.test_request_context() as ctx:
+            ctx.push()
+            session["language"] = lang
+            session.modified = True
+            yield
+            ctx.pop()
+
+    return _set_language
+
+
 @pytest.fixture(scope="session")
 def setup_test_data(app):
     """Create the surveys once for all tests and delete them only after all the tests done."""
     with app.app_context():
-        # Insert test surveys
-        survey_query = "INSERT INTO surveys (name, description, subjects, active) VALUES (%s, %s, %s, %s)"
-        execute_query(
-            survey_query,
-            (
-                "Test Survey",
-                "Description 1",
-                json.dumps(["Subject1", "Subject2"]),
-                True,
-            ),
+        # Insert test surveys with multilingual support
+        survey_query = """
+        INSERT INTO surveys 
+            (name, description, subjects, active) 
+        VALUES 
+            (%s, %s, %s, %s)
+        """
+
+        # First survey
+        name_json = json.dumps({"en": "Test Survey", "he": "סקר בדיקה"})
+        description = json.dumps({"en": "Description 1", "he": "תיאור 1"})
+        subjects_json = json.dumps(
+            [{"en": "Subject1", "he": "נושא1"}, {"en": "Subject2", "he": "נושא2"}]
         )
-        execute_query(
-            survey_query,
-            (
-                "Another Test Survey",
-                "Description 2",
-                json.dumps(["Subject3", "Subject4"]),
-                True,
-            ),
+        execute_query(survey_query, (name_json, description, subjects_json, True))
+
+        # Second survey
+        name_json2 = json.dumps({"en": "Another Test Survey", "he": "סקר בדיקה נוסף"})
+        description2 = json.dumps({"en": "Description 2", "he": "תיאור 2"})
+        subjects_json2 = json.dumps(
+            [{"en": "Subject3", "he": "נושא3"}, {"en": "Subject4", "he": "נושא4"}]
         )
-        execute_query(
-            survey_query,
-            (
-                "Third Test Survey",
-                "Description 3",
-                json.dumps(["Subject5", "Subject6", "Subject7"]),
-                True,
-            ),
-        )
+        execute_query(survey_query, (name_json2, description2, subjects_json2, True))
+
     yield
     with app.app_context():
         execute_query("DELETE FROM surveys")
@@ -241,59 +253,65 @@ def test_user_exists(app_context, cleanup_db):
     assert not user_exists(non_existing_id), f"User {non_existing_id} should not exist"
 
 
-def test_get_subjects(app_context, setup_test_data):
+def test_get_subjects(app_context, setup_test_data, mock_language, app):
     """
     Test the retrieval of subjects for a survey.
     Verifies that the function correctly fetches and decodes subjects for an existing survey.
     """
-    # Fetch an existing survey ID
-    survey_query = "SELECT id, subjects FROM surveys LIMIT 1"
-    result = execute_query(survey_query)
-    assert result, "No surveys found in the database"
-    survey_id = result[0]["id"]
-    expected_subjects = json.loads(result[0]["subjects"])
+    mock_language(app)  # Set default language to Hebrew
 
-    # Test the get_subjects function
-    retrieved_subjects = get_subjects(survey_id)
+    with app.test_request_context():
+        # Fetch an existing survey ID
+        survey_query = "SELECT id, subjects FROM surveys LIMIT 1"
+        result = execute_query(survey_query)
+        assert result, "No surveys found in the database"
+        survey_id = result[0]["id"]
+        expected_subjects = ["נושא1", "נושא2"]  # Default to Hebrew
 
-    # Verify the results
-    assert (
-        retrieved_subjects == expected_subjects
-    ), f"Expected {expected_subjects}, but got {retrieved_subjects}"
+        # Test the get_subjects function
+        retrieved_subjects = get_subjects(survey_id)
 
-    # Test with a non-existent survey ID
-    non_existent_id = 9999
-    empty_subjects = get_subjects(non_existent_id)
-    assert (
-        empty_subjects == []
-    ), f"Expected empty list for non-existent survey, but got {empty_subjects}"
+        # Verify the results
+        assert (
+            retrieved_subjects == expected_subjects
+        ), f"Expected {expected_subjects}, but got {retrieved_subjects}"
+
+        # Test with a non-existent survey ID
+        non_existent_id = 9999
+        empty_subjects = get_subjects(non_existent_id)
+        assert (
+            empty_subjects == []
+        ), f"Expected empty list for non-existent survey, but got {empty_subjects}"
 
 
-def test_get_survey_name(app_context, setup_test_data):
+def test_get_survey_name(app_context, setup_test_data, mock_language, app):
     """
     Test the retrieval of a survey name.
     Verifies that the function correctly fetches the name for an existing survey
     and returns an empty string for a non-existent survey.
     """
-    # Fetch an existing survey ID and name
-    survey_query = "SELECT id, name FROM surveys LIMIT 1"
-    result = execute_query(survey_query)
-    assert result, "No surveys found in the database"
-    survey_id = result[0]["id"]
-    expected_name = result[0]["name"]
+    mock_language(app)  # Set default language to Hebrew
 
-    # Test retrieving the name of the existing survey
-    retrieved_name = get_survey_name(survey_id)
-    assert (
-        retrieved_name == expected_name
-    ), f"Expected '{expected_name}', but got '{retrieved_name}'"
+    with app.test_request_context():
+        # Fetch an existing survey ID and name
+        survey_query = "SELECT id, name FROM surveys LIMIT 1"
+        result = execute_query(survey_query)
+        assert result, "No surveys found in the database"
+        survey_id = result[0]["id"]
+        expected_name = "סקר בדיקה"  # Default to Hebrew
 
-    # Test with a non-existent survey ID
-    non_existent_id = 9999
-    empty_name = get_survey_name(non_existent_id)
-    assert (
-        empty_name == ""
-    ), f"Expected empty string for non-existent survey, but got '{empty_name}'"
+        # Test retrieving the name of the existing survey
+        retrieved_name = get_survey_name(survey_id)
+        assert (
+            retrieved_name == expected_name
+        ), f"Expected '{expected_name}', but got '{retrieved_name}'"
+
+        # Test with a non-existent survey ID
+        non_existent_id = 9999
+        empty_name = get_survey_name(non_existent_id)
+        assert (
+            empty_name == ""
+        ), f"Expected empty string for non-existent survey, but got '{empty_name}'"
 
 
 def test_check_user_participation(app_context, setup_test_data, cleanup_db):
@@ -434,8 +452,6 @@ def test_get_latest_survey_timestamp(app_context, setup_test_data, cleanup_db):
     mark_survey_as_completed(survey_response_id)
 
     # Add a small delay to ensure different timestamps
-    import time
-
     time.sleep(1)
 
     # Create another survey response but don't complete it
@@ -469,6 +485,71 @@ def test_get_latest_survey_timestamp_no_surveys(app_context, cleanup_db):
 
     latest_timestamp = get_latest_survey_timestamp()
     assert latest_timestamp == 0, "Should return 0 when no completed surveys exist"
+
+
+def test_get_subjects_multiple_languages(
+    app_context, setup_test_data, mock_language, app
+):
+    """Test subject retrieval in different languages."""
+    with app.test_request_context() as ctx:
+        # Keep the context active for the entire test
+        ctx.push()  # Push the context
+
+        survey_query = "SELECT id, subjects FROM surveys LIMIT 1"
+        result = execute_query(survey_query)
+        assert result, "No surveys found in the database"
+        survey_id = result[0]["id"]
+
+        # Verify the raw data first
+        subjects_data = json.loads(result[0]["subjects"])
+        assert subjects_data == [
+            {"en": "Subject1", "he": "נושא1"},
+            {"en": "Subject2", "he": "נושא2"},
+        ], "Raw subjects data does not match expected structure"
+
+        # Test Hebrew
+        session["language"] = "he"
+        he_subjects = get_subjects(survey_id)
+        assert he_subjects == [
+            "נושא1",
+            "נושא2",
+        ], f"Expected Hebrew subjects but got {he_subjects}"
+
+        # Test English
+        session["language"] = "en"
+        en_subjects = get_subjects(survey_id)
+        assert en_subjects == [
+            "Subject1",
+            "Subject2",
+        ], f"Expected English subjects but got {en_subjects}"
+
+        ctx.pop()  # Pop the context when done
+
+
+def test_get_survey_name_multiple_languages(
+    app_context, setup_test_data, mock_language, app
+):
+    """Test survey name retrieval in different languages."""
+    with app.test_request_context() as ctx:
+        # Keep the context active for the entire test
+        ctx.push()  # Push the context
+
+        survey_query = "SELECT id, name FROM surveys LIMIT 1"
+        result = execute_query(survey_query)
+        assert result, "No surveys found in the database"
+        survey_id = result[0]["id"]
+
+        # Test Hebrew
+        session["language"] = "he"
+        he_name = get_survey_name(survey_id)
+        assert he_name == "סקר בדיקה", f"Expected 'סקר בדיקה' but got '{he_name}'"
+
+        # Test English
+        session["language"] = "en"
+        en_name = get_survey_name(survey_id)
+        assert en_name == "Test Survey", f"Expected 'Test Survey' but got '{en_name}'"
+
+        ctx.pop()  # Pop the context when done
 
 
 if __name__ == "__main__":
