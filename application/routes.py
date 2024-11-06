@@ -149,7 +149,6 @@ def index():
         user_id=user_id,
         external_survey_id=external_survey_id,
         survey_name=survey_name,
-        get_translation=get_translation,
     )
 
 
@@ -178,7 +177,6 @@ def create_vector():
                 subjects=subjects,
                 user_id=user_id,
                 external_survey_id=external_survey_id,
-                get_translation=get_translation,
             )
 
         logger.info(f"Valid vector created by user {user_id}: {user_vector}")
@@ -200,7 +198,6 @@ def create_vector():
         user_id=user_id,
         internal_survey_id=internal_survey_id,
         external_survey_id=external_survey_id,
-        get_translation=get_translation,
     )
 
 
@@ -245,7 +242,6 @@ def survey():
             internal_survey_id=internal_survey_id,
             external_survey_id=external_survey_id,
             zip=zip,
-            get_translation=get_translation,
         )
 
     elif request.method == "POST":
@@ -307,7 +303,6 @@ def survey():
             return render_template(
                 "error.html",
                 message=get_translation("survey_processing_error", "messages"),
-                get_translation=get_translation,
             )
 
         # Use external survey ID for Panel4All redirect
@@ -322,7 +317,7 @@ def survey():
 def thank_you():
     """Render the thank you page."""
     logger.info("Thank you page accessed")
-    return render_template("thank_you.html", get_translation=get_translation)
+    return render_template("thank_you.html")
 
 
 @main.route("/report")
@@ -344,7 +339,6 @@ def view_report():
         return render_template(
             "error.html",
             message=get_translation("report_error", "messages"),
-            get_translation=get_translation,
         )
 
 
@@ -380,7 +374,6 @@ def dev_report():
     return render_template(
         "error.html",
         message=get_translation("report_error", "messages"),
-        get_translation=get_translation,
     )
 
 
@@ -415,7 +408,6 @@ def bad_request(e):
         render_template(
             "error.html",
             message=e.description,
-            get_translation=get_translation,
         ),
         400,
     )
@@ -436,7 +428,6 @@ def not_found(e):
         render_template(
             "error.html",
             message=e.description,
-            get_translation=get_translation,
         ),
         404,
     )

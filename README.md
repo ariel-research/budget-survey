@@ -13,6 +13,8 @@
   - [Main Routes](#main-routes)
   - [API Endpoints](#api-endpoints)
 - [Screen Text Locations](#screen-text-locations)
+- [Language Support](#language-support)
+  - [Features](#features)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
   - [Changing the Active Survey](#changing-the-active-survey)
@@ -159,30 +161,38 @@ For development purposes, use the `/dev/report` endpoint when making changes to 
 
 ## Screen Text Locations
 To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
-1. **Index Page (Introduction and Consent)**
-   - File: `application/templates/index.html`
-   - This file contains the introductory text on the first page of the survey.
-2. **Create Vector Page (Ideal Budget Input)**
-   - File: `application/templates/create_vector.html`
-   - This file includes the text and instructions for users to input their ideal budget allocation.
-3. **Survey Page (Budget Comparison)**
-   - File: `application/templates/survey.html`
-   - Contains the text for the main survey page where users compare pairs of budget allocations.
-4. **Thank You Page**
-   - File: `application/templates/thank_you.html`
-   - Includes the text shown on the completion page after the survey is finished.
-5. **Error Page**
-   - File: `application/templates/error.html`
-   - Contains text displayed when an error occurs during the survey process.
-     
-Note: Some dynamic error messages are defined in:
 
-- `application/messages.py`: Contains error messages used throughout the application.
+1. **Translations**
+   - File: `application/translations.py`
+   - Contains all translatable text in both Hebrew and English
+   - Includes both user interface text and error messages
+   - Organized in sections: "messages" for errors, "survey" for UI text
 
-**Important**: The survey name and subjects are dynamically loaded from the `surveys` table in the database. These are not hardcoded in any template file but are retrieved and displayed based on the current survey ID.
+2. **Templates**
+   - All templates use translation keys instead of hardcoded text
+   - Hebrew is the default language
+   - Templates automatically handle RTL/LTR based on selected language
+   - Files:
+     - `application/templates/index.html`
+     - `application/templates/create_vector.html`
+     - `application/templates/survey.html`
+     - `application/templates/thank_you.html`
+     - `application/templates/error.html`
+
+Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
+
+## Language Support
+The application supports both Hebrew (default) and English interfaces:
+
+### Features
+- Full Hebrew and English support throughout the application
+- Automatic RTL support for Hebrew
+- Language switcher in the interface
+- Language preference persistence
+- Fallback to Hebrew when translations are missing
 
 ## Database
-The application uses a MySQL database. Here's the schema:
+The application uses a MySQL database with multilingual support. Here's the schema:
 
 ![Database Schema](docs/db_schema_diagram.png)
 
@@ -211,18 +221,45 @@ To add new surveys or modify existing ones, follow these steps:
 
 2. Once connected, you can run SQL queries to add or modify surveys. Here are some example queries:
 
-   Add a new survey:
+   Add a new survey with translations:
    ```sql
    INSERT INTO surveys (name, description, subjects, active)
-   VALUES ('Budget Survey 2024', 'Annual budget allocation survey', '["Health", "Education", "Defense", "Welfare"]', TRUE);
+   VALUES (
+       JSON_OBJECT(
+           'he', 'סקר תקציב 2024',
+           'en', 'Budget Survey 2024'
+       ),
+       JSON_OBJECT(
+           'he', 'סקר שנתי להקצאת תקציב',
+           'en', 'Annual budget allocation survey'
+       ),
+       JSON_ARRAY(
+           JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
+           JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
+           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense'),
+           JSON_OBJECT('he', 'רווחה', 'en', 'Welfare')
+       ),
+       TRUE
+   );
    ```
 
-   Modify an existing survey:
+   Modify an existing survey with translations:
    ```sql
    UPDATE surveys
-   SET name = 'Updated Budget Survey 2024',
-       description = 'Revised annual budget allocation survey',
-       subjects = '["Health", "Education", "Defense", "Infrastructure"]'
+   SET name = JSON_OBJECT(
+           'he', 'סקר תקציב מעודכן 2024',
+           'en', 'Updated Budget Survey 2024'
+       ),
+       description = JSON_OBJECT(
+           'he', 'סקר שנתי מעודכן להקצאת תקציב',
+           'en', 'Revised annual budget allocation survey'
+       ),
+       subjects = JSON_ARRAY(
+           JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
+           JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
+           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense'),
+           JSON_OBJECT('he', 'תשתיות', 'en', 'Infrastructure')
+       )
    WHERE id = 1;
    ```
 
