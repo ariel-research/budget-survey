@@ -124,6 +124,10 @@ def redirect_to_panel4all(user_id, survey_id):
 @main.route("/")
 def index():
     """Render the index page or redirect to thank you page if survey is already completed."""
+    lang = request.args.get("lang")
+    if lang in ["en", "he"]:
+        set_language(lang)
+
     user_id = get_user_id()
     external_survey_id = get_external_survey_id()
     internal_survey_id = get_internal_survey_id()
