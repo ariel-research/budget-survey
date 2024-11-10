@@ -33,7 +33,7 @@ The page inherits from base.html and customizes the title and content blocks.
     <div class="start-survey">
         <p class="consent-agreement">{{ get_translation('consent_agreement') }}</p>
         
-        <a href="{{ url_for('main.create_vector', userID=user_id, surveyID=external_survey_id) }}" 
+        <a href="{{ url_for('main.create_vector', userID=user_id, surveyID=external_survey_id, lang=get_current_language()) }}" 
            class="btn">{{ get_translation('start_survey') }}</a>
         
         <p class="consent-disagreement">{{ get_translation('consent_disagreement') }}</p>

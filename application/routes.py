@@ -48,6 +48,19 @@ def inject_template_globals():
     }
 
 
+@main.before_request
+def before_request():
+    """Handle language parameter for all routes."""
+    handle_language_from_url()
+
+
+def handle_language_from_url():
+    """Set language based on URL parameter if present."""
+    lang = request.args.get("lang")
+    if lang in ["en", "he"]:
+        set_language(lang)
+
+
 def get_internal_survey_id() -> int:
     """
     Get the internal survey ID from application config.
@@ -124,10 +137,6 @@ def redirect_to_panel4all(user_id, survey_id):
 @main.route("/")
 def index():
     """Render the index page or redirect to thank you page if survey is already completed."""
-    lang = request.args.get("lang")
-    if lang in ["en", "he"]:
-        set_language(lang)
-
     user_id = get_user_id()
     external_survey_id = get_external_survey_id()
     internal_survey_id = get_internal_survey_id()
@@ -143,8 +152,14 @@ def index():
         logger.info(
             f"User {user_id} has already completed survey {internal_survey_id}. Redirecting to thank you page."
         )
-        return redirect(url_for("main.thank_you"))
-
+        return redirect(
+            url_for(
+                "main.thank_you",
+                lang=get_current_language(),
+                userID=user_id,
+                surveyID=external_survey_id,
+            )
+        )
     logger.info(
         f"Index page accessed by user_id {user_id}, internal_survey_id {internal_survey_id}, external_survey_id {external_survey_id}"
     )
@@ -163,6 +178,7 @@ def create_vector():
     external_survey_id = get_external_survey_id()
     internal_survey_id = get_internal_survey_id()
     subjects = get_subjects(internal_survey_id)
+    current_lang = get_current_language()
 
     if not subjects:
         logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
@@ -190,6 +206,7 @@ def create_vector():
                 vector=",".join(map(str, user_vector)),
                 userID=user_id,
                 surveyID=external_survey_id,
+                lang=current_lang,
             )
         )
 
@@ -212,6 +229,7 @@ def survey():
     external_survey_id = get_external_survey_id()
     internal_survey_id = get_internal_survey_id()
     subjects = get_subjects(internal_survey_id)
+    current_lang = get_current_language()
 
     if not subjects:
         logger.error(f"No subjects found for internal_survey_id {internal_survey_id}")
@@ -226,7 +244,10 @@ def survey():
             )
             return redirect(
                 url_for(
-                    "main.create_vector", userID=user_id, surveyID=external_survey_id
+                    "main.create_vector",
+                    userID=user_id,
+                    surveyID=external_survey_id,
+                    lang=current_lang,
                 )
             )
 
@@ -267,6 +288,7 @@ def survey():
                     vector=",".join(map(str, user_vector)),
                     userID=user_id,
                     surveyID=external_survey_id,
+                    lang=current_lang,
                 )
             )
 
@@ -441,7 +463,45 @@ def not_found(e):
 @main.route("/set_language")
 def change_language():
     """Handle language change requests."""
-    lang = request.args.get("lang", "he")
-    set_language(lang)
-    # Redirect back to the page user came from, or index if not available
-    return redirect(request.referrer or url_for("main.index"))
+    # Get the new language
+    new_lang = request.args.get("lang", "he")
+    set_language(new_lang)
+
+    # Get the referrer URL
+    referrer = request.referrer
+
+    if referrer:
+        # Parse the referrer URL to preserve existing parameters
+        from urllib.parse import parse_qs, urlencode, urlparse
+
+        # Parse the URL
+        parsed_url = urlparse(referrer)
+        # Convert query string to dictionary
+        query_params = parse_qs(parsed_url.query)
+
+        # Update language parameter
+        query_params["lang"] = [new_lang]
+
+        # Ensure userID and surveyID are preserved
+        if "userID" not in query_params and request.args.get("userID"):
+            query_params["userID"] = [request.args.get("userID")]
+        if "surveyID" not in query_params and request.args.get("surveyID"):
+            query_params["surveyID"] = [request.args.get("surveyID")]
+
+        # Reconstruct the URL with updated parameters
+        new_query = urlencode(query_params, doseq=True)
+        new_url = (
+            f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{new_query}"
+        )
+
+        return redirect(new_url)
+
+    # If no referrer, redirect to index with necessary parameters
+    return redirect(
+        url_for(
+            "main.index",
+            lang=new_lang,
+            userID=request.args.get("userID"),
+            surveyID=request.args.get("surveyID"),
+        )
+    )
