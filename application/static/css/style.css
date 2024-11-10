@@ -486,3 +486,73 @@ input[type="radio"] {
 .rtl .start-survey {
     direction: rtl;
 }
+
+/* Budget Rules */
+.instructions {
+    background-color: #f8f9fa;  /* Light gray background */
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.rules-section {
+    margin-top: 15px;
+    padding-left: 15px;
+    border-left: 3px solid #3498db;
+}
+
+.rules-title {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 12px;
+}
+
+.rules-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.rules-list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.rules-list li::before {
+    content: "•";
+    color: #3498db;
+    position: absolute;
+    left: 0;
+}
+
+/* RTL support */
+.rtl .rules-section {
+    padding-left: 0;
+    padding-right: 15px;
+    border-left: none;
+    border-right: 3px solid #3498db;
+}
+
+.rtl .rules-list li {
+    padding-left: 0;
+    padding-right: 20px;
+}
+
+.rtl .rules-list li::before {
+    right: 0;
+    left: auto;
+}
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.instruction-text {
+    font-size: 1.1em;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}

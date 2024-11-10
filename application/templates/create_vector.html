@@ -12,9 +12,19 @@ The page inherits from base.html and customizes the title and content blocks.
 <div class="create-vector-container">
     <h1>{{ get_translation('create_vector_title') }}</h1>
 
-    <div class="instructions">
-        {{ get_translation('budget_instructions', subjects=", ".join(subjects)) }}
-        <p>{{ get_translation('sum_note') }}</p>
+    <div class="instructions-section">
+        <div class="instruction-text">
+            {{ get_translation('budget_instructions', subjects=", ".join(subjects)) }}
+        </div>
+    
+        <div class="rules-section">
+            <div class="rules-title">{{ get_translation('sum_note').title }}</div>
+            <ul class="rules-list">
+                {% for rule in get_translation('sum_note').rules %}
+                    <li>{{ rule }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 
     {% if error %}

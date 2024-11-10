@@ -94,12 +94,24 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "What is the best budget allocation in your opinion?",
         },
         "budget_instructions": {
-            "he": 'הניחו שאתם יכולים לחלק תקציב של 100 מיליארד ש"ח בין שלושה משרדים: {subjects}. כמה הייתם נותנים לכל משרד?',
-            "en": "Assume you can allocate a budget of 100 billion NIS between three ministries: {subjects}. How much would you give to each ministry?",
+            "he": 'חלקו תקציב של 100 מיליארד ש"ח בין שלושה משרדים: {subjects}.',
+            "en": "Allocate a budget of 100 billion NIS between three ministries: {subjects}.",
         },
         "sum_note": {
-            "he": "שימו לב: הסכום הכולל צריך להיות בדיוק 100.",
-            "en": "Note: The total sum must be exactly 100.",
+            "he": {
+                "title": "כללים",
+                "rules": [
+                    "בחרו ערכים בין 0-95 לכל משרד (אף משרד לא יכול לקבל את כל התקציב)",
+                    "הסכום הכולל חייב להיות בדיוק 100",
+                ],
+            },
+            "en": {
+                "title": "Rules",
+                "rules": [
+                    "Choose values between 0-95 for each ministry (no single ministry can receive the entire budget)",
+                    "Total must equal exactly 100",
+                ],
+            },
         },
         "total": {"he": 'סה"כ:', "en": "Total:"},
         "consent_title": {"he": "טופס הסכמה", "en": "Consent Form"},
