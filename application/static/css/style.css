@@ -1,5 +1,12 @@
-/* Base styles */
-body {
+/*
+ * Budget Survey Application Stylesheet
+ */
+
+/* ==========================================================================
+   1. CSS Reset & Base Styles
+   ========================================================================== */
+
+   body {
     font-family: 'Noto Sans Hebrew', sans-serif;
     line-height: 1.6;
     color: #333;
@@ -9,7 +16,25 @@ body {
     font-size: 18px;
 }
 
-/* Container styles */
+/* ==========================================================================
+   2. Typography
+   ========================================================================== */
+
+h1, h2, h3, h4 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+h1 { font-size: 2.2em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.5em; }
+h4 { font-size: 1.3em; }
+
+/* ==========================================================================
+   3. Layout Components
+   ========================================================================== */
+
+/* Container Layouts */
 .survey-container,
 .thank-you-container,
 .welcome-container,
@@ -24,61 +49,26 @@ body {
     border-radius: 8px;
 }
 
-/* Typography */
-h1, h2, h3, h4 {
-    color: #2c3e50;
-    margin-bottom: 20px;
-}
-
-h1 { font-size: 2.2em; }
-h2 { font-size: 1.8em; }
-h3 { font-size: 1.5em; }
-h4 { font-size: 1.3em; }
-
-/* Button styles */
-.btn {
-    display: inline-block;
-    background: #3498db;
-    color: #fff;
-    padding: 12px 24px;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-}
-
-.btn:hover {
-    background: #2980b9;
-}
-
-/* Center the submit and start survey buttons */
-.submit-container,
-.start-survey {
+/* Options Layout */
+.options-container {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: 30px;
-    padding: 20px 0;
-    text-align: center;
+    justify-content: space-between;
+    gap: 20px;
 }
 
-.submit-btn,
-.start-survey .btn {
-    font-size: 1.2em;
-    padding: 15px 30px;
-    margin-top: 15px;
+.option {
+    flex: 1;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.start-survey p {
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    color: #7f8c8d;
-}
+/* ==========================================================================
+   4. Form Components
+   ========================================================================== */
 
-/* Form styles */
+/* Input Groups */
 .input-group {
     display: flex;
     justify-content: space-between;
@@ -102,18 +92,64 @@ h4 { font-size: 1.3em; }
     font-size: 1.1em;
 }
 
-.input-group select {
-    background-color: #fff;
-    cursor: pointer;
-}
-
 .input-group select:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
 
-/* Survey specific styles */
+/* Button Styles */
+.btn {
+    display: inline-block;
+    background: #3498db;
+    color: #fff;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.btn:hover {
+    background: #2980b9;
+}
+
+.submit-container,
+.start-survey {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.submit-btn,
+.start-survey .btn {
+    font-size: 1.2em;
+    padding: 15px 30px;
+    margin-top: 15px;
+}
+
+/* Form Validation */
+.error-message {
+    background-color: #fdedec;
+    color: #e74c3c;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* ==========================================================================
+   5. Survey Specific Components
+   ========================================================================== */
+
+/* Survey Sections */
 .participant-info,
 .ideal-budget,
 .instructions,
@@ -133,40 +169,10 @@ h4 { font-size: 1.3em; }
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.options-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.option {
-    flex: 1;
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.option label {
-    cursor: pointer;
-    font-size: 1.1em;
-}
-
 /* Radio button styling */
 input[type="radio"] {
     margin-right: 10px;
     transform: scale(1.2);
-}
-
-/* Error message styling */
-.error-message {
-    background-color: #fdedec;
-    color: #e74c3c;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-weight: bold;
-    font-size: 1.1em;
 }
 
 /* Total container styling */
@@ -182,48 +188,86 @@ input[type="radio"] {
     border-radius: 4px;
 }
 
-/* Utility classes */
-.highlight {
+/* Comments Section */
+.comment-section {
+    margin: 20px 0;
+}
+
+.comment-section textarea {
+    width: 97%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   6. Welcome Page Specific Styles
+   ========================================================================== */
+
+.intro-box {
+    background-color: #e8f6f3;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.survey-description {
+    margin: 30px 0;
+}
+
+.survey-description ol {
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+.survey-description li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.consent {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+}
+
+/* ==========================================================================
+   7. Budget Creation Page Specific Styles
+   ========================================================================== */
+
+.instructions-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.instruction-text {
+    font-size: 1.1em;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.rules-section {
+    margin-top: 15px;
+    padding-left: 15px;
+    border-left: 3px solid #3498db;
+}
+
+.rules-title {
     font-weight: bold;
-    color: #3498db;
+    color: #2c3e50;
+    margin-bottom: 12px;
 }
 
-.text-center {
-    text-align: center;
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-    .options-container {
-        flex-direction: column;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        font-size: 16px;
-    }
-    
-    .survey-container,
-    .thank-you-container,
-    .welcome-container,
-    .create-vector-container,
-    .error-container {
-        margin: 30px auto;
-        padding: 20px;
-    }
-    
-    .btn {
-        font-size: 16px;
-        padding: 10px 20px;
-    }
-}
+/* ==========================================================================
+   8. Alert Components
+   ========================================================================== */
 
 .flash-messages {
     margin-bottom: 20px;
 }
 
-/* Styles for inline alerts */
 .alert {
     padding: 15px;
     margin-bottom: 20px;
@@ -231,38 +275,34 @@ input[type="radio"] {
     border-radius: 4px;
 }
 
-/* Specific style for error alerts */
 .alert-error {
     color: #721c24;
     background-color: #f8d7da;
     border-color: #f5c6cb;
 }
 
-/* Full-screen overlay for modal alerts */
 .custom-alert {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
-    z-index: 1000; /* Ensure it's on top of other content */
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.4); /* Semi-transparent background */
+    background-color: rgba(0,0,0,0.4);
 }
 
-/* Content box for modal alerts */
 .alert-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
+    margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
-    max-width: 500px; /* Limit maximum width */
+    max-width: 500px;
     border-radius: 5px;
     text-align: center;
 }
 
-/* Close button for modal alerts */
 #alertClose {
     background-color: #4CAF50;
     color: white;
@@ -273,22 +313,13 @@ input[type="radio"] {
     cursor: pointer;
 }
 
-/* Hover effect for close button */
 #alertClose:hover {
     background-color: #45a049;
 }
 
-.comment-section {
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-.comment-section textarea {
-    width: 97%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
+/* ==========================================================================
+   9. Language Support
+   ========================================================================== */
 
 /* RTL Support */
 .rtl {
@@ -301,61 +332,7 @@ input[type="radio"] {
     text-align: left;
 }
 
-/* Language-specific font settings */
-.rtl body {
-    font-family: 'Noto Sans Hebrew', sans-serif;
-}
-
-.ltr body {
-    font-family: 'Arial', sans-serif;
-}
-
-/* Adjust margins and paddings for RTL */
-.rtl .input-group label {
-    margin-left: 10px;
-    margin-right: 0;
-}
-
-.rtl .language-switcher {
-    left: 10px;
-    right: auto;
-}
-
-/* Flip icons and directional elements */
-.rtl .arrow-icon {
-    transform: scaleX(-1);
-}
-
-/* Form elements alignment */
-.rtl input[type="radio"] {
-    margin-left: 10px;
-    margin-right: 0;
-}
-
-.rtl .option {
-    text-align: right;
-}
-
-/* Navigation elements */
-.rtl .nav-previous {
-    float: right;
-}
-
-.rtl .nav-next {
-    float: left;
-}
-
-/* Modal dialogs */
-.rtl .alert-content {
-    text-align: right;
-}
-
-/* Ensure proper alignment of form validation messages */
-.rtl .error-message {
-    text-align: right;
-}
-
-/* Language switcher styling */
+/* Language Switcher */
 .language-switcher {
     position: fixed;
     top: 10px;
@@ -385,95 +362,24 @@ input[type="radio"] {
     color: white;
 }
 
-/* Welcome page specific styles */
-.welcome-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+/* RTL Specific Adjustments */
+.rtl .input-group label {
+    margin-left: 10px;
+    margin-right: 0;
 }
 
-.welcome-container h1 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 30px;
+.rtl .language-switcher {
+    left: 10px;
+    right: auto;
 }
 
-.intro-box {
-    background-color: #e8f6f3;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+.rtl .rules-section {
+    padding-left: 0;
+    padding-right: 15px;
+    border-left: none;
+    border-right: 3px solid #3498db;
 }
 
-.intro-box p {
-    margin: 0;
-    line-height: 1.6;
-}
-
-.survey-description {
-    margin: 30px 0;
-}
-
-.survey-description h2 {
-    color: #2c3e50;
-    margin-bottom: 20px;
-}
-
-.survey-description ol {
-    padding-right: 20px;
-    padding-left: 20px;
-}
-
-.survey-description li {
-    margin-bottom: 10px;
-    line-height: 1.5;
-}
-
-.consent {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 30px 0;
-}
-
-.consent h2 {
-    color: #2c3e50;
-    margin-bottom: 15px;
-}
-
-.consent p {
-    line-height: 1.6;
-    margin: 0;
-}
-
-.start-survey {
-    text-align: center;
-    margin-top: 30px;
-    padding: 20px 0;
-}
-
-.start-survey .consent-agreement {
-    margin-bottom: 20px;
-    color: #2c3e50;
-    font-weight: 500;
-}
-
-.start-survey .btn {
-    display: inline-block;
-    padding: 15px 30px;
-    font-size: 1.2em;
-    margin: 20px 0;
-}
-
-.start-survey .consent-disagreement {
-    margin-top: 20px;
-    color: #7f8c8d;
-}
-
-/* RTL-specific adjustments for welcome page */
 .rtl .survey-description ol {
     padding-right: 20px;
     padding-left: 0;
@@ -487,72 +393,73 @@ input[type="radio"] {
     direction: rtl;
 }
 
-/* Budget Rules */
-.instructions {
-    background-color: #f8f9fa;  /* Light gray background */
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-}
+/* ==========================================================================
+   10. Utility Classes
+   ========================================================================== */
 
-.rules-section {
-    margin-top: 15px;
-    padding-left: 15px;
-    border-left: 3px solid #3498db;
-}
-
-.rules-title {
+.text-center { text-align: center; }
+.highlight { 
     font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 12px;
-}
-
-.rules-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-}
-
-.rules-list li {
-    position: relative;
-    padding-left: 20px;
-    margin-bottom: 10px;
-    line-height: 1.5;
-}
-
-.rules-list li::before {
-    content: "•";
     color: #3498db;
-    position: absolute;
-    left: 0;
 }
 
-/* RTL support */
-.rtl .rules-section {
-    padding-left: 0;
-    padding-right: 15px;
-    border-left: none;
-    border-right: 3px solid #3498db;
+/* ==========================================================================
+   11. Media Queries
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .options-container {
+        flex-direction: column;
+    }
+    
+    .language-switcher {
+        position: relative;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
 }
 
-.rtl .rules-list li {
-    padding-left: 0;
-    padding-right: 20px;
+@media (max-width: 480px) {
+    body {
+        font-size: 16px;
+    }
+    
+    .survey-container,
+    .thank-you-container,
+    .welcome-container,
+    .create-vector-container,
+    .error-container {
+        margin: 30px auto;
+        padding: 20px;
+    }
+    
+    .btn {
+        font-size: 16px;
+        padding: 10px 20px;
+    }
 }
 
-.rtl .rules-list li::before {
-    right: 0;
-    left: auto;
-}
+/* ==========================================================================
+   12. Print Styles
+   ========================================================================== */
 
-.instructions-section {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.instruction-text {
-    font-size: 1.1em;
-    color: #2c3e50;
-    margin-bottom: 20px;
+@media print {
+    .language-switcher,
+    .btn {
+        display: none;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    .survey-container,
+    .thank-you-container,
+    .welcome-container,
+    .create-vector-container,
+    .error-container {
+        box-shadow: none;
+        margin: 0;
+        width: 100%;
+    }
 }
