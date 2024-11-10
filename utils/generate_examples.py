@@ -134,11 +134,9 @@ def graph_n_edges(user_vector, n: int = 10, vector_size=3) -> nx.Graph:
     G = nx.Graph()
     while len(G.edges) < n:
         v = create_random_vector(vector_size)
-        print(v)
         # Ensures the generated vector is unique
         while v in vectors:
             v = create_random_vector(vector_size)
-            print(v)
         vectors.add(v)
         diff_sum, ratio = get_vector_sr(user_vector, v)
         G.add_node(v, s=diff_sum, r=ratio, pos=(diff_sum, ratio))
