@@ -272,26 +272,28 @@ def generate_individual_analysis(optimization_stats: pd.DataFrame) -> str:
     return content
 
 
-
-def choice_explanation_string_version1(optimal_allocation:tuple, option_1:tuple, option_2:tuple, user_choice:int) -> str:
+def choice_explanation_string_version1(
+    optimal_allocation: tuple, option_1: tuple, option_2: tuple, user_choice: int
+) -> str:
     """
     Returns a string that explains the user's choice between two options. Version 1
     """
     is_sum = is_sum_optimized(
         tuple(optimal_allocation), tuple(option_1), tuple(option_2), user_choice
     )
-    # Format the choice string
     optimization_type = "Sum" if is_sum else "Ratio"
     css_class = "optimization-sum" if is_sum else "optimization-ratio"
     chosen_option = "(1)" if user_choice == 1 else "(2)"
     return f"{str(option_1)} vs {str(option_2)} → <span class='{css_class}'>{optimization_type}</span> {chosen_option}"
 
 
-def choice_explanation_string_version2(optimal_allocation:tuple, option_1:tuple, option_2:tuple, user_choice:int) -> str:
+def choice_explanation_string_version2(
+    optimal_allocation: tuple, option_1: tuple, option_2: tuple, user_choice: int
+) -> str:
     """
-    Returns a string that explains the user's choice between two options. Version 2
+    Returns a string that explains the user's choice between two options with improved formatting.
     """
-    from utils.generate_examples import sum_of_differences, minimal_ratio
+    from utils.generate_examples import minimal_ratio, sum_of_differences
 
     sum_diff_1 = sum_of_differences(optimal_allocation, option_1)
     sum_diff_2 = sum_of_differences(optimal_allocation, option_2)
@@ -303,37 +305,34 @@ def choice_explanation_string_version2(optimal_allocation:tuple, option_1:tuple,
         user_choice_type = "sum" if user_choice == 1 else "ratio"
     elif sum_diff_1 > sum_diff_2 and min_ratio_1 > min_ratio_2:
         user_choice_type = "sum" if user_choice == 2 else "ratio"
-    css_class = f"optimization-{user_choice_type}"
 
-    return f"""<span class='{css_class}'>User optimizes {user_choice_type}<span>:
-<table>
-    <tr>
-        <th></th>
-        <th>Option</th>
-        <th>Sum of differences</th>
-        <th>Minimum ratio</th>
-    </tr>
-    <tr>
-        <td>{'*' if user_choice==1 else ''}</td>
-        <td>{str(option_1)}</th>
-        <td class='{"better" if sum_diff_1 < sum_diff_2 else ""}'>{sum_diff_1}</td>
-        <td class='{"better" if min_ratio_1 > min_ratio_2 else ""}'>{round(min_ratio_1,3)}</td>
-    </tr>
-    <tr>
-        <td>{'*' if user_choice==2 else ''}</td>
-        <td>{str(option_2)}</td>
-        <td class='{"better" if sum_diff_2 < sum_diff_1 else ""}'>{sum_diff_2}</td>
-        <td class='{"better" if min_ratio_2 > min_ratio_1 else ""}'>{round(min_ratio_2,3)}</td>
-    </tr>
-</table>
-"""
-
-    # Format the choice string
-    optimization_type = "Sum" if is_sum else "Ratio"
-    css_class = "optimization-sum" if is_sum else "optimization-ratio"
-    chosen_option = "(1)" if user_choice == 1 else "(2)"
-    return f"{str(option_1)} vs {str(option_2)} → <span class='{css_class}'>{optimization_type}</span> {chosen_option}"
-
+    return f"""
+            <div class="optimization-type optimization-{user_choice_type}">
+                User optimizes {user_choice_type}
+            </div>
+            <div class="table-container">
+                <table>
+                    <tr>
+                        <th>Choice</th>
+                        <th>Option</th>
+                        <th>Sum of differences</th>
+                        <th>Minimum ratio</th>
+                    </tr>
+                    <tr>
+                        <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
+                        <td class="option-column">{str(option_1)}</td>
+                        <td class="{str('better') if sum_diff_1 < sum_diff_2 else ''}">{sum_diff_1}</td>
+                        <td class="{str('better') if min_ratio_1 > min_ratio_2 else ''}">{round(min_ratio_1, 3)}</td>
+                    </tr>
+                    <tr>
+                        <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
+                        <td class="option-column">{str(option_2)}</td>
+                        <td class="{str('better') if sum_diff_2 < sum_diff_1 else ''}">{sum_diff_2}</td>
+                        <td class="{str('better') if min_ratio_2 > min_ratio_1 else ''}">{round(min_ratio_2, 3)}</td>
+                    </tr>
+                </table>
+            </div>
+    """
 
 
 def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
@@ -352,9 +351,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
         logger.warning("No user choices data received")
         return '<div class="detailed-choices"><p>No detailed user choice data available.</p></div>'
 
-    content ="""
-<div class="detailed-choices">
-"""
+    content = """<div class="detailed-choices">"""
 
     try:
         current_user = None
@@ -364,28 +361,38 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
             # Start new user section if needed
             if current_user != choice["user_id"]:
                 if current_user is not None:
-                    content += """
-        </div>
-    </div>"""  # Close previous survey and user sections
+                    if current_survey is not None:
+                        content += """
+                            </div>  <!-- close pairs-container -->
+                        </div>      <!-- close survey-section -->"""
+                    content += """</div>  <!-- close user-section -->"""
                 current_user = choice["user_id"]
                 content += f"""
-    <div class="user-section">
-        <h3>User ID: {current_user}</h3>
-                """
+                    <div class="user-section">
+                        <h3>User ID: {current_user}</h3>"""
                 current_survey = None
 
             # Start new survey section if needed
             if current_survey != choice["survey_id"]:
                 if current_survey is not None:
-                    content += "</div>"  # Close previous survey section
+                    content += """
+                            </div>  <!-- close pairs-container -->
+                        </div>      <!-- close survey-section -->"""
                 current_survey = choice["survey_id"]
                 optimal_allocation = json.loads(choice["optimal_allocation"])
                 content += f"""
-        <div class="survey-section">
-            <div class="survey-header">
-                <h4>Survey ID: {current_survey}</h4>
-                <div>Ideal budget: <span class="ideal-budget">{optimal_allocation}</span></div>
-            </div>
+                    <div class="survey-section">
+                        <div class="survey-header">
+                            <h4>Survey ID: {current_survey}</h4>
+                            <div>Ideal budget: <span class="ideal-budget">{optimal_allocation}</span></div>
+                        </div>
+                        
+                        <!-- Add debugging class -->
+                        <div class="optimization-note-container debug-border">
+                            <p class="optimization-note debug-text">Note: Highlighted values (in blue) indicate better optimization for each metric</p>
+                        </div>
+                        
+                        <div class="pairs-container">
                 """
 
             # Add pair information with optimization type
@@ -395,19 +402,20 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
             optimal_allocation = json.loads(choice["optimal_allocation"])
 
             content += f"""
-            <div class="pair-info">
-                Pair #{choice['pair_number']}: {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
-            </div>
-"""
+                <div class="pair-info">
+                    <h5 class="pair-number">Pair #{choice['pair_number']}</h5>
+                    {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
+                </div>"""
 
-        # Close the last sections
+        # Close the last sections if there was any data
         if current_user is not None:
-            content += """
-        </div>
-    </div>"""
+            if current_survey is not None:
+                content += """
+                            </div>  <!-- close pairs-container -->
+                        </div>      <!-- close survey-section -->"""
+            content += """</div>  <!-- close user-section -->"""
 
-        content += """
-</div>"""
+        content += """</div>  <!-- close detailed-choices -->"""
         return content
 
     except Exception as e:
@@ -501,7 +509,7 @@ def generate_methodology_description() -> str:
     return methodology
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     # Usage example:
     test_data = [
         {
@@ -509,8 +517,8 @@ if __name__=="__main__":
             "survey_id": 1,
             "optimal_allocation": json.dumps([50, 30, 20]),
             "pair_number": 1,
-            "option_1": json.dumps([50, 40, 10]),    # better sum
-            "option_2": json.dumps([30, 50, 20]),    # better ratio
+            "option_1": json.dumps([50, 40, 10]),  # better sum
+            "option_2": json.dumps([30, 50, 20]),  # better ratio
             "user_choice": 2,  # Choosing option 2 -- ratio optimization
         },
         {
@@ -518,8 +526,8 @@ if __name__=="__main__":
             "survey_id": 1,
             "optimal_allocation": json.dumps([50, 30, 20]),
             "pair_number": 1,
-            "option_1": json.dumps([50, 40, 10]),    # better sum
-            "option_2": json.dumps([30, 50, 20]),    # better ratio
+            "option_1": json.dumps([50, 40, 10]),  # better sum
+            "option_2": json.dumps([30, 50, 20]),  # better ratio
             "user_choice": 1,  # Choosing option 1 -- sum optimization
         },
     ]
@@ -527,4 +535,3 @@ if __name__=="__main__":
     result = generate_detailed_user_choices(test_data)
 
     print(result)
-    
