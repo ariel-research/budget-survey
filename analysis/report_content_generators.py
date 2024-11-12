@@ -336,91 +336,56 @@ def choice_explanation_string_version2(
 
 
 def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
-    """
-    Generate detailed analysis of each user's choices for each survey.
-
-    Args:
-        user_choices (List[Dict]): List of dictionaries containing user choices data
-
-    Returns:
-        str: HTML-formatted string with detailed user choices
-    """
-    logger.info("Generating detailed user choices analysis")
+    logger.info("Starting generate_detailed_user_choices")
 
     if not user_choices:
-        logger.warning("No user choices data received")
-        return '<div class="detailed-choices"><p>No detailed user choice data available.</p></div>'
+        return '<div class="no-data">No detailed user choice data available.</div>'
 
-    content = """<div class="detailed-choices">"""
+    # Group choices by user and survey first
+    grouped_choices = {}
+    for choice in user_choices:
+        user_id = choice["user_id"]
+        survey_id = choice["survey_id"]
+        if user_id not in grouped_choices:
+            grouped_choices[user_id] = {}
+        if survey_id not in grouped_choices[user_id]:
+            grouped_choices[user_id][survey_id] = []
+        grouped_choices[user_id][survey_id].append(choice)
 
-    try:
-        current_user = None
-        current_survey = None
+    # Generate HTML
+    content = []
+    for user_id, surveys in grouped_choices.items():
+        content.append('<section class="user-choices">')
+        content.append(f"<h3>User ID: {user_id}</h3>")
 
-        for choice in user_choices:
-            # Start new user section if needed
-            if current_user != choice["user_id"]:
-                if current_user is not None:
-                    if current_survey is not None:
-                        content += """
-                            </div>  <!-- close pairs-container -->
-                        </div>      <!-- close survey-section -->"""
-                    content += """</div>  <!-- close user-section -->"""
-                current_user = choice["user_id"]
-                content += f"""
-                    <div class="user-section">
-                        <h3>User ID: {current_user}</h3>"""
-                current_survey = None
+        for survey_id, choices in surveys.items():
+            optimal_allocation = json.loads(choices[0]["optimal_allocation"])
+            content.append(
+                f"""
+                <div class="survey-choices">
+                    <h4>Survey ID: {survey_id}</h4>
+                    <div class="ideal-budget">Ideal budget: {optimal_allocation}</div>
+                    <div class="pairs-list">
+            """
+            )
 
-            # Start new survey section if needed
-            if current_survey != choice["survey_id"]:
-                if current_survey is not None:
-                    content += """
-                            </div>  <!-- close pairs-container -->
-                        </div>      <!-- close survey-section -->"""
-                current_survey = choice["survey_id"]
-                optimal_allocation = json.loads(choice["optimal_allocation"])
-                content += f"""
-                    <div class="survey-section">
-                        <div class="survey-header">
-                            <h4>Survey ID: {current_survey}</h4>
-                            <div>Ideal budget: <span class="ideal-budget">{optimal_allocation}</span></div>
-                        </div>
-                        
-                        <!-- Add debugging class -->
-                        <div class="optimization-note-container debug-border">
-                            <p class="optimization-note debug-text">Note: Highlighted values (in blue) indicate better optimization for each metric</p>
-                        </div>
-                        
-                        <div class="pairs-container">
+            for choice in choices:
+                option_1 = json.loads(choice["option_1"])
+                option_2 = json.loads(choice["option_2"])
+                user_choice = choice["user_choice"]
+                content.append(
+                    f"""
+                    <div class="choice-pair">
+                        <h5>Pair #{choice["pair_number"]}</h5>
+                        {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
+                    </div>
                 """
+                )
 
-            # Add pair information with optimization type
-            option_1 = json.loads(choice["option_1"])
-            option_2 = json.loads(choice["option_2"])
-            user_choice = choice["user_choice"]
-            optimal_allocation = json.loads(choice["optimal_allocation"])
+            content.append("</div></div>")  # close pairs-list and survey-choices
+        content.append("</section>")  # close user-choices
 
-            content += f"""
-                <div class="pair-info">
-                    <h5 class="pair-number">Pair #{choice['pair_number']}</h5>
-                    {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
-                </div>"""
-
-        # Close the last sections if there was any data
-        if current_user is not None:
-            if current_survey is not None:
-                content += """
-                            </div>  <!-- close pairs-container -->
-                        </div>      <!-- close survey-section -->"""
-            content += """</div>  <!-- close user-section -->"""
-
-        content += """</div>  <!-- close detailed-choices -->"""
-        return content
-
-    except Exception as e:
-        logger.error(f"Error generating detailed user choices: {str(e)}", exc_info=True)
-        return '<div class="detailed-choices"><p>Error generating detailed user choice analysis.</p></div>'
+    return "\n".join(content)
 
 
 def generate_key_findings(
