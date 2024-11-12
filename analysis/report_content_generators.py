@@ -308,7 +308,7 @@ def choice_explanation_string_version2(
 
     return f"""
             <div class="optimization-type optimization-{user_choice_type}">
-                User optimizes {user_choice_type}
+                User optimizes: {user_choice_type}
             </div>
             <div class="table-container">
                 <table>
