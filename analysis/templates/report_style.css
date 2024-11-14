@@ -401,12 +401,17 @@
       flex-direction: column;
       gap: 2rem;
       padding: 1rem 0;
-  }
+      border: none;
+      background: none;
+      box-shadow: none;
+   }
   
   .survey-group {
-      break-inside: avoid;
-      margin-bottom: 2rem;
-  }
+   break-inside: avoid;
+   margin-bottom: 2rem;
+   border: none;
+   background: none;
+   }
   
   .survey-group h3 {
       color: var(--color-primary);
@@ -416,16 +421,16 @@
       border-bottom: 2px solid var(--color-secondary);
   }
   
-  .comment-card {
-      background: var(--color-background);
-      border: 1px solid var(--color-border);
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      padding: 1.25rem;
-      break-inside: avoid;
-      page-break-inside: avoid;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
+.comment-card {
+   background: var(--color-background);
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   margin-bottom: 1rem;
+   padding: 1.25rem;
+   break-inside: avoid;
+   page-break-inside: avoid;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
   
   .comment-header {
       display: flex;
@@ -471,6 +476,45 @@
       border-radius: 8px;
       border: 1px dashed var(--color-border);
   }
+
+  #user-comments {
+   display: flex;
+   flex-direction: column;
+   margin: 0;
+   padding: 0;
+   page-break-before: auto !important;
+   page-break-inside: avoid;
+   border: none;
+   box-shadow: none;
+   background: none;
+}
+
+/* Ensure header stays with content */
+#user-comments-heading {
+   position: relative;
+   margin: 0;
+   padding: 0.5em 0;
+   page-break-after: avoid;
+}
+
+#user-comments-heading h2 {
+   margin: 0;
+   padding: 0;
+}
+
+/* Keep content with its header */
+#user-comments .content {
+   display: flex;
+   flex-direction: column;
+   gap: 1rem;
+   margin: 0;
+   padding: 1em 0 0 0;
+   page-break-before: avoid;
+   page-break-inside: avoid;
+   border: none;
+   box-shadow: none;
+   background: none;
+}
 
  /* Print Optimizations
    ========================================================================== */
