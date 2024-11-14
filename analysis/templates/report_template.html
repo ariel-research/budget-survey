@@ -5,8 +5,10 @@
     <title>Survey Analysis Report</title>
 </head>
 <body>
-    <header class="report-header" role="banner">
+    <!-- Report Header -->
+    <header class="report-header">
         <h1>Survey Analysis Report</h1>
+        
         <div class="metadata-container">
             <div class="metadata-text">
                 <span class="label">Generated on:</span>
@@ -24,97 +26,103 @@
         </div>
     </header>
 
-    <main role="main">
+    <main>
+        <!-- Executive Summary -->
         <section id="executive-summary" class="section">
-            <h2 id="executive-summary-heading">Executive Summary</h2>
+            <h2>Executive Summary</h2>
             <div class="content">
                 {{ sections.executive_summary | safe }}
             </div>
         </section>
 
+        <!-- Overall Statistics -->
         <section id="overall-stats" class="section">
-            <h2 id="overall-stats-heading">Overall Statistics</h2>
+            <h2>Overall Statistics</h2>
             <div class="content">
                 {{ sections.overall_stats | safe }}
             </div>
         </section>
 
-        <section id="visualizations" class="section">
-            <h2 id="visualizations-heading">Algorithm Preference Visualizations</h2>
-            
+        <!-- Visualizations -->
+        <section id="visualizations" class="section page-break-before">
+            <h2>Algorithm Preference Visualizations</h2>
+
             <div class="visualization-grid">
                 <figure class="visualization-item">
-                    <h3 id="user-choice-analysis">User Choice Analysis</h3>
+                    <h3>User Choice Analysis</h3>
                     <div class="chart-container">
                         <img src="data:image/png;base64,{{ sections.visualizations.user_choices }}"
+                             alt="Detailed breakdown of individual user choices across all surveys"
                              class="chart"
-                             alt="Detailed breakdown of individual user choices across all surveys">
+                             loading="lazy" />
                     </div>
                 </figure>
 
                 <figure class="visualization-item">
-                    <h3 id="survey-answer-distribution">Survey Answer Distribution</h3>
+                    <h3>Survey Answer Distribution</h3>
                     <div class="chart-container">
                         <img src="data:image/png;base64,{{ sections.visualizations.per_survey_percentages }}"
+                             alt="Distribution of sum vs ratio optimized answers per survey"
                              class="chart"
-                             alt="Distribution of sum vs ratio optimized answers per survey">
+                             loading="lazy" />
                     </div>
                 </figure>
             </div>
 
-            <!-- Force page break -->
-            <div style="break-after: page"></div>
+            <div class="page-break-after"></div>
 
             <div class="visualization-grid">
                 <figure class="visualization-item">
-                    <h3 id="user-preference-matrix">User Preference Matrix</h3>
+                    <h3>User Preference Matrix</h3>
                     <div class="chart-container">
                         <img src="data:image/png;base64,{{ sections.visualizations.user_majority_choices }}"
+                             alt="Matrix showing user majority choices across different surveys"
                              class="chart"
-                             alt="Matrix showing user majority choices across different surveys">
+                             loading="lazy" />
                     </div>
                 </figure>
 
                 <figure class="visualization-item">
-                    <h3 id="overall-choice-distribution">Overall Choice Distribution</h3>
+                    <h3>Overall Choice Distribution</h3>
                     <div class="chart-container">
                         <img src="data:image/png;base64,{{ sections.visualizations.overall_distribution }}"
+                             alt="Overall distribution of majority choices"
                              class="chart"
-                             alt="Overall distribution of majority choices">
+                             loading="lazy" />
                     </div>
                 </figure>
             </div>
 
-            <!-- Force page break -->
-            <div style="break-after: page"></div>
+            <div class="page-break-after"></div>
 
             <div class="visualization-grid">
                 <figure class="visualization-item">
-                    <h3 id="answer-type-distribution">Answer Type Distribution</h3>
+                    <h3>Answer Type Distribution</h3>
                     <div class="chart-container">
                         <img src="data:image/png;base64,{{ sections.visualizations.answer_distribution }}"
+                             alt="Total distribution of answer types"
                              class="chart"
-                             alt="Total distribution of answer types">
+                             loading="lazy" />
                     </div>
                 </figure>
             </div>
         </section>
 
+        <!-- Detailed Analysis -->
         <section id="detailed-analysis" class="section">
-            <h2 id="detailed-analysis-heading">Detailed Survey Analysis</h2>
+            <h2>Detailed Survey Analysis</h2>
             <div class="content">
                 {{ sections.analysis.survey | safe }}
             </div>
         </section>
 
-        <section id="detailed-choices" class="section">
+        <!-- Detailed User Choice Analysis -->
+        <section id="detailed-choices" class="section page-break-before">
             <h2>Detailed User Choice Analysis</h2>
-            
-            <!-- Legend -->
+
             <div class="legend-container">
-                <div class="legend-header">Color Legend:</div>
+                <h4 class="legend-header">Color Legend:</h4>
                 <div class="legend-items">
-                    <!-- First Row -->
                     <div class="legend-row">
                         <div class="legend-item">
                             <span class="legend-square sum"></span>
@@ -125,7 +133,6 @@
                             <span class="legend-label">Ratio Optimization</span>
                         </div>
                     </div>
-                    <!-- Second Row -->
                     <div class="legend-row">
                         <div class="legend-item">
                             <span class="legend-square none"></span>
@@ -138,38 +145,37 @@
                     </div>
                 </div>
             </div>
-        
+
             {{ sections.analysis.detailed_choices | safe }}
         </section>
 
-        <div id="user-comments">
-            <div id="user-comments-heading">
-                <h2>User Comments</h2>
-            </div>
+        <!-- User Comments -->
+        <section id="user-comments" class="section">
+            <h2>User Comments</h2>
             <div class="content">
                 {{ sections.analysis.user_comments | safe }}
             </div>
-        </div>
+        </section>
 
+        <!-- Key Findings -->
         <section id="findings" class="section">
-            <h2 id="findings-heading">Key Findings</h2>
+            <h2>Key Findings</h2>
             <div class="content">
                 {{ sections.analysis.findings | safe }}
             </div>
         </section>
 
+        <!-- Methodology -->
         <section id="methodology" class="section">
-            <h2 id="methodology-heading">Methodology</h2>
+            <h2>Methodology</h2>
             <div class="content">
                 {{ sections.analysis.methodology | safe }}
             </div>
         </section>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            This report was automatically generated by Budget-Survey System on {{ metadata.generated_date }}
-        </div>
+    <footer class="footer-content">
+        This report was automatically generated by Budget-Survey System on {{ metadata.generated_date }}
     </footer>
 </body>
 </html>

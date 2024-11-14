@@ -307,9 +307,9 @@ def choice_explanation_string_version2(
         user_choice_type = "sum" if user_choice == 2 else "ratio"
 
     return f"""
-            <div class="optimization-type optimization-{user_choice_type}">
+            <span class="user-optimizes user-optimizes-{user_choice_type}">
                 User optimizes: {user_choice_type}
-            </div>
+            </span>
             <div class="table-container">
                 <table>
                     <tr>
