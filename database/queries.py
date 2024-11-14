@@ -290,10 +290,10 @@ def check_user_participation(user_id: int, survey_id: int) -> bool:
 
 def retrieve_completed_survey_responses() -> List[Dict]:
     """
-    Retrieves all completed survey responses, including user choices and both options for each comparison.
+    Retrieves all completed survey responses with proper NULL handling.
 
     Returns:
-        list: A list of dictionaries containing raw survey response data, or an empty list if an error occurs.
+        list: A list of dictionaries containing raw survey response data.
     """
     query = """
     SELECT 
@@ -303,7 +303,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         sr.optimal_allocation,
         sr.completed,
         sr.created_at AS response_created_at,
-        sr.user_comment,
+        COALESCE(sr.user_comment, '') as user_comment,  -- Convert NULL to empty string
         cp.pair_number,
         cp.option_1,
         cp.option_2,
@@ -322,6 +322,11 @@ def retrieve_completed_survey_responses() -> List[Dict]:
     try:
         results = execute_query(query)
         if results:
+            # Additional data cleaning at Python level
+            for row in results:
+                # Ensure user_comment is always a string
+                row["user_comment"] = str(row["user_comment"] or "").strip()
+
             logger.debug(f"Retrieved {len(results)} rows of completed survey data")
             return results
         else:
