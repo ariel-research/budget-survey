@@ -395,92 +395,86 @@
  }
 
 /* User Comments Section
-========================================================================== */
-
-/* Container */
-#user-comments {
-   display: flex;
-   flex-direction: column;
-   margin: 0;
-   padding: 0;
-   page-break-before: always;
-   page-break-inside: avoid;
-}
-
-/* Heading */
-#user-comments-heading {
-   position: relative;
-   margin: 0;
-   padding: 0.5em 0;
-   page-break-after: avoid;
-}
-
-#user-comments-heading h2 {
-   margin: 0;
-   padding: 0;
-}
-
-/* Content */
-#user-comments .content {
-   display: flex;
-   flex-direction: column;
-   gap: 1rem;
-   margin: 0;
-   padding: 1em 0 0 0;
-   page-break-before: avoid;
-   page-break-inside: avoid;
-}
-
-/* Individual Comments */
-.user-comment {
-   position: relative;
-   margin: 0;
-   padding: 1.25rem;
-   background: var(--color-background);
-   border: 1px solid var(--color-border);
-   border-radius: 8px;
-   page-break-inside: avoid;
-   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.comment-header {
-   display: flex;
-   align-items: center;
-   gap: 1rem;
-   margin-bottom: 0.75rem;
-   padding-bottom: 0.75rem;
-   border-bottom: 1px solid var(--color-border);
-   color: var(--color-text-light);
-   font-size: 0.9em;
-}
-
-.response-id, 
-.survey-id {
-   color: var(--color-secondary);
-   font-weight: 500;
-   display: inline-flex;
-   align-items: center;
-}
-
-.response-id::after {
-   content: "•";
-   margin: 0 0.5rem;
-   color: var(--color-text-light);
-   opacity: 0.5;
-}
-
-.comment-text {
-   padding: 0.75rem 1rem;
-   background: var(--color-background-alt);
-   border-radius: 6px;
-   font-style: italic;
-   color: var(--color-text);
-   line-height: 1.5;
-}
+   ========================================================================== */
+   .comments-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding: 1rem 0;
+  }
+  
+  .survey-group {
+      break-inside: avoid;
+      margin-bottom: 2rem;
+  }
+  
+  .survey-group h3 {
+      color: var(--color-primary);
+      font-size: 1.4em;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-secondary);
+  }
+  
+  .comment-card {
+      background: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      padding: 1.25rem;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--color-border);
+  }
+  
+  .comment-metadata {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      font-size: 0.9em;
+  }
+  
+  .response-id {
+      color: var(--color-secondary);
+      font-weight: 500;
+  }
+  
+  .comment-body {
+      background: var(--color-background-alt);
+      border-radius: 6px;
+      padding: 1rem;
+  }
+  
+  .comment-text {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--color-text);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+  }
+  
+  .no-comments {
+      text-align: center;
+      color: var(--color-text-light);
+      font-style: italic;
+      padding: 2rem;
+      background: var(--color-background-alt);
+      border-radius: 8px;
+      border: 1px dashed var(--color-border);
+  }
 
  /* Print Optimizations
    ========================================================================== */
-   /* @media print {
+   @media print {
       body {
           background: none;
           padding: 0;
@@ -527,7 +521,21 @@
       .optimization-note-container {
           break-inside: avoid;
       }
-  } */
+
+      .survey-group {
+         break-inside: avoid;
+         page-break-inside: avoid;
+     }
+     
+     .comment-card {
+         break-inside: avoid;
+         page-break-inside: avoid;
+     }
+     
+     .comment-card:not(:last-child) {
+         margin-bottom: 1.5rem;
+     }
+  }
  
  /* Accessibility
    ========================================================================== */

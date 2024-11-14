@@ -400,10 +400,6 @@ def generate_user_comments_section(responses_df: pd.DataFrame) -> str:
     """
     Generate HTML content for the user comments section of the report.
 
-    Filters survey responses to include only those with non-empty comments,
-    formats each comment with user ID, survey ID, and timestamp, and returns
-    formatted HTML content.
-
     Args:
         responses_df (pd.DataFrame): DataFrame containing survey responses with columns:
             - survey_response_id: ID of the survey response
@@ -420,30 +416,52 @@ def generate_user_comments_section(responses_df: pd.DataFrame) -> str:
     no_nan_mask = responses_df["user_comment"].notna()  # Remove NaN values
     no_empty_mask = (
         responses_df["user_comment"].str.strip() != ""
-    )  # Remove empty/whitespace strings
+    )  # Remove empty strings
     valid_comments_mask = no_nan_mask & no_empty_mask
 
-    # Apply filter
-    comments = responses_df[valid_comments_mask]
+    # Apply filter and sort by survey_id and response_id
+    comments = responses_df[valid_comments_mask].sort_values(
+        ["survey_id", "survey_response_id"]
+    )
 
     if comments.empty:
-        return "<p>No user comments available.</p>"
+        return '<div class="comments-container"><p class="no-comments">No user comments available.</p></div>'
 
-    content = []
+    # Generate the comments HTML with a container
+    content = ['<div class="comments-container">']
+
+    current_survey = None
     for _, row in comments.iterrows():
-        content.append(
-            f"""
-            <div class="user-comment">
-                <div class="comment-header">
-                    <span class="response-id">Response ID: {row['survey_response_id']}</span>
-                    <span class="survey-id">Survey ID: {row['survey_id']}</span>
-                </div>
-                <div class="comment-text">{row['user_comment']}</div>
-            </div>
-            """
-        )
+        # Add survey separator if we're starting a new survey
+        if current_survey != row["survey_id"]:
+            if current_survey is not None:
+                content.append("</div>")  # Close previous survey group
+            current_survey = row["survey_id"]
+            content.append(
+                f'<div class="survey-group"><h3>Survey {row["survey_id"]}</h3>'
+            )
 
-    return "".join(content)
+        # Generate individual comment HTML
+        comment_html = f"""
+            <div class="comment-card">
+                <div class="comment-header">
+                    <div class="comment-metadata">
+                        <span class="response-id">Response ID: {row['survey_response_id']}</span>
+                    </div>
+                </div>
+                <div class="comment-body">
+                    <p class="comment-text">{row['user_comment']}</p>
+                </div>
+            </div>
+        """
+        content.append(comment_html)
+
+    # Close last survey group and main container
+    if current_survey is not None:
+        content.append("</div>")
+    content.append("</div>")
+
+    return "\n".join(content)
 
 
 def generate_key_findings(
