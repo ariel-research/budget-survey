@@ -15,6 +15,7 @@ from analysis.report_content_generators import (
     generate_methodology_description,
     generate_overall_stats,
     generate_survey_analysis,
+    generate_user_comments_section,
 )
 from analysis.utils import (
     load_data,
@@ -115,6 +116,7 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                     "detailed_choices": generate_detailed_user_choices(
                         retrieve_user_survey_choices()
                     ),
+                    "user_comments": generate_user_comments_section(data["responses"]),
                     "findings": generate_key_findings(
                         data["summary"], data["optimization"]
                     ),

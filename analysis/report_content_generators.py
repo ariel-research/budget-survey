@@ -396,6 +396,56 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
     return "\n".join(content)
 
 
+def generate_user_comments_section(responses_df: pd.DataFrame) -> str:
+    """
+    Generate HTML content for the user comments section of the report.
+
+    Filters survey responses to include only those with non-empty comments,
+    formats each comment with user ID, survey ID, and timestamp, and returns
+    formatted HTML content.
+
+    Args:
+        responses_df (pd.DataFrame): DataFrame containing survey responses with columns:
+            - survey_response_id: ID of the survey response
+            - survey_id: ID of the survey
+            - user_comment: Text comment from user
+
+    Returns:
+        str: HTML formatted string containing all user comments. Returns a "no comments"
+             message if no comments are found.
+    """
+    logger.info("Generating user comments section")
+
+    # Create boolean masks
+    no_nan_mask = responses_df["user_comment"].notna()  # Remove NaN values
+    no_empty_mask = (
+        responses_df["user_comment"].str.strip() != ""
+    )  # Remove empty/whitespace strings
+    valid_comments_mask = no_nan_mask & no_empty_mask
+
+    # Apply filter
+    comments = responses_df[valid_comments_mask]
+
+    if comments.empty:
+        return "<p>No user comments available.</p>"
+
+    content = []
+    for _, row in comments.iterrows():
+        content.append(
+            f"""
+            <div class="user-comment">
+                <div class="comment-header">
+                    <span class="response-id">Response ID: {row['survey_response_id']}</span>
+                    <span class="survey-id">Survey ID: {row['survey_id']}</span>
+                </div>
+                <div class="comment-text">{row['user_comment']}</div>
+            </div>
+            """
+        )
+
+    return "".join(content)
+
+
 def generate_key_findings(
     summary_stats: pd.DataFrame, optimization_stats: pd.DataFrame
 ) -> str:
