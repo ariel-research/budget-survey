@@ -153,6 +153,7 @@ def process_survey_responses(raw_results: List[Dict]) -> List[Dict]:
                 "optimal_allocation": json.loads(row["optimal_allocation"]),
                 "completed": row["completed"],
                 "response_created_at": row["response_created_at"],
+                "user_comment": row["user_comment"],
                 "comparisons": [],
             }
         current_response["comparisons"].append(

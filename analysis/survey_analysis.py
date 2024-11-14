@@ -26,7 +26,10 @@ def get_all_completed_survey_responses() -> pd.DataFrame:
         with app.app_context():
             raw_results = retrieve_completed_survey_responses()
         processed_results = process_survey_responses(raw_results)
+
+        # Create DataFrame with all columns
         df: pd.DataFrame = pd.DataFrame(processed_results)
+
         logger.info(f"Successfully retrieved and processed {len(df)} survey responses")
         return df
     except Exception as e:

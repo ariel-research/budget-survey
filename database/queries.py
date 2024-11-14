@@ -303,6 +303,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         sr.optimal_allocation,
         sr.completed,
         sr.created_at AS response_created_at,
+        sr.user_comment,
         cp.pair_number,
         cp.option_1,
         cp.option_2,
