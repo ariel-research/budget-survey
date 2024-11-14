@@ -336,9 +336,17 @@ def choice_explanation_string_version2(
 
 
 def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
-    logger.info("Starting generate_detailed_user_choices")
+    """
+    Generate detailed analysis of each user's choices for each survey.
+    Args:
+        user_choices (List[Dict]): List of dictionaries containing user choices data
+    Returns:
+        str: HTML-formatted string with detailed user choices
+    """
+    logger.info("Generating detailed user choices analysis")
 
     if not user_choices:
+        logger.warning("No user choices data received")
         return '<div class="no-data">No detailed user choice data available.</div>'
 
     # Group choices by user and survey first
