@@ -114,19 +114,31 @@ Note: Make sure your .env file is properly configured with the correct database 
 
 1. Activate the virtual environment (if not already activated)
 
-2. Run the Flask application:
+2. Run the Flask application using either of these commands:
    ```
    python app.py
    ```
+   This will run the application on port 5001.
 
-3. Access the application at `http://localhost:5001`
+   or
+   ```
+   flask run
+   ```
+   This will run the application on port 5000.
 
-The live version of the application can be accessed at:
-https://survey.csariel.xyz/?userID=...&surveyID=...
+3. Access the application based on the command used:
+   - If using `python app.py`: http://localhost:5001
+   - If using `flask run`: http://localhost:5000
+
+The live version of the application can be accessed at these endpoints:
+
+- Main Survey: https://survey.csariel.xyz/?userID=...&surveyID=...
+- Survey Report: https://survey.csariel.xyz/report
+- Development Report: https://survey.csariel.xyz/dev/report
 
 Notes: 
 
-- Both 'userID' and 'surveyID' parameters are required in the URL.
+- For the main survey endpoint, both 'userID' and 'surveyID' parameters are required in the URL.
 - The 'userID' parameter is used to obtain the user_id.
 - While the 'surveyID' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
 
