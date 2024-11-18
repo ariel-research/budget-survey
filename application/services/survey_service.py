@@ -21,22 +21,32 @@ logger = logging.getLogger(__name__)
 
 class SurveyService:
     @staticmethod
-    def check_survey_exists(survey_id: int) -> Tuple[bool, Optional[str]]:
+    def check_survey_exists(
+        survey_id: int,
+    ) -> Tuple[bool, Optional[str], Optional[Dict]]:
         """
-        Verify survey exists and has subjects.
+        Verify survey exists and get its data.
+
+        Args:
+            survey_id: The internal survey ID
 
         Returns:
-            Tuple of (exists: bool, error_message: Optional[str])
+            Tuple containing:
+            - exists: bool: Whether the survey exists
+            - error_message: Optional[str]: Error message if survey doesn't exist
+            - data: Optional[Dict]: Survey data if exists, containing:
+                - name: str: Survey name
+                - subjects: List[str]: Survey subjects
         """
         survey_name = get_survey_name(survey_id)
         if not survey_name:
-            return False, "Survey not found"
+            return False, "Survey not found", None
 
         subjects = get_subjects(survey_id)
         if not subjects:
-            return False, "Survey has no subjects"
+            return False, "Survey has no subjects", None
 
-        return True, None
+        return True, None, {"name": survey_name, "subjects": subjects}
 
     @staticmethod
     def check_user_eligibility(
@@ -55,7 +65,22 @@ class SurveyService:
 
     @staticmethod
     def validate_vector(vector: List[int], num_subjects: int) -> bool:
-        """Validate user's budget allocation vector."""
+        """
+        Validate user's budget allocation vector.
+
+        Args:
+            vector: List of integers representing budget allocations
+            num_subjects: Expected number of subjects in the survey
+
+        Returns:
+            bool: True if vector is valid, False otherwise
+
+        Validation rules:
+        - Vector length must match number of subjects
+        - Each value must be between 0 and 95
+        - Sum of all values must be exactly 100
+        - All values must be divisible by 5
+        """
         return len(vector) == num_subjects and is_valid_vector(vector)
 
     @staticmethod

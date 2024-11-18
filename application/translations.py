@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Optional
 
-from flask import session
+from flask import request, session
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +161,17 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
 
 
 def get_current_language() -> str:
-    """Get the current language from session or return default."""
+    """
+    Get the current language from URL parameter or session.
+    Returns default 'he' if neither is set.
+    """
+    # First check URL parameter
+    url_lang = request.args.get("lang")
+    if url_lang in ["he", "en"]:
+        session["language"] = url_lang  # Update session with URL parameter
+        return url_lang
+
+    # Then fall back to session
     return session.get("language", "he")
 
 

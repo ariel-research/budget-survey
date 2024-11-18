@@ -77,7 +77,7 @@ class SurveySubmission:
             if any(v < 0 or v > 95 for v in self.user_vector):
                 return False, "Budget values must be between 0 and 95"
 
-            # Validate awareness check (must be 2 based on survey.js)
+            # Validate awareness check (must be 2 based)
             if self.awareness_answer != 2:
                 return False, "Failed awareness check"
 
@@ -106,7 +106,7 @@ class SurveySubmission:
         Args:
             form_data: The raw form data from the request
             user_id: The user's identifier
-            survey_id: The survey identifier
+            survey_id: The internal survey identifier
 
         Returns:
             SurveySubmission: A new instance with processed form data
@@ -120,7 +120,7 @@ class SurveySubmission:
 
             # Process comparison pairs
             pairs = []
-            for i in range(10):  # Matches TOTAL_RADIO_GROUPS-1 from survey.js
+            for i in range(10):
                 option_1 = list(map(int, form_data.get(f"option1_{i}", "").split(",")))
                 option_2 = list(map(int, form_data.get(f"option2_{i}", "").split(",")))
                 user_choice = int(form_data.get(f"choice_{i}", 0))
