@@ -1,14 +1,8 @@
 import base64
-import os
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-)
 
 from analysis.utils.visualization_utils import (
     save_plot_to_base64,

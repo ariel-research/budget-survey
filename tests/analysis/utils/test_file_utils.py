@@ -1,13 +1,7 @@
-import os
-import sys
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-)
 
 from analysis.utils.file_utils import ensure_directory_exists, save_dataframe_to_csv
 

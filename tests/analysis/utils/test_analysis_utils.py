@@ -1,13 +1,7 @@
 import json
-import os
-import sys
 
 import pandas as pd
 import pytest
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-)
 
 from analysis.utils.analysis_utils import (
     calculate_optimization_stats,
@@ -50,8 +44,9 @@ def test_is_sum_optimized_invalid_input():
 
 
 def test_process_survey_responses():
-    """Test process_survey_responses function for correct data processing."""
+    """Test process_survey_responses function for proper data processing and structure."""
     raw_results = [
+        # Survey Response 1 - First comparison pair
         {
             "survey_response_id": 1,
             "user_id": 101,
@@ -59,11 +54,13 @@ def test_process_survey_responses():
             "optimal_allocation": json.dumps([50, 30, 20]),
             "completed": True,
             "response_created_at": "2023-01-01 10:00:00",
+            "user_comment": "first survey comment",
             "pair_number": 1,
             "option_1": json.dumps([40, 35, 25]),
             "option_2": json.dumps([45, 30, 25]),
             "user_choice": 1,
         },
+        # Survey Response 1 - Second comparison pair
         {
             "survey_response_id": 1,
             "user_id": 101,
@@ -71,8 +68,22 @@ def test_process_survey_responses():
             "optimal_allocation": json.dumps([50, 30, 20]),
             "completed": True,
             "response_created_at": "2023-01-01 10:00:00",
+            "user_comment": "first survey comment",
             "pair_number": 2,
             "option_1": json.dumps([55, 25, 20]),
+            "option_2": json.dumps([45, 35, 20]),
+            "user_choice": 2,
+        },
+        {
+            "survey_response_id": 2,
+            "user_id": 102,
+            "survey_id": 1,
+            "optimal_allocation": json.dumps([40, 40, 20]),
+            "completed": True,
+            "response_created_at": "2023-01-01 11:00:00",
+            "user_comment": "second survey comment",
+            "pair_number": 1,
+            "option_1": json.dumps([35, 45, 20]),
             "option_2": json.dumps([45, 35, 20]),
             "user_choice": 2,
         },
@@ -80,13 +91,27 @@ def test_process_survey_responses():
 
     processed_results = process_survey_responses(raw_results)
 
-    assert len(processed_results) == 1
-    assert processed_results[0]["survey_response_id"] == 1
-    assert processed_results[0]["user_id"] == 101
-    assert processed_results[0]["optimal_allocation"] == [50, 30, 20]
-    assert len(processed_results[0]["comparisons"]) == 2
-    assert processed_results[0]["comparisons"][0]["pair_number"] == 1
-    assert processed_results[0]["comparisons"][1]["pair_number"] == 2
+    # Test basic structure
+    assert isinstance(processed_results, list)
+    assert len(processed_results) == 2  # Should have two distinct surveys
+
+    # Test first survey response
+    first_result = processed_results[0]
+    assert first_result["survey_response_id"] == 1
+    assert first_result["user_id"] == 101
+    assert first_result["survey_id"] == 1
+    assert first_result["optimal_allocation"] == [50, 30, 20]
+    assert first_result["completed"] is True
+    assert first_result["user_comment"] == "first survey comment"
+    assert len(first_result["comparisons"]) == 2
+
+    # Test second survey response
+    second_result = processed_results[1]
+    assert second_result["survey_response_id"] == 2
+    assert second_result["user_id"] == 102
+    assert second_result["optimal_allocation"] == [40, 40, 20]
+    assert second_result["user_comment"] == "second survey comment"
+    assert len(second_result["comparisons"]) == 1
 
 
 def test_calculate_optimization_stats():

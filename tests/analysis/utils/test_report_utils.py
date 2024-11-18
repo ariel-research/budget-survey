@@ -1,14 +1,8 @@
-import os
-import sys
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
 from flask import Flask
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-)
 
 # Create a test Flask app and context
 app = Flask(__name__)
@@ -83,7 +77,7 @@ def test_ensure_fresh_report_regeneration_needed(app_context):
     with (
         patch("analysis.utils.report_utils.ensure_fresh_csvs", mock_csv_checker),
         patch("os.path.exists", return_value=True),
-        patch("analysis.survey_report_generator_pdf.generate_report") as mock_generate,
+        patch("analysis.survey_report_generator.generate_report") as mock_generate,
     ):
         from analysis.utils.report_utils import ensure_fresh_report
 
