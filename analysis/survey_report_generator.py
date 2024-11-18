@@ -25,11 +25,12 @@ from analysis.utils import (
     visualize_user_choices,
     visualize_user_survey_majority_choices,
 )
-from app import create_app
 from database.queries import retrieve_user_survey_choices
 from logging_config import setup_logging
 
-app = create_app()
+# from app import create_app
+
+# app = create_app()
 
 
 pd.set_option("future.no_silent_downcasting", True)
