@@ -28,11 +28,6 @@ from analysis.utils import (
 from database.queries import retrieve_user_survey_choices
 from logging_config import setup_logging
 
-# from app import create_app
-
-# app = create_app()
-
-
 pd.set_option("future.no_silent_downcasting", True)
 
 setup_logging()

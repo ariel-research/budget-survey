@@ -1,7 +1,7 @@
 from typing import Optional, Type
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, render_template
 
 from application.translations import get_current_language, get_translation
 from config import Config, get_config
@@ -43,6 +43,29 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
             "get_current_language": get_current_language,
             "get_translation": get_translation,
         }
+
+    # Register error handlers
+    @app.errorhandler(400)
+    def bad_request(e):
+        """Handle 400 Bad Request errors."""
+        return (
+            render_template(
+                "error.html",
+                message=e.description,
+            ),
+            400,
+        )
+
+    @app.errorhandler(404)
+    def not_found(e):
+        """Handle 404 Not Found errors."""
+        return (
+            render_template(
+                "error.html",
+                message=e.description,
+            ),
+            404,
+        )
 
     from application.routes.report import report_routes
     from application.routes.survey import survey_routes
