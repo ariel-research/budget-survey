@@ -32,6 +32,12 @@ class Config:
     LANGUAGES: list[str] = ["he", "en"]
     DEFAULT_LANGUAGE: str = "he"
 
+    # Panel4All settings
+    PANEL4ALL = {
+        "BASE_URL": "http://www.panel4all.co.il/survey_runtime/external_survey_status.php",
+        "STATUS": {"COMPLETE": "finish"},
+    }
+
 
 class TestConfig(Config):
     """Test-specific configuration."""

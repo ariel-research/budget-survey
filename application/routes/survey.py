@@ -254,6 +254,9 @@ def thank_you():
 
 def redirect_to_panel4all(user_id: str, survey_id: str) -> str:
     """Generate Panel4All redirect URL."""
-    base_url = "http://www.panel4all.co.il/survey_runtime/external_survey_status.php"
-    params = {"surveyID": survey_id, "userID": user_id, "status": "finish"}
-    return f"{base_url}?{urlencode(params)}"
+    params = {
+        "surveyID": survey_id,
+        "userID": user_id,
+        "status": current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"],
+    }
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"

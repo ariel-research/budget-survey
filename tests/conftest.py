@@ -1,7 +1,6 @@
 import pytest
 from test_setup import setup_test_environment
 
-# Get create_app function
 create_app = setup_test_environment()
 
 
