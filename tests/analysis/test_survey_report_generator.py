@@ -1,12 +1,9 @@
 import os
-import sys
-from unittest.mock import ANY, Mock, mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pandas as pd
 import pytest
 from jinja2 import Environment
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from analysis.survey_report_generator_pdf import (
     generate_pdf,
@@ -16,30 +13,37 @@ from analysis.survey_report_generator_pdf import (
 )
 
 
-@patch("analysis.survey_report_generator.load_data")
-@patch("analysis.survey_report_generator.prepare_report_data")
-@patch("analysis.survey_report_generator.render_html_template")
+@patch("analysis.survey_report_generator_pdf.load_data")
+@patch("analysis.survey_report_generator_pdf.prepare_report_data")
+@patch("analysis.survey_report_generator_pdf.render_html_template")
 @patch("analysis.survey_report_generator_pdf.generate_pdf")
-def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load):
+def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load, app):
     """Test the complete report generation process."""
+    # Setup mock returns
     mock_load.return_value = {
-        "summary": pd.DataFrame(),
-        "optimization": pd.DataFrame(),
-        "responses": pd.DataFrame(),
+        "summary": pd.DataFrame(
+            {"survey_id": ["Total"], "total_survey_responses": [1]}
+        ),
+        "optimization": pd.DataFrame({"survey_id": [1], "user_id": ["test"]}),
+        "responses": pd.DataFrame({"survey_id": [1], "user_id": ["test"]}),
     }
     mock_prepare.return_value = {"key": "value"}
     mock_render.return_value = "<html>Test</html>"
 
+    # Execute
     generate_report()
 
+    # Assert
     mock_load.assert_called_once()
     mock_prepare.assert_called_once()
     mock_render.assert_called_once_with({"key": "value"})
-    mock_generate_pdf.assert_called_once_with("<html>Test</html>")
+    mock_generate_pdf.assert_called_once_with(
+        "<html>Test</html>", "data/survey_analysis_report.pdf"
+    )
 
 
 def test_prepare_report_data(
-    sample_summary_stats, sample_optimization_stats, sample_survey_responses
+    sample_summary_stats, sample_optimization_stats, sample_survey_responses, app
 ):
     """Test preparation of report data using fixture data."""
     sample_data = {
@@ -87,11 +91,18 @@ def test_prepare_report_data(
 def test_render_html_template():
     """Test HTML template rendering."""
     test_data = {
-        "generated_date": "2024-01-01",
-        "executive_summary": "Test summary",
-        "overall_stats": "Test stats",
-        "survey_analysis": "Test analysis",
-        "methodology": "Test methodology",
+        "metadata": {
+            "generated_date": "2024-01-01",
+            "total_surveys": 1,
+            "total_participants": 1,
+            "total_survey_responses": 1,
+        },
+        "sections": {
+            "executive_summary": "Test summary",
+            "overall_stats": "Test stats",
+            "visualizations": {},
+            "analysis": {"survey": "Test analysis", "methodology": "Test methodology"},
+        },
     }
 
     with patch.object(Environment, "get_template") as mock_get_template:
@@ -127,33 +138,36 @@ def test_generate_pdf_file_handling(mock_abspath, mock_file, tmp_path):
     mock_abspath.return_value = css_path
     html_content = "<html>Test Report</html>"
 
-    # Create a mock for the write_pdf method
-    mock_write_pdf = Mock()
-    # Create a mock for the HTML class
-    mock_html_instance = Mock()
-    mock_html_instance.write_pdf = mock_write_pdf
+    # Create mock for WeasyPrint HTML and CSS
+    mock_css = Mock()
+    mock_html = Mock()
+    mock_html.write_pdf = Mock()
 
-    # Create a mock HTML class that returns our mock instance
-    mock_html_class = Mock(return_value=mock_html_instance)
+    with (
+        patch(
+            "analysis.survey_report_generator_pdf.CSS", return_value=mock_css
+        ) as mock_css_class,
+        patch(
+            "analysis.survey_report_generator_pdf.HTML", return_value=mock_html
+        ) as mock_html_class,
+    ):
 
-    with patch("analysis.survey_report_generator_pdf.HTML", mock_html_class):
         generate_pdf(html_content)
 
-        # Verify HTML was created with correct parameters
+        # Verify calls
+        mock_abspath.assert_called_once_with("analysis/templates/report_style.css")
+        mock_css_class.assert_called_once_with(filename=css_path)
         mock_html_class.assert_called_once_with(
             string=html_content, base_url=os.path.dirname(css_path)
         )
-        # Verify write_pdf was called with correct parameters
-        mock_write_pdf.assert_called_once_with(
-            "data/survey_analysis_report.pdf",
-            stylesheets=[ANY],  # Use ANY to avoid CSS object comparison
+        mock_html.write_pdf.assert_called_once_with(
+            "data/survey_analysis_report.pdf", stylesheets=[mock_css]
         )
 
 
-@patch("analysis.survey_report_generator.load_data")
-def test_generate_report_with_empty_data(mock_load):
+@patch("analysis.survey_report_generator_pdf.load_data")
+def test_generate_report_with_empty_data(mock_load, app):
     """Test report generation with empty data."""
-    # Create empty summary DataFrame with required structure
     empty_summary = pd.DataFrame(
         {
             "survey_id": ["Total"],
@@ -170,7 +184,6 @@ def test_generate_report_with_empty_data(mock_load):
         }
     )
 
-    # Create empty optimization DataFrame with required structure
     empty_optimization = pd.DataFrame(
         {
             "survey_id": pd.Series([], dtype="int64"),
@@ -182,7 +195,6 @@ def test_generate_report_with_empty_data(mock_load):
         }
     )
 
-    # Create empty responses DataFrame with required structure
     empty_responses = pd.DataFrame(
         {
             "survey_id": pd.Series([], dtype="int64"),
@@ -198,9 +210,7 @@ def test_generate_report_with_empty_data(mock_load):
         "responses": empty_responses,
     }
 
-    # Generate report should raise ValueError for empty data
     with pytest.raises(ValueError) as exc_info:
         generate_report()
 
-    # Check that the error message contains 'empty'
-    assert "empty" in str(exc_info.value).lower()
+    assert "input dataframe is empty" in str(exc_info.value).lower()

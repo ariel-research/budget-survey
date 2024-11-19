@@ -1,16 +1,25 @@
-import os
+from typing import Optional, Type
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, render_template
 
-from application.routes import main as main_blueprint
-from config import get_config
+from application.translations import get_current_language, get_translation
+from config import Config, get_config
 from logging_config import setup_logging
 
 load_dotenv()
 
 
-def create_app(config_class=None):
+def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
+    """
+    Create and configure the Flask application.
+
+    Args:
+        config_class: Optional configuration class to use instead of default
+
+    Returns:
+        Configured Flask application instance
+    """
     app = Flask(
         __name__,
         template_folder="application/templates",
@@ -18,14 +27,53 @@ def create_app(config_class=None):
     )
     setup_logging()
 
-    # Load the configuration
+    # Load configuration
     if config_class is None:
         app.config.from_object(get_config())
     else:
         app.config.from_object(config_class)
 
-    app.secret_key = os.environ.get("FLASK_SECRET_KEY")
-    app.register_blueprint(main_blueprint)
+    app.secret_key = app.config["SECRET_KEY"]
+
+    # Register template utilities
+    @app.context_processor
+    def utility_processor() -> dict:
+        """Make utility functions available to all templates."""
+        return {
+            "get_current_language": get_current_language,
+            "get_translation": get_translation,
+        }
+
+    # Register error handlers
+    @app.errorhandler(400)
+    def bad_request(e):
+        """Handle 400 Bad Request errors."""
+        return (
+            render_template(
+                "error.html",
+                message=e.description,
+            ),
+            400,
+        )
+
+    @app.errorhandler(404)
+    def not_found(e):
+        """Handle 404 Not Found errors."""
+        return (
+            render_template(
+                "error.html",
+                message=e.description,
+            ),
+            404,
+        )
+
+    from application.routes.report import report_routes
+    from application.routes.survey import survey_routes
+    from application.routes.utils import util_routes
+
+    app.register_blueprint(survey_routes, url_prefix="/")
+    app.register_blueprint(report_routes)
+    app.register_blueprint(util_routes)
 
     return app
 

@@ -1,14 +1,9 @@
 import json
-import os
 import random
-import sys
 import time
 
 import pytest
 from flask import session
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
 
 from app import create_app
 from database.db import execute_query, get_db_connection

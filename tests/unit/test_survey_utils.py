@@ -1,11 +1,3 @@
-import os
-import sys
-
-# Add the parent directory to the system path to allow importing from the backend module.
-sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
-
 import pytest
 
 from utils.survey_utils import generate_awareness_check, is_valid_vector
