@@ -1,5 +1,3 @@
-"""Dashboard routes and functionality for the survey analysis application."""
-
 import logging
 from datetime import datetime
 
@@ -18,6 +16,7 @@ logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
 
 
+@dashboard_routes.route("/dashboard/")
 @dashboard_routes.route("/dashboard")
 def dashboard():
     """Render the analytics dashboard with visualizations and metrics."""
@@ -53,7 +52,27 @@ def dashboard():
             "last_update_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         }
 
-        return render_template("dashboard.html", charts=charts, **metrics)
+        # Pass translations using 'dashboard' section
+        translations = {
+            "title": get_translation("title", "dashboard"),
+            "last_updated": get_translation("last_updated", "dashboard"),
+            "refresh": get_translation("refresh", "dashboard"),
+            "total_surveys": get_translation("total_surveys", "dashboard"),
+            "total_participants": get_translation("total_participants", "dashboard"),
+            "completion_rate": get_translation("completion_rate", "dashboard"),
+            "survey_percentages": get_translation("survey_percentages", "dashboard"),
+            "majority_choices": get_translation("majority_choices", "dashboard"),
+            "overall_distribution": get_translation(
+                "overall_distribution", "dashboard"
+            ),
+            "answer_distribution": get_translation("answer_distribution", "dashboard"),
+            "expand": get_translation("expand", "dashboard"),
+            "download": get_translation("download", "dashboard"),
+        }
+
+        return render_template(
+            "dashboard.html", charts=charts, translations=translations, **metrics
+        )
 
     except Exception as e:
         logger.error(f"Error rendering dashboard: {str(e)}", exc_info=True)
@@ -68,7 +87,7 @@ def dashboard():
 #         return jsonify(
 #             {
 #                 "status": "success",
-#                 "message": get_translation("messages.dashboard_refreshed"),
+#                 "message": get_translation("dashboard_refreshed", "messages"),
 #             }
 #         )
 #     except Exception as e:
@@ -77,17 +96,8 @@ def dashboard():
 #             jsonify(
 #                 {
 #                     "status": "error",
-#                     "message": get_translation("messages.dashboard_refresh_error"),
+#                     "message": get_translation("dashboard_refresh_error", "messages"),
 #                 }
 #             ),
 #             500,
 #         )
-
-
-def get_dashboard_data():
-    """Helper function to get dashboard data from CSVs."""
-    try:
-        return load_data()
-    except Exception as e:
-        logger.error(f"Error loading dashboard data: {str(e)}")
-        raise

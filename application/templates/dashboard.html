@@ -1,69 +1,149 @@
 {% extends "base.html" %}
-
 {% block content %}
+
 <div class="dashboard-wrapper">
     <div class="dashboard-container">
-        <div class="dashboard-header">
+        <!-- Header Section -->
+        <header class="dashboard-header">
             <div class="header-content">
-                <h1>{{ get_translation('dashboard.title', 'survey') }}</h1>
-                <p class="last-updated">{{ get_translation('dashboard.last_updated', 'survey') }}: {{ last_update_time }}</p>
+                <h1>{{ translations.title }}</h1>
+                <div class="last-update">
+                    {{ translations.last_updated }}: {{ last_update_time }}
+                </div>
             </div>
-            <button onclick="refreshDashboard()" class="refresh-btn" id="refreshBtn">
-                <svg class="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-                <span>{{ get_translation('dashboard.refresh', 'survey') }}</span>
+            <button class="refresh-button">
+                <img src="data:image/svg+xml;base64,PHN2ZyBjbGFzcz0icmVmcmVzaC1pY29uIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEuNSAydjZoLTZNMi41IDIydi02aDZNMiAxMS41YTEwIDEwIDAgMCAxIDE4LjgtNC4zTTIyIDEyLjVhMTAgMTAgMCAwIDEtMTguOCA0LjIiIC8+PC9zdmc+" 
+                     class="refresh-icon" 
+                     alt="refresh">
+                {{ translations.refresh }}
             </button>
-        </div>
+        </header>
 
+        <!-- Metrics Summary Section -->
         <div class="metrics-summary">
             <div class="metric-card">
                 <div class="metric-icon">📊</div>
                 <div class="metric-content">
                     <div class="metric-value">{{ total_surveys }}</div>
-                    <div class="metric-label">{{ get_translation('dashboard.total_surveys', 'survey') }}</div>
+                    <div class="metric-label">{{ translations.total_surveys }}</div>
                 </div>
             </div>
+
             <div class="metric-card">
                 <div class="metric-icon">👥</div>
                 <div class="metric-content">
                     <div class="metric-value">{{ total_participants }}</div>
-                    <div class="metric-label">{{ get_translation('dashboard.total_participants', 'survey') }}</div>
+                    <div class="metric-label">{{ translations.total_participants }}</div>
                 </div>
             </div>
+
             <div class="metric-card">
                 <div class="metric-icon">✅</div>
                 <div class="metric-content">
                     <div class="metric-value">{{ completion_rate }}%</div>
-                    <div class="metric-label">{{ get_translation('dashboard.completion_rate', 'survey') }}</div>
+                    <div class="metric-label">{{ translations.completion_rate }}</div>
                 </div>
             </div>
         </div>
 
+        <!-- Charts Grid Section -->
         <div class="charts-grid">
-            {% for chart_id, chart_data in charts.items() %}
+            <!-- Survey Percentages Chart -->
             <div class="chart-card" data-aos="fade-up">
                 <div class="chart-header">
-                    <h2>{{ get_translation('dashboard.' + chart_id, 'survey') }}</h2>
+                    <h2>{{ translations.survey_percentages }}</h2>
                     <div class="chart-toolbar">
-                        <button class="chart-action-btn" onclick="expandChart(this)" title="{{ get_translation('dashboard.expand', 'survey') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
                         </button>
-                        <button class="chart-action-btn" onclick="downloadChart(this)" data-chart="{{ chart_id }}" title="{{ get_translation('dashboard.download', 'survey') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
                         </button>
                     </div>
                 </div>
                 <div class="chart-container">
-                    <img src="data:image/png;base64,{{ chart_data }}" 
-                         alt="{{ get_translation('dashboard.' + chart_id, 'survey') }}" 
+                    <img src="data:image/png;base64,{{ charts.survey_percentages }}"
+                         alt="{{ translations.survey_percentages }}"
                          class="chart-image"
                          loading="lazy">
                 </div>
             </div>
-            {% endfor %}
+
+            <!-- Majority Choices Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.majority_choices }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.majority_choices }}"
+                         alt="{{ translations.majority_choices }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Overall Distribution Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.overall_distribution }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.overall_distribution }}"
+                         alt="{{ translations.overall_distribution }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Answer Distribution Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.answer_distribution }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.answer_distribution }}"
+                         alt="{{ translations.answer_distribution }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Modal for expanded charts -->
 <div id="chartModal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
@@ -71,75 +151,200 @@
     </div>
 </div>
 
+
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize AOS (Animate on Scroll)
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
     AOS.init({
         duration: 800,
-        once: true
+        once: true,
+        offset: 100
     });
+
+    // Get modal elements
+    const modal = document.getElementById('chartModal');
+    const modalImg = document.getElementById('modalImage');
+    const closeModal = document.querySelector('.close-modal');
+
+    // Initialize event listeners for chart interactions
+    initializeChartButtons();
+    initializeRefreshButton();
+    initializeModalHandlers(modal, closeModal);
+
+    // Handle keyboard events
+    initializeKeyboardHandlers(modal);
 });
 
-const modal = document.getElementById('chartModal');
-const modalImg = document.getElementById('modalImage');
-const closeModal = document.querySelector('.close-modal');
+// Initialize chart expand and download buttons
+function initializeChartButtons() {
+    // Handle expand buttons
+    document.querySelectorAll('.expand-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            expandChart(this);
+        });
+    });
 
-function expandChart(button) {
-    const chartImg = button.closest('.chart-card').querySelector('.chart-image');
-    modal.style.display = "flex";
-    modalImg.src = chartImg.src;
+    // Handle download buttons
+    document.querySelectorAll('.download-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            downloadChart(this);
+        });
+    });
 }
 
-closeModal.onclick = () => modal.style.display = "none";
-modal.onclick = (e) => {
-    if (e.target === modal) modal.style.display = "none";
-}
-
-let isRefreshing = false;
-async function refreshDashboard() {
-    if (isRefreshing) return;
-    
-    const btn = document.getElementById('refreshBtn');
-    isRefreshing = true;
-    btn.classList.add('refreshing');
-    
-    try {
-        const response = await fetch('/api/dashboard/refresh');
-        const data = await response.json();
-        if (data.status === 'success') {
-            location.reload();
-        } else {
-            showToast('Error: ' + data.message);
-        }
-    } catch (error) {
-        showToast('Error refreshing dashboard');
-    } finally {
-        isRefreshing = false;
-        btn.classList.remove('refreshing');
+// Initialize refresh button
+function initializeRefreshButton() {
+    const refreshButton = document.querySelector('.refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', refreshDashboard);
     }
 }
 
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+// Initialize modal event handlers
+function initializeModalHandlers(modal, closeModal) {
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            closeModalDialog(modal);
+        });
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModalDialog(modal);
+        }
+    });
 }
 
+// Initialize keyboard handlers
+function initializeKeyboardHandlers(modal) {
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            closeModalDialog(modal);
+        }
+    });
+}
+
+// Expand chart function
+function expandChart(button) {
+    const modal = document.getElementById('chartModal');
+    const modalImg = document.getElementById('modalImage');
+    const chartCard = button.closest('.chart-card');
+    const chartImg = chartCard.querySelector('.chart-image');
+    const chartTitle = chartCard.querySelector('h2').textContent;
+
+    modalImg.src = chartImg.src;
+    modalImg.alt = chartTitle;
+    modal.style.display = 'flex';
+    
+    // Add loading state
+    modalImg.style.opacity = '0';
+    modalImg.onload = function() {
+        modalImg.style.opacity = '1';
+    };
+}
+
+// Close modal function
+function closeModalDialog(modal) {
+    modal.style.display = 'none';
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = '';
+}
+
+// Download chart function
 function downloadChart(button) {
-    const chartId = button.getAttribute('data-chart');
-    const img = button.closest('.chart-card').querySelector('img');
-    const link = document.createElement('a');
-    link.download = `${chartId}.png`;
-    link.href = img.src;
-    link.click();
+    try {
+        const chartCard = button.closest('.chart-card');
+        const chartImg = chartCard.querySelector('.chart-image');
+        const chartTitle = chartCard.querySelector('h2').textContent.trim();
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const fileName = `${chartTitle.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.png`;
+
+        // Create temporary link for download
+        const link = document.createElement('a');
+        link.href = chartImg.src;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Chart downloaded successfully');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Error downloading chart');
+    }
+}
+
+// Refresh dashboard function
+let isRefreshing = false;
+async function refreshDashboard() {
+    if (isRefreshing) return;
+
+    const refreshButton = document.querySelector('.refresh-button');
+    const refreshIcon = refreshButton.querySelector('.refresh-icon');
+
+    try {
+        isRefreshing = true;
+        refreshButton.disabled = true;
+        refreshIcon.style.animation = 'spin 1s linear infinite';
+
+        const response = await fetch('/api/dashboard/refresh');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            showToast('Dashboard refreshed successfully');
+            window.location.reload();
+        } else {
+            throw new Error(data.message || 'Refresh failed');
+        }
+    } catch (error) {
+        console.error('Refresh error:', error);
+        showToast(`Error refreshing dashboard: ${error.message}`);
+    } finally {
+        isRefreshing = false;
+        refreshButton.disabled = false;
+        refreshIcon.style.animation = '';
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Remove existing toasts
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
+
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger reflow for animation
+    toast.offsetHeight;
+    
+    // Add visible class for animation
+    toast.classList.add('toast-visible');
+
+    // Remove toast after delay
+    setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Helper function to handle errors
+function handleError(error, context) {
+    console.error(`${context} error:`, error);
+    showToast(`Error: ${error.message || 'Something went wrong'}`, 'error');
 }
 </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* Main Layout */
 .dashboard-wrapper {
     min-height: 100vh;
     background: #F3F4F6;
@@ -152,6 +357,7 @@ function downloadChart(button) {
     padding: 2rem;
 }
 
+/* Header Styles */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -166,13 +372,13 @@ function downloadChart(button) {
     font-weight: 600;
 }
 
-.last-updated {
+.last-update {
     color: #6B7280;
     font-size: 0.875rem;
     margin: 0.5rem 0 0 0;
 }
 
-.refresh-btn {
+.refresh-button {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -186,12 +392,17 @@ function downloadChart(button) {
     transition: all 0.2s;
 }
 
-.refresh-btn:hover {
+.refresh-button:hover {
     background: #4338CA;
     transform: translateY(-1px);
 }
 
-.refresh-btn.refreshing .refresh-icon {
+.refresh-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.refresh-button.refreshing .refresh-icon {
     animation: spin 1s linear infinite;
 }
 
@@ -199,6 +410,7 @@ function downloadChart(button) {
     100% { transform: rotate(360deg); }
 }
 
+/* Metrics Summary */
 .metrics-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -245,6 +457,7 @@ function downloadChart(button) {
     margin-top: 0.25rem;
 }
 
+/* Charts Grid */
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
@@ -278,12 +491,16 @@ function downloadChart(button) {
     font-weight: 600;
 }
 
+/* Chart Toolbar */
 .chart-toolbar {
     display: flex;
     gap: 0.5rem;
 }
 
-.chart-action-btn {
+.toolbar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem;
     background: none;
     border: 1px solid #E5E7EB;
@@ -293,9 +510,15 @@ function downloadChart(button) {
     color: #6B7280;
 }
 
-.chart-action-btn:hover {
+.toolbar-button:hover {
     background: #F3F4F6;
     color: #111827;
+    border-color: #D1D5DB;
+}
+
+.toolbar-button img {
+    width: 16px;
+    height: 16px;
 }
 
 .chart-container {
@@ -308,6 +531,7 @@ function downloadChart(button) {
     border-radius: 0.5rem;
 }
 
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -316,18 +540,18 @@ function downloadChart(button) {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.75);
-    justify-content: center;
-    align-items: center;
     z-index: 1000;
 }
 
 .modal-content {
     background: white;
-    padding: 1rem;
+    padding: 2rem;
     border-radius: 1rem;
     max-width: 90%;
-    max-height: 90%;
+    max-height: 90vh;
     position: relative;
+    margin: 2rem auto;
+    overflow: auto;
 }
 
 .close-modal {
@@ -338,13 +562,29 @@ function downloadChart(button) {
     color: #6B7280;
     cursor: pointer;
     z-index: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #F3F4F6;
+    transition: all 0.2s;
+}
+
+.close-modal:hover {
+    background: #E5E7EB;
+    color: #111827;
 }
 
 #modalImage {
-    max-width: 100%;
-    max-height: 80vh;
+    width: 100%;
+    height: auto;
+    max-height: calc(90vh - 4rem);
+    object-fit: contain;
 }
 
+/* Toast Notifications */
 .toast {
     position: fixed;
     bottom: 2rem;
@@ -356,6 +596,7 @@ function downloadChart(button) {
     border-radius: 0.5rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     animation: slideUp 0.3s ease-out;
+    z-index: 1100;
 }
 
 @keyframes slideUp {
@@ -363,13 +604,22 @@ function downloadChart(button) {
     to { transform: translate(-50%, 0); opacity: 1; }
 }
 
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-container {
         padding: 1rem;
     }
     
-    .charts-grid {
-        grid-template-columns: 1fr;
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
     
     .metric-card {
@@ -377,6 +627,24 @@ function downloadChart(button) {
     }
     
     .header-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .chart-header {
+        padding: 1rem;
+    }
+
+    .chart-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-value {
         font-size: 1.5rem;
     }
 }

@@ -178,6 +178,13 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "completion_rate": {"he": "אחוז השלמה", "en": "Completion Rate"},
         "expand": {"he": "הרחב", "en": "Expand"},
         "download": {"he": "הורד", "en": "Download"},
+        "survey_percentages": {
+            "he": "התפלגות התשובות לפי סקר",
+            "en": "Survey Answer Percentages",
+        },
+        "majority_choices": {"he": "בחירת רוב המשתמשים", "en": "User Majority Choices"},
+        "overall_distribution": {"he": "התפלגות כללית", "en": "Overall Distribution"},
+        "answer_distribution": {"he": "התפלגות התשובות", "en": "Answer Distribution"},
     },
 }
 
