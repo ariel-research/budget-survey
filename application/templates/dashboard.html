@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>{{ translations.title }}</h1>
+                <div class="last-update">
+                    {{ translations.last_updated }}: {{ last_update_time }}
+                </div>
+            </div>
+            <button class="refresh-button">
+                <img src="data:image/svg+xml;base64,PHN2ZyBjbGFzcz0icmVmcmVzaC1pY29uIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEuNSAydjZoLTZNMi41IDIydi02aDZNMiAxMS41YTEwIDEwIDAgMCAxIDE4LjgtNC4zTTIyIDEyLjVhMTAgMTAgMCAwIDEtMTguOCA0LjIiIC8+PC9zdmc+" 
+                     class="refresh-icon" 
+                     alt="refresh">
+                {{ translations.refresh }}
+            </button>
+        </header>
+
+        <!-- Metrics Summary Section -->
+        <div class="metrics-summary">
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_surveys }}</div>
+                    <div class="metric-label">{{ translations.total_surveys }}</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">👥</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_participants }}</div>
+                    <div class="metric-label">{{ translations.total_participants }}</div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon">✅</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ completion_rate }}%</div>
+                    <div class="metric-label">{{ translations.completion_rate }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid Section -->
+        <div class="charts-grid">
+            <!-- Survey Percentages Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.survey_percentages }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.survey_percentages }}"
+                         alt="{{ translations.survey_percentages }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Majority Choices Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.majority_choices }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.majority_choices }}"
+                         alt="{{ translations.majority_choices }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Overall Distribution Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.overall_distribution }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.overall_distribution }}"
+                         alt="{{ translations.overall_distribution }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Answer Distribution Chart -->
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ translations.answer_distribution }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="toolbar-button expand-chart" title="{{ translations.expand }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMTUgM2g2djZNOSAyMUgzdi02TTIxIDNsLTcgN00zIDIxbDctNyIgLz48L3N2Zz4" 
+                                 alt="expand">
+                        </button>
+                        <button class="toolbar-button download-chart" title="{{ translations.download }}">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld2JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNE03IDEwbDUgNSA1LTVNMTIgMTVWMyIgLz48L3N2Zz4" 
+                                 alt="download">
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ charts.answer_distribution }}"
+                         alt="{{ translations.answer_distribution }}"
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for expanded charts -->
+<div id="chartModal" class="modal"> 
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <img id="modalImage" src="" alt="Expanded chart">
+    </div>
+</div>
+
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+// Initialize AOS (Animate on Scroll)
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100
+    });
+
+    // Get modal elements
+    const modal = document.getElementById('chartModal');
+    const modalImg = document.getElementById('modalImage');
+    const closeModal = document.querySelector('.close-modal');
+
+    // Initialize event listeners for chart interactions
+    initializeChartButtons();
+    initializeRefreshButton();
+    initializeModalHandlers(modal, closeModal);
+
+    // Handle keyboard events
+    initializeKeyboardHandlers(modal);
+});
+
+// Initialize chart expand and download buttons
+function initializeChartButtons() {
+    // Handle expand buttons
+    document.querySelectorAll('.expand-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            expandChart(this);
+        });
+    });
+
+    // Handle download buttons
+    document.querySelectorAll('.download-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            downloadChart(this);
+        });
+    });
+}
+
+// Initialize refresh button
+function initializeRefreshButton() {
+    const refreshButton = document.querySelector('.refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', refreshDashboard);
+    }
+}
+
+// Initialize modal event handlers
+function initializeModalHandlers(modal, closeModal) {
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            closeModalDialog(modal);
+        });
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModalDialog(modal);
+        }
+    });
+}
+
+// Initialize keyboard handlers
+function initializeKeyboardHandlers(modal) {
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            closeModalDialog(modal);
+        }
+    });
+}
+
+// Expand chart function
+function expandChart(button) {
+    const modal = document.getElementById('chartModal');
+    const modalImg = document.getElementById('modalImage');
+    const chartCard = button.closest('.chart-card');
+    const chartImg = chartCard.querySelector('.chart-image');
+    const chartTitle = chartCard.querySelector('h2').textContent;
+
+    modalImg.src = chartImg.src;
+    modalImg.alt = chartTitle;
+    modal.style.display = 'flex';
+    
+    // Add loading state
+    modalImg.style.opacity = '0';
+    modalImg.onload = function() {
+        modalImg.style.opacity = '1';
+    };
+}
+
+// Close modal function
+function closeModalDialog(modal) {
+    modal.style.display = 'none';
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = '';
+}
+
+// Download chart function
+function downloadChart(button) {
+    try {
+        const chartCard = button.closest('.chart-card');
+        const chartImg = chartCard.querySelector('.chart-image');
+        const chartTitle = chartCard.querySelector('h2').textContent.trim();
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const fileName = `${chartTitle.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.png`;
+
+        // Create temporary link for download
+        const link = document.createElement('a');
+        link.href = chartImg.src;
+        link.download = fileName;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Chart downloaded successfully');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Error downloading chart');
+    }
+}
+
+// Refresh dashboard function
+let isRefreshing = false;
+async function refreshDashboard() {
+    if (isRefreshing) return;
+
+    const refreshButton = document.querySelector('.refresh-button');
+    const refreshIcon = refreshButton.querySelector('.refresh-icon');
+
+    try {
+        isRefreshing = true;
+        refreshButton.disabled = true;
+        refreshIcon.style.animation = 'spin 1s linear infinite';
+
+        const response = await fetch('/api/dashboard/refresh');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            showToast('Dashboard refreshed successfully');
+            window.location.reload();
+        } else {
+            throw new Error(data.message || 'Refresh failed');
+        }
+    } catch (error) {
+        console.error('Refresh error:', error);
+        showToast(`Error refreshing dashboard: ${error.message}`);
+    } finally {
+        isRefreshing = false;
+        refreshButton.disabled = false;
+        refreshIcon.style.animation = '';
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Remove existing toasts
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach(toast => toast.remove());
+
+    // Create new toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger reflow for animation
+    toast.offsetHeight;
+    
+    // Add visible class for animation
+    toast.classList.add('toast-visible');
+
+    // Remove toast after delay
+    setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Helper function to handle errors
+function handleError(error, context) {
+    console.error(`${context} error:`, error);
+    showToast(`Error: ${error.message || 'Something went wrong'}`, 'error');
+}
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Main Layout */
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: #F3F4F6;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header Styles */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.875rem;
+    color: #111827;
+    font-weight: 600;
+}
+
+.last-update {
+    color: #6B7280;
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0 0;
+}
+
+.refresh-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-button:hover {
+    background: #4338CA;
+    transform: translateY(-1px);
+}
+
+.refresh-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.refresh-button.refreshing .refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+/* Metrics Summary */
+.metrics-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.metric-icon {
+    font-size: 1.5rem;
+    background: #F3F4F6;
+    padding: 1rem;
+    border-radius: 0.75rem;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 1.875rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.metric-label {
+    color: #6B7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 1.5rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.chart-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.chart-header h2 {
+    font-size: 1.25rem;
+    color: #111827;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Chart Toolbar */
+.chart-toolbar {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toolbar-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: none;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6B7280;
+}
+
+.toolbar-button:hover {
+    background: #F3F4F6;
+    color: #111827;
+    border-color: #D1D5DB;
+}
+
+.toolbar-button img {
+    width: 16px;
+    height: 16px;
+}
+
+.chart-container {
+    padding: 1.5rem;
+}
+
+.chart-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    max-width: 90%;
+    max-height: 90vh;
+    position: relative;
+    margin: 2rem auto;
+    overflow: auto;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    color: #6B7280;
+    cursor: pointer;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #F3F4F6;
+    transition: all 0.2s;
+}
+
+.close-modal:hover {
+    background: #E5E7EB;
+    color: #111827;
+}
+
+#modalImage {
+    width: 100%;
+    height: auto;
+    max-height: calc(90vh - 4rem);
+    object-fit: contain;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1F2937;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slideUp 0.3s ease-out;
+    z-index: 1100;
+}
+
+@keyframes slideUp {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .header-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .chart-header {
+        padding: 1rem;
+    }
+
+    .chart-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
