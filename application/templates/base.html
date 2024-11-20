@@ -13,6 +13,7 @@ It defines the common elements and layout that will be inherited by other templa
     {% if get_current_language() == 'he' %}
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap">
     {% endif %}
+    {% block additional_css %}{% endblock %}
 </head>
 <body class="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
     <div class="language-switcher">

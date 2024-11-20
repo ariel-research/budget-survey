@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/answers_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="answers-container">
+    <h1>Survey Answers</h1>
+    
+    {% if data.content %}
+        {{ data.content|safe }}
+    {% else %}
+        <p class="no-data">No answers available.</p>
+    {% endif %}
+</div>
+{% endblock %}
