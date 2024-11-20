@@ -41,6 +41,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אירעה שגיאה בהפקת הדוח. אנא נסה שוב מאוחר יותר.",
             "en": "An error occurred generating the report. Please try again later.",
         },
+        "dashboard_error": {
+            "he": "שגיאה בטעינת לוח הבקרה",
+            "en": "Error loading dashboard",
+        },
+        "dashboard_refreshed": {
+            "he": "הנתונים עודכנו בהצלחה",
+            "en": "Data refreshed successfully",
+        },
+        "dashboard_refresh_error": {
+            "he": "שגיאה בעדכון הנתונים",
+            "en": "Error refreshing dashboard data",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -156,6 +168,16 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אופס! משהו השתבש",
             "en": "Oops! Something went wrong",
         },
+    },
+    "dashboard": {
+        "title": {"he": "לוח בקרה", "en": "Dashboard"},
+        "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
+        "last_updated": {"he": "עודכן לאחרונה", "en": "Last Updated"},
+        "total_surveys": {"he": "סך הכל סקרים", "en": "Total Surveys"},
+        "total_participants": {"he": "סך הכל משתתפים", "en": "Total Participants"},
+        "completion_rate": {"he": "אחוז השלמה", "en": "Completion Rate"},
+        "expand": {"he": "הרחב", "en": "Expand"},
+        "download": {"he": "הורד", "en": "Download"},
     },
 }
 

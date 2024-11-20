@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="header-content">
+                <h1>{{ get_translation('dashboard.title', 'survey') }}</h1>
+                <p class="last-updated">{{ get_translation('dashboard.last_updated', 'survey') }}: {{ last_update_time }}</p>
+            </div>
+            <button onclick="refreshDashboard()" class="refresh-btn" id="refreshBtn">
+                <svg class="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                <span>{{ get_translation('dashboard.refresh', 'survey') }}</span>
+            </button>
+        </div>
+
+        <div class="metrics-summary">
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_surveys }}</div>
+                    <div class="metric-label">{{ get_translation('dashboard.total_surveys', 'survey') }}</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">👥</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_participants }}</div>
+                    <div class="metric-label">{{ get_translation('dashboard.total_participants', 'survey') }}</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">✅</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ completion_rate }}%</div>
+                    <div class="metric-label">{{ get_translation('dashboard.completion_rate', 'survey') }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            {% for chart_id, chart_data in charts.items() %}
+            <div class="chart-card" data-aos="fade-up">
+                <div class="chart-header">
+                    <h2>{{ get_translation('dashboard.' + chart_id, 'survey') }}</h2>
+                    <div class="chart-toolbar">
+                        <button class="chart-action-btn" onclick="expandChart(this)" title="{{ get_translation('dashboard.expand', 'survey') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                        </button>
+                        <button class="chart-action-btn" onclick="downloadChart(this)" data-chart="{{ chart_id }}" title="{{ get_translation('dashboard.download', 'survey') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ chart_data }}" 
+                         alt="{{ get_translation('dashboard.' + chart_id, 'survey') }}" 
+                         class="chart-image"
+                         loading="lazy">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="chartModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <img id="modalImage" src="" alt="Expanded chart">
+    </div>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    AOS.init({
+        duration: 800,
+        once: true
+    });
+});
+
+const modal = document.getElementById('chartModal');
+const modalImg = document.getElementById('modalImage');
+const closeModal = document.querySelector('.close-modal');
+
+function expandChart(button) {
+    const chartImg = button.closest('.chart-card').querySelector('.chart-image');
+    modal.style.display = "flex";
+    modalImg.src = chartImg.src;
+}
+
+closeModal.onclick = () => modal.style.display = "none";
+modal.onclick = (e) => {
+    if (e.target === modal) modal.style.display = "none";
+}
+
+let isRefreshing = false;
+async function refreshDashboard() {
+    if (isRefreshing) return;
+    
+    const btn = document.getElementById('refreshBtn');
+    isRefreshing = true;
+    btn.classList.add('refreshing');
+    
+    try {
+        const response = await fetch('/api/dashboard/refresh');
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            showToast('Error: ' + data.message);
+        }
+    } catch (error) {
+        showToast('Error refreshing dashboard');
+    } finally {
+        isRefreshing = false;
+        btn.classList.remove('refreshing');
+    }
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function downloadChart(button) {
+    const chartId = button.getAttribute('data-chart');
+    const img = button.closest('.chart-card').querySelector('img');
+    const link = document.createElement('a');
+    link.download = `${chartId}.png`;
+    link.href = img.src;
+    link.click();
+}
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: #F3F4F6;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.875rem;
+    color: #111827;
+    font-weight: 600;
+}
+
+.last-updated {
+    color: #6B7280;
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0 0;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: #4338CA;
+    transform: translateY(-1px);
+}
+
+.refresh-btn.refreshing .refresh-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.metrics-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+.metric-icon {
+    font-size: 1.5rem;
+    background: #F3F4F6;
+    padding: 1rem;
+    border-radius: 0.75rem;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: 1.875rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.metric-label {
+    color: #6B7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 1.5rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.chart-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.chart-header h2 {
+    font-size: 1.25rem;
+    color: #111827;
+    margin: 0;
+    font-weight: 600;
+}
+
+.chart-toolbar {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chart-action-btn {
+    padding: 0.5rem;
+    background: none;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6B7280;
+}
+
+.chart-action-btn:hover {
+    background: #F3F4F6;
+    color: #111827;
+}
+
+.chart-container {
+    padding: 1.5rem;
+}
+
+.chart-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 1rem;
+    border-radius: 1rem;
+    max-width: 90%;
+    max-height: 90%;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    color: #6B7280;
+    cursor: pointer;
+    z-index: 1;
+}
+
+#modalImage {
+    max-width: 100%;
+    max-height: 80vh;
+}
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1F2937;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .header-content h1 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
