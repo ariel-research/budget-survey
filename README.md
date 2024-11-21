@@ -135,6 +135,10 @@ The live version of the application can be accessed at these endpoints:
 - Main Survey: https://survey.csariel.xyz/?userID=...&surveyID=...
 - Survey Report: https://survey.csariel.xyz/report
 - Development Report: https://survey.csariel.xyz/dev/report
+- Analytics Dashboard: https://survey.csariel.xyz/dashboard
+- Survey Responses: https://survey.csariel.xyz/answers
+  - View all responses: https://survey.csariel.xyz/answers
+  - View by survey ID: https://survey.csariel.xyz/answers/{survey_id}
 
 Notes: 
 
@@ -150,14 +154,17 @@ Notes:
 - `/survey`: The third survey page, asks the user to compare pairs of non-ideal budgets.
 - `/thank_you`: Thank you page, shown after survey completion.
 - `/report`: Displays the survey analysis report in PDF format. This endpoint:
-  - Automatically ensures the report is up-to-date with the latest survey data
-  - Shows the PDF directly in the browser
-  - Allows downloading the report
+  - Automatically ensures the report is up-to-date with the latest survey data.
+  - Shows the PDF directly in the browser.
+  - Allows downloading the report.
 - `/dev/report`: Development endpoint for testing report modifications. This endpoint:
-  - Always generates a fresh PDF report regardless of database state
-  - Creates the report as 'survey_analysis_report_dev.pdf'
-  - Useful for testing report template changes without affecting the production report
-  - Does not implement the automatic refresh mechanism of the main `/report` endpoint
+  - Always generates a fresh PDF report regardless of database state.
+  - Creates the report as 'survey_analysis_report_dev.pdf'.
+  - Useful for testing report template changes without affecting the production report.
+  - Does not implement the automatic refresh mechanism of the main `/report` endpoint.
+- `/dashboard`: Analytics dashboard displaying visualizations and metrics of survey results.
+- `/answers`: List of all survey answers.
+  - `/answers/<survey_id>`: Detailed answers for a specific survey.
 
 Note: The `/report` endpoint includes an automatic refresh mechanism that:
 1. Checks if the CSV files are up-to-date with the database
