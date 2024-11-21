@@ -53,6 +53,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "שגיאה בעדכון הנתונים",
             "en": "Error refreshing dashboard data",
         },
+        "survey_not_found_or_empty": {
+            "he": "סקר {survey_id} לא נמצא או שאין לו תשובות. אנא בדקו את מספר הסקר ונסו שוב.",
+            "en": "Survey {survey_id} was not found or has no answers. Please verify the survey ID and try again.",
+        },
+        "survey_retrieval_error": {
+            "he": "אירעה שגיאה בעת אחזור נתוני הסקר. אנא נסו שוב מאוחר יותר.",
+            "en": "An error occurred while retrieving the survey data. Please try again later.",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -169,7 +177,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Oops! Something went wrong",
         },
     },
-    "dashboard": {
+    "dashboard": {  # Dashboard page
         "title": {"he": "לוח בקרה", "en": "Dashboard"},
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
         "last_updated": {"he": "עודכן לאחרונה", "en": "Last Updated"},
@@ -185,6 +193,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "majority_choices": {"he": "בחירת רוב המשתמשים", "en": "User Majority Choices"},
         "overall_distribution": {"he": "התפלגות כללית", "en": "Overall Distribution"},
         "answer_distribution": {"he": "התפלגות התשובות", "en": "Answer Distribution"},
+    },
+    "answers": {  # Answers page
+        "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},
+        "survey_title": {
+            "he": "תשובות לסקר מספר {survey_id}",
+            "en": "Survey #{survey_id} Answers",
+        },
+        "no_answers": {"he": "אין תשובות זמינות.", "en": "No answers available."},
     },
 }
 

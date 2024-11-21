@@ -6,12 +6,12 @@
 
 {% block content %}
 <div class="answers-container">
-    <h1>Survey Answers</h1>
+    <h1>{{ get_translation('title', 'answers') }}</h1>
     
     {% if data.content %}
         {{ data.content|safe }}
     {% else %}
-        <p class="no-data">No answers available.</p>
+        <p class="no-data">{{ get_translation('no_answers', 'answers') }}</p>
     {% endif %}
 </div>
 {% endblock %}

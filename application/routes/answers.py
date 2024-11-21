@@ -6,14 +6,27 @@ from flask import Blueprint, abort, render_template
 from analysis.report_content_generators import (
     generate_detailed_user_choices,
 )
+from application.translations import get_translation
 from database.queries import retrieve_user_survey_choices
 
 logger = logging.getLogger(__name__)
 answers_routes = Blueprint("answers", __name__)
 
 
-def get_user_answers(survey_id: Optional[int] = None) -> Dict:
-    """Retrieve and format user answers data"""
+def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
+    """
+    Fetch and format user survey answers with optional survey filtering.
+
+    Args:
+        survey_id: Optional ID to filter results for a specific survey.
+
+    Returns:
+        Dict containing formatted HTML content of user answers.
+        Empty dict if no answers found.
+
+    Raises:
+        Exception: On database or processing errors.
+    """
     try:
         # Get raw data from database
         choices = retrieve_user_survey_choices()
@@ -25,7 +38,7 @@ def get_user_answers(survey_id: Optional[int] = None) -> Dict:
         if not choices:
             return {}
 
-        # Use existing function to generate detailed HTML
+        # Generate detailed HTML
         formatted_data = generate_detailed_user_choices(choices)
         return {"content": formatted_data}
 
@@ -55,7 +68,9 @@ def show_survey_answers(survey_id: int):
             return (
                 render_template(
                     "error.html",
-                    message=f"Survey {survey_id} was not found or has no answers. Please verify the survey ID and try again.",
+                    message=get_translation(
+                        "survey_not_found_or_empty", "messages", survey_id=survey_id
+                    ),
                 ),
                 404,
             )
@@ -67,7 +82,7 @@ def show_survey_answers(survey_id: int):
         return (
             render_template(
                 "error.html",
-                message="An error occurred while retrieving the survey data. Please try again later.",
+                message=get_translation("survey_retrieval_error", "messages"),
             ),
             500,
         )
