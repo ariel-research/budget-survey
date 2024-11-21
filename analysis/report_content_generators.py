@@ -410,7 +410,37 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
         grouped_choices[user_id][survey_id].append(choice)
 
     # Generate HTML
-    content = []
+    content = [
+        # Add legend at the start
+        """
+        <div class="legend-container">
+            <h4 class="legend-header">Legend</h4>  
+            <div class="legend-items">
+                <div class="legend-row">
+                    <div class="legend-item">
+                        <span class="legend-square sum"></span>
+                        <span class="legend-label">Sum Optimization</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-square ratio"></span>
+                        <span class="legend-label">Ratio Optimization</span>
+                    </div>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-item">
+                        <span class="legend-square none"></span>
+                        <span class="legend-label">No Clear Optimization</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-square better"></span>
+                        <span class="legend-label">Better Value in Comparison</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    ]
+
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -444,12 +474,29 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
             content.append(
                 f"""
                 <div class="survey-stats">
-                    <hr>
-                    <p class="stats-summary">
-                        TOTAL: 
-                        <br>- {stats['sum_percent']:.0f}% optimizing sum, {stats['ratio_percent']:.0f}% optimizing ratio
-                        <br>- {stats['option1_percent']:.0f}% answered 1, {stats['option2_percent']:.0f}% answered 2
-                    </p>
+                    <h6 class="stats-title">Survey Summary</h6>
+                    <div class="stats-summary">
+                        <div class="stats-row">
+                            <div class="stats-item">
+                                <span class="stats-label">Sum optimization:</span>
+                                <span class="stats-value">{stats['sum_percent']:.0f}%</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="stats-label">Ratio optimization:</span>
+                                <span class="stats-value">{stats['ratio_percent']:.0f}%</span>
+                            </div>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stats-item">
+                                <span class="stats-label">Option 1 chosen:</span>
+                                <span class="stats-value">{stats['option1_percent']:.0f}%</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="stats-label">Option 2 chosen:</span>
+                                <span class="stats-value">{stats['option2_percent']:.0f}%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 """
             )

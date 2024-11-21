@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Variables & Base Styles
-   ========================================================================== */
-   :root {
+  Variables & Base Styles
+  ========================================================================== */
+  :root {
     /* Colors */
     --color-primary: #2C3E50;
     --color-primary-light: #34495e;
@@ -12,7 +12,7 @@
     --color-background: #ffffff;
     --color-background-alt: #f8fafb;
     
-    /* Optimization Colors with opacity variants */
+    /* Optimization Colors */
     --color-sum: #3498db;
     --color-sum-light: #ebf5fb;
     --color-ratio: #2ecc71;
@@ -31,243 +31,295 @@
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-/* ==========================================================================
+ }
+ 
+ /* ==========================================================================
    Main Container Styles
    ========================================================================== */
-.answers-container {
-    max-width: 1000px;
+ .answers-container {
     margin: 0 auto;
+    max-width: 1000px;
     padding: var(--spacing-lg);
+ }
+
+ /* ==========================================================================
+   Legend Styles
+   ========================================================================== */
+.legend-container {
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin: var(--spacing-md) 0 var(--spacing-xl);
+    padding: var(--spacing-md) var(--spacing-lg);
 }
 
-.section-title {
-    color: var(--color-primary);
-    font-size: 1.75rem;
-    font-weight: 600;
-    margin: var(--spacing-xl) 0 var(--spacing-lg);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--color-secondary);
+.legend-header {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-md);
 }
 
-/* ==========================================================================
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.legend-row {
+    display: flex;
+    gap: var(--spacing-xl);
+    justify-content: flex-start;
+}
+
+.legend-item {
+    align-items: center;
+    display: flex;
+    min-width: 200px;
+}
+
+.legend-square {
+    border-radius: 2px;
+    display: inline-block;
+    flex-shrink: 0;
+    height: 12px;
+    margin-right: var(--spacing-sm);
+    width: 12px;
+}
+
+/* Legend colors */
+.legend-square.sum { background-color: var(--color-sum); }
+.legend-square.ratio { background-color: var(--color-ratio); }
+.legend-square.none { background-color: var(--color-none); }
+.legend-square.better { background-color: var(--color-better); }
+
+.legend-label {
+    color: var(--color-text);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+ 
+ /* ==========================================================================
    User Choices Section
    ========================================================================== */
-.user-choices {
+ .user-choices {
     background: var(--color-background);
     border-radius: 8px;
     box-shadow: var(--shadow-md);
     margin: var(--spacing-lg) 0;
     overflow: hidden;
     padding: var(--spacing-lg);
-}
-
-.survey-choices {
-    padding: var(--spacing-lg);
+ }
+ 
+ .survey-choices {
     border-bottom: 1px solid var(--color-border);
-}
-
-.survey-choices:last-child {
+    padding: var(--spacing-lg);
+ }
+ 
+ .survey-choices:last-child {
     border-bottom: none;
-}
-
-.survey-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-}
-
-/* ==========================================================================
-   Ideal Budget Display
-   ========================================================================== */
-.ideal-budget {
-    font-family: 'Monaco', 'Consolas', monospace;
-    background: var(--color-background-alt);
-    color: var(--color-primary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
-    font-weight: 500;
-    font-size: 0.9rem;
-    display: inline-block;
-    margin: var(--spacing-md) 0;
-}
-
-/* ==========================================================================
+ }
+ 
+ /* ==========================================================================
    Choice Pairs
    ========================================================================== */
-.choice-pair {
+ .choice-pair {
     background: var(--color-background);
-    border-radius: 6px;
-    padding: var(--spacing-md);
-    margin: var(--spacing-md) 0;
     border: 1px solid var(--color-border);
-}
-
-.choice-pair h5 {
+    border-radius: 6px;
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+ }
+ 
+ .choice-pair h5 {
     color: var(--color-text-light);
     font-size: 0.9rem;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: var(--spacing-sm);
-}
-
-/* ==========================================================================
-   Survey Stats
+    text-transform: uppercase;
+ }
+ 
+ /* ==========================================================================
+   Ideal Budget Display
    ========================================================================== */
-   .survey-stats {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-}
-
-.stats-summary {
-    font-family: monospace;
-    margin: 0;
-    line-height: 1.5;
-}
-
-.survey-stats hr {
-    margin: 10px 0;
-    border: none;
-    border-top: 1px solid #dee2e6;
-}
-
-/* ==========================================================================
+ .ideal-budget {
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-primary);
+    display: inline-block;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+ }
+ 
+ /* ==========================================================================
    Table Styles
    ========================================================================== */
-.table-container {
-    margin: var(--spacing-md) 0;
+ .table-container {
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: var(--shadow-sm);
-}
+    margin: var(--spacing-md) 0;
+    overflow-x: auto;
+ }
 
-.table-container table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: var(--color-background);
-    font-size: 0.95rem;
-}
-
-.table-container th {
-    background: var(--color-primary);
-    color: white;
-    padding: var(--spacing-md);
-    text-align: left;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.table-container th:first-child {
-    padding-left: var(--spacing-lg);
-    border-top-left-radius: 8px;
-}
-
-.table-container th:last-child {
-    border-top-right-radius: 8px;
-}
-
-.table-container td {
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text);
-}
-
-.table-container tr:last-child td {
-    border-bottom: none;
-}
-
-.table-container td:first-child {
-    padding-left: var(--spacing-lg);
-}
-
-.selection-column {
-    width: 80px;
-    color: var(--color-secondary);
-    font-size: 1.1rem;
-}
-
-.option-column {
-    font-family: 'Monaco', 'Consolas', monospace;
-    width: 180px;
-    font-size: 0.9rem;
-}
-
-/* Zebra striping for better readability */
-.table-container tr:nth-child(even) {
+ /* Hover effect for rows */
+.table-container tr:hover {
     background-color: var(--color-background-alt);
 }
-
-/* ==========================================================================
+ 
+ .table-container table {
+    margin: 0 auto;
+    width: 650px;
+ }
+ 
+ .table-container th,
+ .table-container td {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+ }
+ 
+ .table-container th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid var(--color-border);
+}
+ 
+.table-container td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;  /* Better alignment */
+}
+ 
+.selection-column {
+    color: var(--color-secondary);
+    text-align: center;
+    font-size: 1.2rem;
+}
+ 
+ .option-column {
+    font-family: 'Monaco', 'Consolas', monospace;
+ }
+ 
+ /* Zebra striping */
+ /* .table-container tr:nth-child(even) {
+    background-color: var(--color-background-alt);
+ } */
+ 
+ /* ==========================================================================
    Optimization Indicators
    ========================================================================== */
-.user-optimizes {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-md);
+ .user-optimizes {
     border-radius: 4px;
-    font-weight: 500;
+    display: inline-block;
     font-size: 0.9rem;
+    font-weight: 500;
     margin: var(--spacing-sm) 0;
-}
-
-.user-optimizes-none {
+    padding: var(--spacing-xs) var(--spacing-md);
+ }
+ 
+ .user-optimizes-none {
     background-color: var(--color-none-light);
     color: var(--color-none);
-}
-
-.user-optimizes-sum {
+ }
+ 
+ .user-optimizes-sum {
     background-color: var(--color-sum-light);
     color: var(--color-sum);
-}
-
-.user-optimizes-ratio {
+ }
+ 
+ .user-optimizes-ratio {
     background-color: var(--color-ratio-light);
     color: var(--color-ratio);
-}
-
-/* ==========================================================================
+ }
+ 
+ /* ==========================================================================
    Better Value Highlighting
    ========================================================================== */
-.better {
-    font-weight: 600;
+ .better {
     color: var(--color-better);
+    font-weight: 600;
     position: relative;
-}
-
-.better::after {
-    content: "";
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 2px;
+ }
+ 
+ .better::after {
     background-color: var(--color-better);
+    bottom: -2px;
+    content: "";
+    height: 2px;
+    left: 0;
     opacity: 0.3;
-}
-
-/* ==========================================================================
+    position: absolute;
+    width: 100%;
+ }
+ 
+ /* ==========================================================================
+   Survey Stats
+   ========================================================================== */
+ .survey-stats {
+    background-color: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    margin-top: 25px;
+    padding: 15px 20px;
+ }
+ 
+ .stats-title {
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px 0;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+ }
+ 
+ .stats-summary {
+    font-family: monospace;
+    line-height: 1.5;
+    margin: 0;
+ }
+ 
+ .stats-row {
+    display: flex;
+    gap: 20px;
+    justify-content: flex-start;
+    margin: 5px 0;
+ }
+ 
+ .stats-item {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+ }
+ 
+ .stats-label {
+    color: var(--color-text-light);
+    font-size: 0.85rem;
+ }
+ 
+ .stats-value {
+    color: var(--color-primary);
+    font-weight: 500;
+ }
+ 
+ /* ==========================================================================
    Responsive Adjustments
    ========================================================================== */
-@media (max-width: 768px) {
+ @media (max-width: 768px) {
     .answers-container {
         padding: var(--spacing-md);
     }
-
-    .table-container {
-        overflow-x: auto;
-    }
-
-    .table-container table {
-        min-width: 600px;
-    }
-
+ 
     .choice-pair {
         padding: var(--spacing-sm);
     }
-}
+ }
