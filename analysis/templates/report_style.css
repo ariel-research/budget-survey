@@ -116,6 +116,28 @@
 }
 
 /* ==========================================================================
+   Survey Stats
+   ========================================================================== */
+   .survey-stats {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.stats-summary {
+    font-family: monospace;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.survey-stats hr {
+    margin: 10px 0;
+    border: none;
+    border-top: 1px solid #dee2e6;
+}
+
+/* ==========================================================================
    Table Styles
    ========================================================================== */
 .table-container {
