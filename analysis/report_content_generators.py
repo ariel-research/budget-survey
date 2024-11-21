@@ -287,6 +287,58 @@ def choice_explanation_string_version1(
     return f"{str(option_1)} vs {str(option_2)} → <span class='{css_class}'>{optimization_type}</span> {chosen_option}"
 
 
+def calculate_choice_statistics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate optimization and answer choice statistics for a set of survey choices.
+
+    Args:
+        choices: List of choices for a single user's survey response.
+                Each choice should have: optimal_allocation, option_1, option_2, user_choice
+
+    Returns:
+        Dict containing percentages for sum/ratio optimization and answer choices:
+        {
+            "sum_percent": float,     # Percentage of choices optimizing sum
+            "ratio_percent": float,   # Percentage of choices optimizing ratio
+            "option1_percent": float, # Percentage of times option 1 was chosen
+            "option2_percent": float  # Percentage of times option 2 was chosen
+        }
+    """
+    total_choices = len(choices)
+    if total_choices == 0:
+        return {
+            "sum_percent": 0,
+            "ratio_percent": 0,
+            "option1_percent": 0,
+            "option2_percent": 0,
+        }
+
+    sum_optimized = 0
+    option1_count = 0
+
+    for choice in choices:
+        optimal_allocation = json.loads(choice["optimal_allocation"])
+        option_1 = json.loads(choice["option_1"])
+        option_2 = json.loads(choice["option_2"])
+        user_choice = choice["user_choice"]
+
+        # Determine if choice optimizes sum or ratio
+        is_sum = is_sum_optimized(optimal_allocation, option_1, option_2, user_choice)
+        if is_sum:
+            sum_optimized += 1
+
+        # Count option choices
+        if user_choice == 1:
+            option1_count += 1
+
+    return {
+        "sum_percent": (sum_optimized / total_choices) * 100,
+        "ratio_percent": ((total_choices - sum_optimized) / total_choices) * 100,
+        "option1_percent": (option1_count / total_choices) * 100,
+        "option2_percent": ((total_choices - option1_count) / total_choices) * 100,
+    }
+
+
 def choice_explanation_string_version2(
     optimal_allocation: tuple, option_1: tuple, option_2: tuple, user_choice: int
 ) -> str:
@@ -343,10 +395,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
     Returns:
         str: HTML-formatted string with detailed user choices
     """
-    logger.info("Generating detailed user choices analysis")
-
     if not user_choices:
-        logger.warning("No user choices data received")
         return '<div class="no-data">No detailed user choice data available.</div>'
 
     # Group choices by user and survey first
@@ -361,7 +410,37 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
         grouped_choices[user_id][survey_id].append(choice)
 
     # Generate HTML
-    content = []
+    content = [
+        # Add legend at the start
+        """
+        <div class="legend-container">
+            <h4 class="legend-header">Legend</h4>  
+            <div class="legend-items">
+                <div class="legend-row">
+                    <div class="legend-item">
+                        <span class="legend-square sum"></span>
+                        <span class="legend-label">Sum Optimization</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-square ratio"></span>
+                        <span class="legend-label">Ratio Optimization</span>
+                    </div>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-item">
+                        <span class="legend-square none"></span>
+                        <span class="legend-label">No Clear Optimization</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-square better"></span>
+                        <span class="legend-label">Better Value in Comparison</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    ]
+
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -374,7 +453,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                     <h4>Survey ID: {survey_id}</h4>
                     <div class="ideal-budget">Ideal budget: {optimal_allocation}</div>
                     <div class="pairs-list">
-            """
+                """
             )
 
             for choice in choices:
@@ -389,6 +468,38 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                     </div>
                 """
                 )
+
+            # Calculate and add statistics
+            stats = calculate_choice_statistics(choices)
+            content.append(
+                f"""
+                <div class="survey-stats">
+                    <h6 class="stats-title">Survey Summary</h6>
+                    <div class="stats-summary">
+                        <div class="stats-row">
+                            <div class="stats-item">
+                                <span class="stats-label">Sum optimization:</span>
+                                <span class="stats-value">{stats['sum_percent']:.0f}%</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="stats-label">Ratio optimization:</span>
+                                <span class="stats-value">{stats['ratio_percent']:.0f}%</span>
+                            </div>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stats-item">
+                                <span class="stats-label">Option 1 chosen:</span>
+                                <span class="stats-value">{stats['option1_percent']:.0f}%</span>
+                            </div>
+                            <div class="stats-item">
+                                <span class="stats-label">Option 2 chosen:</span>
+                                <span class="stats-value">{stats['option2_percent']:.0f}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """
+            )
 
             content.append("</div></div>")  # close pairs-list and survey-choices
         content.append("</section>")  # close user-choices
