@@ -37,16 +37,21 @@ class SurveyService:
             - data: Optional[Dict]: Survey data if exists, containing:
                 - name: str: Survey name
                 - subjects: List[str]: Survey subjects
+                - survey_id: int: The survey ID
         """
         survey_name = get_survey_name(survey_id)
         if not survey_name:
-            return False, "Survey not found", None
+            return False, ("survey_not_found", {"survey_id": survey_id}), None
 
         subjects = get_subjects(survey_id)
         if not subjects:
-            return False, "Survey has no subjects", None
+            return False, ("survey_not_found", {"survey_id": survey_id}), None
 
-        return True, None, {"name": survey_name, "subjects": subjects}
+        return (
+            True,
+            None,
+            {"name": survey_name, "subjects": subjects, "survey_id": survey_id},
+        )
 
     @staticmethod
     def check_user_eligibility(

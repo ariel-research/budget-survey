@@ -132,7 +132,11 @@ Note: Make sure your .env file is properly configured with the correct database 
 
 The live version of the application can be accessed at these endpoints:
 
-- Main Survey: https://survey.csariel.xyz/?userID=...&surveyID=...
+- Main Survey: 
+  - Default survey (uses config survey ID): 
+    - https://survey.csariel.xyz/?userID=...&surveyID=...
+  - Custom survey ID: 
+    - https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=2
 - Survey Report: https://survey.csariel.xyz/report
 - Development Report: https://survey.csariel.xyz/dev/report
 - Analytics Dashboard: https://survey.csariel.xyz/dashboard
@@ -144,7 +148,9 @@ Notes:
 
 - For the main survey endpoint, both 'userID' and 'surveyID' parameters are required in the URL.
 - The 'userID' parameter is used to obtain the user_id.
-- While the 'surveyID' parameter is required in the URL, it is not used by the application. Instead, the survey ID is hardcoded in the config file.
+- While the 'surveyID' parameter is required in the URL, it is not used by the application. Instead, the survey ID is determined by:
+  1. Custom internal survey ID if provided via `internalID` parameter at root endpoint
+  2. Falls back to the survey ID from config file if no custom ID is provided
 
 ## Endpoints
 
