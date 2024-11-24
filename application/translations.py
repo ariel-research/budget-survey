@@ -32,10 +32,13 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "פרמטר חסר: {param}",
             "en": "Missing parameter: {param}",
         },
-        "survey_not_found": {"he": "הסקר לא נמצא", "en": "Survey not found"},
+        "survey_not_found": {
+            "he": "סקר מספר {survey_id} לא נמצא",
+            "en": "Survey #{survey_id} not found",
+        },
         "survey_no_subjects": {
-            "he": "הסקר לא נמצא או אין לו נושאים",
-            "en": "Survey not found or has no subjects",
+            "he": "סקר מספר {survey_id} לא נמצא או אין לו נושאים",
+            "en": "Survey #{survey_id} not found or has no subjects",
         },
         "report_error": {
             "he": "אירעה שגיאה בהפקת הדוח. אנא נסה שוב מאוחר יותר.",
@@ -60,6 +63,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "survey_retrieval_error": {
             "he": "אירעה שגיאה בעת אחזור נתוני הסקר. אנא נסו שוב מאוחר יותר.",
             "en": "An error occurred while retrieving the survey data. Please try again later.",
+        },
+        "invalid_parameter": {
+            "en": "Invalid parameter provided",
+            "he": "פרמטר לא חוקי",
         },
     },
     "survey": {  # Survey content

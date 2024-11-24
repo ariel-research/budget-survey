@@ -10,6 +10,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 
@@ -48,7 +49,10 @@ def get_required_params() -> Tuple[str, str, int]:
             missing_param = "userID" if not user_id else "surveyID"
             raise ValueError(f"Missing {missing_param}")
 
-        internal_survey_id = current_app.config["SURVEY_ID"]
+        # Get internal_survey_id from session if available, otherwise from config
+        internal_survey_id = session.get(
+            "internal_survey_id", current_app.config["SURVEY_ID"]
+        )
         return user_id, external_survey_id, internal_survey_id
 
     except ValueError as e:
@@ -64,12 +68,25 @@ def index():
     """Landing page route handler."""
     user_id, external_survey_id, internal_survey_id = get_required_params()
 
+    # Handle custom internal survey ID
+    custom_internal_id = request.args.get("internalID")
+    if custom_internal_id:
+        try:
+            internal_survey_id = int(custom_internal_id)
+            # Store in session for subsequent requests
+            session["internal_survey_id"] = internal_survey_id
+            logger.info(f"Custom internal survey ID set: {custom_internal_id}")
+        except ValueError:
+            logger.warning(f"Invalid internal survey ID provided: {custom_internal_id}")
+            abort(400, description=get_translation("invalid_parameter", "messages"))
+
     # Verify survey exists
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
         internal_survey_id
     )
     if not survey_exists:
-        abort(404, description=get_translation(error, "messages"))
+        error_key, error_params = error
+        abort(404, description=get_translation(error_key, "messages", **error_params))
 
     # Check user eligibility
     is_eligible, redirect_url = SurveyService.check_user_eligibility(
@@ -103,8 +120,8 @@ def create_vector():
         internal_survey_id
     )
     if not survey_exists:
-        logger.error(f"No subjects found for survey {internal_survey_id}")
-        abort(404, description=get_translation(error, "messages"))
+        error_key, error_params = error
+        abort(404, description=get_translation(error_key, "messages", **error_params))
 
     if request.method == "POST":
         try:
@@ -164,7 +181,8 @@ def survey():
         internal_survey_id
     )
     if not survey_exists:
-        abort(404, description=get_translation("survey_no_subjects", "messages"))
+        error_key, error_params = error
+        abort(404, description=get_translation(error_key, "messages", **error_params))
 
     if request.method == "GET":
         return handle_survey_get(user_id, external_survey_id, survey_data["subjects"])
