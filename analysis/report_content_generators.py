@@ -537,7 +537,23 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
     # Sort summaries by survey_id, then user_id for consistent display
     sorted_summaries = sorted(summaries, key=lambda x: (x["survey_id"], x["user_id"]))
 
-    breakdown_table = f"""
+    # Generate table rows separately
+    rows = []
+    for summary in sorted_summaries:
+        row = f"""
+        <tr>
+            <td>{summary['user_id']}</td>
+            <td>{summary['survey_id']}</td>
+            <td>{format(summary['stats']['sum_percent'], '.1f')}%</td>
+            <td>{format(summary['stats']['ratio_percent'], '.1f')}%</td>
+            <td>{format(summary['stats']['option1_percent'], '.1f')}%</td>
+            <td>{format(summary['stats']['option2_percent'], '.1f')}%</td>
+        </tr>
+        """
+        rows.append(row)
+
+    # Combine into final table
+    table_html = f"""
     <div class="summary-table-container">
         <h2>Survey Response Breakdown</h2>
         <div class="table-container detailed-breakdown">
@@ -553,23 +569,14 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
                     </tr>
                 </thead>
                 <tbody>
-                    {''.join(f"""
-                    <tr>
-                        <td>{summary['user_id']}</td>
-                        <td>{summary['survey_id']}</td>
-                        <td>{summary['stats']['sum_percent']:.1f}%</td>
-                        <td>{summary['stats']['ratio_percent']:.1f}%</td>
-                        <td>{summary['stats']['option1_percent']:.1f}%</td>
-                        <td>{summary['stats']['option2_percent']:.1f}%</td>
-                    </tr>
-                    """ for summary in sorted_summaries)}
+                    {''.join(rows)}
                 </tbody>
             </table>
         </div>
     </div>
     """
 
-    return breakdown_table
+    return table_html
 
 
 def generate_overall_statistics_table(summaries: List[Dict]) -> str:
