@@ -400,6 +400,9 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
 
     # Group choices by user and survey first
     grouped_choices = {}
+    # Keep track of all summaries for the final table
+    all_summaries = []
+
     for choice in user_choices:
         user_id = choice["user_id"]
         survey_id = choice["survey_id"]
@@ -441,6 +444,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
         """
     ]
 
+    # Process each user's choices and collect summaries
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -469,8 +473,14 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                 """
                 )
 
-            # Calculate and add statistics
+            # Calculate statistics for this survey response
             stats = calculate_choice_statistics(choices)
+            # Add to summaries list with user and survey info
+            all_summaries.append(
+                {"user_id": user_id, "survey_id": survey_id, "stats": stats}
+            )
+
+            # Add individual survey stats
             content.append(
                 f"""
                 <div class="survey-stats">
@@ -504,7 +514,120 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
             content.append("</div></div>")  # close pairs-list and survey-choices
         content.append("</section>")  # close user-choices
 
+    # Generate and append both summary tables
+    content.append(generate_detailed_breakdown_table(all_summaries))
+    content.append(generate_overall_statistics_table(all_summaries))
+
     return "\n".join(content)
+
+
+def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
+    """
+    Generate a detailed breakdown table showing statistics for each survey response.
+
+    Args:
+        summaries (List[Dict]): List of dictionaries containing survey summaries
+
+    Returns:
+        str: HTML table showing detailed breakdown of all survey responses
+    """
+    if not summaries:
+        return ""
+
+    # Sort summaries by survey_id, then user_id for consistent display
+    sorted_summaries = sorted(summaries, key=lambda x: (x["survey_id"], x["user_id"]))
+
+    breakdown_table = f"""
+    <div class="summary-table-container">
+        <h2>Survey Response Breakdown</h2>
+        <div class="table-container detailed-breakdown">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Survey ID</th>
+                        <th>Sum Optimization</th>
+                        <th>Ratio Optimization</th>
+                        <th>Option 1 Chosen</th>
+                        <th>Option 2 Chosen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(f"""
+                    <tr>
+                        <td>{summary['user_id']}</td>
+                        <td>{summary['survey_id']}</td>
+                        <td>{summary['stats']['sum_percent']:.1f}%</td>
+                        <td>{summary['stats']['ratio_percent']:.1f}%</td>
+                        <td>{summary['stats']['option1_percent']:.1f}%</td>
+                        <td>{summary['stats']['option2_percent']:.1f}%</td>
+                    </tr>
+                    """ for summary in sorted_summaries)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+
+    return breakdown_table
+
+
+def generate_overall_statistics_table(summaries: List[Dict]) -> str:
+    """
+    Generate a summary table showing overall statistics across all survey responses.
+
+    Args:
+        summaries (List[Dict]): List of dictionaries containing survey summaries
+
+    Returns:
+        str: HTML table showing overall statistics
+    """
+    if not summaries:
+        return ""
+
+    # Calculate overall averages
+    total_responses = len(summaries)
+    avg_sum = sum(s["stats"]["sum_percent"] for s in summaries) / total_responses
+    avg_ratio = sum(s["stats"]["ratio_percent"] for s in summaries) / total_responses
+    avg_opt1 = sum(s["stats"]["option1_percent"] for s in summaries) / total_responses
+    avg_opt2 = sum(s["stats"]["option2_percent"] for s in summaries) / total_responses
+
+    overall_table = f"""
+    <div class="summary-table-container">
+        <h2>Overall Survey Statistics</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Average Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sum Optimization</td>
+                        <td>{avg_sum:.1f}%</td>
+                    </tr>
+                    <tr>
+                        <td>Ratio Optimization</td>
+                        <td>{avg_ratio:.1f}%</td>
+                    </tr>
+                    <tr>
+                        <td>Option 1 Selected</td>
+                        <td>{avg_opt1:.1f}%</td>
+                    </tr>
+                    <tr>
+                        <td>Option 2 Selected</td>
+                        <td>{avg_opt2:.1f}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="summary-note">Based on {total_responses} survey responses</p>
+    </div>
+    """
+
+    return overall_table
 
 
 def generate_user_comments_section(responses_df: pd.DataFrame) -> str:

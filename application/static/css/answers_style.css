@@ -170,7 +170,6 @@
  .table-container table {
     width: 650px;
     border-collapse: separate;
-    border-spacing: 0;
     margin: 0 auto;
  }
  
@@ -199,15 +198,6 @@
  .option-column {
     font-family: 'Monaco', 'Consolas', monospace;
     letter-spacing: -0.5px;
- }
- 
- /* First row white, second row alt color */
- .table-container tr:nth-child(1) {
-    background-color: var(--color-background);
- }
- 
- .table-container tr:nth-child(2) {
-    background-color: var(--color-background-alt);
  }
  
  /* Hover effect */
@@ -313,6 +303,58 @@
     font-weight: 500;
  }
  
+ /* ==========================================================================
+   Overall Statistics Table
+   ========================================================================== */
+   .summary-table-container {
+      margin: var(--spacing-xl) 0;
+      padding: var(--spacing-lg);
+      background: var(--color-background);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+  }
+  
+  .summary-table-container h2 {
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-md);
+      font-size: 1.5rem;
+  }
+  
+  .summary-note {
+      color: var(--color-text-light);
+      font-size: 0.9rem;
+      margin-top: var(--spacing-md);
+      text-align: right;
+      font-style: italic;
+  }
+
+ /* ==========================================================================
+   Detailed Breakdown Table
+   ========================================================================== */
+   .detailed-breakdown {
+      margin: var(--spacing-md) 0;
+      overflow-x: auto;
+  }
+  
+  .detailed-breakdown table {
+      min-width: 800px;
+      width: 100%;
+  }
+  
+  .detailed-breakdown td {
+      text-align: center;
+  }
+  
+  .detailed-breakdown td:first-child,
+  .detailed-breakdown td:nth-child(2) {
+      text-align: left;
+      font-family: var(--font-family-mono);
+  }
+  
+  .detailed-breakdown tbody tr:hover {
+      background-color: rgba(52, 152, 219, 0.1);
+  }
+
  /* ==========================================================================
    Responsive Adjustments
    ========================================================================== */
