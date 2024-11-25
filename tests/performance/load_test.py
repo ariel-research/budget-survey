@@ -9,8 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 
 from app import create_app
+from application.services.survey_vector_generator import create_random_vector
 from database.queries import get_subjects
-from utils.generate_examples import create_random_vector
 
 logger = logging.getLogger(__name__)
 

@@ -390,25 +390,24 @@ The project includes comprehensive test coverage across multiple testing domains
 ### Test Structure
 ```python
 tests/
-├── analysis/                  # Data analysis and reporting tests
-│   ├── utils/                
+├── analysis/                     # Data analysis and reporting tests
+│   ├── utils/
 │   │   ├── test_analysis_utils.py
 │   │   ├── test_file_utils.py
 │   │   └── test_visualization_utils.py
 │   ├── test_report_content_generators.py
 │   ├── test_survey_analysis.py
 │   └── test_survey_report_generator.py
-├── api/                      # API endpoint tests
+├── api/                         # API endpoint tests
 │   └── test_routes.py
-├── database/                 # Database integration tests
+├── database/                    # Database integration tests
 │   └── test_database_integration.py
-├── performance/              # Load and performance tests
+├── performance/                 # Load and performance tests
 │   └── load_test.py
-├── UI/                      # Frontend/UI tests
+├── services/                    # Service layer tests
+│   └── test_survey_vector_generator.py
+├── UI/                         # Frontend/UI tests
 │   └── test_client_side.py
-└── unit/                    # Core functionality tests
-    ├── test_generate_examples.py
-    └── test_survey_utils.py
 ```
 
 ### Running Tests

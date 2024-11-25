@@ -61,8 +61,10 @@ def test_invalid_vector(client, sample_user_id, sample_survey_id, monkeypatch):
         "application.services.survey_service.SurveyService.check_survey_exists",
         mock_survey_exists,
     )
-    monkeypatch.setattr("utils.survey_utils.is_valid_vector", lambda *args: False)
-
+    monkeypatch.setattr(
+        "application.services.survey_service.SurveyService.validate_vector",
+        lambda *args: False,
+    )
     with client.session_transaction() as sess:
         sess["language"] = "en"
 
