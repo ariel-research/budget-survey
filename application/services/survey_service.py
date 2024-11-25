@@ -14,8 +14,6 @@ from database.queries import (
     user_exists,
 )
 
-# from utils.generate_examples import generate_user_example
-# from utils.survey_utils import generate_awareness_check, is_valid_vector
 from .survey_vector_generator import generate_awareness_check, generate_survey_pairs
 
 logger = logging.getLogger(__name__)

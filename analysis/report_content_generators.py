@@ -345,7 +345,10 @@ def choice_explanation_string_version2(
     """
     Returns a string that explains the user's choice between two options with improved formatting.
     """
-    from utils.generate_examples import minimal_ratio, sum_of_differences
+    from application.services.survey_vector_generator import (
+        minimal_ratio,
+        sum_of_differences,
+    )
 
     sum_diff_1 = sum_of_differences(optimal_allocation, option_1)
     sum_diff_2 = sum_of_differences(optimal_allocation, option_2)

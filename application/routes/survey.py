@@ -17,7 +17,6 @@ from flask import (
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
-from utils.survey_utils import is_valid_vector
 
 logger = logging.getLogger(__name__)
 survey_routes = Blueprint("survey", __name__)
@@ -130,7 +129,9 @@ def create_vector():
             ]
             logger.debug(f"User {user_id} submitted vector: {user_vector}")
 
-            if not is_valid_vector(user_vector):
+            if not SurveyService.validate_vector(
+                user_vector, len(survey_data["subjects"])
+            ):
                 return render_template(
                     "create_vector.html",
                     error=get_translation("invalid_vector", "messages"),

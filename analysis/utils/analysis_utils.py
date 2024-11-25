@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from utils.generate_examples import sum_of_differences
+from application.services.survey_vector_generator import sum_of_differences
 
 logger = logging.getLogger(__name__)
 
