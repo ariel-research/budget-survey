@@ -5,6 +5,7 @@ import pytest
 from application.services.survey_vector_generator import (
     calculate_optimization_metrics,
     create_random_vector,
+    generate_awareness_check,
     generate_survey_pairs,
     generate_vector_pool,
     is_valid_pair,
@@ -98,3 +99,40 @@ def test_generate_survey_pairs_error_handling():
     invalid_vector = (0, 0, 0)
     with pytest.raises(ValueError):
         generate_survey_pairs(invalid_vector)
+
+
+def test_generated_pairs_are_valid():
+    """Test if all generated pairs satisfy the complementary optimization properties."""
+    user_vector = (60, 20, 20)
+    pairs = generate_survey_pairs(user_vector, n=10)
+
+    for v1, v2 in pairs:
+        # Calculate optimization metrics for the pair
+        metrics = calculate_optimization_metrics(user_vector, v1, v2)
+
+        # Check if pair has valid optimization trade-offs
+        assert is_valid_pair(metrics), (
+            f"Invalid pair found:\n"
+            f"Vector 1: {v1}\n"
+            f"Vector 2: {v2}\n"
+            f"Metrics (s1, s2, r1, r2): {metrics}"
+        )
+
+
+def test_generate_awareness_check():
+    """Test if awareness check generation produces valid and distinct options."""
+    user_vector = [95, 5, 0]
+    result = generate_awareness_check(user_vector, 3)
+
+    # Check structure
+    assert "option1" in result
+    assert "option2" in result
+    assert "correct_answer" in result
+    assert result["correct_answer"] == 2  # Correct is always option2
+
+    # Validate options
+    assert result["option2"] == user_vector  # option2 should be original vector
+    assert result["option1"] != result["option2"]  # Options must be different
+    assert sum(result["option1"]) == 100  # Sum must still be 100
+    assert all(0 <= v <= 100 for v in result["option1"])  # Values in valid range
+    assert all(v % 5 == 0 for v in result["option1"])  # Multiples of 5

@@ -235,7 +235,7 @@ def generate_survey_pairs(
             )
             return _generate_pairs(attempt + 1)
 
-        logger.info(f"There are {len(valid_pairs)} valid_pairs")
+        logger.debug(f"There are {len(valid_pairs)} valid_pairs")
         selected_pairs = random.sample(valid_pairs, n)
         logger.info(f"Successfully generated {n} diverse pairs")
         return selected_pairs
