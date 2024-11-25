@@ -158,7 +158,7 @@ def generate_vector_pool(size: int, vector_size: int) -> Set[tuple]:
     """
     vector_pool = set()
     attempts = 0
-    max_attempts = size * 10
+    max_attempts = size * 20
 
     while len(vector_pool) < size and attempts < max_attempts:
         vector = create_random_vector(vector_size)
@@ -193,7 +193,7 @@ def generate_survey_pairs(
     Raises:
         ValueError: If unable to generate enough valid pairs
     """
-    POOL_MULTIPLIER = 4  # Size of vector pool relative to needed pairs
+    POOL_MULTIPLIER = 20  # Size of vector pool relative to needed pairs
     MAX_ATTEMPTS = 3  # Maximum recursion depth
 
     def _generate_pairs(attempt: int = 0) -> List[Tuple[tuple, tuple]]:
@@ -235,6 +235,7 @@ def generate_survey_pairs(
             )
             return _generate_pairs(attempt + 1)
 
+        logger.info(f"There are {len(valid_pairs)} valid_pairs")
         selected_pairs = random.sample(valid_pairs, n)
         logger.info(f"Successfully generated {n} diverse pairs")
         return selected_pairs

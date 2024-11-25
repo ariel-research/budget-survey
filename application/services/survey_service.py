@@ -13,8 +13,10 @@ from database.queries import (
     mark_survey_as_completed,
     user_exists,
 )
-from utils.generate_examples import generate_user_example
-from utils.survey_utils import generate_awareness_check, is_valid_vector
+
+# from utils.generate_examples import generate_user_example
+# from utils.survey_utils import generate_awareness_check, is_valid_vector
+from .survey_vector_generator import generate_awareness_check, generate_survey_pairs
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,11 @@ class SurveyService:
         - Sum of all values must be exactly 100
         - All values must be divisible by 5
         """
-        return len(vector) == num_subjects and is_valid_vector(vector)
+        return (
+            len(vector) == num_subjects
+            and sum(vector) == 100
+            and all(0 <= v <= 95 and v % 5 == 0 for v in vector)
+        )
 
     @staticmethod
     def generate_survey_pairs(
@@ -103,7 +109,7 @@ class SurveyService:
             Tuple of (comparison_pairs, awareness_check)
         """
         comparison_pairs = list(
-            generate_user_example(tuple(user_vector), n=10, vector_size=num_subjects)
+            generate_survey_pairs(tuple(user_vector), n=10, vector_size=num_subjects)
         )
         awareness_check = generate_awareness_check(user_vector, num_subjects)
 
