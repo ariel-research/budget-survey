@@ -68,6 +68,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Invalid parameter provided",
             "he": "פרמטר לא חוקי",
         },
+        "rescale_error_too_small": {
+            "he": "לא ניתן לשנות קנה מידה כאשר הסכום הכולל קטן מדי",
+            "en": "Cannot rescale when the total sum is too small",
+        },
+        "rescale_error_too_many_zeros": {
+            "he": "לא ניתן לשנות קנה מידה כאשר יותר ממשרד אחד מקבל 0",
+            "en": "Cannot rescale when more than one ministry has 0 allocation",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -182,6 +190,15 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "error_page_heading": {
             "he": "אופס! משהו השתבש",
             "en": "Oops! Something went wrong",
+        },
+        "rescale_button": {"he": "שנה קנה מידה", "en": "Rescale"},
+        "rescale_tooltip": {
+            "he": "התאם את הערכים באופן יחסי כך שיסתכמו ל-100",
+            "en": "Adjust values proportionally to sum to 100",
+        },
+        "value_constraints": {
+            "he": "ערכים חייבים להיות מספרים בין 0-95 המתחלקים ב-5",
+            "en": "Values must be numbers between 0-95 divisible by 5",
         },
     },
     "dashboard": {  # Dashboard page

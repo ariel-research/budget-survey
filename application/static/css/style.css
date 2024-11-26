@@ -3,14 +3,43 @@
  */
 
 /* ==========================================================================
-   1. CSS Reset & Base Styles
+   1. CSS Variables & Base Styles
    ========================================================================== */
 
-   body {
+   :root {
+    /* Colors */
+    --color-primary: #3498db;
+    --color-secondary: #2c3e50;
+    --color-success: #27ae60;
+    --color-error: #e74c3c;
+    --color-warning: #f1c40f;
+    --color-background: #f4f4f4;
+    --color-text: #333;
+    --color-border: #ddd;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    
+    /* Border Radius */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
+    --shadow-md: 0 0 20px rgba(0,0,0,0.1);
+    
+    /* Transitions */
+    --transition-speed: 0.3s;
+}
+
+body {
     font-family: 'Noto Sans Hebrew', sans-serif;
     line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
+    color: var(--color-text);
+    background-color: var(--color-background);
     margin: 0;
     padding: 0;
     font-size: 18px;
@@ -21,8 +50,8 @@
    ========================================================================== */
 
 h1, h2, h3, h4 {
-    color: #2c3e50;
-    margin-bottom: 20px;
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-md);
 }
 
 h1 { font-size: 2.2em; }
@@ -43,25 +72,25 @@ h4 { font-size: 1.3em; }
     width: 95%;
     max-width: 800px;
     margin: 60px auto;
-    padding: 25px;
+    padding: var(--spacing-lg);
     background-color: #fff;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-md);
 }
 
 /* Options Layout */
 .options-container {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
+    gap: var(--spacing-md);
 }
 
 .option {
     flex: 1;
     background-color: #fff;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ==========================================================================
@@ -69,44 +98,55 @@ h4 { font-size: 1.3em; }
    ========================================================================== */
 
 /* Input Groups */
+.budget-inputs {
+    margin-bottom: var(--spacing-lg);
+}
+
 .input-group {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-md);
 }
 
 .input-group label {
     flex: 1;
-    font-weight: bold;
-    color: #2c3e50;
+    font-weight: 500;
+    color: var(--color-secondary);
     font-size: 1.1em;
 }
 
+/* Input Styles */
+.budget-input,
 .input-group input,
 .input-group select {
-    flex: 0 0 120px;
-    padding: 10px;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px;
+    width: 120px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
     font-size: 1.1em;
+    text-align: center;
+    transition: all var(--transition-speed) ease;
 }
 
+.budget-input:focus,
+.input-group input:focus,
 .input-group select:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 3px rgba(52, 152, 219, 0.5);
 }
 
 /* Button Styles */
 .btn {
     display: inline-block;
-    background: #3498db;
+    background: var(--color-primary);
     color: #fff;
     padding: 12px 24px;
     text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    border-radius: var(--border-radius-sm);
+    transition: background-color var(--transition-speed) ease;
     border: none;
     cursor: pointer;
     font-size: 18px;
@@ -116,31 +156,38 @@ h4 { font-size: 1.3em; }
     background: #2980b9;
 }
 
+.btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
 .submit-container,
 .start-survey {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 30px;
-    padding: 20px 0;
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
     text-align: center;
-}
-
-.submit-btn,
-.start-survey .btn {
-    font-size: 1.2em;
-    padding: 15px 30px;
-    margin-top: 15px;
 }
 
 /* Form Validation */
 .error-message {
     background-color: #fdedec;
-    color: #e74c3c;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    color: var(--color-error);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
     font-weight: bold;
     font-size: 1.1em;
 }
@@ -155,49 +202,52 @@ h4 { font-size: 1.3em; }
 .instructions,
 .message-box {
     background-color: #e8f6f3;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 25px;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-md);
     font-size: 1.1em;
 }
 
 .pair-container {
     background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Radio button styling */
 input[type="radio"] {
-    margin-right: 10px;
+    margin-right: var(--spacing-sm);
     transform: scale(1.2);
 }
 
-/* Total container styling */
-.total-container {
+/* Total Controls */
+.total-controls {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius-md);
+}
+
+.total-display {
     font-size: 1.2em;
-    font-weight: bold;
-    margin-bottom: 20px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+    font-weight: 500;
 }
 
 /* Comments Section */
 .comment-section {
-    margin: 20px 0;
+    margin: var(--spacing-md) 0;
 }
 
 .comment-section textarea {
     width: 97%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
 }
 
 /* ==========================================================================
@@ -206,30 +256,30 @@ input[type="radio"] {
 
 .intro-box {
     background-color: #e8f6f3;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
 }
 
 .survey-description {
-    margin: 30px 0;
+    margin: var(--spacing-lg) 0;
 }
 
 .survey-description ol {
-    padding-right: 20px;
-    padding-left: 20px;
+    padding-right: var(--spacing-md);
+    padding-left: var(--spacing-md);
 }
 
 .survey-description li {
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
     line-height: 1.5;
 }
 
 .consent {
     background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 30px 0;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    margin: var(--spacing-lg) 0;
 }
 
 /* ==========================================================================
@@ -238,26 +288,26 @@ input[type="radio"] {
 
 .instructions-section {
     background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
 }
 
 .instruction-text {
     font-size: 1.1em;
-    color: #2c3e50;
-    margin-bottom: 20px;
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-md);
 }
 
 .rules-section {
-    margin-top: 15px;
-    padding-left: 15px;
-    border-left: 3px solid #3498db;
+    margin-top: var(--spacing-sm);
+    padding-left: var(--spacing-md);
+    border-left: 3px solid var(--color-primary);
 }
 
 .rules-title {
     font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 12px;
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-sm);
 }
 
 /* ==========================================================================
@@ -265,14 +315,14 @@ input[type="radio"] {
    ========================================================================== */
 
 .flash-messages {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-md);
 }
 
 .alert {
-    padding: 15px;
-    margin-bottom: 20px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 }
 
 .alert-error {
@@ -295,21 +345,21 @@ input[type="radio"] {
 .alert-content {
     background-color: #fefefe;
     margin: 15% auto;
-    padding: 20px;
+    padding: var(--spacing-md);
     border: 1px solid #888;
     width: 80%;
     max-width: 500px;
-    border-radius: 5px;
+    border-radius: var(--border-radius-sm);
     text-align: center;
 }
 
 #alertClose {
     background-color: #4CAF50;
     color: white;
-    padding: 10px 20px;
-    margin-top: 15px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-top: var(--spacing-md);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
 }
 
@@ -339,21 +389,21 @@ input[type="radio"] {
     right: 10px;
     z-index: 1000;
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-sm);
 }
 
 .lang-btn {
     padding: 5px 15px;
-    border: 1px solid #3498db;
-    border-radius: 4px;
-    color: #3498db;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    color: var(--color-primary);
     text-decoration: none;
     font-size: 14px;
-    transition: all 0.3s ease;
+    transition: all var(--transition-speed) ease;
 }
 
 .lang-btn.active {
-    background: #3498db;
+    background: var(--color-primary);
     color: white;
 }
 
@@ -363,9 +413,21 @@ input[type="radio"] {
 }
 
 /* RTL Specific Adjustments */
+.rtl .input-group {
+    flex-direction: row-reverse;
+}
+
 .rtl .input-group label {
-    margin-left: 10px;
+    margin-left: var(--spacing-sm);
     margin-right: 0;
+}
+
+.rtl .total-controls {
+    flex-direction: row-reverse;
+}
+
+.rtl .budget-input {
+    text-align: center;
 }
 
 .rtl .language-switcher {
@@ -375,13 +437,13 @@ input[type="radio"] {
 
 .rtl .rules-section {
     padding-left: 0;
-    padding-right: 15px;
+    padding-right: var(--spacing-md);
     border-left: none;
-    border-right: 3px solid #3498db;
+    border-right: 3px solid var(--color-primary);
 }
 
 .rtl .survey-description ol {
-    padding-right: 20px;
+    padding-right: var(--spacing-md);
     padding-left: 0;
 }
 
@@ -397,10 +459,13 @@ input[type="radio"] {
    10. Utility Classes
    ========================================================================== */
 
-.text-center { text-align: center; }
+.text-center { 
+    text-align: center; 
+}
+
 .highlight { 
     font-weight: bold;
-    color: #3498db;
+    color: var(--color-primary);
 }
 
 /* ==========================================================================
@@ -415,7 +480,24 @@ input[type="radio"] {
     .language-switcher {
         position: relative;
         justify-content: center;
-        margin-bottom: 20px;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .budget-input,
+    .input-group input,
+    .input-group select {
+        width: 100%;
+    }
+    
+    .total-controls {
+        flex-direction: column;
+        gap: var(--spacing-sm);
     }
 }
 
@@ -429,13 +511,13 @@ input[type="radio"] {
     .welcome-container,
     .create-vector-container,
     .error-container {
-        margin: 30px auto;
-        padding: 20px;
+        margin: var(--spacing-lg) auto;
+        padding: var(--spacing-md);
     }
     
     .btn {
         font-size: 16px;
-        padding: 10px 20px;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
 }
 
@@ -461,5 +543,10 @@ input[type="radio"] {
         box-shadow: none;
         margin: 0;
         width: 100%;
+    }
+
+    .pair-container,
+    .option {
+        break-inside: avoid;
     }
 }
