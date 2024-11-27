@@ -231,16 +231,48 @@ function initializeBudgetForm() {
     updateFormState();
 }
 
+
 /**
- * Initializes the survey form for comparison pairs.
+ * Initializes survey form by setting up event listeners and validation
+ * Controls submit button state based on form completion
  */
 function initializeSurveyForm() {
     const form = document.querySelector('form');
-    if (form) {
+    const submitBtn = document.querySelector('.btn[type="submit"]');
+    
+    if (form && submitBtn) {
+        // Add event listener for form submission
         form.addEventListener('submit', handleSurveySubmission);
+        
+        // Add event listeners for radio buttons to check completion
+        const radioGroups = document.querySelectorAll('input[type="radio"]');
+        radioGroups.forEach(radio => {
+            radio.addEventListener('change', () => {
+                updateSubmitButtonState(submitBtn);
+            });
+        });
+        
+        // Initial button state
+        updateSubmitButtonState(submitBtn);
     } else {
-        console.warn('Survey form element not found');
+        console.warn('Survey form or submit button not found');
     }
+}
+
+/**
+ * Updates submit button state based on survey completion
+ * @param {HTMLButtonElement} submitBtn - The form's submit button element
+ */
+function updateSubmitButtonState(submitBtn) {
+    const totalPairs = TOTAL_RADIO_GROUPS;
+    const selectedPairs = document.querySelectorAll('input[type="radio"]:checked').length;
+    const isComplete = selectedPairs === totalPairs;
+    
+    submitBtn.disabled = !isComplete;
+    submitBtn.classList.toggle('btn-disabled', !isComplete);
+    
+    // Add tooltip for incomplete state
+    submitBtn.title = isComplete ? '' : messages.choose_all_pairs;
 }
 
 /**

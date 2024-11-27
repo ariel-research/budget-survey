@@ -247,6 +247,26 @@ h4 { font-size: 1.3em; }
 /* ==========================================================================
    6. Form Validation & Messages
    ========================================================================== */
+/* Flash Messages */
+.flash-messages {
+    margin: 20px 0;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.alert-error {
+    color: var(--color-error);
+    background-color: #fdedec;
+    border-color: #ebccd1;
+}
+
 .error-message {
     background-color: #fdedec;
     border-radius: 8px;
