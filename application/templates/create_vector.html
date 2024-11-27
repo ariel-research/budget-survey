@@ -55,12 +55,10 @@ The page inherits from base.html and customizes the title and content blocks.
             <div class="total-display">
                 {{ get_translation('total') }} <span id="total">0</span>
             </div>
-            <button type="button" 
-                    id="rescale-btn" 
-                    class="btn btn-secondary" 
-                    title="{{ get_translation('rescale_tooltip') }}"
-                    disabled>
+    
+            <button type="button" class="btn rescale-btn" id="rescale-btn" disabled>
                 {{ get_translation('rescale_button') }}
+                <span class="tooltip">{{ get_translation('rescale_tooltip') }}</span>
             </button>
         </div>
 
@@ -69,7 +67,7 @@ The page inherits from base.html and customizes the title and content blocks.
 
         <!-- Submit button -->
         <div class="submit-container">
-            <button type="submit" id="submit-btn" class="btn" disabled>
+            <button type="submit" class="btn btn-submit" id="submit-btn" disabled>
                 {{ get_translation('submit') }}
             </button>
         </div>

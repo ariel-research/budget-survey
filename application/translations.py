@@ -13,8 +13,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "The sum must be 100 and each number must be divisible by 5.",
         },
         "total_not_100": {
-            "he": "נא לוודא שהסכום הכולל הוא 100.",
-            "en": "Please ensure the total sum is 100.",
+            "he": "נא לוודא שהסכום הכולל הוא 100. השתמשו בכפתור 'שנה קנה מידה' להתאמה אוטומטית.",
+            "en": "Please ensure the total sum is 100. Use the 'Rescale' button for automatic adjustment.",
         },
         "choose_all_pairs": {
             "he": "נא לבחור אפשרות אחת עבור כל זוג.",
@@ -69,12 +69,12 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "פרמטר לא חוקי",
         },
         "rescale_error_too_small": {
-            "he": "לא ניתן לשנות קנה מידה כאשר הסכום הכולל קטן מדי",
-            "en": "Cannot rescale when the total sum is too small",
+            "he": "לא ניתן לשנות קנה מידה כאשר הסכום הכולל הוא 0",
+            "en": "Cannot rescale when the total sum is 0",
         },
         "rescale_error_too_many_zeros": {
-            "he": "לא ניתן לשנות קנה מידה כאשר יותר ממשרד אחד מקבל 0",
-            "en": "Cannot rescale when more than one ministry has 0 allocation",
+            "he": "לא ניתן לשנות קנה מידה כאשר יותר ממשרד אחד מקבל 0. שנו לפחות אחד מהערכים להיות מעל 0.",
+            "en": "Cannot rescale when more than one ministry has 0. Change at least one value to be above 0.",
         },
     },
     "survey": {  # Survey content
@@ -125,7 +125,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Your responses to the budget survey have been successfully saved.",
         },
         "create_vector_title": {
-            "he": "מהי חלוקת התקציב הטובה ביותר לדעתכם?",
+            "he": "מהי חלוקת התקציב הטובה ביותר לדעתך?",
             "en": "What is the best budget allocation in your opinion?",
         },
         "budget_instructions": {
@@ -134,19 +134,28 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "sum_note": {
             "he": {
-                "title": "כללים",
+                "title": "שימו לב",
                 "rules": [
-                    "בחרו ערכים בין 0-95 לכל משרד (אף משרד לא יכול לקבל את כל התקציב)",
-                    "הסכום הכולל חייב להיות בדיוק 100",
+                    "הזינו ערכים עבור כל משרד",
+                    "ניתן להשתמש בכפתור 'שנה קנה מידה' כדי להתאים את הערכים באופן יחסי לסכום של 100",
+                    "רק משרד אחד לכל היותר יכול לקבל 0",
+                    "בסוף התהליך הסכום הכולל חייב להיות בדיוק 100",
                 ],
             },
             "en": {
-                "title": "Rules",
+                "title": "Instructions",
                 "rules": [
-                    "Choose values between 0-95 for each ministry (no single ministry can receive the entire budget)",
-                    "Total must equal exactly 100",
+                    "Enter values for each ministry",
+                    "Use the 'Rescale' button to proportionally adjust your values to sum to 100",
+                    "Only one ministry can receive 0",
+                    "The final total must equal exactly 100",
                 ],
             },
+        },
+        "rescale_button": {"he": "שנה קנה מידה", "en": "Rescale"},
+        "rescale_tooltip": {
+            "he": "התאמה אוטומטית של הערכים באופן יחסי כך שיסתכמו ל-100",
+            "en": "Automatically adjust values proportionally to sum to 100",
         },
         "total": {"he": 'סה"כ:', "en": "Total:"},
         "consent_title": {"he": "טופס הסכמה", "en": "Consent Form"},
@@ -190,15 +199,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "error_page_heading": {
             "he": "אופס! משהו השתבש",
             "en": "Oops! Something went wrong",
-        },
-        "rescale_button": {"he": "שנה קנה מידה", "en": "Rescale"},
-        "rescale_tooltip": {
-            "he": "התאם את הערכים באופן יחסי כך שיסתכמו ל-100",
-            "en": "Adjust values proportionally to sum to 100",
-        },
-        "value_constraints": {
-            "he": "ערכים חייבים להיות מספרים בין 0-95 המתחלקים ב-5",
-            "en": "Values must be numbers between 0-95 divisible by 5",
         },
     },
     "dashboard": {  # Dashboard page

@@ -3,55 +3,52 @@
  */
 
 /* ==========================================================================
-   1. CSS Variables & Base Styles
+   1. Color Definitions
    ========================================================================== */
-
    :root {
-    /* Colors */
+    /* Primary Colors */
     --color-primary: #3498db;
-    --color-secondary: #2c3e50;
+    --color-primary-dark: #2980b9;
     --color-success: #27ae60;
+    --color-success-dark: #219a52;
+    --color-warning: #e67e22;
     --color-error: #e74c3c;
-    --color-warning: #f1c40f;
-    --color-background: #f4f4f4;
+    
+    /* Text Colors */
+    --color-text-dark: #2c3e50;
     --color-text: #333;
-    --color-border: #ddd;
     
-    /* Spacing */
-    --spacing-xs: 0.5rem;
-    --spacing-sm: 1rem;
-    --spacing-md: 1.5rem;
-    --spacing-lg: 2rem;
+    /* Background Colors */
+    --color-background: #f4f4f4;
+    --color-background-light: #fff;
+    --color-background-alt: #f9f9f9;
+    --color-background-info: #e8f6f3;
     
-    /* Border Radius */
-    --border-radius-sm: 4px;
-    --border-radius-md: 8px;
+    /* Border Colors */
+    --color-border: #bdc3c7;
+    --color-border-light: #e2e8f0;
     
-    /* Shadows */
-    --shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
-    --shadow-md: 0 0 20px rgba(0,0,0,0.1);
-    
-    /* Transitions */
-    --transition-speed: 0.3s;
-}
-
-body {
-    font-family: 'Noto Sans Hebrew', sans-serif;
-    line-height: 1.6;
-    color: var(--color-text);
-    background-color: var(--color-background);
-    margin: 0;
-    padding: 0;
-    font-size: 18px;
+    /* Disabled State */
+    --color-disabled: #708090;
 }
 
 /* ==========================================================================
-   2. Typography
+   2. CSS Reset & Base Styles
    ========================================================================== */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Noto Sans Hebrew', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
 
+/* Typography */
 h1, h2, h3, h4 {
-    color: var(--color-secondary);
-    margin-bottom: var(--spacing-md);
+    color: var(--color-text-dark);
+    margin-bottom: 20px;
 }
 
 h1 { font-size: 2.2em; }
@@ -62,316 +59,281 @@ h4 { font-size: 1.3em; }
 /* ==========================================================================
    3. Layout Components
    ========================================================================== */
-
-/* Container Layouts */
 .survey-container,
 .thank-you-container,
 .welcome-container,
 .create-vector-container,
 .error-container {
-    width: 95%;
-    max-width: 800px;
+    background-color: var(--color-background-light);
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
     margin: 60px auto;
-    padding: var(--spacing-lg);
-    background-color: #fff;
-    box-shadow: var(--shadow-md);
-    border-radius: var(--border-radius-md);
+    max-width: 800px;
+    padding: 25px;
+    width: 95%;
 }
 
-/* Options Layout */
 .options-container {
     display: flex;
+    gap: 20px;
     justify-content: space-between;
-    gap: var(--spacing-md);
 }
 
 .option {
+    background-color: var(--color-background-light);
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     flex: 1;
-    background-color: #fff;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    box-shadow: var(--shadow-sm);
+    padding: 15px;
 }
 
 /* ==========================================================================
    4. Form Components
    ========================================================================== */
-
-/* Input Groups */
-.budget-inputs {
-    margin-bottom: var(--spacing-lg);
-}
-
 .input-group {
+    align-items: center;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-sm);
-    gap: var(--spacing-md);
+    margin: 15px 0;
 }
 
 .input-group label {
+    color: var(--color-text-dark);
     flex: 1;
-    font-weight: 500;
-    color: var(--color-secondary);
     font-size: 1.1em;
+    font-weight: bold;
 }
 
-/* Input Styles */
-.budget-input,
 .input-group input,
 .input-group select {
-    width: 120px;
-    padding: var(--spacing-sm);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
+    border-radius: 4px;
+    flex: 0 0 120px;
     font-size: 1.1em;
-    text-align: center;
-    transition: all var(--transition-speed) ease;
+    padding: 8px;
 }
 
-.budget-input:focus,
-.input-group input:focus,
 .input-group select:focus {
-    outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 3px rgba(52, 152, 219, 0.5);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    outline: none;
 }
 
-/* Button Styles */
-.btn {
-    display: inline-block;
-    background: var(--color-primary);
-    color: #fff;
-    padding: 12px 24px;
-    text-decoration: none;
-    border-radius: var(--border-radius-sm);
-    transition: background-color var(--transition-speed) ease;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
+.budget-input {
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    font-size: 16px;
+    padding: 8px 12px;
+    transition: border-color 0.2s ease;
+    width: 120px;
 }
 
-.btn:hover {
-    background: #2980b9;
-}
-
-.btn:disabled {
-    background: #bdc3c7;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.btn-secondary {
-    background: #95a5a6;
-}
-
-.btn-secondary:hover {
-    background: #7f8c8d;
-}
-
-.submit-container,
-.start-survey {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-md) 0;
-    text-align: center;
-}
-
-/* Form Validation */
-.error-message {
-    background-color: #fdedec;
-    color: var(--color-error);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-md);
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-/* ==========================================================================
-   5. Survey Specific Components
-   ========================================================================== */
-
-/* Survey Sections */
-.participant-info,
-.ideal-budget,
-.instructions,
-.message-box {
-    background-color: #e8f6f3;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-md);
-    font-size: 1.1em;
-}
-
-.pair-container {
-    background-color: #f9f9f9;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
-}
-
-/* Radio button styling */
-input[type="radio"] {
-    margin-right: var(--spacing-sm);
-    transform: scale(1.2);
-}
-
-/* Total Controls */
-.total-controls {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    padding: var(--spacing-md);
-    background-color: #f8f9fa;
-    border-radius: var(--border-radius-md);
-}
-
-.total-display {
-    font-size: 1.2em;
-    font-weight: 500;
+.budget-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
 }
 
 /* Comments Section */
 .comment-section {
-    margin: var(--spacing-md) 0;
+    margin: 20px 0;
 }
 
 .comment-section textarea {
     width: 97%;
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 /* ==========================================================================
-   6. Welcome Page Specific Styles
+   5. Button Styles
    ========================================================================== */
-
-.intro-box {
-    background-color: #e8f6f3;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
+.btn {
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 18px;
+    padding: 12px 24px;
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
 
-.survey-description {
-    margin: var(--spacing-lg) 0;
+.btn:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
 }
 
-.survey-description ol {
-    padding-right: var(--spacing-md);
-    padding-left: var(--spacing-md);
+.btn:disabled {
+    background-color: var(--color-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
-.survey-description li {
-    margin-bottom: var(--spacing-sm);
-    line-height: 1.5;
-}
-
-.consent {
-    background-color: #f8f9fa;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    margin: var(--spacing-lg) 0;
-}
-
-/* ==========================================================================
-   7. Budget Creation Page Specific Styles
-   ========================================================================== */
-
-.instructions-section {
-    background-color: #f8f9fa;
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
-}
-
-.instruction-text {
-    font-size: 1.1em;
-    color: var(--color-secondary);
-    margin-bottom: var(--spacing-md);
-}
-
-.rules-section {
-    margin-top: var(--spacing-sm);
-    padding-left: var(--spacing-md);
-    border-left: 3px solid var(--color-primary);
-}
-
-.rules-title {
-    font-weight: bold;
-    color: var(--color-secondary);
-    margin-bottom: var(--spacing-sm);
-}
-
-/* ==========================================================================
-   8. Alert Components
-   ========================================================================== */
-
-.flash-messages {
-    margin-bottom: var(--spacing-md);
-}
-
-.alert {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    border: 1px solid transparent;
-    border-radius: var(--border-radius-sm);
-}
-
-.alert-error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
-
-.custom-alert {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
-}
-
-.alert-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: var(--spacing-md);
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 500px;
-    border-radius: var(--border-radius-sm);
+/* Submit Container */
+.submit-container,
+.start-survey {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 30px;
+    padding: 20px 0;
     text-align: center;
 }
 
-#alertClose {
-    background-color: #4CAF50;
-    color: white;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-top: var(--spacing-md);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
+/* Submit Button */
+.btn-submit {
+    background-color: var(--color-success);
+    font-size: 1.2em;
+    margin-top: 15px;
+    padding: 15px 30px;
 }
 
-#alertClose:hover {
-    background-color: #45a049;
+.btn-submit:not(:disabled):hover {
+    background-color: var(--color-success-dark);
+}
+
+.btn-submit:disabled {
+    background-color: var(--color-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Rescale Button */
+.rescale-btn {
+    background-color: var(--color-primary);
+    margin: 10px 0;
+    position: relative;
+}
+
+.rescale-btn:disabled {
+    background-color: var(--color-disabled);
+}
+
+/* Button Animations */
+.btn-pulse {
+    animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Button Tooltips */
+.rescale-btn .tooltip {
+    background: var(--color-text-dark);
+    border-radius: 4px;
+    bottom: 100%;
+    color: white;
+    font-size: 14px;
+    left: 50%;
+    opacity: 0;
+    padding: 8px;
+    position: absolute;
+    transform: translateX(-50%);
+    transition: opacity 0.2s ease;
+    width: 220px;
+}
+
+.rescale-btn:hover .tooltip {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   6. Form Validation & Messages
+   ========================================================================== */
+.error-message {
+    background-color: #fdedec;
+    border-radius: 8px;
+    color: var(--color-error);
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 15px;
+}
+
+/* Total Display */
+.total-container {
+    align-items: center;
+    background-color: var(--color-background-alt);
+    border-radius: 4px;
+    display: flex;
+    font-size: 1.2em;
+    font-weight: bold;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.total-display {
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.total-display[data-status="under"] { color: var(--color-error); }
+.total-display[data-status="over"] { color: var(--color-warning); }
+.total-display[data-status="perfect"] { color: var(--color-success); }
+
+/* ==========================================================================
+   7. Survey Specific Components
+   ========================================================================== */
+.participant-info,
+.ideal-budget,
+.instructions,
+.message-box {
+    background-color: var(--color-background-info);
+    border-radius: 5px;
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    padding: 15px;
+}
+
+.pair-container {
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+/* ==========================================================================
+   8. Welcome Page Styles
+   ========================================================================== */
+.intro-box {
+    background-color: var(--color-background-info);
+    border-radius: 8px;
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+.survey-description {
+    margin: 30px 0;
+}
+
+.survey-description ol {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.survey-description li {
+    line-height: 1.5;
+    margin-bottom: 10px;
 }
 
 /* ==========================================================================
    9. Language Support
    ========================================================================== */
-
-/* RTL Support */
 .rtl {
     direction: rtl;
     text-align: right;
@@ -382,24 +344,23 @@ input[type="radio"] {
     text-align: left;
 }
 
-/* Language Switcher */
 .language-switcher {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 10px;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 1000;
 }
 
 .lang-btn {
-    padding: 5px 15px;
     border: 1px solid var(--color-primary);
-    border-radius: var(--border-radius-sm);
+    border-radius: 4px;
     color: var(--color-primary);
-    text-decoration: none;
     font-size: 14px;
-    transition: all var(--transition-speed) ease;
+    padding: 5px 15px;
+    text-decoration: none;
+    transition: all 0.3s ease;
 }
 
 .lang-btn.active {
@@ -408,26 +369,14 @@ input[type="radio"] {
 }
 
 .lang-btn:hover {
-    background: #2980b9;
+    background: var(--color-primary-dark);
     color: white;
 }
 
 /* RTL Specific Adjustments */
-.rtl .input-group {
-    flex-direction: row-reverse;
-}
-
 .rtl .input-group label {
-    margin-left: var(--spacing-sm);
+    margin-left: 10px;
     margin-right: 0;
-}
-
-.rtl .total-controls {
-    flex-direction: row-reverse;
-}
-
-.rtl .budget-input {
-    text-align: center;
 }
 
 .rtl .language-switcher {
@@ -436,15 +385,15 @@ input[type="radio"] {
 }
 
 .rtl .rules-section {
-    padding-left: 0;
-    padding-right: var(--spacing-md);
     border-left: none;
     border-right: 3px solid var(--color-primary);
+    padding-left: 0;
+    padding-right: 15px;
 }
 
 .rtl .survey-description ol {
-    padding-right: var(--spacing-md);
     padding-left: 0;
+    padding-right: 20px;
 }
 
 .rtl .consent {
@@ -456,48 +405,26 @@ input[type="radio"] {
 }
 
 /* ==========================================================================
-   10. Utility Classes
+   10. Media Queries
    ========================================================================== */
-
-.text-center { 
-    text-align: center; 
-}
-
-.highlight { 
-    font-weight: bold;
-    color: var(--color-primary);
-}
-
-/* ==========================================================================
-   11. Media Queries
-   ========================================================================== */
-
 @media (max-width: 768px) {
     .options-container {
         flex-direction: column;
     }
     
     .language-switcher {
-        position: relative;
         justify-content: center;
-        margin-bottom: var(--spacing-md);
-    }
-
-    .input-group {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--spacing-sm);
-    }
-
-    .budget-input,
-    .input-group input,
-    .input-group select {
-        width: 100%;
+        margin-bottom: 20px;
+        position: relative;
     }
     
-    .total-controls {
+    .input-group {
         flex-direction: column;
-        gap: var(--spacing-sm);
+        gap: 10px;
+    }
+    
+    .budget-input {
+        width: 100%;
     }
 }
 
@@ -511,28 +438,28 @@ input[type="radio"] {
     .welcome-container,
     .create-vector-container,
     .error-container {
-        margin: var(--spacing-lg) auto;
-        padding: var(--spacing-md);
+        margin: 30px auto;
+        padding: 20px;
     }
     
     .btn {
         font-size: 16px;
-        padding: var(--spacing-sm) var(--spacing-md);
+        padding: 10px 20px;
+        width: 100%;
     }
 }
 
 /* ==========================================================================
-   12. Print Styles
+   11. Print Styles
    ========================================================================== */
-
 @media print {
+    body {
+        background: white;
+    }
+    
     .language-switcher,
     .btn {
         display: none;
-    }
-    
-    body {
-        background: white;
     }
     
     .survey-container,
@@ -543,10 +470,5 @@ input[type="radio"] {
         box-shadow: none;
         margin: 0;
         width: 100%;
-    }
-
-    .pair-container,
-    .option {
-        break-inside: avoid;
     }
 }

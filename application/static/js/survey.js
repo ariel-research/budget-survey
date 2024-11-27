@@ -89,31 +89,77 @@ function initializeBudgetForm() {
     rescaleBtn.addEventListener('click', handleRescale);
 
     /**
+     * Updates the total display with appropriate styling based on the current total.
+     * @param {number} total - The current total value
+     */
+    function updateTotalDisplay(total) {
+        if (!totalElement) return;
+        
+        totalElement.textContent = total;
+        
+        // Update the status and color based on total value
+        if (total === TOTAL_EXPECTED) {
+            totalElement.dataset.status = 'perfect';
+            totalElement.style.color = '#27ae60'; // green
+        } else if (total > TOTAL_EXPECTED) {
+            totalElement.dataset.status = 'over';
+            totalElement.style.color = '#e67e22'; // orange
+        } else {
+            totalElement.dataset.status = 'under';
+            totalElement.style.color = '#e74c3c'; // red
+        }
+    }
+
+    /**
+     * Updates the submit button state and styling based on form validity.
+     * The button will be enabled only when:
+     * 1. The total sum is exactly 100
+     * 2. At least two values are positive
+     * @param {Array<number>} values - Array of current input values
+     */
+    function updateSubmitButton(values) {
+        if (!submitBtn) return;
+
+        const total = values.reduce((sum, val) => sum + val, 0);
+        const positiveValuesCount = values.filter(val => val > 0).length;
+        
+        const isValid = total === TOTAL_EXPECTED && positiveValuesCount >= 2;
+        
+        // Update button state and styling
+        submitBtn.disabled = !isValid;
+        submitBtn.classList.toggle('btn-disabled', !isValid);
+        
+        // Add pulse animation when becoming valid
+        if (isValid && !submitBtn.dataset.wasEnabled) {
+            submitBtn.dataset.wasEnabled = 'true';
+            submitBtn.classList.add('btn-pulse');
+            setTimeout(() => submitBtn.classList.remove('btn-pulse'), 1000);
+        }
+        
+        // Reset the wasEnabled flag when becoming invalid
+        if (!isValid) {
+            submitBtn.dataset.wasEnabled = 'false';
+        }
+    }
+
+    /**
      * Updates the form state including total, button states, and error messages.
      */
     function updateFormState() {
         const values = Array.from(inputs).map(input => parseInt(input.value) || 0);
         const total = values.reduce((sum, val) => sum + val, 0);
         
-        // Count how many zeros we have
-        const zeroCount = values.filter(val => val === 0).length;
-        
         // Update total display
-        totalElement.textContent = total;
-        totalElement.style.color = total === TOTAL_EXPECTED ? '#27ae60' : '#e74c3c';
+        updateTotalDisplay(total);
         
-        // Update button states
-        submitBtn.disabled = total !== TOTAL_EXPECTED;
+        // Update submit button state with values array
+        updateSubmitButton(values);
         
-        // Disable rescale button and show message if needed
-        if (zeroCount > 1) {
-            rescaleBtn.disabled = true;
-            showAlert(messages.rescale_error_too_many_zeros);
-        } else {
-            rescaleBtn.disabled = total === 0 || total === TOTAL_EXPECTED || values.some(val => isNaN(val));
-        }
+        // Update rescale button state
+        rescaleBtn.disabled = total === 0 || total === TOTAL_EXPECTED || 
+                            values.some(val => isNaN(val));
         
-        // Update error display
+        // Update error display for total sum
         errorDisplay.textContent = total !== TOTAL_EXPECTED ? messages.total_not_100 : '';
         errorDisplay.style.display = total !== TOTAL_EXPECTED ? 'block' : 'none';
     }
@@ -129,34 +175,55 @@ function initializeBudgetForm() {
             showAlert(messages.rescale_error_too_small);
             return;
         }
-
+    
         // Check for multiple zeros
         const zeroCount = values.filter(val => val === 0).length;
         if (zeroCount > 1) {
             showAlert(messages.rescale_error_too_many_zeros);
             return;
         }
-        
-        // Calculate scaled values and round to multiples of 5
+    
+        // First pass: Calculate scaled values
         let scaledValues = values.map(value => {
+            if (value === 0) return 0; // Keep zeros as zeros
+            // For non-zero values, ensure minimum of 5 after scaling
             let scaled = (value * TOTAL_EXPECTED / total);
-            return Math.round(scaled / 5) * 5;
+            return Math.max(5, Math.round(scaled / 5) * 5);
         });
-
-        // Adjust to ensure total is exactly TOTAL_EXPECTED
+    
+        // Second pass: Adjust to ensure total is exactly 100
         let newTotal = scaledValues.reduce((sum, val) => sum + val, 0);
         if (newTotal !== TOTAL_EXPECTED) {
-            // Find the largest non-zero value and adjust it
-            const maxIndex = scaledValues.reduce((maxIdx, val, idx) => 
-                (val > scaledValues[maxIdx] || scaledValues[maxIdx] === 0) ? idx : maxIdx, 0);
-            scaledValues[maxIndex] += (TOTAL_EXPECTED - newTotal);
+            // Find the largest value and adjust it
+            const maxIndex = scaledValues.indexOf(Math.max(...scaledValues));
+            // Ensure we don't go below 5 for non-zero values
+            const adjustment = TOTAL_EXPECTED - newTotal;
+            const newValue = scaledValues[maxIndex] + adjustment;
+            if (newValue >= 5) {
+                scaledValues[maxIndex] = newValue;
+            } else {
+                // If adjustment would make the value too small, 
+                // redistribute among other non-zero values
+                const nonZeroIndices = scaledValues
+                    .map((val, idx) => val > 0 ? idx : -1)
+                    .filter(idx => idx !== -1 && idx !== maxIndex);
+                
+                if (nonZeroIndices.length > 0) {
+                    const redistributeAmount = Math.abs(newValue - 5);
+                    scaledValues[maxIndex] = 5;
+                    const largestOtherIndex = nonZeroIndices.reduce((maxIdx, idx) => 
+                        scaledValues[idx] > scaledValues[maxIdx] ? idx : maxIdx, 
+                        nonZeroIndices[0]);
+                    scaledValues[largestOtherIndex] -= redistributeAmount;
+                }
+            }
         }
-
+    
         // Update input values
         inputs.forEach((input, index) => {
             input.value = scaledValues[index];
         });
-
+    
         updateFormState();
     }
 
