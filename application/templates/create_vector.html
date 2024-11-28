@@ -5,21 +5,21 @@ The page inherits from base.html and customizes the title and content blocks.
 -->
 
 {% extends "base.html" %}
-
-{% block title %}{{ get_translation('create_vector_title') }}{% endblock %}
-
 {% block content %}
-<div class="create-vector-container">
-    <h1>{{ get_translation('create_vector_title') }}</h1>
 
+<div class="create-vector-container {% if get_current_language() == 'he' %}rtl{% endif %}">
+    <h1>{{ get_translation('create_vector_title') }}</h1>
+    
+    <!-- Instructions section -->
     <div class="instructions-section">
         <div class="instruction-text">
             {{ get_translation('budget_instructions', subjects=", ".join(subjects)) }}
         </div>
-    
+        
+        <!-- Rules section -->
         <div class="rules-section">
             <div class="rules-title">{{ get_translation('sum_note').title }}</div>
-            <ul class="rules-list">
+            <ul>
                 {% for rule in get_translation('sum_note').rules %}
                     <li>{{ rule }}</li>
                 {% endfor %}
@@ -27,36 +27,46 @@ The page inherits from base.html and customizes the title and content blocks.
         </div>
     </div>
 
-    {% if error %}
-    <div class="error-message">
-        {{ error }}
-    </div>
-    {% endif %}
-
+    <!-- Main form -->
     <form method="POST" data-form-type="create-vector">
+        <!-- Budget input fields -->
         <div class="budget-inputs">
             {% for subject in subjects %}
             <div class="input-group">
                 <label for="{{ subject }}">{{ subject }}:</label>
-                <select name="{{ subject }}" id="{{ subject }}" required>
-                    {% for value in range(0, 100, 5) %}
-                        <option value="{{ value }}">{{ value }}</option>
-                    {% endfor %}
-                </select>
+                <input type="number" 
+                        id="{{ subject }}"
+                        name="{{ subject }}"
+                        min="0"
+                        value="0"
+                        class="budget-input"
+                >
             </div>
             {% endfor %}
         </div>
 
-        <div class="total-container">
-            <span>{{ get_translation('total') }}</span>
-            <span id="total">0</span>
+        <!-- Total and rescale controls -->
+        <div class="total-controls">
+            <div class="total-display">
+                {{ get_translation('total') }} <span id="total">0</span>
+            </div>
         </div>
 
+        <!-- Dynamic error display -->
         <div id="error-display" class="error-message" style="display: none;"></div>
 
-        <div class="submit-container">
-            <button type="submit" id="submit-btn" class="btn">{{ get_translation('submit') }}</button>
+        <!-- buttons-->
+        <div class="button-container">
+            <button id="rescale-btn" class="btn btn-rescale" title="{{ get_translation('rescale_tooltip') }}">
+                <span class="btn-icon">↻</span>
+                {{ get_translation('rescale_button') }}
+            </button>
+            
+            <button id="submit-btn" class="btn btn-submit" type="submit">
+                {{ get_translation('submit') }}
+            </button>
         </div>
     </form>
 </div>
+
 {% endblock %}

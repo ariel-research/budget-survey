@@ -3,25 +3,56 @@
  */
 
 /* ==========================================================================
-   1. CSS Reset & Base Styles
+   1. Color Definitions
    ========================================================================== */
+   :root {
+    /* Primary Colors */
+    --color-primary: #3498db;
+    --color-primary-dark: #2980b9;
+    --color-success: #27ae60;
+    --color-success-dark: #219a52;
+    --color-warning: #e67e22;
+    --color-error: #e74c3c;
+    
+    /* Text Colors */
+    --color-text-dark: #2c3e50;
+    --color-text: #333;
+    
+    /* Background Colors */
+    --color-background: #f4f4f4;
+    --color-background-light: #fff;
+    --color-background-alt: #f9f9f9;
+    --color-background-info: #e8f6f3;
+    
+    /* Border Colors */
+    --color-border: #bdc3c7;
+    --color-border-light: #e2e8f0;
+    
+    /* Disabled State */
+    --color-disabled: #708090;
 
-   body {
-    font-family: 'Noto Sans Hebrew', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-    font-size: 18px;
+    /* Shadow variables */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
-   2. Typography
+   2. CSS Reset & Base Styles
    ========================================================================== */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Noto Sans Hebrew', sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
 
+/* Typography */
 h1, h2, h3, h4 {
-    color: #2c3e50;
+    color: var(--color-text-dark);
     margin-bottom: 20px;
 }
 
@@ -33,159 +64,85 @@ h4 { font-size: 1.3em; }
 /* ==========================================================================
    3. Layout Components
    ========================================================================== */
-
-/* Container Layouts */
 .survey-container,
 .thank-you-container,
 .welcome-container,
 .create-vector-container,
 .error-container {
-    width: 95%;
-    max-width: 800px;
-    margin: 60px auto;
-    padding: 25px;
-    background-color: #fff;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    background-color: var(--color-background-light);
     border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    margin: 60px auto;
+    max-width: 800px;
+    padding: 25px;
+    width: 95%;
 }
 
-/* Options Layout */
 .options-container {
     display: flex;
-    justify-content: space-between;
     gap: 20px;
+    justify-content: space-between;
 }
 
 .option {
-    flex: 1;
-    background-color: #fff;
-    padding: 15px;
+    background-color: var(--color-background-light);
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
+    flex: 1;
+    padding: 15px;
 }
 
 /* ==========================================================================
    4. Form Components
    ========================================================================== */
-
-/* Input Groups */
 .input-group {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin: 15px 0;
 }
 
 .input-group label {
+    color: var(--color-text-dark);
     flex: 1;
-    font-weight: bold;
-    color: #2c3e50;
     font-size: 1.1em;
+    font-weight: bold;
 }
 
 .input-group input,
 .input-group select {
-    flex: 0 0 120px;
-    padding: 10px;
-    border: 1px solid #bdc3c7;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
+    flex: 0 0 90px;
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
     font-size: 1.1em;
+    padding: 8px;
 }
 
 .input-group select:focus {
-    outline: none;
-    border-color: #3498db;
+    border-color: var(--color-primary);
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    outline: none;
 }
 
-/* Button Styles */
-.btn {
-    display: inline-block;
-    background: #3498db;
-    color: #fff;
-    padding: 12px 24px;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
+.budget-input {
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    font-size: 16px;
+    padding: 8px 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
 }
 
-.btn:hover {
-    background: #2980b9;
-}
-
-.submit-container,
-.start-survey {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin-top: 30px;
-    padding: 20px 0;
-    text-align: center;
-}
-
-.submit-btn,
-.start-survey .btn {
-    font-size: 1.2em;
-    padding: 15px 30px;
-    margin-top: 15px;
-}
-
-/* Form Validation */
-.error-message {
-    background-color: #fdedec;
-    color: #e74c3c;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-weight: bold;
-    font-size: 1.1em;
-}
-
-/* ==========================================================================
-   5. Survey Specific Components
-   ========================================================================== */
-
-/* Survey Sections */
-.participant-info,
-.ideal-budget,
-.instructions,
-.message-box {
-    background-color: #e8f6f3;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 25px;
-    font-size: 1.1em;
-}
-
-.pair-container {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Radio button styling */
-input[type="radio"] {
-    margin-right: 10px;
-    transform: scale(1.2);
-}
-
-/* Total container styling */
-.total-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-bottom: 20px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+.budget-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
 }
 
 /* Comments Section */
@@ -194,21 +151,306 @@ input[type="radio"] {
 }
 
 .comment-section textarea {
-    width: 97%;
-    padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
+    padding: 10px;
+    width: 97%;
 }
 
 /* ==========================================================================
-   6. Welcome Page Specific Styles
+   5. Button Styles
    ========================================================================== */
+/* Button Container */
+.button-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* Base Button Styles */
+.btn {
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+    min-width: 160px;
+    padding: 12px 24px;
+    position: relative;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+/* Button States */
+.btn:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn:disabled {
+    background-color: var(--color-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Focus States */
+.btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+}
+
+@media (prefers-contrast: high) {
+    .btn:focus {
+        outline: 2px solid #000;
+        outline-offset: 2px;
+    }
+}
+
+/* Submit Button */
+.btn-submit {
+    background-color: var(--color-success);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background-color: var(--color-success-dark);
+}
+
+/* Start Survey Container */
+.start-survey {
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 3rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s ease;
+}
+
+/* Agreement/Disagreement Text */
+.consent-agreement,
+.consent-disagreement {
+    max-width: 600px;
+    margin: 1.5rem auto;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+
+/* Survey Sections Spacing */
+.survey-description,
+.consent {
+    margin: 3rem 0;
+    line-height: 1.7;
+}
+
+/* Start Survey Button */
+.btn-start {
+    min-width: 200px;
+    padding: 12px 32px;
+    margin: 1rem 0;
+    background-color: var(--color-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.btn-start:hover {
+    background-color: var(--color-primary-dark);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* Rescale Button */
+.btn-rescale {
+    background-color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Button Loading State */
+.btn.loading {
+    color: transparent;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn.loading::after {
+    animation: spin 1s linear infinite;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    content: '';
+    height: 20px;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    position: absolute;
+    top: 50%;
+    width: 20px;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Button Animations */
+.btn-pulse {
+    animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Button Tooltips */
+.tooltip {
+    background: var(--color-text-dark);
+    border-radius: 4px;
+    bottom: 100%;
+    color: white;
+    font-size: 14px;
+    left: 50%;
+    margin-bottom: 8px;
+    opacity: 0;
+    padding: 8px 12px;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.tooltip::after {
+    border: 6px solid transparent;
+    border-top-color: var(--color-text-dark);
+    content: '';
+    left: 50%;
+    position: absolute;
+    top: 100%;
+    transform: translateX(-50%);
+}
+
+.btn:hover .tooltip {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   6. Form Validation & Messages
+   ========================================================================== */
+/* Flash Messages */
+.flash-messages {
+    margin: 20px 0;
+}
+
+.alert {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding: 15px;
+    text-align: center;
+}
+
+.alert-error {
+    background-color: #fdedec;
+    border-color: #ebccd1;
+    color: var(--color-error);
+}
+
+.error-message {
+    animation: fadeIn 0.3s ease;
+    background-color: #fdedec;
+    border-radius: 8px;
+    color: var(--color-error);
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 15px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Total Display */
+.total-container {
+    align-items: center;
+    background-color: var(--color-background-alt);
+    border-radius: 4px;
+    display: flex;
+    font-size: 1.2em;
+    font-weight: bold;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.total-display {
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.total-display[data-status="under"] { color: var(--color-error); }
+.total-display[data-status="over"] { color: var(--color-warning); }
+.total-display[data-status="perfect"] { color: var(--color-success); }
+
+/* ==========================================================================
+   7. Survey Specific Components
+   ========================================================================== */
+.participant-info,
+.ideal-budget,
+.instructions,
+.message-box {
+    background-color: var(--color-background-info);
+    border-radius: 5px;
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    padding: 15px;
+}
+
+.pair-container {
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+/* ==========================================================================
+   8. Welcome Page Styles
+   ========================================================================== */
+.welcome-container h1 {
+    margin-bottom: 2rem;
+}
 
 .intro-box {
-    background-color: #e8f6f3;
-    padding: 20px;
+    background-color: var(--color-background-info);
     border-radius: 8px;
-    margin-bottom: 30px;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    line-height: 1.7;
 }
 
 .survey-description {
@@ -216,112 +458,18 @@ input[type="radio"] {
 }
 
 .survey-description ol {
-    padding-right: 20px;
     padding-left: 20px;
+    padding-right: 20px;
 }
 
 .survey-description li {
-    margin-bottom: 10px;
     line-height: 1.5;
-}
-
-.consent {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 30px 0;
-}
-
-/* ==========================================================================
-   7. Budget Creation Page Specific Styles
-   ========================================================================== */
-
-.instructions-section {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.instruction-text {
-    font-size: 1.1em;
-    color: #2c3e50;
-    margin-bottom: 20px;
-}
-
-.rules-section {
-    margin-top: 15px;
-    padding-left: 15px;
-    border-left: 3px solid #3498db;
-}
-
-.rules-title {
-    font-weight: bold;
-    color: #2c3e50;
-    margin-bottom: 12px;
-}
-
-/* ==========================================================================
-   8. Alert Components
-   ========================================================================== */
-
-.flash-messages {
-    margin-bottom: 20px;
-}
-
-.alert {
-    padding: 15px;
-    margin-bottom: 20px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-}
-
-.alert-error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
-
-.custom-alert {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
-}
-
-.alert-content {
-    background-color: #fefefe;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 5px;
-    text-align: center;
-}
-
-#alertClose {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    margin-top: 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#alertClose:hover {
-    background-color: #45a049;
+    margin-bottom: 10px;
 }
 
 /* ==========================================================================
    9. Language Support
    ========================================================================== */
-
-/* RTL Support */
 .rtl {
     direction: rtl;
     text-align: right;
@@ -332,33 +480,32 @@ input[type="radio"] {
     text-align: left;
 }
 
-/* Language Switcher */
 .language-switcher {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
     display: flex;
     gap: 10px;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 1000;
 }
 
 .lang-btn {
-    padding: 5px 15px;
-    border: 1px solid #3498db;
+    border: 1px solid var(--color-primary);
     border-radius: 4px;
-    color: #3498db;
-    text-decoration: none;
+    color: var(--color-primary);
     font-size: 14px;
+    padding: 5px 15px;
+    text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .lang-btn.active {
-    background: #3498db;
+    background: var(--color-primary);
     color: white;
 }
 
 .lang-btn:hover {
-    background: #2980b9;
+    background: var(--color-primary-dark);
     color: white;
 }
 
@@ -373,16 +520,20 @@ input[type="radio"] {
     right: auto;
 }
 
+.rtl .button-container {
+    flex-direction: row;
+}
+
 .rtl .rules-section {
+    border-left: none;
+    border-right: 3px solid var(--color-primary);
     padding-left: 0;
     padding-right: 15px;
-    border-left: none;
-    border-right: 3px solid #3498db;
 }
 
 .rtl .survey-description ol {
-    padding-right: 20px;
     padding-left: 0;
+    padding-right: 20px;
 }
 
 .rtl .consent {
@@ -394,63 +545,162 @@ input[type="radio"] {
 }
 
 /* ==========================================================================
-   10. Utility Classes
+   10. Media Queries
    ========================================================================== */
-
-.text-center { text-align: center; }
-.highlight { 
-    font-weight: bold;
-    color: #3498db;
-}
-
-/* ==========================================================================
-   11. Media Queries
-   ========================================================================== */
-
 @media (max-width: 768px) {
+    /* Layout Adjustments */
     .options-container {
         flex-direction: column;
     }
     
+    /* Language Switcher */
     .language-switcher {
-        position: relative;
         justify-content: center;
         margin-bottom: 20px;
+        position: relative;
+    }
+    
+    /* Form Elements */
+    .input-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .budget-input {
+        width: 100%;
+    }
+
+    /* Button Adjustments */
+    .button-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* Start Survey Section */
+    .start-survey {
+        padding: 1.5rem;
+    }
+
+    .btn-start {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .consent-agreement,
+    .consent-disagreement {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+
+    /* RTL Specific */
+    .rtl .button-container {
+        flex-direction: column;
+    }
+
+    /* Survey Components */
+    .pair-container {
+        padding: 15px;
+    }
+
+    .options-container {
+        gap: 15px;
+    }
+
+    .intro-box,
+    .survey-description,
+    .consent {
+        padding: 1rem;
     }
 }
 
 @media (max-width: 480px) {
+    /* Typography */
     body {
         font-size: 16px;
     }
     
+    /* Container Spacing */
     .survey-container,
     .thank-you-container,
     .welcome-container,
     .create-vector-container,
     .error-container {
-        margin: 30px auto;
-        padding: 20px;
+        margin: 20px auto;
+        padding: 15px;
+        width: 92%;
     }
-    
+
+    /* Button Adjustments */
     .btn {
-        font-size: 16px;
         padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    /* Form Elements */
+    .input-group {
+        gap: 8px;
+    }
+
+    .budget-input {
+        padding: 8px;
+    }
+
+    /* Error Messages */
+    .error-message {
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    /* Tooltips */
+    .tooltip {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    /* Headers */
+    h1 { font-size: 1.8em; }
+    h2 { font-size: 1.5em; }
+    h3 { font-size: 1.3em; }
+    h4 { font-size: 1.1em; }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+    .survey-container,
+    .thank-you-container,
+    .welcome-container,
+    .create-vector-container,
+    .error-container {
+        margin: 15px auto;
+        padding: 12px;
+        width: 95%;
+    }
+
+    body {
+        font-size: 14px;
+    }
+
+    .btn {
+        padding: 8px 16px;
     }
 }
 
 /* ==========================================================================
-   12. Print Styles
+   11. Print Styles
    ========================================================================== */
-
-@media print {
+   @media print {
+    body {
+        background: white;
+    }
+    
     .language-switcher,
     .btn {
         display: none;
-    }
-    
-    body {
-        background: white;
     }
     
     .survey-container,
@@ -462,4 +712,64 @@ input[type="radio"] {
         margin: 0;
         width: 100%;
     }
+
+    .button-container {
+        display: none;
+    }
+
+    .tooltip {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   12. Custom Alert Styles
+   ========================================================================== */
+.custom-alert {
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.alert-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    max-width: 400px;
+    padding: 20px;
+    text-align: center;
+    width: 90%;
+}
+
+.alert-content p {
+    color: var(--color-text-dark);
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+#alertClose {
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 8px 16px;
+    transition: background-color 0.3s ease;
+}
+
+#alertClose:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* RTL support for custom alert */
+.rtl .alert-content {
+    direction: rtl;
 }

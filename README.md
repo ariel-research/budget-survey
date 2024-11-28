@@ -3,6 +3,9 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Features](#features)
+  - [Automatic Budget Rescaling](#automatic-budget-rescaling)
+  - [Language Support](#language-support)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Database Setup](#database-setup)
@@ -13,8 +16,6 @@
   - [Main Routes](#main-routes)
   - [API Endpoints](#api-endpoints)
 - [Screen Text Locations](#screen-text-locations)
-- [Language Support](#language-support)
-  - [Features](#features)
 - [Database](#database)
 - [Modifying the Survey](#modifying-the-survey)
   - [Changing the Active Survey](#changing-the-active-survey)
@@ -41,6 +42,71 @@
 
 ## Overview
 This project aims to collect data to develop an algorithm for optimal budget calculations, considering the votes of many users. Users allocate money among a few subjects, creating their optimal allocation. They then compare ten pairs of options, optimizing for difference and ratio against their optimal allocation.
+
+## Features
+
+### Automatic Budget Rescaling
+The application includes an automatic rescaling feature that helps users create valid budget allocations:
+
+- **Purpose**: Helps users adjust their budget allocations to:
+  - Sum to exactly 100
+  - Ensure all numbers are divisible by 5
+  - Maintain relative proportions between departments
+
+- **How it works**:
+  1. Proportionally adjusts non-zero values to sum to 100
+  2. Rounds each value to the nearest multiple of 5
+  3. Makes final adjustments to ensure the total remains exactly 100
+  4. Maintains a minimum value of 5 for any non-zero allocation
+  5. Preserves zero allocations (does not rescale them)
+
+- **Button States**:
+  The "Rescale" button becomes disabled when:
+  - The total sum is already exactly 100
+  - All values are zero
+  - Any input contains invalid numbers
+  - The total is zero
+
+- **Constraints**:
+  - Requires at least two departments with non-zero allocations
+  - Maintains relative proportions between original values as closely as possible while satisfying the constraints
+
+Users can trigger rescaling at any time using the "Rescale" button in the budget allocation interface.
+
+### Language Support
+The application provides comprehensive bilingual support:
+
+- **Available Languages**:
+  - Hebrew (default)
+  - English
+
+- **Key Features**:
+  - Language switcher in the UI header
+  - Automatic RTL layout for Hebrew
+  - LTR layout for English
+  - Language preference persistence across sessions
+  - Fallback to Hebrew for missing translations
+
+- **Translation Coverage**:
+  - User interface elements
+  - Error messages
+  - Survey questions and instructions
+  - Survey subjects (e.g., ministry names)
+  - System messages and alerts
+  - Button labels and tooltips
+  - Form validations
+  - Success/failure notifications
+
+- **How to Switch Languages**:
+  - Via UI: Click the language toggle in the top-right corner
+  - Via URL: Add 'lang' parameter to the URL
+    - For Hebrew: `?lang=he`
+    - For English: `?lang=en`
+    - Example: `https://survey.csariel.xyz/?userID=abc&surveyID=123&lang=en`
+  - Selection is remembered for future visits
+  - Can be changed at any point during the survey
+
+All translations are managed through the translations system, making it easy to maintain and update content in both languages.
 
 ## Prerequisites
 - Python 3.8+
@@ -205,16 +271,6 @@ To modify the text displayed on each screen of the application, here's a guide t
      - `application/templates/error.html`
 
 Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
-
-## Language Support
-The application supports both Hebrew (default) and English interfaces:
-
-### Features
-- Full Hebrew and English support throughout the application
-- Automatic RTL support for Hebrew
-- Language switcher in the interface
-- Language preference persistence
-- Fallback to Hebrew when translations are missing
 
 ## Database
 The application uses a MySQL database with multilingual support. Here's the schema:
