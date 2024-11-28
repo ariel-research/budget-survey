@@ -148,6 +148,7 @@ function initializeBudgetForm() {
     function updateFormState() {
         const values = Array.from(inputs).map(input => parseInt(input.value) || 0);
         const total = values.reduce((sum, val) => sum + val, 0);
+        const zeroCount = values.filter(val => val === 0).length;
         
         // Count how many departments have non-zero allocation
         const nonZeroDepartments = values.filter(val => val > 0).length;
@@ -177,8 +178,10 @@ function initializeBudgetForm() {
         }
         
         // Update rescale button state
-        rescaleBtn.disabled = total === 0 || total === TOTAL_EXPECTED || 
-                            values.some(val => isNaN(val));
+        rescaleBtn.disabled = total === 0 || 
+        total === TOTAL_EXPECTED || 
+        values.some(val => isNaN(val)) ||
+        zeroCount > 1; 
         
         // Add/remove pulse animation for submit button
         if (isValid && !submitBtn.dataset.wasEnabled) {
@@ -201,13 +204,6 @@ function initializeBudgetForm() {
         
         if (total === 0) {
             showAlert(messages.rescale_error_too_small);
-            return;
-        }
-    
-        // Check for multiple zeros
-        const zeroCount = values.filter(val => val === 0).length;
-        if (zeroCount > 1) {
-            showAlert(messages.rescale_error_too_many_zeros);
             return;
         }
     
