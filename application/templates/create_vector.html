@@ -27,11 +27,6 @@ The page inherits from base.html and customizes the title and content blocks.
         </div>
     </div>
 
-    <!-- Error message display -->
-    {% if error %}
-        <div class="error-message">{{ error }}</div>
-    {% endif %}
-
     <!-- Main form -->
     <form method="POST" data-form-type="create-vector">
         <!-- Budget input fields -->

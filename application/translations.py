@@ -13,8 +13,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "The sum must be 100 and each number must be divisible by 5.",
         },
         "total_not_100": {
-            "he": "נא לוודא שהסכום הכולל הוא 100. השתמשו בכפתור 'שנה קנה מידה' להתאמה אוטומטית.",
-            "en": "Please ensure the total sum is 100. Use the 'Rescale' button for automatic adjustment.",
+            "he": "נא לוודא שהסכום הכולל הוא 100 ושכל המספרים מתחלקים ב-5. השתמשו בכפתור 'שנה קנה מידה' להתאמה אוטומטית.",
+            "en": "Please ensure the total sum is 100 and all numbers are divisible by 5. Use the 'Rescale' button for automatic adjustment.",
         },
         "choose_all_pairs": {
             "he": "נא לבחור אפשרות אחת עבור כל זוג.",
