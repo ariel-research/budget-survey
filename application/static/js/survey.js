@@ -166,11 +166,11 @@ function initializeBudgetForm() {
         submitBtn.classList.toggle('btn-disabled', !isValid);
         
         // Update error display
-        if (!isValidTotal) {
-            errorDisplay.textContent = messages.total_not_100;
-            errorDisplay.style.display = 'block';
-        } else if (!hasMinimumDepartments) {
+        if (!hasMinimumDepartments) {
             errorDisplay.textContent = messages.min_two_departments;
+            errorDisplay.style.display = 'block';
+        } else if (!isValidTotal) {
+            errorDisplay.textContent = messages.total_not_100;
             errorDisplay.style.display = 'block';
         } else {
             errorDisplay.textContent = '';
