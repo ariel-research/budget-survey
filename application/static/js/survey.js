@@ -149,19 +149,47 @@ function initializeBudgetForm() {
         const values = Array.from(inputs).map(input => parseInt(input.value) || 0);
         const total = values.reduce((sum, val) => sum + val, 0);
         
+        // Count how many departments have non-zero allocation
+        const nonZeroDepartments = values.filter(val => val > 0).length;
+        
         // Update total display
         updateTotalDisplay(total);
         
-        // Update submit button state with values array
-        updateSubmitButton(values);
+        // Update submit button state with additional validation
+        const isValidTotal = total === TOTAL_EXPECTED;
+        const hasMinimumDepartments = nonZeroDepartments >= 2;
+        const isValid = isValidTotal && hasMinimumDepartments;
+        
+        // Update submit button
+        submitBtn.disabled = !isValid;
+        submitBtn.classList.toggle('btn-disabled', !isValid);
+        
+        // Update error display
+        if (!isValidTotal) {
+            errorDisplay.textContent = messages.total_not_100;
+            errorDisplay.style.display = 'block';
+        } else if (!hasMinimumDepartments) {
+            errorDisplay.textContent = messages.min_two_departments;
+            errorDisplay.style.display = 'block';
+        } else {
+            errorDisplay.textContent = '';
+            errorDisplay.style.display = 'none';
+        }
         
         // Update rescale button state
         rescaleBtn.disabled = total === 0 || total === TOTAL_EXPECTED || 
                             values.some(val => isNaN(val));
         
-        // Update error display for total sum
-        errorDisplay.textContent = total !== TOTAL_EXPECTED ? messages.total_not_100 : '';
-        errorDisplay.style.display = total !== TOTAL_EXPECTED ? 'block' : 'none';
+        // Add/remove pulse animation for submit button
+        if (isValid && !submitBtn.dataset.wasEnabled) {
+            submitBtn.dataset.wasEnabled = 'true';
+            submitBtn.classList.add('btn-pulse');
+            setTimeout(() => submitBtn.classList.remove('btn-pulse'), 1000);
+        }
+        
+        if (!isValid) {
+            submitBtn.dataset.wasEnabled = 'false';
+        }
     }
 
     /**

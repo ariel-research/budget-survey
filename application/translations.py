@@ -76,6 +76,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "לא ניתן לשנות קנה מידה כאשר יותר ממשרד אחד מקבל 0. שנו לפחות אחד מהערכים להיות מעל 0.",
             "en": "Cannot rescale when more than one ministry has 0. Change at least one value to be above 0.",
         },
+        "min_two_departments": {
+            "he": "יש להקצות תקציב לשני משרדים לפחות.",
+            "en": "Budget must be allocated to at least two departments.",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -138,7 +142,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "rules": [
                     "הזינו ערכים עבור כל משרד",
                     "ניתן להשתמש בכפתור 'שנה קנה מידה' כדי להתאים את הערכים באופן יחסי לסכום של 100",
-                    "רק משרד אחד לכל היותר יכול לקבל 0",
+                    "יש להקצות תקציב לשני משרדים לפחות",
                     "בסוף התהליך הסכום הכולל חייב להיות בדיוק 100",
                 ],
             },
@@ -147,7 +151,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "rules": [
                     "Enter values for each ministry",
                     "Use the 'Rescale' button to proportionally adjust your values to sum to 100",
-                    "Only one ministry can receive 0",
+                    "The budget must be allocated to at least two departments",
                     "The final total must equal exactly 100",
                 ],
             },
