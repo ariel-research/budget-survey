@@ -65,14 +65,13 @@ function initializeBudgetForm() {
         return;
     }
 
-    // Input validation and formatting
+    // Real-time input validation and formatting
     inputs.forEach(input => {
-        // Handle input while typing
         input.addEventListener('input', function() {
             // Allow any non-negative integer
             let value = parseInt(this.value) || 0;
-            value = Math.max(0, value); // Only ensure it's not negative
-            this.value = value || '0'; // Always show 0 instead of empty
+            value = Math.max(0, value);
+            this.value = value || '0';
             updateFormState();
         });
 
@@ -107,38 +106,6 @@ function initializeBudgetForm() {
         } else {
             totalElement.dataset.status = 'under';
             totalElement.style.color = '#e74c3c'; // red
-        }
-    }
-
-    /**
-     * Updates the submit button state and styling based on form validity.
-     * The button will be enabled only when:
-     * 1. The total sum is exactly 100
-     * 2. At least two values are positive
-     * @param {Array<number>} values - Array of current input values
-     */
-    function updateSubmitButton(values) {
-        if (!submitBtn) return;
-
-        const total = values.reduce((sum, val) => sum + val, 0);
-        const positiveValuesCount = values.filter(val => val > 0).length;
-        
-        const isValid = total === TOTAL_EXPECTED && positiveValuesCount >= 2;
-        
-        // Update button state and styling
-        submitBtn.disabled = !isValid;
-        submitBtn.classList.toggle('btn-disabled', !isValid);
-        
-        // Add pulse animation when becoming valid
-        if (isValid && !submitBtn.dataset.wasEnabled) {
-            submitBtn.dataset.wasEnabled = 'true';
-            submitBtn.classList.add('btn-pulse');
-            setTimeout(() => submitBtn.classList.remove('btn-pulse'), 1000);
-        }
-        
-        // Reset the wasEnabled flag when becoming invalid
-        if (!isValid) {
-            submitBtn.dataset.wasEnabled = 'false';
         }
     }
 

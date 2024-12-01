@@ -17,9 +17,9 @@ It defines the common elements and layout that will be inherited by other templa
 </head>
 <body class="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
     <div class="language-switcher">
-        <a href="{{ url_for('utils.change_language', lang='he', userID=request.args.get('userID'), surveyID=request.args.get('surveyID')) }}" 
+        <a href="{{ url_for('utils.change_language', lang='he', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
            class="lang-btn {% if get_current_language() == 'he' %}active{% endif %}">עברית</a>
-        <a href="{{ url_for('utils.change_language', lang='en', userID=request.args.get('userID'), surveyID=request.args.get('surveyID')) }}" 
+        <a href="{{ url_for('utils.change_language', lang='en', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
            class="lang-btn {% if get_current_language() == 'en' %}active{% endif %}">English</a>
     </div>
     

@@ -10,7 +10,6 @@ from flask import (
     redirect,
     render_template,
     request,
-    session,
     url_for,
 )
 
@@ -38,20 +37,28 @@ def get_required_params() -> Tuple[str, str, int]:
         Tuple[str, str, int]: user_id, external_survey_id, internal_survey_id
 
     Raises:
-        abort(400): If required parameters are missing
+        abort(400): If required parameters are missing or invalid
     """
     try:
         user_id = request.args.get("userID")
         external_survey_id = request.args.get("surveyID")
+        custom_internal_id = request.args.get("internalID")
 
         if not user_id or not external_survey_id:
             missing_param = "userID" if not user_id else "surveyID"
             raise ValueError(f"Missing {missing_param}")
 
-        # Get internal_survey_id from session if available, otherwise from config
-        internal_survey_id = session.get(
-            "internal_survey_id", current_app.config["SURVEY_ID"]
-        )
+        # Get internal_survey_id from query parameter or default config
+        internal_survey_id = current_app.config["SURVEY_ID"]
+        if custom_internal_id:
+            try:
+                internal_survey_id = int(custom_internal_id)
+            except ValueError:
+                logger.warning(
+                    f"Invalid internal survey ID provided: {custom_internal_id}"
+                )
+                abort(400, description=get_translation("invalid_parameter", "messages"))
+
         return user_id, external_survey_id, internal_survey_id
 
     except ValueError as e:
@@ -66,18 +73,6 @@ def get_required_params() -> Tuple[str, str, int]:
 def index():
     """Landing page route handler."""
     user_id, external_survey_id, internal_survey_id = get_required_params()
-
-    # Handle custom internal survey ID
-    custom_internal_id = request.args.get("internalID")
-    if custom_internal_id:
-        try:
-            internal_survey_id = int(custom_internal_id)
-            # Store in session for subsequent requests
-            session["internal_survey_id"] = internal_survey_id
-            logger.info(f"Custom internal survey ID set: {custom_internal_id}")
-        except ValueError:
-            logger.warning(f"Invalid internal survey ID provided: {custom_internal_id}")
-            abort(400, description=get_translation("invalid_parameter", "messages"))
 
     # Verify survey exists
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
@@ -97,6 +92,7 @@ def index():
                 f"survey.{redirect_url}",
                 userID=user_id,
                 surveyID=external_survey_id,
+                internalID=internal_survey_id,
             )
         )
 
@@ -104,6 +100,7 @@ def index():
         "index.html",
         user_id=user_id,
         external_survey_id=external_survey_id,
+        internal_survey_id=internal_survey_id,
         survey_name=survey_data["name"],
     )
 
@@ -138,6 +135,7 @@ def create_vector():
                     subjects=survey_data["subjects"],
                     user_id=user_id,
                     external_survey_id=external_survey_id,
+                    internal_survey_id=internal_survey_id,
                 )
 
             logger.info(f"Valid vector created by user {user_id}: {user_vector}")
@@ -147,6 +145,7 @@ def create_vector():
                     vector=",".join(map(str, user_vector)),
                     userID=user_id,
                     surveyID=external_survey_id,
+                    internalID=internal_survey_id,
                     lang=current_lang,
                 )
             )
@@ -159,6 +158,7 @@ def create_vector():
                 subjects=survey_data["subjects"],
                 user_id=user_id,
                 external_survey_id=external_survey_id,
+                internal_survey_id=internal_survey_id,
             )
 
     logger.debug(
@@ -186,7 +186,9 @@ def survey():
         abort(404, description=get_translation(error_key, "messages", **error_params))
 
     if request.method == "GET":
-        return handle_survey_get(user_id, external_survey_id, survey_data["subjects"])
+        return handle_survey_get(
+            user_id, external_survey_id, internal_survey_id, survey_data["subjects"]
+        )
     elif request.method == "POST":
         return handle_survey_post(user_id, external_survey_id, internal_survey_id)
     else:
@@ -194,7 +196,7 @@ def survey():
 
 
 def handle_survey_get(
-    user_id: str, external_survey_id: str, subjects: list[str]
+    user_id: str, external_survey_id: str, internal_survey_id: int, subjects: list[str]
 ) -> str:
     """Handle GET request for survey page."""
     try:
@@ -207,6 +209,7 @@ def handle_survey_get(
                     "survey.create_vector",
                     userID=user_id,
                     surveyID=external_survey_id,
+                    internalID=internal_survey_id,
                     lang=current_lang,
                 )
             )
@@ -218,7 +221,10 @@ def handle_survey_get(
             subjects=subjects,
         )
 
-        return render_template("survey.html", **session_data.to_template_data())
+        template_data = session_data.to_template_data()
+        template_data["internal_survey_id"] = internal_survey_id
+
+        return render_template("survey.html", **template_data)
 
     except Exception as e:
         logger.error(f"Error in survey GET: {str(e)}", exc_info=True)
@@ -244,6 +250,8 @@ def handle_survey_post(
                     vector=",".join(map(str, submission.user_vector)),
                     userID=user_id,
                     surveyID=external_survey_id,
+                    internalID=internal_survey_id,
+                    lang=get_current_language(),
                 )
             )
 
