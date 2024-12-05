@@ -2,6 +2,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from application.translations import get_translation
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,32 +71,34 @@ class SurveySubmission:
         try:
             # Validate user_vector
             if not self.user_vector:
-                return False, "Missing budget allocation"
+                return False, get_translation("missing_budget", "messages")
 
             if sum(self.user_vector) != 100:
-                return False, "Budget allocation must sum to 100"
+                return False, get_translation("budget_sum_error", "messages")
 
             if any(v < 0 or v > 95 for v in self.user_vector):
-                return False, "Budget values must be between 0 and 95"
+                return False, get_translation("budget_range_error", "messages")
 
-            # Validate awareness check (must be 2 based)
+            # Validate awareness check (must be 2)
             if self.awareness_answer != 2:
-                return False, "Failed awareness check"
+                return False, get_translation("failed_awareness", "messages")
 
             # Validate comparison pairs
             if len(self.comparison_pairs) != 10:
-                return False, "Incorrect number of comparison pairs"
+                return False, get_translation("invalid_pairs_count", "messages")
 
             # Validate each comparison pair
             for idx, pair in enumerate(self.comparison_pairs):
                 if not pair.is_valid():
-                    return False, f"Invalid comparison pair at position {idx + 1}"
+                    return False, get_translation(
+                        "invalid_pair_at_position", "messages", position=str(idx + 1)
+                    )
 
             return True, None
 
         except Exception as e:
             logger.error(f"Survey validation error: {str(e)}")
-            return False, "Internal validation error"
+            return False, get_translation("validation_error", "messages")
 
     @classmethod
     def from_form_data(

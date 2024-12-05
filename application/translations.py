@@ -80,6 +80,30 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "יש להקצות תקציב לשני משרדים לפחות.",
             "en": "Budget must be allocated to at least two departments.",
         },
+        "missing_budget": {
+            "he": "נא להזין את הקצאת התקציב",
+            "en": "Missing budget allocation",
+        },
+        "budget_sum_error": {
+            "he": "סכום התקציב חייב להיות 100",
+            "en": "Budget allocation must sum to 100",
+        },
+        "budget_range_error": {
+            "he": "ערכי התקציב חייבים להיות בין 0 ל-95",
+            "en": "Budget values must be between 0 and 95",
+        },
+        "invalid_pairs_count": {
+            "he": "מספר זוגות ההשוואה אינו תקין",
+            "en": "Incorrect number of comparison pairs",
+        },
+        "invalid_pair_at_position": {
+            "he": "זוג השוואה לא תקין במיקום {position}",
+            "en": "Invalid comparison pair at position {position}",
+        },
+        "validation_error": {
+            "he": "שגיאה בתהליך האימות",
+            "en": "Internal validation error",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
