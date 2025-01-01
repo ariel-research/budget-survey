@@ -221,7 +221,7 @@ class SurveySessionData:
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
         comparison_pairs, awareness_check = SurveyService.generate_survey_pairs(
-            self.user_vector, len(self.subjects)
+            self.user_vector, len(self.subjects), self.survey_id
         )
 
         return {
