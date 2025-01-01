@@ -236,6 +236,6 @@ class SurveySessionData:
             "awareness_check": awareness_check,
             "subjects": self.subjects,
             "user_id": self.user_id,
-            "survey_id": self.survey_id,
+            "survey_id": self.external_survey_id,
             "zip": zip,
         }
