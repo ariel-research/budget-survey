@@ -172,11 +172,11 @@ def generate_vector_pool(size: int, vector_size: int) -> Set[tuple]:
     return vector_pool
 
 
-def generate_survey_pairs(
+def generate_optimization_metric_pairs(
     user_vector: tuple, n: int = 10, vector_size: int = 3
 ) -> List[Tuple[tuple, tuple]]:
     """
-    Generate pairs of budget allocation vectors for survey comparisons.
+    Generate pairs optimized for sum of differences and minimal ratio metrics.
 
     Each pair contains two vectors where one is better in terms of sum_of_differences
     while the other is better in terms of minimal_ratio.
