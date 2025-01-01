@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from application.schemas.validators import SurveySubmission
+from application.services.pair_generation import StrategyRegistry
+from application.translations import get_translation
 from database.queries import (
     check_user_participation,
     create_comparison_pair,
@@ -10,11 +12,14 @@ from database.queries import (
     create_user,
     get_subjects,
     get_survey_name,
+    get_survey_pair_generation_config,
     mark_survey_as_completed,
     user_exists,
 )
 
-from .survey_vector_generator import generate_awareness_check, generate_survey_pairs
+from .survey_vector_generator import (
+    generate_awareness_check,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,24 +99,55 @@ class SurveyService:
 
     @staticmethod
     def generate_survey_pairs(
-        user_vector: List[int], num_subjects: int
+        user_vector: List[int], num_subjects: int, survey_id: int
     ) -> Tuple[List[Dict], Dict]:
         """
-        Generate survey comparison pairs and awareness check.
+        Generate survey pairs and awareness check, using configured strategy.
 
         Args:
             user_vector: User's ideal budget allocation
             num_subjects: Number of budget subjects
+            survey_id: Survey identifier
 
         Returns:
             Tuple of (comparison_pairs, awareness_check)
-        """
-        comparison_pairs = list(
-            generate_survey_pairs(tuple(user_vector), n=10, vector_size=num_subjects)
-        )
-        awareness_check = generate_awareness_check(user_vector, num_subjects)
 
-        return comparison_pairs, awareness_check
+        Raises:
+            ValueError: If strategy configuration is invalid
+        """
+        logger.debug(f"Generating pairs for survey {survey_id}")
+
+        # Get strategy configuration
+        config = get_survey_pair_generation_config(survey_id)
+        if not config:
+            logger.error(f"No configuration found for survey {survey_id}")
+            raise ValueError(get_translation("survey_not_found", "messages"))
+
+        try:
+            # Parse and validate configuration
+            strategy_name = config.get("strategy")
+            params = config.get("params", {})
+
+            if not strategy_name:
+                raise ValueError("Missing strategy name in configuration")
+
+            # Get and execute strategy
+            strategy = StrategyRegistry.get_strategy(strategy_name)
+            comparison_pairs = strategy.generate_pairs(
+                tuple(user_vector),
+                n=params.get("num_pairs", 10),
+                vector_size=num_subjects,
+            )
+
+            # Generate awareness check
+            awareness_check = generate_awareness_check(user_vector, num_subjects)
+
+            logger.info(f"Successfully generated {len(comparison_pairs)} pairs")
+            return comparison_pairs, awareness_check
+
+        except Exception as e:
+            logger.error(f"Error generating pairs: {str(e)}")
+            raise ValueError(get_translation("pair_generation_error", "messages"))
 
     @staticmethod
     def process_survey_submission(submission: SurveySubmission) -> None:
