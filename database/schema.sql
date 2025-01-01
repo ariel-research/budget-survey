@@ -9,6 +9,7 @@ CREATE TABLE surveys (
   description TEXT,
   subjects JSON NOT NULL,
   active BOOLEAN DEFAULT TRUE,
+  pair_generation_config JSON NOT NULL DEFAULT '{"strategy": "optimization_metrics", "params": {"num_pairs": 10}}',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_external_id (external_id),
