@@ -107,7 +107,7 @@ class SurveyService:
         Args:
             user_vector: User's ideal budget allocation
             num_subjects: Number of budget subjects
-            survey_id: Survey identifier
+            survey_id: The internal survey identifier
 
         Returns:
             Tuple of (comparison_pairs, awareness_check)
@@ -210,10 +210,16 @@ class SurveySessionData:
     """Helper class to manage survey session data."""
 
     def __init__(
-        self, user_id: str, survey_id: int, user_vector: List[int], subjects: List[str]
+        self,
+        user_id: str,
+        internal_survey_id: int,
+        external_survey_id: int,
+        user_vector: List[int],
+        subjects: List[str],
     ):
         self.user_id = user_id
-        self.survey_id = survey_id
+        self.internal_survey_id = internal_survey_id
+        self.external_survey_id = external_survey_id
         self.user_vector = user_vector
         self.subjects = subjects
         self.timestamp = datetime.now()
@@ -221,7 +227,7 @@ class SurveySessionData:
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
         comparison_pairs, awareness_check = SurveyService.generate_survey_pairs(
-            self.user_vector, len(self.subjects), self.survey_id
+            self.user_vector, len(self.subjects), self.internal_survey_id
         )
 
         return {
