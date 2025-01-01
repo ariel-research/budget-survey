@@ -424,12 +424,6 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
 
     Returns:
         Dict containing strategy configuration or None if not found
-
-    Example config:
-        {
-            "strategy": "optimization_metrics",
-            "params": {"num_pairs": 10}
-        }
     """
     query = "SELECT pair_generation_config FROM surveys WHERE id = %s AND active = TRUE"
     logger.debug(f"Retrieving pair generation config for survey: {survey_id}")
@@ -440,8 +434,18 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
             logger.warning(f"No configuration found for survey: {survey_id}")
             return None
 
-        config = result.get("pair_generation_config")
+        config_str = result.get("pair_generation_config")
+        if not config_str:
+            return None
+
+        # Parse JSON string into dict
+        config = json.loads(config_str)
+        logger.debug(f"Retrieved config: {config}")
         return config
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Error parsing pair generation config JSON: {str(e)}")
+        return None
     except Exception as e:
         logger.error(f"Error retrieving pair generation config: {str(e)}")
         return None
