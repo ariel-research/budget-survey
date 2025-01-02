@@ -31,7 +31,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         """
         return int(np.sum(np.abs(np.array(user_vector) - np.array(comparison_vector))))
 
-    def _minimal_ratio(self, user_vector: tuple, comparison_vector: tuple) -> float:
+    def minimal_ratio(self, user_vector: tuple, comparison_vector: tuple) -> float:
         """
         Calculate the minimal ratio between corresponding elements.
 
@@ -43,7 +43,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
             float: Minimum ratio between corresponding elements
 
         Example:
-            >>> _minimal_ratio((50, 30, 20), (30, 40, 30))
+            >>> minimal_ratio((50, 30, 20), (30, 40, 30))
             0.6
         """
         ratios = np.array(comparison_vector) / np.array(user_vector)
@@ -64,8 +64,8 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         """
         s1 = self.sum_of_differences(user_vector, v1)
         s2 = self.sum_of_differences(user_vector, v2)
-        r1 = self._minimal_ratio(user_vector, v1)
-        r2 = self._minimal_ratio(user_vector, v2)
+        r1 = self.minimal_ratio(user_vector, v1)
+        r2 = self.minimal_ratio(user_vector, v2)
         return s1, s2, r1, r2
 
     def _is_valid_pair(self, metrics: Tuple[float, float, float, float]) -> bool:

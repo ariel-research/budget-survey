@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 
 from app import create_app
-from application.services.awareness_check import create_random_vector
+from application.services.pair_generation import PairGenerationStrategy
 from database.queries import get_subjects
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class SurveyUser(HttpUser):
 
             # Step 2: Create vector
             logger.debug(f"User {self.user_id}: Creating vector")
-            vector = create_random_vector(len(self.subjects))
+            vector = PairGenerationStrategy.create_random_vector(len(self.subjects))
             with self.client.post(
                 f"/create_vector?userid={self.user_id}&surveyid={self.survey_id}",
                 data={subject: value for subject, value in zip(self.subjects, vector)},
@@ -94,10 +94,16 @@ class SurveyUser(HttpUser):
             }
             for i in range(10):
                 survey_data[f"option1_{i}"] = ",".join(
-                    map(str, create_random_vector(len(self.subjects)))
+                    map(
+                        str,
+                        PairGenerationStrategy.create_random_vector(len(self.subjects)),
+                    )
                 )
                 survey_data[f"option2_{i}"] = ",".join(
-                    map(str, create_random_vector(len(self.subjects)))
+                    map(
+                        str,
+                        PairGenerationStrategy.create_random_vector(len(self.subjects)),
+                    )
                 )
                 survey_data[f"choice_{i}"] = random.choice(["1", "2"])
 

@@ -120,12 +120,9 @@ def is_sum_optimized(
     if user_choice not in [1, 2]:
         raise ValueError("user_choice must be either 1 or 2")
 
-    sum_diff_1 = OptimizationMetricsStrategy.sum_of_differences(
-        optimal_vector, option_1
-    )
-    sum_diff_2 = OptimizationMetricsStrategy.sum_of_differences(
-        optimal_vector, option_2
-    )
+    strategy = OptimizationMetricsStrategy()
+    sum_diff_1 = strategy.sum_of_differences(optimal_vector, option_1)
+    sum_diff_2 = strategy.sum_of_differences(optimal_vector, option_2)
 
     optimal_choice = 1 if sum_diff_1 < sum_diff_2 else 2
 

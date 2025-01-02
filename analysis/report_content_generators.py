@@ -345,15 +345,13 @@ def choice_explanation_string_version2(
     """
     Returns a string that explains the user's choice between two options with improved formatting.
     """
-    from application.services.awareness_check import (
-        minimal_ratio,
-        sum_of_differences,
-    )
+    from application.services.pair_generation import OptimizationMetricsStrategy
 
-    sum_diff_1 = sum_of_differences(optimal_allocation, option_1)
-    sum_diff_2 = sum_of_differences(optimal_allocation, option_2)
-    min_ratio_1 = minimal_ratio(optimal_allocation, option_1)
-    min_ratio_2 = minimal_ratio(optimal_allocation, option_2)
+    strategy = OptimizationMetricsStrategy()  # Create instance
+    sum_diff_1 = strategy.sum_of_differences(optimal_allocation, option_1)
+    sum_diff_2 = strategy.sum_of_differences(optimal_allocation, option_2)
+    min_ratio_1 = strategy.minimal_ratio(optimal_allocation, option_1)
+    min_ratio_2 = strategy.minimal_ratio(optimal_allocation, option_2)
 
     user_choice_type = "none"
     if sum_diff_1 < sum_diff_2 and min_ratio_1 < min_ratio_2:

@@ -23,7 +23,7 @@ def test_minimal_ratio(strategy):
     """Test if minimal_ratio calculates correctly."""
     user_vector = (50, 30, 20)
     generated_vector = (30, 40, 30)
-    assert strategy._minimal_ratio(user_vector, generated_vector) == 0.6
+    assert strategy.minimal_ratio(user_vector, generated_vector) == 0.6
 
 
 def test_calculate_optimization_metrics(strategy):
