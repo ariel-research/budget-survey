@@ -2,7 +2,7 @@
 
 import pytest
 
-from application.services.survey_vector_generator import (
+from application.services.awareness_check import (
     calculate_optimization_metrics,
     create_random_vector,
     generate_awareness_check,

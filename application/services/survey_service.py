@@ -17,7 +17,7 @@ from database.queries import (
     user_exists,
 )
 
-from .survey_vector_generator import (
+from .awareness_check import (
     generate_awareness_check,
 )
 

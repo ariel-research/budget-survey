@@ -345,7 +345,7 @@ def choice_explanation_string_version2(
     """
     Returns a string that explains the user's choice between two options with improved formatting.
     """
-    from application.services.survey_vector_generator import (
+    from application.services.awareness_check import (
         minimal_ratio,
         sum_of_differences,
     )
