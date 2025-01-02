@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from application.translations import get_current_language
 from logging_config import setup_logging
@@ -413,3 +413,39 @@ def retrieve_user_survey_choices() -> List[Dict]:
     except Exception as e:
         logger.error(f"Error retrieving survey choices: {str(e)}")
         return []
+
+
+def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
+    """
+    Get pair generation configuration for a survey.
+
+    Args:
+        survey_id: ID of the survey
+
+    Returns:
+        Dict containing strategy configuration or None if not found
+    """
+    query = "SELECT pair_generation_config FROM surveys WHERE id = %s AND active = TRUE"
+    logger.debug(f"Retrieving pair generation config for survey: {survey_id}")
+
+    try:
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result:
+            logger.warning(f"No configuration found for survey: {survey_id}")
+            return None
+
+        config_str = result.get("pair_generation_config")
+        if not config_str:
+            return None
+
+        # Parse JSON string into dict
+        config = json.loads(config_str)
+        logger.debug(f"Retrieved config: {config}")
+        return config
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Error parsing pair generation config JSON: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Error retrieving pair generation config: {str(e)}")
+        return None

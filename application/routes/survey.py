@@ -216,7 +216,8 @@ def handle_survey_get(
 
         session_data = SurveySessionData(
             user_id=user_id,
-            survey_id=external_survey_id,
+            internal_survey_id=internal_survey_id,
+            external_survey_id=external_survey_id,
             user_vector=user_vector,
             subjects=subjects,
         )

@@ -5,7 +5,9 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from application.services.survey_vector_generator import sum_of_differences
+from application.services.pair_generation.optimization import (
+    OptimizationMetricsStrategy,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +120,9 @@ def is_sum_optimized(
     if user_choice not in [1, 2]:
         raise ValueError("user_choice must be either 1 or 2")
 
-    sum_diff_1 = sum_of_differences(optimal_vector, option_1)
-    sum_diff_2 = sum_of_differences(optimal_vector, option_2)
+    strategy = OptimizationMetricsStrategy()
+    sum_diff_1 = strategy.sum_of_differences(optimal_vector, option_1)
+    sum_diff_2 = strategy.sum_of_differences(optimal_vector, option_2)
 
     optimal_choice = 1 if sum_diff_1 < sum_diff_2 else 2
 

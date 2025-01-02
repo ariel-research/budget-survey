@@ -104,6 +104,22 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "שגיאה בתהליך האימות",
             "en": "Internal validation error",
         },
+        "invalid_pair_strategy": {
+            "he": "אסטרטגיית יצירת הזוגות '{strategy}' אינה קיימת",
+            "en": "Pair generation strategy '{strategy}' does not exist",
+        },
+        "pair_generation_error": {
+            "he": "שגיאה ביצירת הזוגות ",
+            "en": "Error generating comparison pairs",
+        },
+        "invalid_pair_config": {
+            "he": "קונפיגרצית יצירת הזוגות אינה תקינה",
+            "en": "Invalid pair generation configuration",
+        },
+        "strategy_execution_error": {
+            "he": "שגיאה בביצוע אסטרטגיית יצירת הזוגות",
+            "en": "Error executing pair generation strategy",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
