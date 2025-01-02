@@ -6,7 +6,7 @@ from application.services.survey_vector_generator import (
     calculate_optimization_metrics,
     create_random_vector,
     generate_awareness_check,
-    generate_survey_pairs,
+    generate_optimization_metric_pairs,
     generate_vector_pool,
     is_valid_pair,
     minimal_ratio,
@@ -74,11 +74,11 @@ def test_generate_vector_pool():
     assert all(all(x % 5 == 0 for x in v) for v in pool)
 
 
-def test_generate_survey_pairs():
+def test_generate_optimization_metric_pairs():
     """Test if survey pair generation works correctly."""
     user_vector = (60, 20, 20)
     n_pairs = 5
-    pairs = generate_survey_pairs(user_vector, n=n_pairs)
+    pairs = generate_optimization_metric_pairs(user_vector, n=n_pairs)
 
     assert len(pairs) == n_pairs
     assert all(len(pair) == 2 for pair in pairs)
@@ -87,24 +87,24 @@ def test_generate_survey_pairs():
 
 
 @pytest.mark.parametrize("n_pairs", [5, 10, 15])
-def test_generate_survey_pairs_different_sizes(n_pairs):
+def test_generate_optimization_metric_pairs_different_sizes(n_pairs):
     """Test if pair generation works with different numbers of pairs."""
     user_vector = (60, 20, 20)
-    pairs = generate_survey_pairs(user_vector, n=n_pairs)
+    pairs = generate_optimization_metric_pairs(user_vector, n=n_pairs)
     assert len(pairs) == n_pairs
 
 
-def test_generate_survey_pairs_error_handling():
+def test_generate_optimization_metric_pairs_error_handling():
     """Test if pair generation handles errors correctly."""
     invalid_vector = (0, 0, 0)
     with pytest.raises(ValueError):
-        generate_survey_pairs(invalid_vector)
+        generate_optimization_metric_pairs(invalid_vector)
 
 
 def test_generated_pairs_are_valid():
     """Test if all generated pairs satisfy the complementary optimization properties."""
     user_vector = (60, 20, 20)
-    pairs = generate_survey_pairs(user_vector, n=10)
+    pairs = generate_optimization_metric_pairs(user_vector, n=10)
 
     for v1, v2 in pairs:
         # Calculate optimization metrics for the pair
