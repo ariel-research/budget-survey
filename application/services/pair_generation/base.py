@@ -5,13 +5,55 @@ Implements Strategy pattern for flexible pair generation algorithms.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Set, Tuple, Type
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
 class PairGenerationStrategy(ABC):
     """Base class for implementing pair generation strategies."""
+
+    def create_random_vector(self, size: int = 3) -> tuple:
+        """
+        Generate a random vector of integers that sums to 100.
+
+        Args:
+            size: Number of elements in the vector
+
+        Returns:
+            tuple: Vector of integers summing to 100, each divisible by 5
+        """
+        vector = np.random.rand(size)
+        vector = np.floor(vector / vector.sum() * 20).astype(int)
+        vector[-1] = 20 - vector[:-1].sum()
+        np.random.shuffle(vector)
+        vector = vector * 5
+        return tuple(vector)
+
+    def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
+        """
+        Generate a pool of unique random vectors.
+
+        Args:
+            size: Number of vectors to generate
+            vector_size: Size of each vector
+
+        Returns:
+            Set of unique vectors
+        """
+        vector_pool = set()
+        attempts = 0
+        max_attempts = size * 20
+
+        while len(vector_pool) < size and attempts < max_attempts:
+            vector = self.create_random_vector(vector_size)
+            vector_pool.add(vector)
+            attempts += 1
+
+        logger.debug(f"Generated vector pool of size {len(vector_pool)}")
+        return vector_pool
 
     @abstractmethod
     def generate_pairs(
