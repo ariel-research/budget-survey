@@ -5,6 +5,7 @@
 - [Overview](#overview)
 - [Features](#features)
   - [Automatic Budget Rescaling](#automatic-budget-rescaling)
+  - [Pair Generation Strategies](#pair-generation-strategies)
   - [Language Support](#language-support)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -72,6 +73,43 @@ The application includes an automatic rescaling feature that helps users create 
   - Maintains relative proportions between original values as closely as possible while satisfying the constraints
 
 Users can trigger rescaling at any time using the "Rescale" button in the budget allocation interface.
+
+### Pair Generation Strategies
+
+The application uses the Strategy pattern to support multiple pair generation algorithms. Each survey can be configured with its own pair generation strategy.
+
+#### Available Strategies
+
+1. **Optimization Metrics Strategy**
+   - Strategy name: `optimization_metrics`
+   - Uses both sum of differences and minimal ratio metrics
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 10)
+
+#### Adding New Strategies
+
+To add a new pair generation strategy:
+
+1. Create a new file in `application/services/pair_generation/` (e.g., `new_strategy.py`):
+```python
+from application.services.pair_generation.base import PairGenerationStrategy
+
+class NewStrategy(PairGenerationStrategy):
+    def generate_pairs(self, user_vector: tuple, n: int, vector_size: int):
+        # Implement your pair generation logic here
+        pass
+        
+    def get_strategy_name(self):
+        return "new_strategy_name"
+```
+
+2. Register the strategy in `application/services/pair_generation/__init__.py`:
+```python
+from .new_strategy import NewStrategy
+StrategyRegistry.register(NewStrategy)
+```
+
+For examples of how to configure surveys to use different strategies, see the [Adding or Modifying Surveys](#adding-or-modifying-surveys) section.
 
 ### Language Support
 The application provides comprehensive bilingual support:
@@ -302,9 +340,15 @@ To add new surveys or modify existing ones, follow these steps:
 
 2. Once connected, you can run SQL queries to add or modify surveys. Here are some example queries:
 
-   Add a new survey with translations:
+   Add a new survey:
    ```sql
-   INSERT INTO surveys (name, description, subjects, active)
+   INSERT INTO surveys (
+       name, 
+       description, 
+       subjects, 
+       active,
+       pair_generation_config
+   )
    VALUES (
        JSON_OBJECT(
            'he', 'סקר תקציב 2024',
@@ -317,14 +361,17 @@ To add new surveys or modify existing ones, follow these steps:
        JSON_ARRAY(
            JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
            JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
-           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense'),
-           JSON_OBJECT('he', 'רווחה', 'en', 'Welfare')
+           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense')
        ),
-       TRUE
+       TRUE,
+       JSON_OBJECT(
+           'strategy', 'optimization_metrics',
+           'params', JSON_OBJECT('num_pairs', 10)
+       )
    );
    ```
 
-   Modify an existing survey with translations:
+   Modify an existing survey:
    ```sql
    UPDATE surveys
    SET name = JSON_OBJECT(
@@ -338,9 +385,22 @@ To add new surveys or modify existing ones, follow these steps:
        subjects = JSON_ARRAY(
            JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
            JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
-           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense'),
-           JSON_OBJECT('he', 'תשתיות', 'en', 'Infrastructure')
+           JSON_OBJECT('he', 'ביטחון', 'en', 'Defense')
+       ),
+       pair_generation_config = JSON_OBJECT(
+           'strategy', 'optimization_metrics',
+           'params', JSON_OBJECT('num_pairs', 15)
        )
+   WHERE id = 1;
+   ```
+
+   Update just the pair generation strategy:
+   ```sql
+   UPDATE surveys
+   SET pair_generation_config = JSON_OBJECT(
+       'strategy', 'new_strategy_name',
+       'params', JSON_OBJECT('num_pairs', 10)
+   )
    WHERE id = 1;
    ```
 
@@ -351,7 +411,10 @@ To add new surveys or modify existing ones, follow these steps:
    WHERE id = 1;
    ```
 
-Remember to update the `SURVEY_ID` in `config.py` after adding or modifying surveys to ensure the application uses the correct survey.
+Remember to:
+- Use valid strategy names as defined in the pair generation strategies
+- Include all required parameters for the chosen strategy
+- Update the `SURVEY_ID` in `config.py` after adding or modifying surveys
 
 ## Algorithm
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.
