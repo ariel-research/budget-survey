@@ -82,9 +82,37 @@ The application uses the Strategy pattern to support multiple pair generation al
 
 1. **Optimization Metrics Strategy**
    - Strategy name: `optimization_metrics`
-   - Uses both sum of differences and minimal ratio metrics
+   - Generates pairs that force users to choose between minimizing sum of differences and maximizing minimal ratio
+   - Each pair contains two non-ideal allocations where one is better in terms of sum of differences while the other is better in terms of minimal ratio
    - Parameters:
      - `num_pairs`: Number of pairs to generate (default: 10)
+   - Example:
+     ```python
+     # User's ideal: (60, 20, 20)
+     # Option 1: (40, 30, 30)  Better minimal ratio (0.67) but worse sum of differences (40)
+     # Option 2: (70, 15, 15)  Better sum of differences (20) but worse minimal ratio (0.75)
+     ```
+
+2. **Weighted Vector Strategy**
+   - Strategy name: `weighted_vector`
+   - Generates pairs by combining user's ideal vector with random vectors using weighted averages
+   - Each pair contains:
+     - A random vector different from user's ideal allocation
+     - A weighted combination of the random vector and user's ideal allocation
+   - Weighting pattern:
+     - Starts with 10% user vector, 90% random vector
+     - Gradually increases user vector weight by 10% each round
+     - Includes two pairs at 50-50 weight
+     - Ends with 100% user vector weight
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 10)
+   - Example:
+     ```python
+     # For user_vector = [20, 30, 50]:
+     # Round 1: x=0.1, y=0.9
+     # - Random vector: [40, 40, 20]
+     # - Weighted result: [38, 39, 23] (40*0.9 + 20*0.1, 40*0.9 + 30*0.1, 20*0.9 + 50*0.1)
+     ```
 
 #### Adding New Strategies
 

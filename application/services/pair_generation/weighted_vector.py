@@ -124,7 +124,7 @@ class WeightedVectorStrategy(PairGenerationStrategy):
                 for (a1, a2, a3), (b1, b2, b3) in pairs
             ]
             for i, (vec_a, sum_a, vec_b, sum_b) in enumerate(pairs_list):
-                logger.debug(
+                logger.info(
                     f"pair {i + 1}: {vec_a} (sum: {sum_a}), {vec_b} (sum: {sum_b})"
                 )
 
