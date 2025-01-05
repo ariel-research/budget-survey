@@ -55,7 +55,11 @@ class WeightedVectorStrategy(PairGenerationStrategy):
         """
         y_weight = 1 - x_weight
         weighted = user_vector * x_weight + random_vector * y_weight
-        return tuple(weighted.astype(int))
+        # Round to integers and ensure sum is 100
+        weighted = np.round(weighted).astype(int)
+        # Adjust last element to ensure sum is exactly 100
+        weighted[-1] = 100 - weighted[:-1].sum()
+        return tuple(weighted)
 
     def generate_pairs(
         self, user_vector: tuple, n: int = 10, vector_size: int = 3
@@ -70,7 +74,17 @@ class WeightedVectorStrategy(PairGenerationStrategy):
 
         Returns:
             List of pairs, each containing [random_vector, weighted_vector]
+
+        Raises:
+            ValueError: If user_vector is invalid (sum not 100)
         """
+        # Validate input vector
+        if not user_vector or len(user_vector) != vector_size:
+            raise ValueError(f"User vector must have length {vector_size}")
+
+        if sum(user_vector) != 100:
+            raise ValueError("User vector must sum to 100")
+
         try:
             user_vector_array = np.array(user_vector)
             pairs = []
@@ -98,7 +112,27 @@ class WeightedVectorStrategy(PairGenerationStrategy):
             random.shuffle(pairs)
 
             logger.info(f"Successfully generated {len(pairs)} weighted vector pairs")
+
+            # Log each pair with their sums
+            pairs_list = [
+                (
+                    (int(a1), int(a2), int(a3)),
+                    sum((int(a1), int(a2), int(a3))),
+                    (int(b1), int(b2), int(b3)),
+                    sum((int(b1), int(b2), int(b3))),
+                )
+                for (a1, a2, a3), (b1, b2, b3) in pairs
+            ]
+            for i, (vec_a, sum_a, vec_b, sum_b) in enumerate(pairs_list):
+                logger.debug(
+                    f"pair {i + 1}: {vec_a} (sum: {sum_a}), {vec_b} (sum: {sum_b})"
+                )
+
             return pairs
+
+        except Exception as e:
+            logger.error(f"Error generating weighted vector pairs: {str(e)}")
+            raise ValueError("Failed to generate weighted vector pairs") from e
 
         except Exception as e:
             logger.error(f"Error generating weighted vector pairs: {str(e)}")
