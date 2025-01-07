@@ -1,6 +1,8 @@
 import numpy as np
 
-from application.services.pair_generation import WeightedAverageVectorStrategy
+from application.services.pair_generation.weighted_average_vector import (
+    WeightedAverageVectorStrategy,
+)
 
 
 class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
