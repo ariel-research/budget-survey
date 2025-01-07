@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
@@ -224,15 +225,35 @@ class SurveySessionData:
         self.subjects = subjects
         self.timestamp = datetime.now()
 
+    def _randomize_pair_options(self, pair: tuple) -> tuple:
+        """
+        Randomly reorder options within a pair.
+
+        Returns:
+            tuple: The pair with randomized order and indicator of whether it was swapped
+        """
+        if random.random() < 0.5:  # 50% chance to swap
+            return (pair[1], pair[0], True)
+        return (pair[0], pair[1], False)
+
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
         comparison_pairs, awareness_check = SurveyService.generate_survey_pairs(
             self.user_vector, len(self.subjects), self.internal_survey_id
         )
 
+        # Randomize each pair and track the swaps
+        randomized_pairs = []
+        swap_tracking = []
+        for pair in comparison_pairs:
+            option1, option2, was_swapped = self._randomize_pair_options(pair)
+            randomized_pairs.append((option1, option2))
+            swap_tracking.append(was_swapped)
+
         return {
             "user_vector": self.user_vector,
-            "comparison_pairs": comparison_pairs,
+            "comparison_pairs": randomized_pairs,
+            "pair_swaps": swap_tracking,
             "awareness_check": awareness_check,
             "subjects": self.subjects,
             "user_id": self.user_id,
