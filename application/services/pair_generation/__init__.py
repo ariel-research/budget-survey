@@ -2,15 +2,15 @@
 
 from .base import PairGenerationStrategy, StrategyRegistry
 from .optimization import OptimizationMetricsStrategy
-from .weighted_vector import WeightedVectorStrategy
+from .weighted_average_vector import WeightedAverageVectorStrategy
 
 # Register strategies
 StrategyRegistry.register(OptimizationMetricsStrategy)
-StrategyRegistry.register(WeightedVectorStrategy)
+StrategyRegistry.register(WeightedAverageVectorStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
     "StrategyRegistry",
     "OptimizationMetricsStrategy",
-    "WeightedVectorStrategy",
+    "WeightedAverageVectorStrategy",
 ]

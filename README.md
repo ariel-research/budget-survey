@@ -94,7 +94,7 @@ The application uses the Strategy pattern to support multiple pair generation al
      ```
 
 2. **Weighted Vector Strategy**
-   - Strategy name: `weighted_vector`
+   - Strategy name: `weighted_average_vector`
    - Generates pairs by combining user's ideal vector with random vectors using weighted averages
    - Each pair contains:
      - A random vector different from user's ideal allocation

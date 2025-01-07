@@ -11,7 +11,7 @@ from application.services.pair_generation.base import PairGenerationStrategy
 logger = logging.getLogger(__name__)
 
 
-class WeightedVectorStrategy(PairGenerationStrategy):
+class WeightedAverageVectorStrategy(PairGenerationStrategy):
     """Strategy using weighted combinations of user vector and random vectors."""
 
     def _generate_different_random_vector(
@@ -134,10 +134,6 @@ class WeightedVectorStrategy(PairGenerationStrategy):
             logger.error(f"Error generating weighted vector pairs: {str(e)}")
             raise ValueError("Failed to generate weighted vector pairs") from e
 
-        except Exception as e:
-            logger.error(f"Error generating weighted vector pairs: {str(e)}")
-            raise ValueError("Failed to generate weighted vector pairs") from e
-
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "weighted_vector"
+        return "weighted_average_vector"

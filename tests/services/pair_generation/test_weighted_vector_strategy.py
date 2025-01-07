@@ -3,17 +3,17 @@
 import numpy as np
 import pytest
 
-from application.services.pair_generation import WeightedVectorStrategy
+from application.services.pair_generation import WeightedAverageVectorStrategy
 
 
 @pytest.fixture
 def strategy():
-    return WeightedVectorStrategy()
+    return WeightedAverageVectorStrategy()
 
 
 def test_strategy_name(strategy):
     """Test if strategy name is correct."""
-    assert strategy.get_strategy_name() == "weighted_vector"
+    assert strategy.get_strategy_name() == "weighted_average_vector"
 
 
 def test_generate_different_random_vector(strategy):
