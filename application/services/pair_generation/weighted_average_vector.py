@@ -12,7 +12,20 @@ logger = logging.getLogger(__name__)
 
 
 class WeightedAverageVectorStrategy(PairGenerationStrategy):
-    """Strategy using weighted combinations of user vector and random vectors."""
+    """Strategy using weighted combinations of user vector and random vectors.
+
+    Example:
+        >>> strategy = WeightedAverageVectorStrategy()
+        >>> user_vector = np.array([60, 25, 15])
+        >>> random_vector = np.array([30, 45, 25])
+        >>> result = strategy._calculate_weighted_vector(user_vector, random_vector, 0.3)
+        >>> print(result)  # (39, 39, 22):
+            # Calculation:
+            #   - (60*0.3 + 30*0.7 = 39)
+            #   - (25*0.3 + 45*0.7 = 39)
+            #   - (15*0.3 + 25*0.7 = 22)
+            #   - After rounding to integers and adjusting sum: [39, 39, 22]
+    """
 
     # Class constants
     MAX_ATTEMPTS = 1000
