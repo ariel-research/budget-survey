@@ -32,9 +32,10 @@ and collects the user's preferences through a form submission.
     <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
         
-        {% for pair in comparison_pairs %}
+        {% for pair, was_swapped in zip(comparison_pairs, pair_swaps) %}
         <div class="pair-container">
             <h3>{{ get_translation('pair') }} {{ loop.index }}</h3>
+            <input type="hidden" name="was_swapped_{{ loop.index0 }}" value="{{ '1' if was_swapped else '0' }}">
             <div class="options-container">
                 <div class="option">
                     <h4>{{ get_translation('option') }} 1:</h4>

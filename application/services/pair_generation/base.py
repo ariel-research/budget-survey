@@ -15,6 +15,24 @@ logger = logging.getLogger(__name__)
 class PairGenerationStrategy(ABC):
     """Base class for implementing pair generation strategies."""
 
+    def _validate_vector(self, vector: tuple, vector_size: int) -> None:
+        """
+        Validate vector properties.
+
+        Args:
+            vector: Vector to validate
+            vector_size: Expected size of vector
+
+        Raises:
+            ValueError: If vector is invalid
+        """
+        if not vector or len(vector) != vector_size:
+            raise ValueError(f"Vector must have length {vector_size}")
+        if sum(vector) != 100:
+            raise ValueError("Vector must sum to 100")
+        if any(v < 0 or v > 100 for v in vector):
+            raise ValueError("Vector values must be between 0 and 100")
+
     def create_random_vector(self, size: int = 3) -> tuple:
         """
         Generate a random vector of integers that sums to 100.

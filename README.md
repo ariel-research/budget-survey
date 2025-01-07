@@ -114,6 +114,24 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - Weighted result: [38, 39, 23] (40*0.9 + 20*0.1, 40*0.9 + 30*0.1, 20*0.9 + 50*0.1)
      ```
 
+3. **Rounded Weighted Vector Strategy**
+   - Strategy name: `rounded_weighted_average_vector`
+   - Extends the Weighted Vector Strategy to ensure all allocations are multiples of 5
+   - Each pair contains:
+     - A random vector different from user's ideal allocation (in multiples of 5)
+     - A weighted combination rounded to multiples of 5
+   - Maintains all weighting patterns from the parent strategy
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 10)
+   - Example:
+     ```python
+     # For user_vector = [60, 25, 15]:
+     # With x_weight = 0.3:
+     # - Random vector: [30, 45, 25]
+     # - Before rounding: [39, 39, 22] (30*0.7 + 60*0.3, 45*0.7 + 25*0.3, 25*0.7 + 15*0.3)
+     # - After rounding to multiples of 5: [40, 40, 20]
+     ```
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

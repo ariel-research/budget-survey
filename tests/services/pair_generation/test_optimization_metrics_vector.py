@@ -2,7 +2,7 @@
 
 import pytest
 
-from application.services.pair_generation.optimization import (
+from application.services.pair_generation.optimization_metrics_vector import (
     OptimizationMetricsStrategy,
 )
 
