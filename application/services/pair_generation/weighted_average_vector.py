@@ -1,4 +1,4 @@
-"""Implementation of the weighted vector pair generation strategy."""
+"""Implementation of the weighted average vector pair generation strategy."""
 
 import logging
 import random
@@ -14,6 +14,23 @@ logger = logging.getLogger(__name__)
 class WeightedAverageVectorStrategy(PairGenerationStrategy):
     """Strategy using weighted combinations of user vector and random vectors."""
 
+    # Class constants
+    MAX_ATTEMPTS = 1000
+    WEIGHTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    def _validate_weight(self, weight: float) -> None:
+        """
+        Validate weight value.
+
+        Args:
+            weight: Weight value to validate
+
+        Raises:
+            ValueError: If weight is invalid
+        """
+        if not isinstance(weight, float) or not 0 <= weight <= 1:
+            raise ValueError("Weight must be a float between 0 and 1")
+
     def _generate_different_random_vector(
         self, user_vector: tuple, vector_size: int, existing_vectors: Set[tuple]
     ) -> tuple:
@@ -27,17 +44,21 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
         Returns:
             tuple: A new random vector
+
+        Raises:
+            ValueError: If unable to generate unique vector after max attempts
         """
-        MAX_ATTEMPTS = 1000
         attempts = 0
 
-        while attempts < MAX_ATTEMPTS:
+        while attempts < self.MAX_ATTEMPTS:
             new_vector = self.create_random_vector(vector_size)
             if new_vector != user_vector and new_vector not in existing_vectors:
                 return new_vector
             attempts += 1
 
-        raise ValueError("Could not generate a unique random vector after max attempts")
+        raise ValueError(
+            f"Could not generate unique random vector after {self.MAX_ATTEMPTS} attempts"
+        )
 
     def _calculate_weighted_vector(
         self, user_vector: np.ndarray, random_vector: np.ndarray, x_weight: float
@@ -53,6 +74,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         Returns:
             tuple: Weighted combination vector
         """
+        self._validate_weight(x_weight)
         y_weight = 1 - x_weight
         weighted = user_vector * x_weight + random_vector * y_weight
         # Round to integers and ensure sum is 100
@@ -60,6 +82,33 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         # Adjust last element to ensure sum is exactly 100
         weighted[-1] = 100 - weighted[:-1].sum()
         return tuple(weighted)
+
+    def _format_vector_for_logging(self, vector: tuple) -> Tuple[tuple, int]:
+        """
+        Format vector for logging, converting values to integers.
+
+        Args:
+            vector: Vector to format
+
+        Returns:
+            Tuple containing formatted vector and its sum
+        """
+        formatted = tuple(int(v) for v in vector)
+        return formatted, sum(formatted)
+
+    def _log_pairs(self, pairs: List[Tuple[tuple, tuple]]) -> None:
+        """
+        Log generated pairs with their sums.
+
+        Args:
+            pairs: List of vector pairs to log
+        """
+        for i, (vec_a, vec_b) in enumerate(pairs, 1):
+            vec_a_fmt, sum_a = self._format_vector_for_logging(vec_a)
+            vec_b_fmt, sum_b = self._format_vector_for_logging(vec_b)
+            logger.info(
+                f"pair {i}: {vec_a_fmt} (sum: {sum_a}), {vec_b_fmt} (sum: {sum_b})"
+            )
 
     def generate_pairs(
         self, user_vector: tuple, n: int = 10, vector_size: int = 3
@@ -76,26 +125,19 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             List of pairs, each containing [random_vector, weighted_vector]
 
         Raises:
-            ValueError: If user_vector is invalid (sum not 100)
+            ValueError: If parameters are invalid or generation fails
         """
-        # Validate input vector
-        if not user_vector or len(user_vector) != vector_size:
-            raise ValueError(f"User vector must have length {vector_size}")
-
-        if sum(user_vector) != 100:
-            raise ValueError("User vector must sum to 100")
-
         try:
+            # Validate input vector
+            self._validate_vector(user_vector, vector_size)
+
             user_vector_array = np.array(user_vector)
             pairs = []
             existing_vectors = {
                 user_vector
             }  # Track generated vectors to avoid duplicates
 
-            # Calculate weights for each round
-            weights = [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9]
-
-            for x_weight in weights:
+            for x_weight in self.WEIGHTS:
                 # Generate new random vector
                 random_vector = self._generate_different_random_vector(
                     user_vector, vector_size, existing_vectors
@@ -109,29 +151,19 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
                 pairs.append((random_vector, weighted_vector))
 
+            # Shuffle pairs for random presentation order
             random.shuffle(pairs)
 
             logger.info(f"Successfully generated {len(pairs)} weighted vector pairs")
-
-            # Log each pair with their sums
-            pairs_list = [
-                (
-                    (int(a1), int(a2), int(a3)),
-                    sum((int(a1), int(a2), int(a3))),
-                    (int(b1), int(b2), int(b3)),
-                    sum((int(b1), int(b2), int(b3))),
-                )
-                for (a1, a2, a3), (b1, b2, b3) in pairs
-            ]
-            for i, (vec_a, sum_a, vec_b, sum_b) in enumerate(pairs_list):
-                logger.info(
-                    f"pair {i + 1}: {vec_a} (sum: {sum_a}), {vec_b} (sum: {sum_b})"
-                )
+            self._log_pairs(pairs)
 
             return pairs
 
         except Exception as e:
-            logger.error(f"Error generating weighted vector pairs: {str(e)}")
+            logger.error(
+                f"Error generating pairs for user_vector={user_vector}, "
+                f"n={n}, vector_size={vector_size}: {str(e)}"
+            )
             raise ValueError("Failed to generate weighted vector pairs") from e
 
     def get_strategy_name(self) -> str:
