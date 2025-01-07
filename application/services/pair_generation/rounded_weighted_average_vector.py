@@ -42,7 +42,7 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
             max_idx = np.argmax(rounded)
             rounded[max_idx] += 100 - current_sum
 
-        return rounded
+        return rounded.astype(int)
 
     def _calculate_weighted_vector(
         self, user_vector: np.ndarray, random_vector: np.ndarray, x_weight: float

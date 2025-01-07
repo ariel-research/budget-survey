@@ -167,7 +167,9 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             # Shuffle pairs for random presentation order
             random.shuffle(pairs)
 
-            logger.info(f"Successfully generated {len(pairs)} weighted vector pairs")
+            logger.info(
+                f"Successfully generated {len(pairs)} pairs using {self.__class__.__name__}"
+            )
             self._log_pairs(pairs)
 
             return pairs
