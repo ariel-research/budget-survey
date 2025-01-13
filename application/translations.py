@@ -261,6 +261,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "majority_choices": {"he": "בחירת רוב המשתמשים", "en": "User Majority Choices"},
         "overall_distribution": {"he": "התפלגות כללית", "en": "Overall Distribution"},
         "answer_distribution": {"he": "התפלגות התשובות", "en": "Answer Distribution"},
+        "survey_analysis": {"he": "ניתוח הסקר", "en": "Survey Analysis"},
+        "choice_distribution": {"he": "התפלגות הבחירות", "en": "Choice Distribution"},
+        "user_choices": {"he": "בחירות המשתמשים", "en": "User Choices"},
+        "user_id": {"he": "מזהה המשתמש", "en": "User ID"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},

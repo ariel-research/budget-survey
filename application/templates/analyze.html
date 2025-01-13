@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="analysis-container">
+    <h1>{{ get_translation('survey_analysis', 'survey') }} #{{ survey_id }}</h1>
+    
+    <!-- Basic Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ get_translation('total_responses', 'dashboard') }}</h3>
+            <div class="stat-value">{{ analysis.total_responses }}</div>
+        </div>
+    </div>
+
+    <!-- Distribution Chart -->
+    <div class="chart-container">
+        <h2>{{ get_translation('choice_distribution', 'dashboard') }}</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ chart }}" alt="Choice Distribution">
+        </div>
+    </div>
+
+    <!-- User Choices Table -->
+    <div class="table-container">
+        <h2>{{ get_translation('user_choices', 'dashboard') }}</h2>
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>{{ get_translation('user_id', 'dashboard') }}</th>
+                    {% for i in range(1, 11) %}
+                    <th>{{ get_translation('pair', 'survey') }} {{ i }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in analysis.user_choices %}
+                <tr>
+                    <td>{{ user.user_id }}</td>
+                    {% for choice in user.choices %}
+                    <td>{{ option_labels[0] if choice == 1 else option_labels[1] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

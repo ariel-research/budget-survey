@@ -8,6 +8,7 @@ import pandas as pd
 from application.services.pair_generation.optimization_metrics_vector import (
     OptimizationMetricsStrategy,
 )
+from database.queries import retrieve_completed_survey_responses
 
 logger = logging.getLogger(__name__)
 
@@ -214,3 +215,30 @@ def calculate_optimization_stats(row: pd.Series) -> pd.Series:
             "result": result,
         }
     )
+
+
+def get_all_completed_survey_responses(app=None) -> pd.DataFrame:
+    """
+    Retrieves and processes all completed survey responses.
+
+    Args:
+        app: Optional Flask app instance. If None, uses current_app.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing processed survey response data.
+    """
+    from flask import current_app
+
+    try:
+        # Use provided app or current_app
+        ctx = app.app_context() if app else current_app.app_context()
+        with ctx:
+            raw_results = retrieve_completed_survey_responses()
+
+        processed_results = process_survey_responses(raw_results)
+        df = pd.DataFrame(processed_results)
+        logger.info(f"Successfully retrieved and processed {len(df)} survey responses")
+        return df
+    except Exception as e:
+        logger.error(f"Error in get_all_completed_survey_responses: {e}")
+        raise
