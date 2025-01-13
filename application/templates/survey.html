@@ -32,32 +32,32 @@ and collects the user's preferences through a form submission.
     <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
         
-        {% for pair, was_swapped in zip(comparison_pairs, pair_swaps) %}
+        {% for pair in comparison_pairs %}
         <div class="pair-container">
             <h3>{{ get_translation('pair') }} {{ loop.index }}</h3>
-            <input type="hidden" name="was_swapped_{{ loop.index0 }}" value="{{ '1' if was_swapped else '0' }}">
+            <input type="hidden" name="was_swapped_{{ loop.index0 }}" value="{{ 'true' if pair.was_swapped else 'false' }}">
             <div class="options-container">
                 <div class="option">
                     <h4>{{ get_translation('option') }} 1:</h4>
-                    {% for subject, value in zip(subjects, pair[0]) %}
+                    {% for subject, value in zip(subjects, pair.display[0]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
                         <span class="value">{{ value }}</span>
                     </div>
                     {% endfor %}
                     <input type="radio" name="choice_{{ loop.index0 }}" value="1">
-                    <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair[0]|join(',') }}">
+                    <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair.display[0]|join(',') }}">
                 </div>
                 <div class="option">
                     <h4>{{ get_translation('option') }} 2:</h4>
-                    {% for subject, value in zip(subjects, pair[1]) %}
+                    {% for subject, value in zip(subjects, pair.display[1]) %}
                     <div>
                         <span class="subject">{{ subject }}:</span>
                         <span class="value">{{ value }}</span>
                     </div>
                     {% endfor %}
                     <input type="radio" name="choice_{{ loop.index0 }}" value="2">
-                    <input type="hidden" name="option2_{{ loop.index0 }}" value="{{ pair[1]|join(',') }}">
+                    <input type="hidden" name="option2_{{ loop.index0 }}" value="{{ pair.display[1]|join(',') }}">
                 </div>
             </div>
         </div>

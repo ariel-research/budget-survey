@@ -106,6 +106,7 @@ class SurveySubmission:
     ) -> "SurveySubmission":
         """
         Creates a SurveySubmission instance from form data.
+        Handles swapped pairs by restoring original option order and adjusting user choice accordingly.
 
         Args:
             form_data: The raw form data from the request
@@ -113,7 +114,9 @@ class SurveySubmission:
             survey_id: The internal survey identifier
 
         Returns:
-            SurveySubmission: A new instance with processed form data
+            SurveySubmission: A new instance with processed form data, where:
+                - Pairs are stored in their original semantic order (e.g., sum-optimized first)
+                - User choices are adjusted to match this original order
 
         Raises:
             ValueError: If form data is malformed or missing required fields
@@ -128,6 +131,14 @@ class SurveySubmission:
                 option_1 = list(map(int, form_data.get(f"option1_{i}", "").split(",")))
                 option_2 = list(map(int, form_data.get(f"option2_{i}", "").split(",")))
                 user_choice = int(form_data.get(f"choice_{i}", 0))
+                was_swapped = form_data.get(f"was_swapped_{i}") == "true"
+
+                # If options were swapped during display, adjust choice and the options
+                # to match original option order
+                if was_swapped:
+                    # Swap both options and adjust choice
+                    option_1, option_2 = option_2, option_1
+                    user_choice = 3 - user_choice
 
                 pairs.append(
                     ComparisonPair(
