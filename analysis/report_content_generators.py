@@ -478,17 +478,25 @@ def generate_detailed_user_choices(
                 </div>
                 <div class="survey-stats">
                     <h6 class="stats-title">Survey Summary</h6>
-                    <div class="stats-summary">
-                        <div class="stats-row">
-                            <div class="stats-item">
-                                <span class="stats-label">{option_labels[0]} chosen:</span>
-                                <span class="stats-value">{stats['option1_percent']:.0f}%</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="stats-label">{option_labels[1]} chosen:</span>
-                                <span class="stats-value">{stats['option2_percent']:.0f}%</span>
-                            </div>
-                        </div>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>Choice</th>
+                                <th>Percentage</th>
+                            </tr>
+                            <tr class="{
+                                'highlight-row' if stats['option1_percent'] > stats['option2_percent'] else ''
+                            }">
+                                <td>{option_labels[0]}</td>
+                                <td>{stats['option1_percent']:.0f}%</td>
+                            </tr>
+                            <tr class="{
+                                'highlight-row' if stats['option2_percent'] > stats['option1_percent'] else ''
+                            }">
+                                <td>{option_labels[1]}</td>
+                                <td>{stats['option2_percent']:.0f}%</td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
                 </div>

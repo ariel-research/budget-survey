@@ -301,6 +301,11 @@
     color: var(--color-primary);
     font-weight: 500;
  }
+
+ .highlight-row {
+   background-color: #e8e1b6;
+   font-weight: 600;
+}
  
  /* ==========================================================================
    Overall Statistics Table
