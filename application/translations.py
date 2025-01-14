@@ -246,7 +246,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
     },
     "dashboard": {  # Dashboard page
-        "title": {"he": "לוח בקרה", "en": "Dashboard"},
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
         "last_updated": {"he": "עודכן לאחרונה", "en": "Last Updated"},
         "total_surveys": {"he": "סך הכל סקרים", "en": "Total Surveys"},
@@ -265,6 +264,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "choice_distribution": {"he": "התפלגות הבחירות", "en": "Choice Distribution"},
         "user_choices": {"he": "בחירות המשתמשים", "en": "User Choices"},
         "user_id": {"he": "מזהה המשתמש", "en": "User ID"},
+        "survey": {"he": "סקר", "en": "Survey"},
+        "strategy": {"he": "אסטרטגיה", "en": "Strategy"},
+        "title": {"he": "סקירת סקרים", "en": "Surveys Overview"},
+        "subtitle": {
+            "he": "צפה בכל הסקרים הפעילים והתוצאות שלהם",
+            "en": "View all active surveys and their results",
+        },
+        "view_details": {"he": "צפה בפרטים", "en": "View Details"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},

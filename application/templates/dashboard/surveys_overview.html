@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="surveys-overview">
+    <header class="overview-header">
+        <h1>{{ get_translation('title', 'dashboard') }}</h1>
+        <p class="header-description">{{ get_translation('subtitle', 'dashboard') }}</p>
+    </header>
+
+    <div class="surveys-grid">
+        {% for survey in surveys %}
+        <div class="survey-card">
+            <a href="{{ url_for('answers.show_survey_answers', survey_id=survey.id) }}" class="card-link">
+                <div class="survey-header">
+                    <span class="survey-number">#{{ survey.id }}</span>
+                    <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">{{ survey.strategy_name }}</span>
+                </div>
+                
+                <div class="survey-content">
+                    <h2 class="survey-title">{{ survey.name[get_current_language()] }}</h2>
+                    {% if survey.description %}
+                    <p class="survey-description">
+                        {{ survey.description[get_current_language()] }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="survey-footer">
+                    <span class="btn btn-view">
+                        <span class="btn-text">{{ get_translation('view_details', 'dashboard') }}</span>
+                        <span class="btn-icon">→</span>
+                    </span>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

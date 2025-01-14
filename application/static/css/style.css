@@ -817,3 +817,235 @@ input[type="radio"] {
 .rtl .alert-content {
     direction: rtl;
 }
+
+/* ==========================================================================
+   13. Dashboard Styles
+   ========================================================================== */
+   .surveys-overview {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Styles */
+.overview-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.overview-header h1 {
+    color: var(--color-text-dark);
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.header-description {
+    color: var(--color-text-light);
+    font-size: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Grid Layout */
+.surveys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Card Styles */
+.survey-card {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+    overflow: hidden;
+    border: 1px solid var(--color-border-light);
+    cursor: pointer;
+}
+
+.survey-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Card Header */
+.survey-header {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background-alt);
+}
+
+.survey-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.strategy-badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+}
+
+/* Card Content */
+.survey-content {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.survey-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-dark);
+}
+
+.survey-description {
+    color: var(--color-text-light);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Card Footer */
+.survey-footer {
+    padding: 1.25rem;
+    border-top: 1px solid var(--color-border-light);
+    text-align: center;
+    background-color: var(--color-background-alt);
+}
+
+/* Button Styles */
+.btn-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.survey-card:hover .btn-view {
+    background: var(--color-primary-dark);
+}
+
+.btn-text {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.btn-icon {
+    display: inline-block;
+    font-size: 1rem;
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+
+.survey-card:hover .btn-icon {
+    transform: translateX(4px);
+}
+
+/* Strategy Badge Colors */
+.strategy-badge[data-strategy="optimization_metrics"] {
+    background: #3B82F6;
+}
+
+.strategy-badge[data-strategy="weighted_average_vector"] {
+    background: #10B981;
+}
+
+.strategy-badge[data-strategy="rounded_weighted_average_vector"] {
+    background: #8B5CF6;
+}
+
+/* RTL Support */
+.rtl .btn-icon {
+    transform: scaleX(-1);
+}
+
+.rtl .survey-card:hover .btn-icon {
+    transform: translateX(-4px) scaleX(-1);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .surveys-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .surveys-overview {
+        padding: 1rem;
+    }
+    
+    .overview-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .overview-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .survey-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .survey-content {
+        padding: 1rem;
+    }
+    
+    .survey-footer {
+        padding: 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .surveys-overview {
+        padding: 0;
+    }
+    
+    .survey-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .btn-view {
+        display: none;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .survey-card {
+        border: 2px solid var(--color-text-dark);
+    }
+    
+    .strategy-badge {
+        border: 1px solid var(--color-text-dark);
+    }
+}

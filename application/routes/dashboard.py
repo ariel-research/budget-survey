@@ -1,79 +1,64 @@
+import json
 import logging
-from datetime import datetime
+from typing import Dict, List
 
 from flask import Blueprint, abort, render_template
 
-from analysis.utils.analysis_utils import load_data
-from analysis.utils.visualization_utils import (
-    visualize_overall_majority_choice_distribution,
-    visualize_per_survey_answer_percentages,
-    visualize_total_answer_percentage_distribution,
-    visualize_user_survey_majority_choices,
-)
 from application.translations import get_translation
+from database.queries import get_active_surveys
 
 logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
 
 
-@dashboard_routes.route("/dashboard/")
+def process_survey_data(surveys: List[Dict]) -> List[Dict]:
+    """
+    Process raw survey data to include strategy information.
+
+    Args:
+        surveys: List of survey records from database
+
+    Returns:
+        List of processed survey data including strategy details
+    """
+    survey_data = []
+
+    for survey in surveys:
+        try:
+            config = json.loads(survey["pair_generation_config"])
+            strategy_name = config.get("strategy")
+
+            survey_data.append(
+                {
+                    "id": survey["id"],
+                    "name": json.loads(survey["name"]),
+                    "description": (
+                        json.loads(survey["description"])
+                        if survey["description"]
+                        else None
+                    ),
+                    "strategy_name": strategy_name,
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error processing survey {survey['id']}: {str(e)}")
+            continue
+
+    return survey_data
+
+
 @dashboard_routes.route("/dashboard")
 def dashboard():
-    """Render the analytics dashboard with visualizations and metrics."""
+    """Display overview of all active surveys with their strategies."""
     try:
-        data = load_data()
+        # Fetch all active surveys
+        surveys = get_active_surveys()
 
-        # Generate visualization charts
-        charts = {
-            "survey_percentages": visualize_per_survey_answer_percentages(
-                data["summary"]
-            ),
-            "majority_choices": visualize_user_survey_majority_choices(
-                data["optimization"]
-            ),
-            "overall_distribution": visualize_overall_majority_choice_distribution(
-                data["summary"]
-            ),
-            "answer_distribution": visualize_total_answer_percentage_distribution(
-                data["summary"]
-            ),
-        }
+        # Process surveys to include strategy information
+        survey_data = process_survey_data(surveys)
 
-        # Calculate metrics
-        total_row = data["summary"].loc[data["summary"]["survey_id"] == "Total"].iloc[0]
-        metrics = {
-            "total_surveys": len(data["summary"]) - 1,  # Exclude "Total" row
-            "total_participants": total_row["total_survey_responses"],
-            "completion_rate": round(
-                (data["optimization"]["result"].count() / len(data["optimization"]))
-                * 100,
-                1,
-            ),
-            "last_update_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        }
-
-        # Pass translations using 'dashboard' section
-        translations = {
-            "title": get_translation("title", "dashboard"),
-            "last_updated": get_translation("last_updated", "dashboard"),
-            "refresh": get_translation("refresh", "dashboard"),
-            "total_surveys": get_translation("total_surveys", "dashboard"),
-            "total_participants": get_translation("total_participants", "dashboard"),
-            "completion_rate": get_translation("completion_rate", "dashboard"),
-            "survey_percentages": get_translation("survey_percentages", "dashboard"),
-            "majority_choices": get_translation("majority_choices", "dashboard"),
-            "overall_distribution": get_translation(
-                "overall_distribution", "dashboard"
-            ),
-            "answer_distribution": get_translation("answer_distribution", "dashboard"),
-            "expand": get_translation("expand", "dashboard"),
-            "download": get_translation("download", "dashboard"),
-        }
-
-        return render_template(
-            "dashboard.html", charts=charts, translations=translations, **metrics
-        )
+        return render_template("dashboard/surveys_overview.html", surveys=survey_data)
 
     except Exception as e:
-        logger.error(f"Error rendering dashboard: {str(e)}", exc_info=True)
-        abort(500, description=get_translation("messages.dashboard_error"))
+        logger.error(f"Error loading dashboard: {str(e)}")
+        abort(500, description=get_translation("dashboard_error", "messages"))
