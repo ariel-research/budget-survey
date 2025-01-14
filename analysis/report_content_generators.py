@@ -481,21 +481,11 @@ def generate_detailed_user_choices(
                     <div class="stats-summary">
                         <div class="stats-row">
                             <div class="stats-item">
-                                <span class="stats-label">Sum optimization:</span>
-                                <span class="stats-value">{stats['sum_percent']:.0f}%</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="stats-label">Ratio optimization:</span>
-                                <span class="stats-value">{stats['ratio_percent']:.0f}%</span>
-                            </div>
-                        </div>
-                        <div class="stats-row">
-                            <div class="stats-item">
-                                <span class="stats-label">Option 1 chosen:</span>
+                                <span class="stats-label">{option_labels[0]} chosen:</span>
                                 <span class="stats-value">{stats['option1_percent']:.0f}%</span>
                             </div>
                             <div class="stats-item">
-                                <span class="stats-label">Option 2 chosen:</span>
+                                <span class="stats-label">{option_labels[1]} chosen:</span>
                                 <span class="stats-value">{stats['option2_percent']:.0f}%</span>
                             </div>
                         </div>
