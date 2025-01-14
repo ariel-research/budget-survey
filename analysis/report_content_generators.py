@@ -403,11 +403,10 @@ def generate_detailed_user_choices(
     if not user_choices:
         return '<div class="no-data">No detailed user choice data available.</div>'
 
-    # Group choices by user and survey first
     grouped_choices = {}
-    # Keep track of all summaries for the final table
     all_summaries = []
 
+    # Group choices by user and survey
     for choice in user_choices:
         user_id = choice["user_id"]
         survey_id = choice["survey_id"]
@@ -417,10 +416,9 @@ def generate_detailed_user_choices(
             grouped_choices[user_id][survey_id] = []
         grouped_choices[user_id][survey_id].append(choice)
 
-    # Generate HTML
     content = []
 
-    # Process each user's choices and collect summaries
+    # Process each user's choices
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -436,47 +434,48 @@ def generate_detailed_user_choices(
                 """
             )
 
-        for choice in choices:
-            option_1 = json.loads(choice["option_1"])
-            option_2 = json.loads(choice["option_2"])
-            user_choice = choice["user_choice"]
-            content.append(
-                f"""
-                <div class="choice-pair">
-                    <h5>Pair #{choice["pair_number"]}</h5>
-                    <div class="table-container">
-                        <table>
-                            <tr>
-                                <th>Choice</th>
-                                <th>Option</th>
-                                <th>Type</th>
-                            </tr>
-                            <tr>
-                                <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
-                                <td class="option-column">{str(option_1)}</td>
-                                <td>{option_labels[0]}</td>
-                            </tr>
-                            <tr>
-                                <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
-                                <td class="option-column">{str(option_2)}</td>
-                                <td>{option_labels[1]}</td>
-                            </tr>
-                        </table>
+            # Add all pairs first
+            for choice in choices:
+                option_1 = json.loads(choice["option_1"])
+                option_2 = json.loads(choice["option_2"])
+                user_choice = choice["user_choice"]
+                content.append(
+                    f"""
+                    <div class="choice-pair">
+                        <h5>Pair #{choice["pair_number"]}</h5>
+                        <div class="table-container">
+                            <table>
+                                <tr>
+                                    <th>Choice</th>
+                                    <th>Option</th>
+                                    <th>Type</th>
+                                </tr>
+                                <tr>
+                                    <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
+                                    <td class="option-column">{str(option_1)}</td>
+                                    <td>{option_labels[0]}</td>
+                                </tr>
+                                <tr>
+                                    <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
+                                    <td class="option-column">{str(option_2)}</td>
+                                    <td>{option_labels[1]}</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                """
-            )
+                    """
+                )
 
-            # Calculate statistics for this survey response
+            # Calculate statistics for this survey response after all pairs
             stats = calculate_choice_statistics(choices)
-            # Add to summaries list with user and survey info
             all_summaries.append(
                 {"user_id": user_id, "survey_id": survey_id, "stats": stats}
             )
 
-            # Add individual survey stats
+            # Add survey summary at the end of all pairs
             content.append(
                 f"""
+                </div>
                 <div class="survey-stats">
                     <h6 class="stats-title">Survey Summary</h6>
                     <div class="stats-summary">
@@ -502,13 +501,13 @@ def generate_detailed_user_choices(
                         </div>
                     </div>
                 </div>
+                </div>
                 """
             )
 
-            content.append("</div></div>")  # close pairs-list and survey-choices
-        content.append("</section>")  # close user-choices
+        content.append("</section>")
 
-    # Generate and append both summary tables
+    # Add the overall statistics tables at the end
     content.append(generate_detailed_breakdown_table(all_summaries))
     content.append(generate_overall_statistics_table(all_summaries))
 
