@@ -520,6 +520,7 @@ def generate_detailed_breakdown_table(
 
     Args:
         summaries (List[Dict]): List of dictionaries containing survey summaries
+        option_labels (Tuple[str, str]): Labels for the two options
 
     Returns:
         str: HTML table showing detailed breakdown of all survey responses
@@ -533,12 +534,15 @@ def generate_detailed_breakdown_table(
     # Generate table rows separately
     rows = []
     for summary in sorted_summaries:
+        opt1_percent = summary["stats"]["option1_percent"]
+        opt2_percent = summary["stats"]["option2_percent"]
+
         row = f"""
         <tr>
             <td>{summary['user_id']}</td>
             <td>{summary['survey_id']}</td>
-            <td>{format(summary['stats']['option1_percent'], '.1f')}%</td>
-            <td>{format(summary['stats']['option2_percent'], '.1f')}%</td>
+            <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">{format(opt1_percent, '.1f')}%</td>
+            <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">{format(opt2_percent, '.1f')}%</td>
         </tr>
         """
         rows.append(row)
@@ -576,6 +580,7 @@ def generate_overall_statistics_table(
 
     Args:
         summaries (List[Dict]): List of dictionaries containing survey summaries
+        option_labels (Tuple[str, str]): Labels for the two options
 
     Returns:
         str: HTML table showing overall statistics
@@ -600,11 +605,11 @@ def generate_overall_statistics_table(
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
+                    <tr class="{'highlight-row' if avg_opt1 > avg_opt2 else ''}">
                         <td>{option_labels[0]}</td>
                         <td>{avg_opt1:.1f}%</td>
                     </tr>
-                    <tr>
+                    <tr class="{'highlight-row' if avg_opt2 > avg_opt1 else ''}">
                         <td>{option_labels[1]}</td>
                         <td>{avg_opt2:.1f}%</td>
                     </tr>
