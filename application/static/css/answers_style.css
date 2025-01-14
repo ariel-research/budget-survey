@@ -339,7 +339,7 @@
     text-align: center;
 }
 
- /* ==========================================================================
+/* ==========================================================================
    Detailed Breakdown Table
    ========================================================================== */
    .detailed-breakdown {
@@ -364,6 +364,21 @@
   
   .detailed-breakdown tbody tr:hover {
       background-color: rgba(52, 152, 219, 0.1);
+  }
+  
+  /* Column widths */
+  .detailed-breakdown table th:nth-child(1) {
+      width: 25%;
+  }
+  
+  .detailed-breakdown table th:nth-child(2) {
+      width: 15%;
+  }
+  
+  .detailed-breakdown table th:nth-child(3),
+  .detailed-breakdown table th:nth-child(4) {
+      width: 30%;
+      text-align: center;
   }
 
  /* ==========================================================================
