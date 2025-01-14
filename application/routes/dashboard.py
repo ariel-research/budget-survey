@@ -3,18 +3,14 @@ from datetime import datetime
 
 from flask import Blueprint, abort, render_template
 
-from analysis.survey_choice_analysis import analyze_survey_choices
 from analysis.utils.analysis_utils import load_data
 from analysis.utils.visualization_utils import (
-    create_choice_distribution_chart,
     visualize_overall_majority_choice_distribution,
     visualize_per_survey_answer_percentages,
     visualize_total_answer_percentage_distribution,
     visualize_user_survey_majority_choices,
 )
-from application.services.pair_generation.base import StrategyRegistry
 from application.translations import get_translation
-from database.queries import get_survey_pair_generation_config
 
 logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
@@ -81,36 +77,3 @@ def dashboard():
     except Exception as e:
         logger.error(f"Error rendering dashboard: {str(e)}", exc_info=True)
         abort(500, description=get_translation("messages.dashboard_error"))
-
-
-@dashboard_routes.route("/analyze/<int:survey_id>")
-def analyze_survey(survey_id: int):
-    try:
-        # Get survey configuration
-        config = get_survey_pair_generation_config(survey_id)
-        if not config:
-            abort(404, description=get_translation("survey_not_found", "messages"))
-
-        # Get strategy
-        strategy = StrategyRegistry.get_strategy(config["strategy"])
-        option_labels = strategy.get_option_labels()
-
-        # Get analysis
-        analysis = analyze_survey_choices(survey_id)
-
-        # Generate chart
-        chart = create_choice_distribution_chart(
-            analysis["choice_distribution"], option_labels
-        )
-
-        return render_template(
-            "analyze.html",
-            survey_id=survey_id,
-            analysis=analysis,
-            chart=chart,
-            option_labels=option_labels,
-        )
-
-    except Exception as e:
-        logger.error(f"Error in survey analysis: {str(e)}")
-        abort(500, description=get_translation("survey_retrieval_error", "messages"))
