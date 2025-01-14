@@ -506,13 +506,15 @@ def generate_detailed_user_choices(
         content.append("</section>")
 
     # Add the overall statistics tables at the end
-    content.append(generate_detailed_breakdown_table(all_summaries))
-    content.append(generate_overall_statistics_table(all_summaries))
+    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+    content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
     return "\n".join(content)
 
 
-def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
+def generate_detailed_breakdown_table(
+    summaries: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate a detailed breakdown table showing statistics for each survey response.
 
@@ -535,8 +537,6 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
         <tr>
             <td>{summary['user_id']}</td>
             <td>{summary['survey_id']}</td>
-            <td>{format(summary['stats']['sum_percent'], '.1f')}%</td>
-            <td>{format(summary['stats']['ratio_percent'], '.1f')}%</td>
             <td>{format(summary['stats']['option1_percent'], '.1f')}%</td>
             <td>{format(summary['stats']['option2_percent'], '.1f')}%</td>
         </tr>
@@ -553,10 +553,8 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
                     <tr>
                         <th>User ID</th>
                         <th>Survey ID</th>
-                        <th>Sum Optimization</th>
-                        <th>Ratio Optimization</th>
-                        <th>Option 1 Chosen</th>
-                        <th>Option 2 Chosen</th>
+                        <th>{option_labels[0]}</th>
+                        <th>{option_labels[1]}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -570,7 +568,9 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
     return table_html
 
 
-def generate_overall_statistics_table(summaries: List[Dict]) -> str:
+def generate_overall_statistics_table(
+    summaries: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate a summary table showing overall statistics across all survey responses.
 
@@ -585,8 +585,6 @@ def generate_overall_statistics_table(summaries: List[Dict]) -> str:
 
     # Calculate overall averages
     total_responses = len(summaries)
-    avg_sum = sum(s["stats"]["sum_percent"] for s in summaries) / total_responses
-    avg_ratio = sum(s["stats"]["ratio_percent"] for s in summaries) / total_responses
     avg_opt1 = sum(s["stats"]["option1_percent"] for s in summaries) / total_responses
     avg_opt2 = sum(s["stats"]["option2_percent"] for s in summaries) / total_responses
 
@@ -603,19 +601,11 @@ def generate_overall_statistics_table(summaries: List[Dict]) -> str:
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Sum Optimization</td>
-                        <td>{avg_sum:.1f}%</td>
-                    </tr>
-                    <tr>
-                        <td>Ratio Optimization</td>
-                        <td>{avg_ratio:.1f}%</td>
-                    </tr>
-                    <tr>
-                        <td>Option 1 Selected</td>
+                        <td>{option_labels[0]}</td>
                         <td>{avg_opt1:.1f}%</td>
                     </tr>
                     <tr>
-                        <td>Option 2 Selected</td>
+                        <td>{option_labels[1]}</td>
                         <td>{avg_opt2:.1f}%</td>
                     </tr>
                 </tbody>
