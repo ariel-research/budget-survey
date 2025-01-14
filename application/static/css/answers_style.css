@@ -332,6 +332,13 @@
       font-style: italic;
   }
 
+  /* Table column widths and alignment for Overall Survey Statistics */
+.summary-table-container table th:last-child,
+.summary-table-container table td:last-child {
+    width: 50%;
+    text-align: center;
+}
+
  /* ==========================================================================
    Detailed Breakdown Table
    ========================================================================== */
