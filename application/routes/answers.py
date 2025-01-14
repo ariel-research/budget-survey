@@ -6,8 +6,12 @@ from flask import Blueprint, abort, render_template
 from analysis.report_content_generators import (
     generate_detailed_user_choices,
 )
+from application.services.pair_generation.base import StrategyRegistry
 from application.translations import get_translation
-from database.queries import retrieve_user_survey_choices
+from database.queries import (
+    get_survey_pair_generation_config,
+    retrieve_user_survey_choices,
+)
 
 logger = logging.getLogger(__name__)
 answers_routes = Blueprint("answers", __name__)
@@ -15,7 +19,7 @@ answers_routes = Blueprint("answers", __name__)
 
 def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
     """
-    Fetch and format user survey answers with optional survey filtering.
+    Fetch and format user survey answers with strategy-based display.
 
     Args:
         survey_id: Optional ID to filter results for a specific survey.
@@ -35,11 +39,21 @@ def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
         if survey_id is not None:
             choices = [c for c in choices if c["survey_id"] == survey_id]
 
+            # Get strategy configuration for this survey
+            config = get_survey_pair_generation_config(survey_id)
+            if config:
+                strategy = StrategyRegistry.get_strategy(config["strategy"])
+                option_labels = strategy.get_option_labels()
+            else:
+                option_labels = ("Option 1", "Option 2")
+        else:
+            option_labels = ("Option 1", "Option 2")
+
         if not choices:
             return {}
 
-        # Generate detailed HTML
-        formatted_data = generate_detailed_user_choices(choices)
+        # Generate detailed HTML with strategy context
+        formatted_data = generate_detailed_user_choices(choices, option_labels)
         return {"content": formatted_data}
 
     except Exception as e:

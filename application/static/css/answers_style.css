@@ -89,11 +89,10 @@
     width: 12px;
  }
  
- /* Legend colors */
- .legend-square.sum { background-color: var(--color-sum); }
- .legend-square.ratio { background-color: var(--color-ratio); }
- .legend-square.none { background-color: var(--color-none); }
- .legend-square.better { background-color: var(--color-better); }
+/* Legend colors */
+.legend-square.option1 { background-color: var(--color-primary); }
+.legend-square.option2 { background-color: var(--color-secondary); }
+.legend-square.better { background-color: var(--color-better); }
  
  .legend-label {
     color: var(--color-text);

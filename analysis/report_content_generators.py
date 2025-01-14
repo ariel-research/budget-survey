@@ -1,7 +1,7 @@
 import json
 import logging
 import math
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -388,11 +388,15 @@ def choice_explanation_string_version2(
     """
 
 
-def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
+def generate_detailed_user_choices(
+    user_choices: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate detailed analysis of each user's choices for each survey.
+
     Args:
-        user_choices (List[Dict]): List of dictionaries containing user choices data
+        user_choices: List of dictionaries containing user choices data
+        option_labels: Tuple of labels for the two options (e.g., ("Sum Optimized", "Ratio Optimized"))
     Returns:
         str: HTML-formatted string with detailed user choices
     """
@@ -414,36 +418,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
         grouped_choices[user_id][survey_id].append(choice)
 
     # Generate HTML
-    content = [
-        # Add legend at the start
-        """
-        <div class="legend-container">
-            <h4 class="legend-header">Legend</h4>  
-            <div class="legend-items">
-                <div class="legend-row">
-                    <div class="legend-item">
-                        <span class="legend-square sum"></span>
-                        <span class="legend-label">Sum Optimization</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-square ratio"></span>
-                        <span class="legend-label">Ratio Optimization</span>
-                    </div>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-item">
-                        <span class="legend-square none"></span>
-                        <span class="legend-label">No Clear Optimization</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-square better"></span>
-                        <span class="legend-label">Better Value in Comparison</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """
-    ]
+    content = []
 
     # Process each user's choices and collect summaries
     for user_id, surveys in grouped_choices.items():
@@ -461,18 +436,36 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                 """
             )
 
-            for choice in choices:
-                option_1 = json.loads(choice["option_1"])
-                option_2 = json.loads(choice["option_2"])
-                user_choice = choice["user_choice"]
-                content.append(
-                    f"""
-                    <div class="choice-pair">
-                        <h5>Pair #{choice["pair_number"]}</h5>
-                        {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
+        for choice in choices:
+            option_1 = json.loads(choice["option_1"])
+            option_2 = json.loads(choice["option_2"])
+            user_choice = choice["user_choice"]
+            content.append(
+                f"""
+                <div class="choice-pair">
+                    <h5>Pair #{choice["pair_number"]}</h5>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>Choice</th>
+                                <th>Option</th>
+                                <th>Type</th>
+                            </tr>
+                            <tr>
+                                <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
+                                <td class="option-column">{str(option_1)}</td>
+                                <td>{option_labels[0]}</td>
+                            </tr>
+                            <tr>
+                                <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
+                                <td class="option-column">{str(option_2)}</td>
+                                <td>{option_labels[1]}</td>
+                            </tr>
+                        </table>
                     </div>
+                </div>
                 """
-                )
+            )
 
             # Calculate statistics for this survey response
             stats = calculate_choice_statistics(choices)
