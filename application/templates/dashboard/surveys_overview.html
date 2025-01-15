@@ -1,39 +1,70 @@
 {% extends "base.html" %}
 
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_style.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="surveys-overview">
-    <header class="overview-header">
-        <h1>{{ get_translation('title', 'dashboard') }}</h1>
-        <p class="header-description">{{ get_translation('subtitle', 'dashboard') }}</p>
-    </header>
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>{{ translations.title }}</h1>
+                <p class="header-description">{{ translations.subtitle }}</p>
+            </div>
+        </header>
 
-    <div class="surveys-grid">
-        {% for survey in surveys %}
-        <div class="survey-card">
-            <a href="{{ url_for('answers.show_survey_answers', survey_id=survey.id) }}" class="card-link">
-                <div class="survey-header">
-                    <span class="survey-number">#{{ survey.id }}</span>
-                    <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">{{ survey.strategy_name }}</span>
+        <!-- Metrics Summary Section -->
+        <div class="metrics-summary">
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_surveys }}</div>
+                    <div class="metric-label">{{ translations.total_surveys }}</div>
                 </div>
-                
-                <div class="survey-content">
-                    <h2 class="survey-title">{{ survey.name[get_current_language()] }}</h2>
-                    {% if survey.description %}
-                    <p class="survey-description">
-                        {{ survey.description[get_current_language()] }}
-                    </p>
-                    {% endif %}
-                </div>
+            </div>
 
-                <div class="survey-footer">
-                    <span class="btn btn-view">
-                        <span class="btn-text">{{ get_translation('view_details', 'dashboard') }}</span>
-                        <span class="btn-icon">→</span>
-                    </span>
+            <div class="metric-card">
+                <div class="metric-icon">👥</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ total_participants }}</div>
+                    <div class="metric-label">{{ translations.total_participants }}</div>
                 </div>
-            </a>
+            </div>
         </div>
-        {% endfor %}
+
+        <!-- Surveys Grid -->
+        <div class="surveys-grid">
+            {% for survey in surveys %}
+            <div class="survey-card">
+                <a href="{{ url_for('answers.show_survey_answers', survey_id=survey.id) }}" class="card-link">
+                    <div class="survey-header">
+                        <span class="survey-number">#{{ survey.id }}</span>
+                        <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">
+                            {{ survey.strategy_name }}
+                        </span>
+                    </div>
+                    
+                    <div class="survey-content">
+                        <h2 class="survey-title">{{ survey.name[get_current_language()] }}</h2>
+                        {% if survey.description %}
+                        <p class="survey-description">
+                            {{ survey.description[get_current_language()] }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="survey-footer">
+                        <span class="btn btn-view">
+                            <span class="btn-text">{{ translations.view_details }}</span>
+                            <span class="btn-icon">→</span>
+                        </span>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

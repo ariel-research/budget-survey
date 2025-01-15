@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Variables & Settings
+   ========================================================================== */
+   :root {
+    /* Colors */
+    --color-primary: #3B82F6;    /* Blue */
+    --color-success: #10B981;    /* Green */
+    --color-purple: #8B5CF6;     /* Purple */
+    
+    /* Text Colors */
+    --color-text-dark: #1f2937;
+    --color-text-light: #6b7280;
+    
+    /* Background Colors */
+    --color-background: #F3F4F6;
+    --color-background-light: #ffffff;
+    --color-background-alt: #f8fafc;
+    
+    /* Border Colors */
+    --color-border: #e5e7eb;
+    
+    /* Shadow values */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    
+    /* Font Sizes */
+    --text-xs: 0.8125rem;     /* 13px */
+    --text-sm: 0.875rem;      /* 14px */
+    --text-base: 1rem;        /* 16px */
+    --text-lg: 1.125rem;      /* 18px */
+    --text-xl: 1.25rem;       /* 20px */
+    --text-2xl: 1.875rem;     /* 30px */
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-base: all 0.2s ease;
+}
+
+/* ==========================================================================
+   Base Dashboard Layout
+   ========================================================================== */
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: var(--color-background);
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+/* ==========================================================================
+   Header Styles
+   ========================================================================== */
+   .dashboard-header {
+    text-align: center;
+    margin: var(--spacing-lg) auto var(--spacing-xl);
+    max-width: 600px;
+}
+
+.header-content h1 {
+    margin: 0;
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--text-2xl);
+    color: var(--color-text-dark);
+    font-weight: 600;
+}
+
+.header-description {
+    color: var(--color-text-light);
+    font-size: var(--text-sm);
+    margin: 0 auto;
+    max-width: 450px;
+}
+
+/* ==========================================================================
+   Metrics Summary
+   ========================================================================== */
+   .metrics-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(200px, 250px));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-xl) auto var(--spacing-xl);
+    justify-content: center;
+}
+
+.metric-card {
+    background: var(--color-background-light);
+    padding: var(--spacing-md); 
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-icon {
+    font-size: var(--text-lg);
+    background: var(--color-background);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-value {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-text-dark);
+    line-height: 1.2;
+}
+
+.metric-label {
+    color: var(--color-text-light);
+    font-size: var(--text-sm);
+    margin-top: var(--spacing-xs);
+}
+
+/* ==========================================================================
+   Survey Cards Grid
+   ========================================================================== */
+   .surveys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+.survey-card {
+    position: relative;
+    background: var(--color-background-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    max-width: 400px; 
+    margin: 0 auto;
+    width: 100%;
+}
+
+.survey-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Card Header */
+.survey-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background-alt);
+}
+
+.survey-number {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.strategy-badge {
+    font-size: var(--text-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-full);
+    color: var(--color-background-light);
+    font-weight: 500;
+}
+
+/* Strategy Badge Colors */
+.strategy-badge[data-strategy="optimization_metrics"] { background: var(--color-primary); }
+.strategy-badge[data-strategy="weighted_average_vector"] { background: var(--color-success); }
+.strategy-badge[data-strategy="rounded_weighted_average_vector"] { background: var(--color-purple); }
+
+/* Card Content */
+.survey-content {
+    padding: var(--spacing-md);
+    text-align: center;
+    flex: 1;
+}
+
+.survey-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-dark);
+}
+
+.survey-description {
+    color: var(--color-text-light);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    margin: 0 auto;
+    max-width: 300px;
+}
+
+/* Card Footer */
+.survey-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+    background-color: var(--color-background-alt);
+}
+
+/* View Button */
+.btn-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-lg);
+    background: var(--color-primary);
+    color: var(--color-background-light);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    transition: var(--transition-base);
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.btn-view:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-icon {
+    transition: transform 0.2s ease;
+}
+
+.survey-card:hover .btn-icon {
+    transform: translateX(4px);
+}
+
+/* Spacing Utilities */
+.mb-lg {
+    margin-bottom: var(--spacing-lg);
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   RTL Support
+   ========================================================================== */
+.rtl .btn-icon {
+    transform: scaleX(-1);
+}
+
+.rtl .survey-card:hover .btn-icon {
+    transform: translateX(-4px) scaleX(-1);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .surveys-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: var(--spacing-md);
+    }
+    
+    .dashboard-header {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .header-content h1 {
+        font-size: var(--text-xl);
+    }
+    
+    .survey-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .survey-content {
+        padding: var(--spacing-md);
+    }
+    
+    .survey-footer {
+        padding: var(--spacing-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-value {
+        font-size: var(--text-xl);
+    }
+}

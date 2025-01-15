@@ -248,8 +248,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
         "last_updated": {"he": "עודכן לאחרונה", "en": "Last Updated"},
-        "total_surveys": {"he": "סך הכל סקרים", "en": "Total Surveys"},
-        "total_participants": {"he": "סך הכל משתתפים", "en": "Total Participants"},
         "completion_rate": {"he": "אחוז השלמה", "en": "Completion Rate"},
         "expand": {"he": "הרחב", "en": "Expand"},
         "download": {"he": "הורד", "en": "Download"},
@@ -266,11 +264,13 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "user_id": {"he": "מזהה המשתמש", "en": "User ID"},
         "survey": {"he": "סקר", "en": "Survey"},
         "strategy": {"he": "אסטרטגיה", "en": "Strategy"},
-        "title": {"he": "סקירת סקרים", "en": "Surveys Overview"},
+        "title": {"he": "פאנל הסקרים", "en": "Surveys Overview"},
         "subtitle": {
             "he": "צפה בכל הסקרים הפעילים והתוצאות שלהם",
             "en": "View all active surveys and their results",
         },
+        "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
+        "total_participants": {"he": "סך כל המשתתפים", "en": "Total Participants"},
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
     },
     "answers": {  # Answers page

@@ -1,64 +1,44 @@
-import json
 import logging
-from typing import Dict, List
+from datetime import datetime
 
-from flask import Blueprint, abort, render_template
+from flask import Blueprint, render_template
 
+from application.services.dashboard_service import get_dashboard_metrics
 from application.translations import get_translation
-from database.queries import get_active_surveys
 
 logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
 
 
-def process_survey_data(surveys: List[Dict]) -> List[Dict]:
-    """
-    Process raw survey data to include strategy information.
-
-    Args:
-        surveys: List of survey records from database
-
-    Returns:
-        List of processed survey data including strategy details
-    """
-    survey_data = []
-
-    for survey in surveys:
-        try:
-            config = json.loads(survey["pair_generation_config"])
-            strategy_name = config.get("strategy")
-
-            survey_data.append(
-                {
-                    "id": survey["id"],
-                    "name": json.loads(survey["name"]),
-                    "description": (
-                        json.loads(survey["description"])
-                        if survey["description"]
-                        else None
-                    ),
-                    "strategy_name": strategy_name,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error processing survey {survey['id']}: {str(e)}")
-            continue
-
-    return survey_data
-
-
 @dashboard_routes.route("/dashboard")
-def dashboard():
-    """Display overview of all active surveys with their strategies."""
+def view_dashboard():
+    """Display the dashboard overview."""
     try:
-        # Fetch all active surveys
-        surveys = get_active_surveys()
+        # Get dashboard data and metrics
+        dashboard_data = get_dashboard_metrics()
 
-        # Process surveys to include strategy information
-        survey_data = process_survey_data(surveys)
+        # Get translations for dashboard content
+        translations = {
+            "title": get_translation("title", "dashboard"),
+            "subtitle": get_translation("subtitle", "dashboard"),
+            "total_surveys": get_translation("total_surveys", "dashboard"),
+            "total_participants": get_translation("total_participants", "dashboard"),
+            "last_updated": get_translation("last_updated", "dashboard"),
+            "view_details": get_translation("view_details", "dashboard"),
+        }
 
-        return render_template("dashboard/surveys_overview.html", surveys=survey_data)
+        return render_template(
+            "dashboard/surveys_overview.html",
+            surveys=dashboard_data["surveys"],
+            total_surveys=dashboard_data["total_surveys"],
+            total_participants=dashboard_data["total_participants"],
+            translations=translations,
+            last_update_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        )
 
     except Exception as e:
-        logger.error(f"Error loading dashboard: {str(e)}")
-        abort(500, description=get_translation("dashboard_error", "messages"))
+        logger.error(f"Error displaying dashboard: {str(e)}")
+        return render_template(
+            "error.html",
+            message=get_translation("dashboard_error", "messages"),
+        )
