@@ -162,7 +162,9 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
                     user_vector_array, random_vector_array, x_weight
                 )
 
-                pairs.append((random_vector, weighted_vector))
+                pair = (random_vector, weighted_vector)
+                # pair = {"Random": random_vector, f"Weighted {x_weight}": weighted_vector}
+                pairs.append(pair)
 
             # Shuffle pairs for random presentation order
             random.shuffle(pairs)
