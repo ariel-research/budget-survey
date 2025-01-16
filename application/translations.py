@@ -159,7 +159,11 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Which of the following options represents the ideal budget you chose at the beginning of the survey?",
         },
         "comments": {"he": "הערות", "en": "Comments"},
-        "submit": {"he": "שלח סקר", "en": "Submit Survey"},
+        "submit_next_stage": {
+            "he": "התקדם לשלב הבא בסקר",
+            "en": "Proceed to the Next Stage",
+        },
+        "submit_final": {"he": "שלח סקר", "en": "Submit Survey"},
         "thank_you": {
             "he": "תודה רבה על השתתפותך!",
             "en": "Thank you for your participation!",
@@ -196,7 +200,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 ],
             },
         },
-        "rescale_button": {"he": "שנה קנה מידה", "en": "Rescale"},
+        "rescale_button": {"he": "התאם את הסכום ל-100", "en": "Rescale to 100"},
         "rescale_tooltip": {
             "he": "התאמה אוטומטית של הערכים באופן יחסי כך שיסתכמו ל-100",
             "en": "Automatically adjust values proportionally to sum to 100",
