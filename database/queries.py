@@ -449,3 +449,28 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
     except Exception as e:
         logger.error(f"Error retrieving pair generation config: {str(e)}")
         return None
+
+
+def get_active_surveys() -> List[Dict]:
+    """
+    Retrieve all active surveys with their configurations.
+
+    Returns:
+        List[Dict]: List of active surveys with their details.
+        Each dict contains: id, name, description, pair_generation_config
+    """
+    query = """
+        SELECT id, name, description, pair_generation_config 
+        FROM surveys 
+        WHERE active = TRUE 
+        ORDER BY id
+    """
+    logger.debug("Retrieving active surveys")
+
+    try:
+        results = execute_query(query)
+        logger.info(f"Retrieved {len(results)} active surveys")
+        return results
+    except Exception as e:
+        logger.error(f"Error retrieving active surveys: {str(e)}")
+        return []

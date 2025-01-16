@@ -1,7 +1,7 @@
 import json
 import logging
 import math
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -388,22 +388,25 @@ def choice_explanation_string_version2(
     """
 
 
-def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
+def generate_detailed_user_choices(
+    user_choices: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate detailed analysis of each user's choices for each survey.
+
     Args:
-        user_choices (List[Dict]): List of dictionaries containing user choices data
+        user_choices: List of dictionaries containing user choices data
+        option_labels: Tuple of labels for the two options (e.g., ("Sum Optimized", "Ratio Optimized"))
     Returns:
         str: HTML-formatted string with detailed user choices
     """
     if not user_choices:
         return '<div class="no-data">No detailed user choice data available.</div>'
 
-    # Group choices by user and survey first
     grouped_choices = {}
-    # Keep track of all summaries for the final table
     all_summaries = []
 
+    # Group choices by user and survey
     for choice in user_choices:
         user_id = choice["user_id"]
         survey_id = choice["survey_id"]
@@ -413,39 +416,9 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
             grouped_choices[user_id][survey_id] = []
         grouped_choices[user_id][survey_id].append(choice)
 
-    # Generate HTML
-    content = [
-        # Add legend at the start
-        """
-        <div class="legend-container">
-            <h4 class="legend-header">Legend</h4>  
-            <div class="legend-items">
-                <div class="legend-row">
-                    <div class="legend-item">
-                        <span class="legend-square sum"></span>
-                        <span class="legend-label">Sum Optimization</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-square ratio"></span>
-                        <span class="legend-label">Ratio Optimization</span>
-                    </div>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-item">
-                        <span class="legend-square none"></span>
-                        <span class="legend-label">No Clear Optimization</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-square better"></span>
-                        <span class="legend-label">Better Value in Comparison</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        """
-    ]
+    content = []
 
-    # Process each user's choices and collect summaries
+    # Process each user's choices
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -461,6 +434,7 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                 """
             )
 
+            # Add all pairs first
             for choice in choices:
                 option_1 = json.loads(choice["option_1"])
                 option_2 = json.loads(choice["option_2"])
@@ -469,65 +443,84 @@ def generate_detailed_user_choices(user_choices: List[Dict]) -> str:
                     f"""
                     <div class="choice-pair">
                         <h5>Pair #{choice["pair_number"]}</h5>
-                        {choice_explanation_string_version2(optimal_allocation, option_1, option_2, user_choice)}
+                        <div class="table-container">
+                            <table>
+                                <tr>
+                                    <th>Choice</th>
+                                    <th>Option</th>
+                                    <th>Type</th>
+                                </tr>
+                                <tr>
+                                    <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
+                                    <td class="option-column">{str(option_1)}</td>
+                                    <td>{option_labels[0]}</td>
+                                </tr>
+                                <tr>
+                                    <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
+                                    <td class="option-column">{str(option_2)}</td>
+                                    <td>{option_labels[1]}</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                """
+                    """
                 )
 
-            # Calculate statistics for this survey response
+            # Calculate statistics for this survey response after all pairs
             stats = calculate_choice_statistics(choices)
-            # Add to summaries list with user and survey info
             all_summaries.append(
                 {"user_id": user_id, "survey_id": survey_id, "stats": stats}
             )
 
-            # Add individual survey stats
+            # Add survey summary at the end of all pairs
             content.append(
                 f"""
+                </div>
                 <div class="survey-stats">
                     <h6 class="stats-title">Survey Summary</h6>
-                    <div class="stats-summary">
-                        <div class="stats-row">
-                            <div class="stats-item">
-                                <span class="stats-label">Sum optimization:</span>
-                                <span class="stats-value">{stats['sum_percent']:.0f}%</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="stats-label">Ratio optimization:</span>
-                                <span class="stats-value">{stats['ratio_percent']:.0f}%</span>
-                            </div>
-                        </div>
-                        <div class="stats-row">
-                            <div class="stats-item">
-                                <span class="stats-label">Option 1 chosen:</span>
-                                <span class="stats-value">{stats['option1_percent']:.0f}%</span>
-                            </div>
-                            <div class="stats-item">
-                                <span class="stats-label">Option 2 chosen:</span>
-                                <span class="stats-value">{stats['option2_percent']:.0f}%</span>
-                            </div>
-                        </div>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>Choice</th>
+                                <th>Percentage</th>
+                            </tr>
+                            <tr class="{
+                                'highlight-row' if stats['option1_percent'] > stats['option2_percent'] else ''
+                            }">
+                                <td>{option_labels[0]}</td>
+                                <td>{stats['option1_percent']:.0f}%</td>
+                            </tr>
+                            <tr class="{
+                                'highlight-row' if stats['option2_percent'] > stats['option1_percent'] else ''
+                            }">
+                                <td>{option_labels[1]}</td>
+                                <td>{stats['option2_percent']:.0f}%</td>
+                            </tr>
+                        </table>
                     </div>
+                </div>
                 </div>
                 """
             )
 
-            content.append("</div></div>")  # close pairs-list and survey-choices
-        content.append("</section>")  # close user-choices
+        content.append("</section>")
 
-    # Generate and append both summary tables
-    content.append(generate_detailed_breakdown_table(all_summaries))
-    content.append(generate_overall_statistics_table(all_summaries))
+    # Add the overall statistics tables at the end
+    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+    content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
     return "\n".join(content)
 
 
-def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
+def generate_detailed_breakdown_table(
+    summaries: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate a detailed breakdown table showing statistics for each survey response.
 
     Args:
         summaries (List[Dict]): List of dictionaries containing survey summaries
+        option_labels (Tuple[str, str]): Labels for the two options
 
     Returns:
         str: HTML table showing detailed breakdown of all survey responses
@@ -541,14 +534,15 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
     # Generate table rows separately
     rows = []
     for summary in sorted_summaries:
+        opt1_percent = summary["stats"]["option1_percent"]
+        opt2_percent = summary["stats"]["option2_percent"]
+
         row = f"""
         <tr>
             <td>{summary['user_id']}</td>
             <td>{summary['survey_id']}</td>
-            <td>{format(summary['stats']['sum_percent'], '.1f')}%</td>
-            <td>{format(summary['stats']['ratio_percent'], '.1f')}%</td>
-            <td>{format(summary['stats']['option1_percent'], '.1f')}%</td>
-            <td>{format(summary['stats']['option2_percent'], '.1f')}%</td>
+            <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">{format(opt1_percent, '.1f')}%</td>
+            <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">{format(opt2_percent, '.1f')}%</td>
         </tr>
         """
         rows.append(row)
@@ -563,10 +557,8 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
                     <tr>
                         <th>User ID</th>
                         <th>Survey ID</th>
-                        <th>Sum Optimization</th>
-                        <th>Ratio Optimization</th>
-                        <th>Option 1 Chosen</th>
-                        <th>Option 2 Chosen</th>
+                        <th>{option_labels[0]}</th>
+                        <th>{option_labels[1]}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -580,12 +572,15 @@ def generate_detailed_breakdown_table(summaries: List[Dict]) -> str:
     return table_html
 
 
-def generate_overall_statistics_table(summaries: List[Dict]) -> str:
+def generate_overall_statistics_table(
+    summaries: List[Dict], option_labels: Tuple[str, str]
+) -> str:
     """
     Generate a summary table showing overall statistics across all survey responses.
 
     Args:
         summaries (List[Dict]): List of dictionaries containing survey summaries
+        option_labels (Tuple[str, str]): Labels for the two options
 
     Returns:
         str: HTML table showing overall statistics
@@ -595,8 +590,6 @@ def generate_overall_statistics_table(summaries: List[Dict]) -> str:
 
     # Calculate overall averages
     total_responses = len(summaries)
-    avg_sum = sum(s["stats"]["sum_percent"] for s in summaries) / total_responses
-    avg_ratio = sum(s["stats"]["ratio_percent"] for s in summaries) / total_responses
     avg_opt1 = sum(s["stats"]["option1_percent"] for s in summaries) / total_responses
     avg_opt2 = sum(s["stats"]["option2_percent"] for s in summaries) / total_responses
 
@@ -612,20 +605,12 @@ def generate_overall_statistics_table(summaries: List[Dict]) -> str:
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Sum Optimization</td>
-                        <td>{avg_sum:.1f}%</td>
-                    </tr>
-                    <tr>
-                        <td>Ratio Optimization</td>
-                        <td>{avg_ratio:.1f}%</td>
-                    </tr>
-                    <tr>
-                        <td>Option 1 Selected</td>
+                    <tr class="{'highlight-row' if avg_opt1 > avg_opt2 else ''}">
+                        <td>{option_labels[0]}</td>
                         <td>{avg_opt1:.1f}%</td>
                     </tr>
-                    <tr>
-                        <td>Option 2 Selected</td>
+                    <tr class="{'highlight-row' if avg_opt2 > avg_opt1 else ''}">
+                        <td>{option_labels[1]}</td>
                         <td>{avg_opt2:.1f}%</td>
                     </tr>
                 </tbody>

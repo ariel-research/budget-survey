@@ -95,6 +95,11 @@ class PairGenerationStrategy(ABC):
         """Return unique identifier for this strategy."""
         pass
 
+    @abstractmethod
+    def get_option_labels(self) -> Tuple[str, str]:
+        """Return labels for the two options being compared."""
+        pass
+
 
 class StrategyRegistry:
     """

@@ -1,5 +1,6 @@
 from .analysis_utils import (
     calculate_optimization_stats,
+    get_all_completed_survey_responses,
     get_latest_csv_files,
     is_sum_optimized,
     load_data,
@@ -30,4 +31,5 @@ __all__ = [
     "visualize_user_choices",
     "load_data",
     "get_latest_csv_files",
+    "get_all_completed_survey_responses",
 ]

@@ -89,11 +89,10 @@
     width: 12px;
  }
  
- /* Legend colors */
- .legend-square.sum { background-color: var(--color-sum); }
- .legend-square.ratio { background-color: var(--color-ratio); }
- .legend-square.none { background-color: var(--color-none); }
- .legend-square.better { background-color: var(--color-better); }
+/* Legend colors */
+.legend-square.option1 { background-color: var(--color-primary); }
+.legend-square.option2 { background-color: var(--color-secondary); }
+.legend-square.better { background-color: var(--color-better); }
  
  .legend-label {
     color: var(--color-text);
@@ -302,6 +301,11 @@
     color: var(--color-primary);
     font-weight: 500;
  }
+
+ .highlight-row {
+   background-color: #e8e1b6;
+   font-weight: 600;
+}
  
  /* ==========================================================================
    Overall Statistics Table
@@ -328,7 +332,14 @@
       font-style: italic;
   }
 
- /* ==========================================================================
+  /* Table column widths and alignment for Overall Survey Statistics */
+.summary-table-container table th:last-child,
+.summary-table-container table td:last-child {
+    width: 50%;
+    text-align: center;
+}
+
+/* ==========================================================================
    Detailed Breakdown Table
    ========================================================================== */
    .detailed-breakdown {
@@ -353,6 +364,21 @@
   
   .detailed-breakdown tbody tr:hover {
       background-color: rgba(52, 152, 219, 0.1);
+  }
+  
+  /* Column widths */
+  .detailed-breakdown table th:nth-child(1) {
+      width: 25%;
+  }
+  
+  .detailed-breakdown table th:nth-child(2) {
+      width: 15%;
+  }
+  
+  .detailed-breakdown table th:nth-child(3),
+  .detailed-breakdown table th:nth-child(4) {
+      width: 30%;
+      text-align: center;
   }
 
  /* ==========================================================================

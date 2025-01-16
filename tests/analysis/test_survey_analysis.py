@@ -9,23 +9,24 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from analysis.survey_analysis import (
     generate_survey_optimization_stats,
-    get_all_completed_survey_responses,
     summarize_stats_by_survey,
 )
+from analysis.utils import get_all_completed_survey_responses
 
 
-@patch("analysis.survey_analysis.retrieve_completed_survey_responses")
-@patch("analysis.survey_analysis.process_survey_responses")
-def test_get_all_completed_survey_responses(mock_process, mock_retrieve):
+@patch("analysis.utils.analysis_utils.process_survey_responses")
+@patch("analysis.utils.analysis_utils.retrieve_completed_survey_responses")
+def test_get_all_completed_survey_responses(mock_retrieve, mock_process, app):
     """Test that get_all_completed_survey_responses returns a DataFrame and calls expected functions."""
     mock_retrieve.return_value = [{"some": "data"}]
     mock_process.return_value = [{"processed": "data"}]
 
-    result = get_all_completed_survey_responses()
+    with app.app_context():
+        result = get_all_completed_survey_responses(app)
 
-    assert isinstance(result, pd.DataFrame)
-    mock_retrieve.assert_called_once()
-    mock_process.assert_called_once_with([{"some": "data"}])
+        assert isinstance(result, pd.DataFrame)
+        mock_retrieve.assert_called_once()
+        mock_process.assert_called_once_with([{"some": "data"}])
 
 
 def test_generate_survey_optimization_stats(sample_survey_responses):

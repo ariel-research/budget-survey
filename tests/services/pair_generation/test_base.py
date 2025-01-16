@@ -13,6 +13,9 @@ class TestStrategy(PairGenerationStrategy):
     def get_strategy_name(self):
         return "test_strategy"
 
+    def get_option_labels(self):
+        return ("Option 1", "Option 2")
+
 
 @pytest.fixture
 def strategy():

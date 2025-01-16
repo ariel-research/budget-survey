@@ -84,10 +84,13 @@ def test_survey_route(client, sample_user_id, sample_survey_id, monkeypatch):
     def mock_session_data(self, *args, **kwargs):
         return {
             "user_vector": [50, 50],
-            "comparison_pairs": [[[60, 40], [40, 60]]],
+            "comparison_pairs": [
+                {"display": ([60, 40], [40, 60]), "was_swapped": False}
+            ],
             "awareness_check": {
-                "correct": [50, 50],
-                "options": [[60, 40], [40, 60], [50, 50]],
+                "option1": [60, 40],
+                "option2": [50, 50],
+                "correct_answer": 2,
             },
             "subjects": ["Health", "Education"],
             "user_id": sample_user_id,

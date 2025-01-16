@@ -1,7 +1,7 @@
 import base64
 import io
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import matplotlib
 
@@ -513,3 +513,39 @@ def visualize_user_choices(query_results: List[Dict]) -> str:
         logger.error(f"Error creating visualization: {str(e)}", exc_info=True)
         logger.exception("Full traceback:")
         return ""
+
+
+def create_choice_distribution_chart(
+    distribution: Dict[str, int], labels: Tuple[str, str]
+) -> str:
+    """Create bar chart showing distribution of choices."""
+    style = get_chart_style()
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Create bars
+    x = range(len(labels))
+    heights = [distribution["option_1"], distribution["option_2"]]
+
+    bars = ax.bar(
+        x, heights, color=[style["colors"]["primary"], style["colors"]["secondary"]]
+    )
+
+    # Customize chart
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Number of Choices")
+
+    # Add value labels
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height,
+            f"{height}",
+            ha="center",
+            va="bottom",
+        )
+
+    apply_chart_style(fig, ax)
+
+    return save_plot_to_base64(fig)

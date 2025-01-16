@@ -1,9 +1,13 @@
 /*
  * Budget Survey Application Stylesheet
+ * This stylesheet contains common styles used across the application
+ * excluding dashboard-specific styles which are in dashboard_style.css
  */
 
 /* ==========================================================================
-   1. Color Definitions
+   1. Color Variables & Theme Settings
+   Purpose: Define reusable color schemes and theme variables
+   Used by: All components for consistent styling
    ========================================================================== */
    :root {
     /* Primary Colors */
@@ -28,17 +32,19 @@
     --color-border: #bdc3c7;
     --color-border-light: #e2e8f0;
     
-    /* Disabled State */
+    /* States */
     --color-disabled: #708090;
 
-    /* Shadow variables */
+    /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
-   2. CSS Reset & Base Styles
+   2. Reset & Base Styles
+   Purpose: Set basic styles and typography
+   Used by: Global application styling
    ========================================================================== */
 body {
     background-color: var(--color-background);
@@ -63,6 +69,8 @@ h4 { font-size: 1.3em; }
 
 /* ==========================================================================
    3. Layout Components
+   Purpose: Core layout containers and structures
+   Used by: Main content containers and layouts
    ========================================================================== */
 .survey-container,
 .thank-you-container,
@@ -94,6 +102,8 @@ h4 { font-size: 1.3em; }
 
 /* ==========================================================================
    4. Form Components
+   Purpose: Styles for form elements and inputs
+   Used by: Survey forms and input fields
    ========================================================================== */
 .input-group {
     align-items: center;
@@ -159,8 +169,40 @@ h4 { font-size: 1.3em; }
 
 /* ==========================================================================
    5. Button Styles
+   Purpose: Common button styles and states
+   Used by: All interactive buttons across the application
    ========================================================================== */
-/* Button Container */
+.tooltip {
+    background: var(--color-text-dark);
+    border-radius: 4px;
+    bottom: 100%;
+    color: white;
+    font-size: 14px;
+    left: 50%;
+    margin-bottom: 8px;
+    opacity: 0;
+    padding: 8px 12px;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.tooltip::after {
+    border: 6px solid transparent;
+    border-top-color: var(--color-text-dark);
+    content: '';
+    left: 50%;
+    position: absolute;
+    top: 100%;
+    transform: translateX(-50%);
+}
+
+.btn:hover .tooltip {
+    opacity: 1;
+}
+
 .button-container {
     display: flex;
     gap: 1rem;
@@ -168,7 +210,6 @@ h4 { font-size: 1.3em; }
     margin-top: 2rem;
 }
 
-/* Base Button Styles */
 .btn {
     background-color: var(--color-primary);
     border: none;
@@ -183,7 +224,6 @@ h4 { font-size: 1.3em; }
     transition: all 0.3s ease;
 }
 
-/* Button States */
 .btn:hover:not(:disabled) {
     background-color: var(--color-primary-dark);
     transform: translateY(-1px);
@@ -200,20 +240,11 @@ h4 { font-size: 1.3em; }
     opacity: 0.7;
 }
 
-/* Focus States */
 .btn:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
 }
 
-@media (prefers-contrast: high) {
-    .btn:focus {
-        outline: 2px solid #000;
-        outline-offset: 2px;
-    }
-}
-
-/* Submit Button (create vector page) */
 .btn-submit {
     background-color: var(--color-success);
     box-shadow: var(--shadow-sm);
@@ -224,53 +255,20 @@ h4 { font-size: 1.3em; }
     background-color: var(--color-success-dark);
 }
 
-/* Start Survey Container */
-.start-survey {
-    background-color: var(--color-background-alt);
-    border-radius: 8px;
-    padding: 2rem;
-    margin-top: 3rem;
-    text-align: center;
-    box-shadow: var(--shadow-sm);
-    transition: background-color 0.3s ease;
-}
-
-/* Agreement/Disagreement Text */
-.consent-agreement,
-.consent-disagreement {
-    max-width: 600px;
-    margin: 1.5rem auto;
-    font-size: 1rem;
-    color: var(--color-text);
-}
-
-/* Survey Sections Spacing */
-.survey-description,
-.consent {
-    margin: 3rem 0;
-    line-height: 1.7;
-}
-
-/* Start Survey Button */
 .btn-start {
-    min-width: 200px;
+    min-width: 160px; 
+    max-width: 160px;  
     padding: 12px 32px;
-    margin: 1rem 0;
+    margin: 0.75rem auto; 
     background-color: var(--color-primary);
     font-size: 1.2rem;
     font-weight: 600;
     box-shadow: var(--shadow-sm);
     text-align: center;
     transition: all 0.3s ease;
+    display: block;
 }
 
-.btn-start:hover {
-    background-color: var(--color-primary-dark);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-
-/* Rescale Button */
 .btn-rescale {
     background-color: var(--color-primary);
     display: flex;
@@ -315,38 +313,6 @@ h4 { font-size: 1.3em; }
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
-}
-
-/* Button Tooltips */
-.tooltip {
-    background: var(--color-text-dark);
-    border-radius: 4px;
-    bottom: 100%;
-    color: white;
-    font-size: 14px;
-    left: 50%;
-    margin-bottom: 8px;
-    opacity: 0;
-    padding: 8px 12px;
-    pointer-events: none;
-    position: absolute;
-    transform: translateX(-50%);
-    transition: opacity 0.2s ease;
-    white-space: nowrap;
-}
-
-.tooltip::after {
-    border: 6px solid transparent;
-    border-top-color: var(--color-text-dark);
-    content: '';
-    left: 50%;
-    position: absolute;
-    top: 100%;
-    transform: translateX(-50%);
-}
-
-.btn:hover .tooltip {
-    opacity: 1;
 }
 
 /* Submit Container (survey page) */
@@ -394,9 +360,39 @@ h4 { font-size: 1.3em; }
 }
 
 /* ==========================================================================
-   6. Form Validation & Messages
+   6. Survey Specific Components
+   Purpose: Styles specific to survey functionality
+   Used by: Survey pages and components
    ========================================================================== */
-/* Flash Messages */
+.participant-info,
+.ideal-budget,
+.instructions,
+.message-box {
+    background-color: var(--color-background-info);
+    border-radius: 5px;
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    padding: 15px;
+}
+
+.pair-container {
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+/* ==========================================================================
+   7. Form Validation & Messages
+   Purpose: Styles for form validation and user feedback
+   Used by: Forms and error messaging
+   ========================================================================== */
 .flash-messages {
     margin: 20px 0;
 }
@@ -456,49 +452,14 @@ h4 { font-size: 1.3em; }
 .total-display[data-status="perfect"] { color: var(--color-success); }
 
 /* ==========================================================================
-   7. Survey Specific Components
+   Welcome Page Styles
+   Purpose: Styles for the welcome/landing page
+   Used by: Welcome/landing page components
    ========================================================================== */
-.participant-info,
-.ideal-budget,
-.instructions,
-.message-box {
-    background-color: var(--color-background-info);
-    border-radius: 5px;
-    font-size: 1.1em;
-    margin-bottom: 25px;
-    padding: 15px;
-}
-
-.pair-container {
-    background-color: var(--color-background-alt);
-    border-radius: 8px;
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 30px;
-    padding: 20px;
-}
-
-input[type="radio"] {
-    margin-right: 10px;
-    transform: scale(1.2);
-}
-
-/* ==========================================================================
-   8. Welcome Page Styles
-   ========================================================================== */
-.welcome-container h1 {
-    margin-bottom: 2rem;
-}
-
-.intro-box {
-    background-color: var(--color-background-info);
-    border-radius: 8px;
-    margin: 2rem 0;
-    padding: 1.5rem;
-    line-height: 1.7;
-}
 
 .survey-description {
-    margin: 30px 0;
+    margin: 3rem 0;
+    line-height: 1.7;
 }
 
 .survey-description ol {
@@ -510,9 +471,45 @@ input[type="radio"] {
     line-height: 1.5;
     margin-bottom: 10px;
 }
+   .welcome-container h1 {
+    margin-bottom: 2rem;
+}
+
+.intro-box {
+    background-color: var(--color-background-info);
+    border-radius: 8px;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    line-height: 1.7;
+}
+
+/* Start Survey Section */
+.start-survey {
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 3rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s ease;
+    display: flex;    
+    flex-direction: column; 
+    align-items: center; 
+}
+
+.consent-agreement,
+.consent-disagreement {
+    max-width: 600px;
+    margin: 0.5rem auto;
+    font-size: 1rem;
+    color: var(--color-text);
+    text-align: center;
+}
 
 /* ==========================================================================
-   9. Language Support
+   8. Language Support
+   Purpose: RTL/LTR language support
+   Used by: All pages for language switching
    ========================================================================== */
 .rtl {
     direction: rtl;
@@ -568,43 +565,22 @@ input[type="radio"] {
     flex-direction: row;
 }
 
-.rtl .rules-section {
-    border-left: none;
-    border-right: 3px solid var(--color-primary);
-    padding-left: 0;
-    padding-right: 15px;
-}
-
-.rtl .survey-description ol {
-    padding-left: 0;
-    padding-right: 20px;
-}
-
-.rtl .consent {
-    text-align: right;
-}
-
-.rtl .start-survey {
-    direction: rtl;
-}
-
 /* ==========================================================================
-   10. Media Queries
+   9. Responsive Design
+   Purpose: Mobile and tablet adaptations
+   Used by: All components for responsive behavior
    ========================================================================== */
 @media (max-width: 768px) {
-    /* Layout Adjustments */
     .options-container {
         flex-direction: column;
     }
     
-    /* Language Switcher */
     .language-switcher {
         justify-content: center;
         margin-bottom: 20px;
         position: relative;
     }
     
-    /* Form Elements */
     .input-group {
         flex-direction: column;
         gap: 10px;
@@ -614,7 +590,6 @@ input[type="radio"] {
         width: 100%;
     }
 
-    /* Button Adjustments */
     .button-container {
         flex-direction: column;
         gap: 1rem;
@@ -624,51 +599,13 @@ input[type="radio"] {
         width: 100%;
         min-width: auto;
     }
-
-    /* Start Survey Section */
-    .start-survey {
-        padding: 1.5rem;
-    }
-
-    .btn-start {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .consent-agreement,
-    .consent-disagreement {
-        max-width: 100%;
-        padding: 0 1rem;
-    }
-
-    /* RTL Specific */
-    .rtl .button-container {
-        flex-direction: column;
-    }
-
-    /* Survey Components */
-    .pair-container {
-        padding: 15px;
-    }
-
-    .options-container {
-        gap: 15px;
-    }
-
-    .intro-box,
-    .survey-description,
-    .consent {
-        padding: 1rem;
-    }
 }
 
 @media (max-width: 480px) {
-    /* Typography */
     body {
         font-size: 16px;
     }
     
-    /* Container Spacing */
     .survey-container,
     .thank-you-container,
     .welcome-container,
@@ -679,65 +616,18 @@ input[type="radio"] {
         width: 92%;
     }
 
-    /* Button Adjustments */
     .btn {
         padding: 10px 20px;
         font-size: 1rem;
     }
-
-    /* Form Elements */
-    .input-group {
-        gap: 8px;
-    }
-
-    .budget-input {
-        padding: 8px;
-    }
-
-    /* Error Messages */
-    .error-message {
-        font-size: 1rem;
-        padding: 12px;
-    }
-
-    /* Tooltips */
-    .tooltip {
-        font-size: 12px;
-        padding: 6px 10px;
-    }
-
-    /* Headers */
-    h1 { font-size: 1.8em; }
-    h2 { font-size: 1.5em; }
-    h3 { font-size: 1.3em; }
-    h4 { font-size: 1.1em; }
-}
-
-/* Extra small devices */
-@media (max-width: 360px) {
-    .survey-container,
-    .thank-you-container,
-    .welcome-container,
-    .create-vector-container,
-    .error-container {
-        margin: 15px auto;
-        padding: 12px;
-        width: 95%;
-    }
-
-    body {
-        font-size: 14px;
-    }
-
-    .btn {
-        padding: 8px 16px;
-    }
 }
 
 /* ==========================================================================
-   11. Print Styles
+   10. Print Styles
+   Purpose: Print layout optimizations
+   Used by: All pages when printing
    ========================================================================== */
-   @media print {
+@media print {
     body {
         background: white;
     }
@@ -760,16 +650,26 @@ input[type="radio"] {
     .button-container {
         display: none;
     }
+}
 
-    .tooltip {
-        display: none;
+/* ==========================================================================
+   11. High Contrast Mode
+   Purpose: Accessibility improvements
+   Used by: All components when high contrast mode is enabled
+   ========================================================================== */
+@media (prefers-contrast: high) {
+    .btn:focus {
+        outline: 2px solid #000;
+        outline-offset: 2px;
     }
 }
 
 /* ==========================================================================
    12. Custom Alert Styles
+   Purpose: Styles for custom alert popups
+   Used by: Alert dialogs across the application
    ========================================================================== */
-.custom-alert {
+   .custom-alert {
     align-items: center;
     background-color: rgba(0, 0, 0, 0.5);
     display: none;

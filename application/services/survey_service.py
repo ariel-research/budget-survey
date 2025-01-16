@@ -238,22 +238,24 @@ class SurveySessionData:
 
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
-        comparison_pairs, awareness_check = SurveyService.generate_survey_pairs(
+        original_pairs, awareness_check = SurveyService.generate_survey_pairs(
             self.user_vector, len(self.subjects), self.internal_survey_id
         )
 
-        # Randomize each pair and track the swaps
-        randomized_pairs = []
-        swap_tracking = []
-        for pair in comparison_pairs:
+        # Combine pair data with its presentation state
+        presentation_pairs = []
+        for pair in original_pairs:
             option1, option2, was_swapped = self._randomize_pair_options(pair)
-            randomized_pairs.append((option1, option2))
-            swap_tracking.append(was_swapped)
+            presentation_pairs.append(
+                {
+                    "display": (option1, option2),  # What user sees
+                    "was_swapped": was_swapped,  # Track if swapped
+                }
+            )
 
         return {
             "user_vector": self.user_vector,
-            "comparison_pairs": randomized_pairs,
-            "pair_swaps": swap_tracking,
+            "comparison_pairs": presentation_pairs,
             "awareness_check": awareness_check,
             "subjects": self.subjects,
             "user_id": self.user_id,
