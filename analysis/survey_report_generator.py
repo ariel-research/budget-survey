@@ -87,6 +87,12 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
     logger.info("Preparing report data")
 
     try:
+        # Get option labels from the strategy
+        from application.services.pair_generation import OptimizationMetricsStrategy
+
+        strategy = OptimizationMetricsStrategy()
+        option_labels = strategy.get_option_labels()
+
         report_data = {
             "metadata": {
                 "generated_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -122,7 +128,7 @@ def prepare_report_data(data: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
                     "survey": generate_survey_analysis(data["summary"]),
                     "individual": generate_individual_analysis(data["optimization"]),
                     "detailed_choices": generate_detailed_user_choices(
-                        retrieve_user_survey_choices()
+                        retrieve_user_survey_choices(), option_labels
                     ),
                     "user_comments": generate_user_comments_section(data["responses"]),
                     "findings": generate_key_findings(

@@ -113,12 +113,14 @@ def test_generate_methodology_description():
 
 def test_generate_detailed_user_choices_empty():
     """Test generate_detailed_user_choices with empty input."""
-    result = generate_detailed_user_choices([])
+    option_labels = ("Option 1", "Option 2")
+    result = generate_detailed_user_choices([], option_labels)
     assert "No detailed user choice data available" in result
 
 
 def test_generate_detailed_user_choices_single_user():
     """Test generate_detailed_user_choices with a single user's data."""
+    option_labels = ("Sum Optimized", "Ratio Optimized")
     test_data = [
         {
             "user_id": "test123",
@@ -131,18 +133,19 @@ def test_generate_detailed_user_choices_single_user():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data)
+    result = generate_detailed_user_choices(test_data, option_labels)
 
     # Check basic structure with corrected assertions
     assert "User ID: test123" in result
     assert "Survey ID: 1" in result
-    assert 'class="ideal-budget">Ideal budget: [50, 30, 20]' in result
-    assert "user-optimizes-ratio" in result
+    assert "Ideal budget: [50, 30, 20]" in result
+    assert "<td>Ratio Optimized</td>" in result
 
 
 def test_generate_detailed_user_choices_multiple_optimizations():
     """Test generate_detailed_user_choices with both sum and ratio optimizations."""
     optimal = [50, 30, 20]  # Base optimal allocation
+    option_labels = ("Sum Optimized", "Ratio Optimized")
     test_data = [
         {
             "user_id": "test123",
@@ -164,19 +167,17 @@ def test_generate_detailed_user_choices_multiple_optimizations():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data)
+    result = generate_detailed_user_choices(test_data, option_labels)
 
-    # Check both optimization types are present with corrected class names
-    assert "user-optimizes-sum" in result
-    assert "user-optimizes-ratio" in result
-
-    # Check presence of both pairs
+    assert "<td>Sum Optimized</td>" in result
+    assert "<td>Ratio Optimized</td>" in result
     assert "Pair #1" in result
     assert "Pair #2" in result
 
 
 def test_generate_detailed_user_choices_multiple_surveys():
     """Test generate_detailed_user_choices with multiple surveys for the same user."""
+    option_labels = ("Sum Optimized", "Ratio Optimized")
     test_data = [
         {
             "user_id": "test123",
@@ -198,7 +199,7 @@ def test_generate_detailed_user_choices_multiple_surveys():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data)
+    result = generate_detailed_user_choices(test_data, option_labels)
 
     # Check multiple survey sections
     assert "Survey ID: 1" in result
@@ -209,6 +210,7 @@ def test_generate_detailed_user_choices_multiple_surveys():
 
 def test_generate_detailed_user_choices_css_classes():
     """Test that generate_detailed_user_choices includes correct CSS classes."""
+    option_labels = ("Sum Optimized", "Ratio Optimized")
     test_data = [
         {
             "user_id": "test123",
@@ -221,11 +223,12 @@ def test_generate_detailed_user_choices_css_classes():
         }
     ]
 
-    result = generate_detailed_user_choices(test_data)
+    result = generate_detailed_user_choices(test_data, option_labels)
 
     # Check CSS classes
     assert 'class="user-choices"' in result
     assert 'class="survey-choices"' in result
     assert 'class="pairs-list"' in result
     assert 'class="ideal-budget"' in result
-    assert 'class="user-optimizes' in result
+    assert 'class="selection-column"' in result
+    assert 'class="option-column"' in result
