@@ -284,6 +284,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Survey #{survey_id} Answers",
         },
         "no_answers": {"he": "אין תשובות זמינות.", "en": "No answers available."},
+        "comments_title": {"he": "הערות המשתמשים", "en": "User Comments"},
+        "no_comments": {"he": "אין הערות זמינות.", "en": "No comments available."},
+        "survey_answers_tab": {"he": "תשובות הסקר", "en": "Survey Answers"},
+        "survey_comments_tab": {"he": "הערות המשתתפים", "en": "Participant Comments"},
     },
 }
 

@@ -10,11 +10,59 @@ from application.services.pair_generation.base import StrategyRegistry
 from application.translations import get_translation
 from database.queries import (
     get_survey_pair_generation_config,
+    retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
 )
 
 logger = logging.getLogger(__name__)
 answers_routes = Blueprint("answers", __name__)
+
+
+def format_comments_data(responses):
+    """Format survey responses for comments display."""
+    comments_data = []
+    for response in responses:
+        if response.get("user_comment") and response["user_comment"].strip():
+            comments_data.append(
+                {
+                    "survey_id": response["survey_id"],
+                    "user_id": response["user_id"],
+                    "comment": response["user_comment"],
+                    "created_at": response["response_created_at"],
+                }
+            )
+    return comments_data
+
+
+@answers_routes.route("/comments")
+def show_comments():
+    """Display user comments from all surveys."""
+    try:
+        # Get all completed survey responses
+        responses = retrieve_completed_survey_responses()
+
+        # Format comments data
+        comments = format_comments_data(responses)
+
+        # Group comments by survey
+        grouped_comments = {}
+        for comment in comments:
+            survey_id = comment["survey_id"]
+            if survey_id not in grouped_comments:
+                grouped_comments[survey_id] = []
+            grouped_comments[survey_id].append(comment)
+
+        return render_template(
+            "answers/answers_comments.html",
+            data={"content": grouped_comments} if grouped_comments else {},
+            show_comments=True,
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving survey comments: {str(e)}")
+        return render_template(
+            "error.html", message=get_translation("survey_retrieval_error", "messages")
+        )
 
 
 def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
