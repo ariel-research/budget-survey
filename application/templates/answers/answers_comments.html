@@ -6,7 +6,15 @@
 
 {% block content %}
 <div class="answers-container">
-    <h1>{{ get_translation('comments_title', 'answers') }}</h1>
+    <div class="comments-header">
+        <h1>{{ get_translation('comments_title', 'answers') }}</h1>
+        
+        {% if survey_id %}
+            <a href="{{ url_for('answers.show_comments') }}" class="view-all-link">
+                {{ get_translation('view_all_comments', 'answers') }}
+            </a>
+        {% endif %}
+    </div>
     
     {% if data.content %}
         {% for survey_id, comments in data.content.items() %}
