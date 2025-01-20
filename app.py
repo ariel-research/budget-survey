@@ -67,17 +67,28 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
             404,
         )
 
-    from application.routes.answers import answers_routes
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        """Handle 500 Internal Server Error."""
+        return (
+            render_template(
+                "error.html",
+                message=e.description,
+            ),
+            500,
+        )
+
     from application.routes.dashboard import dashboard_routes
     from application.routes.report import report_routes
     from application.routes.survey import survey_routes
+    from application.routes.survey_responses import responses_routes
     from application.routes.utils import util_routes
 
     app.register_blueprint(util_routes)
     app.register_blueprint(survey_routes, url_prefix="/")
     app.register_blueprint(report_routes)
     app.register_blueprint(dashboard_routes)
-    app.register_blueprint(answers_routes, url_prefix="/answers")
+    app.register_blueprint(responses_routes, url_prefix="/surveys")
 
     return app
 
