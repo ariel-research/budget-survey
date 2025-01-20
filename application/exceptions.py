@@ -1,0 +1,47 @@
+class SurveyError(Exception):
+    """Base exception class for survey-related errors."""
+
+    def __init__(self, message: str = "An error occurred with the survey"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class SurveyNotFoundError(SurveyError):
+    """
+    Raised when a survey is not found in the database.
+
+    Example:
+        raise SurveyNotFoundError(survey_id=123)
+    """
+
+    def __init__(self, survey_id: int):
+        self.survey_id = survey_id
+        message = f"Survey {survey_id} not found"
+        super().__init__(message)
+
+
+class ResponseProcessingError(SurveyError):
+    """
+    Raised when there's an error processing survey responses.
+
+    Example:
+        raise ResponseProcessingError("Failed to process survey response data")
+    """
+
+    def __init__(self, message: str = "Error processing survey responses"):
+        super().__init__(message)
+
+
+class StrategyConfigError(SurveyError):
+    """
+    Raised when there's an error with survey strategy configuration.
+
+    Example:
+        raise StrategyConfigError(survey_id=123, strategy="optimization_metrics")
+    """
+
+    def __init__(self, survey_id: int, strategy: str):
+        self.survey_id = survey_id
+        self.strategy = strategy
+        message = f"Invalid strategy configuration '{strategy}' for survey {survey_id}"
+        super().__init__(message)

@@ -7,7 +7,6 @@ import logging
 from typing import Dict, List, Optional
 
 from flask import Blueprint, render_template
-from werkzeug.exceptions import InternalServerError, NotFound
 
 from analysis.report_content_generators import generate_detailed_user_choices
 from application.exceptions import (
@@ -51,14 +50,12 @@ def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
 
             if not choices:
                 logger.warning(f"No responses found for survey {survey_id}")
-                raise SurveyNotFoundError(f"Survey {survey_id} has no responses")
+                raise SurveyNotFoundError(survey_id)
 
             strategy_config = get_survey_pair_generation_config(survey_id)
             if not strategy_config:
                 logger.error(f"Invalid strategy config for survey {survey_id}")
-                raise StrategyConfigError(
-                    f"Invalid strategy configuration for survey {survey_id}"
-                )
+                raise StrategyConfigError(survey_id, "unknown")
 
             strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
             option_labels = strategy.get_option_labels()
@@ -76,7 +73,7 @@ def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
         raise
     except Exception as e:
         logger.error(f"Error processing responses: {str(e)}", exc_info=True)
-        raise ResponseProcessingError("Error processing survey responses")
+        raise ResponseProcessingError(f"Failed to process survey responses: {str(e)}")
 
 
 def format_comments_data(responses: List[Dict]) -> List[Dict]:
@@ -122,25 +119,29 @@ def get_survey_responses(survey_id: int):
 
     Returns:
         Rendered template with survey responses
-
-    Raises:
-        NotFound: If survey or responses not found
-        InternalServerError: If error occurs during retrieval
     """
     try:
         data = get_user_answers(survey_id)
         return render_template("responses/detail.html", data=data, survey_id=survey_id)
-    except SurveyNotFoundError:
-        logger.warning(f"Survey {survey_id} not found or has no responses")
-        raise NotFound(
-            description=get_translation(
-                "survey_not_found_or_empty", "messages", survey_id=survey_id
-            )
+    except SurveyNotFoundError as e:
+        logger.warning(str(e))
+        return (
+            render_template(
+                "error.html",
+                message=get_translation(
+                    "survey_not_found_or_empty", "messages", survey_id=survey_id
+                ),
+            ),
+            404,
         )
-    except Exception as e:
-        logger.error(f"Error retrieving survey responses: {str(e)}")
-        raise InternalServerError(
-            description=get_translation("survey_retrieval_error", "messages")
+    except ResponseProcessingError as e:
+        logger.error(str(e))
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
         )
 
 
@@ -151,17 +152,18 @@ def list_all_responses():
 
     Returns:
         Rendered template with all survey responses
-
-    Raises:
-        InternalServerError: If error occurs during retrieval
     """
     try:
         data = get_user_answers()
         return render_template("responses/list.html", data=data)
-    except Exception as e:
-        logger.error(f"Error retrieving all responses: {str(e)}")
-        raise InternalServerError(
-            description=get_translation("survey_retrieval_error", "messages")
+    except ResponseProcessingError as e:
+        logger.error(str(e))
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
         )
 
 
@@ -175,31 +177,37 @@ def get_survey_comments(survey_id: int):
 
     Returns:
         Rendered template with survey comments
-
-    Raises:
-        NotFound: If survey not found or has no comments
-        InternalServerError: If error occurs during retrieval
     """
     try:
         responses = retrieve_completed_survey_responses()
         survey_responses = [r for r in responses if r["survey_id"] == survey_id]
 
         if not survey_responses:
-            logger.warning(f"No responses found for survey {survey_id}")
-            raise NotFound(
-                description=get_translation(
-                    "survey_not_found_or_empty", "messages", survey_id=survey_id
-                )
-            )
+            raise SurveyNotFoundError(survey_id)
 
         comments = format_comments_data(survey_responses)
         return render_template(
             "responses/comments/detail.html", data=comments, survey_id=survey_id
         )
+    except SurveyNotFoundError as e:
+        logger.warning(str(e))
+        return (
+            render_template(
+                "error.html",
+                message=get_translation(
+                    "survey_not_found_or_empty", "messages", survey_id=survey_id
+                ),
+            ),
+            404,
+        )
     except Exception as e:
         logger.error(f"Error retrieving survey comments: {str(e)}")
-        raise InternalServerError(
-            description=get_translation("survey_retrieval_error", "messages")
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
         )
 
 
@@ -210,9 +218,6 @@ def list_all_comments():
 
     Returns:
         Rendered template with all survey comments
-
-    Raises:
-        InternalServerError: If error occurs during retrieval
     """
     try:
         responses = retrieve_completed_survey_responses()
@@ -220,6 +225,10 @@ def list_all_comments():
         return render_template("responses/comments/list.html", data=comments)
     except Exception as e:
         logger.error(f"Error retrieving all comments: {str(e)}")
-        raise InternalServerError(
-            description=get_translation("survey_retrieval_error", "messages")
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
         )
