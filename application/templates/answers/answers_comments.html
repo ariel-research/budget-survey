@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/answers_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="answers-container">
+    <div class="comments-header">
+        <h1>{{ get_translation('comments_title', 'answers') }}</h1>
+        
+        {% if survey_id %}
+            <a href="{{ url_for('answers.show_comments') }}" class="view-all-link">
+                {{ get_translation('view_all_comments', 'answers') }}
+            </a>
+        {% endif %}
+    </div>
+    
+    {% if data.content %}
+        {% for survey_id, comments in data.content.items() %}
+            <div class="survey-section">
+                <h2>{{ get_translation('survey_title', 'answers', survey_id=survey_id) }}</h2>
+                <div class="comments-grid">
+                    {% for comment in comments %}
+                        <div class="comment-card">
+                            <div class="comment-header">
+                                <span class="user-id">{{ comment.user_id }}</span>
+                                <span class="comment-date">{{ comment.created_at }}</span>
+                            </div>
+                            <div class="comment-body">
+                                {{ comment.comment }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-data">{{ get_translation('no_comments', 'answers') }}</p>
+    {% endif %}
+</div>
+{% endblock %}
