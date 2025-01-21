@@ -45,23 +45,3 @@ class ResponseFormatter:
                 "version": "1.0",
             },
         }
-
-    @staticmethod
-    def format_comments_data(comments: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Format comments data consistently.
-
-        Args:
-            comments: List of comment dictionaries
-
-        Returns:
-            Dict[str, Any]: Formatted comments data with metadata
-        """
-        return {
-            "total_comments": len(comments),
-            "comments": comments,
-            "metadata": {
-                "generated_at": ResponseFormatter.get_current_utc_time(),
-                "version": "1.0",
-            },
-        }

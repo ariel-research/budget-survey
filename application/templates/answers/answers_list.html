@@ -9,13 +9,12 @@
     <div class="answers-header">
         <h1>{{ get_translation('title', 'answers') }}</h1>
         
-        <!-- Navigation tabs -->
         <div class="navigation-tabs">
-            <a href="{{ url_for('answers.list_answers') }}" 
+            <a href="{{ url_for('responses.list_all_responses') }}" 
                class="tab {% if not show_comments %}active{% endif %}">
                 {{ get_translation('survey_answers_tab', 'answers') }}
             </a>
-            <a href="{{ url_for('answers.show_comments') }}" 
+            <a href="{{ url_for('responses.list_all_comments') }}" 
                class="tab {% if show_comments %}active{% endif %}">
                 {{ get_translation('survey_comments_tab', 'answers') }}
             </a>

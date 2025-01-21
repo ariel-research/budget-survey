@@ -106,7 +106,7 @@ def format_comments_data(responses: List[Dict]) -> List[Dict]:
             )
             processed_responses.add(response_id)
 
-    return ResponseFormatter.format_comments_data(comments_data)
+    return comments_data
 
 
 @responses_routes.route("/<int:survey_id>/responses")
@@ -122,7 +122,9 @@ def get_survey_responses(survey_id: int):
     """
     try:
         data = get_user_answers(survey_id)
-        return render_template("responses/detail.html", data=data, survey_id=survey_id)
+        return render_template(
+            "answers/answers_detail.html", data=data, survey_id=survey_id
+        )
     except SurveyNotFoundError as e:
         logger.warning(str(e))
         return (
@@ -155,7 +157,7 @@ def list_all_responses():
     """
     try:
         data = get_user_answers()
-        return render_template("responses/list.html", data=data)
+        return render_template("answers/answers_list.html", data=data)
     except ResponseProcessingError as e:
         logger.error(str(e))
         return (
@@ -186,8 +188,13 @@ def get_survey_comments(survey_id: int):
             raise SurveyNotFoundError(survey_id)
 
         comments = format_comments_data(survey_responses)
+        survey_comments = {survey_id: comments} if comments else {}
+
         return render_template(
-            "responses/comments/detail.html", data=comments, survey_id=survey_id
+            "answers/answers_comments.html",
+            data={"content": survey_comments},
+            show_comments=True,
+            survey_id=survey_id,
         )
     except SurveyNotFoundError as e:
         logger.warning(str(e))
@@ -220,9 +227,25 @@ def list_all_comments():
         Rendered template with all survey comments
     """
     try:
+        # Get all completed survey responses
         responses = retrieve_completed_survey_responses()
+
+        # Format comments data
         comments = format_comments_data(responses)
-        return render_template("responses/comments/list.html", data=comments)
+
+        # Group comments by survey
+        grouped_comments = {}
+        for comment in comments:
+            survey_id = comment["survey_id"]
+            if survey_id not in grouped_comments:
+                grouped_comments[survey_id] = []
+            grouped_comments[survey_id].append(comment)
+
+        return render_template(
+            "answers/answers_comments.html",
+            data={"content": grouped_comments} if grouped_comments else {},
+            show_comments=True,
+        )
     except Exception as e:
         logger.error(f"Error retrieving all comments: {str(e)}")
         return (

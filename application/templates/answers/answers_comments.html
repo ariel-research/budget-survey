@@ -10,7 +10,7 @@
         <h1>{{ get_translation('comments_title', 'answers') }}</h1>
         
         {% if survey_id %}
-            <a href="{{ url_for('answers.show_comments') }}" class="view-all-link">
+            <a href="{{ url_for('responses.list_all_comments') }}" class="view-all-link">
                 {{ get_translation('view_all_comments', 'answers') }}
             </a>
         {% endif %}
