@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 responses_routes = Blueprint("responses", __name__)
 
 
-def get_user_answers(survey_id: Optional[int] = None) -> Dict[str, str]:
+def get_user_responses(survey_id: Optional[int] = None) -> Dict[str, str]:
     """
     Get formatted user survey responses.
 
@@ -121,10 +121,8 @@ def get_survey_responses(survey_id: int):
         Rendered template with survey responses
     """
     try:
-        data = get_user_answers(survey_id)
-        return render_template(
-            "answers/answers_detail.html", data=data, survey_id=survey_id
-        )
+        data = get_user_responses(survey_id)
+        return render_template("responses/detail.html", data=data, survey_id=survey_id)
     except SurveyNotFoundError as e:
         logger.warning(str(e))
         return (
@@ -156,8 +154,8 @@ def list_all_responses():
         Rendered template with all survey responses
     """
     try:
-        data = get_user_answers()
-        return render_template("answers/answers_list.html", data=data)
+        data = get_user_responses()
+        return render_template("responses/list.html", data=data)
     except ResponseProcessingError as e:
         logger.error(str(e))
         return (
@@ -191,7 +189,7 @@ def get_survey_comments(survey_id: int):
         survey_comments = {survey_id: comments} if comments else {}
 
         return render_template(
-            "answers/answers_comments.html",
+            "responses/comments.html",
             data={"content": survey_comments},
             show_comments=True,
             survey_id=survey_id,
@@ -242,7 +240,7 @@ def list_all_comments():
             grouped_comments[survey_id].append(comment)
 
         return render_template(
-            "answers/answers_comments.html",
+            "responses/comments.html",
             data={"content": grouped_comments} if grouped_comments else {},
             show_comments=True,
         )
