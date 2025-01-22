@@ -319,11 +319,11 @@ Notes:
   - Useful for testing report template changes without affecting the production report.
   - Does not implement the automatic refresh mechanism of the main `/report` endpoint.
 - `/dashboard`: Analytics dashboard displaying visualizations and metrics of survey results.
-- `/answers`: Survey answers and comments section:
-  - `/answers`: View all survey answers
-  - `/answers/<survey_id>`: View answers for a specific survey
-  - `/answers/<survey_id>/comments`: View comments for a specific survey
-  - `/answers/comments`: View all comments across all surveys
+- `/surveys`: Survey answers and comments section:
+  - `/surveys/responses`: View all survey answers
+  - `/surveys/<survey_id>/responses`: View answers for a specific survey
+  - `/surveys/<survey_id>/comments`: View comments for a specific survey
+  - `/surveys/comments`: View all comments across all surveys
 
 Note: The `/report` endpoint includes an automatic refresh mechanism that:
 1. Checks if the CSV files are up-to-date with the database
