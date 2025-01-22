@@ -119,6 +119,7 @@
    margin: var(--spacing-lg) 0;
    overflow: hidden;
    padding: var(--spacing-lg);
+   scroll-margin-top: 2rem;
 }
 
 .survey-choices {
@@ -210,6 +211,22 @@
 
 .table-container tr:hover {
    background-color: var(--color-background-alt);
+}
+
+/* User link styles */
+.user-link {
+   color: var(--color-primary);
+   text-decoration: none;
+   transition: color 0.2s ease;
+}
+
+.user-link:hover {
+   color: var(--color-secondary);
+   text-decoration: underline;
+}
+
+html {
+   scroll-behavior: smooth;
 }
 
 /* ==========================================================================

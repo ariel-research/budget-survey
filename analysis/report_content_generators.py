@@ -541,9 +541,9 @@ def generate_detailed_user_choices(
     # 2. Detailed breakdown table
     content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
 
-    # 3. Detailed user choices
+    # 3. Detailed user choices with IDs for linking
     for user_id, surveys in grouped_choices.items():
-        content.append('<section class="user-choices">')
+        content.append(f'<section id="user-{user_id}" class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
 
         for survey_id, choices in surveys.items():
@@ -583,7 +583,7 @@ def generate_detailed_breakdown_table(
 
         row = f"""
         <tr>
-            <td>{summary['user_id']}</td>
+            <td><a href="#user-{summary['user_id']}" class="user-link">{summary['user_id']}</a></td>
             <td>{summary['survey_id']}</td>
             <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">{format(opt1_percent, '.1f')}%</td>
             <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">{format(opt2_percent, '.1f')}%</td>
