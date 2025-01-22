@@ -290,10 +290,12 @@ The live version of the application can be accessed at these endpoints:
 - Survey Report: https://survey.csariel.xyz/report
 - Development Report: https://survey.csariel.xyz/dev/report
 - Analytics Dashboard: https://survey.csariel.xyz/dashboard
-- Survey Responses: https://survey.csariel.xyz/answers
-  - View all responses: https://survey.csariel.xyz/answers
-  - View by survey ID: https://survey.csariel.xyz/answers/{survey_id}
-
+- Survey Responses: https://survey.csariel.xyz/surveys
+  - View all responses: https://survey.csariel.xyz/surveys/responses
+  - View responses by survey ID: https://survey.csariel.xyz/surveys/{survey_id}/responses
+  - View all comments: https://survey.csariel.xyz/surveys/comments
+  - View comments by survey ID: https://survey.csariel.xyz/surveys/{survey_id}/comments
+  
 Notes: 
 
 - For the main survey endpoint, both 'userID' and 'surveyID' parameters are required in the URL.
