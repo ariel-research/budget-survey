@@ -388,25 +388,133 @@ def choice_explanation_string_version2(
     """
 
 
+def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> str:
+    """Generate HTML for a single choice pair.
+
+    Args:
+        choice: Dictionary containing choice data
+        option_labels: Tuple of labels for the two options
+    Returns:
+        str: HTML for the choice pair
+    """
+    option_1 = json.loads(choice["option_1"])
+    option_2 = json.loads(choice["option_2"])
+    user_choice = choice["user_choice"]
+
+    return f"""
+    <div class="choice-pair">
+        <h5>Pair #{choice["pair_number"]}</h5>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>Choice</th>
+                    <th>Option</th>
+                    <th>Type</th>
+                </tr>
+                <tr>
+                    <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
+                    <td class="option-column">{str(option_1)}</td>
+                    <td>{option_labels[0]}</td>
+                </tr>
+                <tr>
+                    <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
+                    <td class="option-column">{str(option_2)}</td>
+                    <td>{option_labels[1]}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    """
+
+
+def _generate_survey_summary_html(
+    choices: List[Dict], option_labels: Tuple[str, str]
+) -> str:
+    """Generate HTML for survey summary statistics.
+
+    Args:
+        choices: List of choices for a survey
+        option_labels: Tuple of labels for the two options
+    Returns:
+        str: HTML for the survey summary
+    """
+    stats = calculate_choice_statistics(choices)
+    return f"""
+    <div class="survey-stats">
+        <h6 class="stats-title">Survey Summary</h6>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>Choice</th>
+                    <th>Percentage</th>
+                </tr>
+                <tr class="{'highlight-row' if stats['option1_percent'] > stats['option2_percent'] else ''}">
+                    <td>{option_labels[0]}</td>
+                    <td>{stats['option1_percent']:.0f}%</td>
+                </tr>
+                <tr class="{'highlight-row' if stats['option2_percent'] > stats['option1_percent'] else ''}">
+                    <td>{option_labels[1]}</td>
+                    <td>{stats['option2_percent']:.0f}%</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    """
+
+
+def _generate_survey_choices_html(
+    survey_id: int, choices: List[Dict], option_labels: Tuple[str, str]
+) -> str:
+    """Generate HTML for all choices in a survey.
+
+    Args:
+        survey_id: ID of the survey
+        choices: List of choices for the survey
+        option_labels: Tuple of labels for the two options
+    Returns:
+        str: HTML for the survey choices
+    """
+    optimal_allocation = json.loads(choices[0]["optimal_allocation"])
+
+    choices_html = [
+        f"""
+        <div class="survey-choices">
+            <h4>Survey ID: {survey_id}</h4>
+            <div class="ideal-budget">Ideal budget: {optimal_allocation}</div>
+            <div class="pairs-list">
+        """
+    ]
+
+    # Add all pairs
+    for choice in choices:
+        choices_html.append(_generate_choice_pair_html(choice, option_labels))
+
+    # Add summary
+    choices_html.append("</div>")  # Close pairs-list
+    choices_html.append(_generate_survey_summary_html(choices, option_labels))
+    choices_html.append("</div>")  # Close survey-choices
+
+    return "\n".join(choices_html)
+
+
 def generate_detailed_user_choices(
     user_choices: List[Dict], option_labels: Tuple[str, str]
 ) -> str:
-    """
-    Generate detailed analysis of each user's choices for each survey.
+    """Generate detailed analysis of each user's choices for each survey.
 
     Args:
         user_choices: List of dictionaries containing user choices data
-        option_labels: Tuple of labels for the two options (e.g., ("Sum Optimized", "Ratio Optimized"))
+        option_labels: Tuple of labels for the two options
     Returns:
         str: HTML-formatted string with detailed user choices
     """
     if not user_choices:
         return '<div class="no-data">No detailed user choice data available.</div>'
 
+    # Group choices by user and survey
     grouped_choices = {}
     all_summaries = []
 
-    # Group choices by user and survey
     for choice in user_choices:
         user_id = choice["user_id"]
         survey_id = choice["survey_id"]
@@ -416,9 +524,7 @@ def generate_detailed_user_choices(
             grouped_choices[user_id][survey_id] = []
         grouped_choices[user_id][survey_id].append(choice)
 
-    content = []
-
-    # First: Process all surveys to get statistics
+    # Collect statistics for all surveys
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
@@ -426,90 +532,23 @@ def generate_detailed_user_choices(
                 {"user_id": user_id, "survey_id": survey_id, "stats": stats}
             )
 
-    # Second: Generate overall statistics table
+    # Generate content
+    content = []
+
+    # 1. Overall statistics table
     content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
-    # Third: Generate detailed breakdown table
+    # 2. Detailed breakdown table
     content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
 
-    # Fourth: Generate detailed user choices
+    # 3. Detailed user choices
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
 
         for survey_id, choices in surveys.items():
-            optimal_allocation = json.loads(choices[0]["optimal_allocation"])
             content.append(
-                f"""
-                <div class="survey-choices">
-                    <h4>Survey ID: {survey_id}</h4>
-                    <div class="ideal-budget">Ideal budget: {optimal_allocation}</div>
-                    <div class="pairs-list">
-                """
-            )
-
-            # Add all pairs
-            for choice in choices:
-                option_1 = json.loads(choice["option_1"])
-                option_2 = json.loads(choice["option_2"])
-                user_choice = choice["user_choice"]
-                content.append(
-                    f"""
-                    <div class="choice-pair">
-                        <h5>Pair #{choice["pair_number"]}</h5>
-                        <div class="table-container">
-                            <table>
-                                <tr>
-                                    <th>Choice</th>
-                                    <th>Option</th>
-                                    <th>Type</th>
-                                </tr>
-                                <tr>
-                                    <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
-                                    <td class="option-column">{str(option_1)}</td>
-                                    <td>{option_labels[0]}</td>
-                                </tr>
-                                <tr>
-                                    <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
-                                    <td class="option-column">{str(option_2)}</td>
-                                    <td>{option_labels[1]}</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    """
-                )
-
-            # Add survey summary at the end of pairs
-            stats = calculate_choice_statistics(choices)
-            content.append(
-                f"""
-                </div>
-                <div class="survey-stats">
-                    <h6 class="stats-title">Survey Summary</h6>
-                    <div class="table-container">
-                        <table>
-                            <tr>
-                                <th>Choice</th>
-                                <th>Percentage</th>
-                            </tr>
-                            <tr class="{
-                                'highlight-row' if stats['option1_percent'] > stats['option2_percent'] else ''
-                            }">
-                                <td>{option_labels[0]}</td>
-                                <td>{stats['option1_percent']:.0f}%</td>
-                            </tr>
-                            <tr class="{
-                                'highlight-row' if stats['option2_percent'] > stats['option1_percent'] else ''
-                            }">
-                                <td>{option_labels[1]}</td>
-                                <td>{stats['option2_percent']:.0f}%</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                </div>
-                """
+                _generate_survey_choices_html(survey_id, choices, option_labels)
             )
 
         content.append("</section>")
