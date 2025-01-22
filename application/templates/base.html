@@ -26,8 +26,13 @@ It defines the common elements and layout that will be inherited by other templa
     <div class="container {% if get_current_language() == 'he' %}rtl{% endif %}">
         {% block content %}{% endblock %}
     </div>
+
+    {% block floating_content %}{% endblock %}
+
     {% block scripts %}
     <script src="{{ url_for('static', filename='js/survey.js') }}"></script>
     {% endblock %}
+
+    {% block additional_scripts %}{% endblock %}
 </body>
 </html>

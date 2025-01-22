@@ -30,3 +30,11 @@
     </div>
 </div>
 {% endblock %}
+
+{% block floating_content %}
+<a href="#" id="back-to-top" class="back-to-top" aria-label="Back to top">↑</a>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/responses.js') }}"></script>
+{% endblock %}
