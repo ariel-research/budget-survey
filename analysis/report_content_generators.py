@@ -418,7 +418,21 @@ def generate_detailed_user_choices(
 
     content = []
 
-    # Process each user's choices
+    # First: Process all surveys to get statistics
+    for user_id, surveys in grouped_choices.items():
+        for survey_id, choices in surveys.items():
+            stats = calculate_choice_statistics(choices)
+            all_summaries.append(
+                {"user_id": user_id, "survey_id": survey_id, "stats": stats}
+            )
+
+    # Second: Generate overall statistics table
+    content.append(generate_overall_statistics_table(all_summaries, option_labels))
+
+    # Third: Generate detailed breakdown table
+    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+
+    # Fourth: Generate detailed user choices
     for user_id, surveys in grouped_choices.items():
         content.append('<section class="user-choices">')
         content.append(f"<h3>User ID: {user_id}</h3>")
@@ -434,7 +448,7 @@ def generate_detailed_user_choices(
                 """
             )
 
-            # Add all pairs first
+            # Add all pairs
             for choice in choices:
                 option_1 = json.loads(choice["option_1"])
                 option_2 = json.loads(choice["option_2"])
@@ -466,13 +480,8 @@ def generate_detailed_user_choices(
                     """
                 )
 
-            # Calculate statistics for this survey response after all pairs
+            # Add survey summary at the end of pairs
             stats = calculate_choice_statistics(choices)
-            all_summaries.append(
-                {"user_id": user_id, "survey_id": survey_id, "stats": stats}
-            )
-
-            # Add survey summary at the end of all pairs
             content.append(
                 f"""
                 </div>
@@ -504,10 +513,6 @@ def generate_detailed_user_choices(
             )
 
         content.append("</section>")
-
-    # Add the overall statistics tables at the end
-    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
-    content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
     return "\n".join(content)
 

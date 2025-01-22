@@ -77,6 +77,7 @@ class PairGenerationStrategy(ABC):
     def generate_pairs(
         self, user_vector: tuple, n: int, vector_size: int
     ) -> List[Tuple[tuple, tuple]]:
+        # TODO: should return List[Dict[str, tuple]]
         """
         Generate pairs based on strategy's logic.
 
