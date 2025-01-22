@@ -38,7 +38,7 @@
         <div class="surveys-grid">
             {% for survey in surveys %}
             <div class="survey-card">
-                <a href="{{ url_for('answers.show_survey_answers', survey_id=survey.id) }}" class="card-link">
+                <a href="{{ url_for('responses.get_survey_responses', survey_id=survey.id) }}" class="card-link">
                     <div class="survey-header">
                         <span class="survey-number">#{{ survey.id }}</span>
                         <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">
