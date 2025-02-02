@@ -180,15 +180,19 @@ class SurveyService:
             # Store comparison pairs
             for idx, pair in enumerate(submission.comparison_pairs, 1):
                 comparison_pair_id = create_comparison_pair(
-                    survey_response_id,
-                    idx,
-                    pair.option_1,
-                    pair.option_2,
-                    pair.user_choice,
+                    survey_response_id=survey_response_id,
+                    pair_number=idx,
+                    option_1=pair.option_1,
+                    option_2=pair.option_2,
+                    user_choice=pair.user_choice,
+                    raw_user_choice=pair.raw_user_choice,
+                    option1_strategy=pair.option1_strategy,
+                    option2_strategy=pair.option2_strategy,
                 )
                 logger.debug(
                     f"Created comparison pair {idx}/{len(submission.comparison_pairs)}: "
-                    f"{comparison_pair_id}"
+                    f"{comparison_pair_id} (raw_choice={pair.raw_user_choice}, "
+                    f"adjusted_choice={pair.user_choice})"
                 )
 
             # Mark survey as complete
@@ -225,16 +229,42 @@ class SurveySessionData:
         self.subjects = subjects
         self.timestamp = datetime.now()
 
-    def _randomize_pair_options(self, pair: tuple) -> tuple:
+    def _randomize_pair_options(
+        self, pair: Dict[str, tuple]
+    ) -> Tuple[tuple, tuple, bool, str, str]:
         """
         Randomly reorder options within a pair.
 
+        Args:
+            pair: Dictionary containing strategy descriptions and vectors
+
         Returns:
-            tuple: The pair with randomized order and indicator of whether it was swapped
+            Tuple containing:
+            - option1: The first vector
+            - option2: The second vector
+            - was_swapped: Whether the options were swapped
+            - option1_strategy: Strategy description for first option
+            - option2_strategy: Strategy description for second option
         """
+        # Extract the strategy descriptions and vectors
+        strategy_descriptions = list(pair.keys())
+        vectors = list(pair.values())
+
         if random.random() < 0.5:  # 50% chance to swap
-            return (pair[1], pair[0], True)
-        return (pair[0], pair[1], False)
+            return (
+                vectors[1],  # option1
+                vectors[0],  # option2
+                True,  # was_swapped
+                strategy_descriptions[1],  # option1_strategy
+                strategy_descriptions[0],  # option2_strategy
+            )
+        return (
+            vectors[0],  # option1
+            vectors[1],  # option2
+            False,  # was_swapped
+            strategy_descriptions[0],  # option1_strategy
+            strategy_descriptions[1],  # option2_strategy
+        )
 
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
@@ -245,11 +275,15 @@ class SurveySessionData:
         # Combine pair data with its presentation state
         presentation_pairs = []
         for pair in original_pairs:
-            option1, option2, was_swapped = self._randomize_pair_options(pair)
+            option1, option2, was_swapped, option1_strategy, option2_strategy = (
+                self._randomize_pair_options(pair)
+            )
             presentation_pairs.append(
                 {
                     "display": (option1, option2),  # What user sees
                     "was_swapped": was_swapped,  # Track if swapped
+                    "option1_strategy": option1_strategy,  # Strategy description for option 1
+                    "option2_strategy": option2_strategy,  # Strategy description for option 2
                 }
             )
 
