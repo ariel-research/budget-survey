@@ -32,7 +32,10 @@ CREATE TABLE comparison_pairs (
   pair_number INT NOT NULL,
   option_1 JSON NOT NULL,
   option_2 JSON NOT NULL,
-  user_choice INT NOT NULL,
+  user_choice INT NOT NULL,      -- User choice after swap adjustment
+  option1_strategy VARCHAR(100),     -- Strategy used to generate option 1
+  option2_strategy VARCHAR(100),     -- Strategy used to generate option 2
+  raw_user_choice INT NULL,      -- Original user choice before swap adjustment
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (survey_response_id) REFERENCES survey_responses(id)
 );
