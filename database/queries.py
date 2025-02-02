@@ -71,33 +71,37 @@ def create_comparison_pair(
     option_1: list,
     option_2: list,
     user_choice: int,
+    raw_user_choice: int,
+    option1_strategy: str,
+    option2_strategy: str,
 ) -> int:
     """
     Inserts a new comparison pair into the comparison_pairs table.
 
     Args:
-        survey_response_id (int): The ID of the related survey response.
-        pair_number (int): The number of the comparison pair.
-        option_1 (list): JSON data for the first option in the comparison pair.
-        option_2 (list): JSON data for the second option in the comparison pair.
-        user_choice (int): The user's choice between the two options.
+        survey_response_id: The ID of the related survey response
+        pair_number: The number of the comparison pair
+        option_1: JSON data for the first option
+        option_2: JSON data for the second option
+        user_choice: The user's choice after swap adjustment
+        raw_user_choice: The original user choice before swap adjustment
+        option1_strategy: Strategy description for option 1
+        option2_strategy: Strategy description for option 2
 
     Returns:
-        int: The ID of the newly created comparison pair, or None if an error occurs.
+        int: The ID of the newly created comparison pair, or None if an error occurs
     """
     query = """
-        INSERT INTO comparison_pairs (survey_response_id, pair_number, option_1, option_2, user_choice)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO comparison_pairs (
+            survey_response_id, pair_number, option_1, option_2, 
+            user_choice, raw_user_choice, option1_strategy, option2_strategy
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
-    option_1_json = json.dumps(option_1)
-    option_2_json = json.dumps(option_2)
-    logger.debug(
-        "Inserting comparison pair for survey_response_id: %s, pair_number: %s",
-        survey_response_id,
-        pair_number,
-    )
-
     try:
+        option_1_json = json.dumps(option_1)
+        option_2_json = json.dumps(option_2)
+
         return execute_query(
             query,
             (
@@ -106,10 +110,13 @@ def create_comparison_pair(
                 option_1_json,
                 option_2_json,
                 user_choice,
+                raw_user_choice,
+                option1_strategy,
+                option2_strategy,
             ),
         )
     except Exception as e:
-        logger.error("Error inserting comparison pair: %s", str(e))
+        logger.error(f"Error inserting comparison pair: {str(e)}")
         return None
 
 
