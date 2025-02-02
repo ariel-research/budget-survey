@@ -2,7 +2,7 @@
 
 import logging
 import random
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -110,8 +110,13 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
     def _generate_pairs_attempt(
         self, user_vector: tuple, n: int, vector_size: int, attempt: int = 0
-    ) -> List[Tuple[tuple, tuple]]:
-        """Helper function with recursion tracking."""
+    ) -> List[Dict[str, tuple]]:
+        """
+        Helper function with recursion tracking.
+
+        Returns:
+            List[Dict[str, tuple]]: List of pairs with strategy descriptions
+        """
         MAX_ATTEMPTS = 3
         POOL_MULTIPLIER = 20
 
@@ -134,10 +139,31 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         for i in range(len(vectors)):
             for j in range(i + 1, len(vectors)):
                 v1, v2 = vectors[i], vectors[j]
-                metrics = self._calculate_optimization_metrics(user_vector, v1, v2)
+                s1, s2, r1, r2 = self._calculate_optimization_metrics(
+                    user_vector, v1, v2
+                )
 
-                if self._is_valid_pair(metrics):
-                    valid_pairs.append((v1, v2))
+                if self._is_valid_pair((s1, s2, r1, r2)):
+                    # Create pair with strategy descriptions
+                    if s1 < s2:  # v1 is better for sum
+                        pair = {
+                            self.get_option_description(
+                                metric_type="sum", value=s1
+                            ): v1,
+                            self.get_option_description(
+                                metric_type="ratio", value=r2
+                            ): v2,
+                        }
+                    else:  # v2 is better for sum
+                        pair = {
+                            self.get_option_description(
+                                metric_type="sum", value=s2
+                            ): v2,
+                            self.get_option_description(
+                                metric_type="ratio", value=r1
+                            ): v1,
+                        }
+                    valid_pairs.append(pair)
 
         logger.debug(f"Found {len(valid_pairs)} valid pairs")
 
@@ -155,7 +181,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
     def generate_pairs(
         self, user_vector: tuple, n: int, vector_size: int
-    ) -> List[Tuple[tuple, tuple]]:
+    ) -> List[Dict[str, tuple]]:
         """
         Generate pairs optimized for sum of differences and minimal ratio metrics.
 
@@ -168,14 +194,21 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
             vector_size: Size of each vector (default: 3)
 
         Returns:
-            List of n pairs, where each pair contains two vectors with
-            complementary optimization properties
+            List[Dict[str, tuple]]: List of pairs, each containing:
+                {
+                    'Sum Optimized Vector: X': sum_optimized_vector,
+                    'Ratio Optimized Vector: Y': ratio_optimized_vector
+                }
+                where X is the sum difference and Y is the minimal ratio
 
         Raises:
             ValueError: If unable to generate enough valid pairs
         """
         try:
-            return self._generate_pairs_attempt(user_vector, n, vector_size)
+            pairs = self._generate_pairs_attempt(user_vector, n, vector_size)
+            self._log_pairs(pairs)
+            return pairs
+
         except Exception as e:
             logger.error(f"Pair generation failed: {str(e)}")
             raise
@@ -186,3 +219,13 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         return ("Sum Optimized", "Ratio Optimized")
+
+    def get_option_description(self, **kwargs) -> str:
+        metric_type = kwargs.get("metric_type")
+        value = kwargs.get("value")
+
+        if metric_type == "sum":
+            return f"Sum Optimized Vector: {int(value)}"
+        elif metric_type == "ratio":
+            return f"Ratio Optimized Vector: {value:.2f}"
+        return "Unknown Vector"

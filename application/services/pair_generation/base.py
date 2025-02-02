@@ -15,6 +15,41 @@ logger = logging.getLogger(__name__)
 class PairGenerationStrategy(ABC):
     """Base class for implementing pair generation strategies."""
 
+    def _format_vector_for_logging(self, vector: tuple) -> Tuple[tuple, int]:
+        """
+        Format vector for logging, converting values to integers.
+
+        Args:
+            vector: Vector to format
+
+        Returns:
+            Tuple containing formatted vector and its sum
+        """
+        formatted = tuple(int(v) for v in vector)
+        return formatted, sum(formatted)
+
+    def _log_pairs(self, pairs: List[Dict[str, tuple]]) -> None:
+        """
+        Log generated pairs with their sums.
+
+        Args:
+            pairs: List of dicts containing strategy descriptions and vectors
+        """
+        logger.info(f"Generated pairs using {self.__class__.__name__}:")
+        for i, pair in enumerate(pairs, 1):
+            # Extract vectors and descriptions
+            descriptions = list(pair.keys())
+            vectors = list(pair.values())
+
+            vec_a_fmt, sum_a = self._format_vector_for_logging(vectors[0])
+            vec_b_fmt, sum_b = self._format_vector_for_logging(vectors[1])
+
+            logger.info(
+                f"Pair {i}:\n"
+                f"  {descriptions[0]}: {vec_a_fmt} (sum: {sum_a})\n"
+                f"  {descriptions[1]}: {vec_b_fmt} (sum: {sum_b})"
+            )
+
     def _validate_vector(self, vector: tuple, vector_size: int) -> None:
         """
         Validate vector properties.
@@ -76,8 +111,7 @@ class PairGenerationStrategy(ABC):
     @abstractmethod
     def generate_pairs(
         self, user_vector: tuple, n: int, vector_size: int
-    ) -> List[Tuple[tuple, tuple]]:
-        # TODO: should return List[Dict[str, tuple]]
+    ) -> List[Dict[str, tuple]]:
         """
         Generate pairs based on strategy's logic.
 
@@ -87,7 +121,8 @@ class PairGenerationStrategy(ABC):
             vector_size: Size of each allocation vector
 
         Returns:
-            List of tuple pairs representing budget allocations
+            List of dicts containing {'option_description': vector} pairs,
+            where option_description includes strategy name and parameters
         """
         pass
 
@@ -99,6 +134,19 @@ class PairGenerationStrategy(ABC):
     @abstractmethod
     def get_option_labels(self) -> Tuple[str, str]:
         """Return labels for the two options being compared."""
+        pass
+
+    @abstractmethod
+    def get_option_description(self, **kwargs) -> str:
+        """
+        Get descriptive name for an option including parameters.
+
+        Args:
+            **kwargs: Strategy-specific parameters (e.g., weight, metrics)
+
+        Returns:
+            str: Human-readable description with parameters
+        """
         pass
 
 

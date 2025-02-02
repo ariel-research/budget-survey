@@ -72,3 +72,18 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
         return "rounded_weighted_average_vector"
+
+    def get_option_description(self, **kwargs) -> str:
+        """
+        Get descriptive name for an option including weight parameter if applicable.
+
+        Args:
+            weight: Optional weight parameter for weighted vectors
+
+        Returns:
+            str: Description like "Rounded Weighted Vector: 70%"
+        """
+        weight = kwargs.get("weight")
+        if weight is None:
+            return "Random Vector"
+        return f"Rounded Weighted Vector: {int(weight * 100)}%"

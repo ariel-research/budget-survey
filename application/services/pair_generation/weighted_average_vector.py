@@ -2,7 +2,7 @@
 
 import logging
 import random
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
@@ -96,36 +96,9 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         weighted[-1] = 100 - weighted[:-1].sum()
         return tuple(weighted)
 
-    def _format_vector_for_logging(self, vector: tuple) -> Tuple[tuple, int]:
-        """
-        Format vector for logging, converting values to integers.
-
-        Args:
-            vector: Vector to format
-
-        Returns:
-            Tuple containing formatted vector and its sum
-        """
-        formatted = tuple(int(v) for v in vector)
-        return formatted, sum(formatted)
-
-    def _log_pairs(self, pairs: List[Tuple[tuple, tuple]]) -> None:
-        """
-        Log generated pairs with their sums.
-
-        Args:
-            pairs: List of vector pairs to log
-        """
-        for i, (vec_a, vec_b) in enumerate(pairs, 1):
-            vec_a_fmt, sum_a = self._format_vector_for_logging(vec_a)
-            vec_b_fmt, sum_b = self._format_vector_for_logging(vec_b)
-            logger.info(
-                f"pair {i}: {vec_a_fmt} (sum: {sum_a}), {vec_b_fmt} (sum: {sum_b})"
-            )
-
     def generate_pairs(
         self, user_vector: tuple, n: int = 10, vector_size: int = 3
-    ) -> List[Tuple[tuple, tuple]]:
+    ) -> List[Dict[str, tuple]]:
         """
         Generate pairs using weighted combinations.
 
@@ -135,7 +108,12 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             vector_size: Size of each vector (default: 3)
 
         Returns:
-            List of pairs, each containing [random_vector, weighted_vector]
+            List[Dict[str, tuple]]: List of pairs, each containing:
+                {
+                    'Random Vector': random_vector,
+                    'Average Weighted Vector: X%': weighted_vector
+                }
+                where X is the weight percentage used
 
         Raises:
             ValueError: If parameters are invalid or generation fails
@@ -162,8 +140,11 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
                     user_vector_array, random_vector_array, x_weight
                 )
 
-                pair = (random_vector, weighted_vector)
-                # pair = {"Random": random_vector, f"Weighted {x_weight}": weighted_vector}
+                pair = {
+                    self.get_option_description(): random_vector,
+                    self.get_option_description(weight=x_weight): weighted_vector,
+                }
+
                 pairs.append(pair)
 
             # Shuffle pairs for random presentation order
@@ -189,3 +170,19 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         return ("Random Vector", "Weighted Average Vector")
+
+    def get_option_description(self, **kwargs) -> str:
+        """
+        Get descriptive name for an option including weight parameter if applicable.
+
+        Args:
+            weight: Optional weight parameter for weighted vectors
+
+        Returns:
+            str: Description like "Average Weighted Vector: 70%"
+        """
+        weight = kwargs.get("weight")
+        logger.debug(f"get_option_description - weight: {weight}")
+        if weight is None:
+            return "Random Vector"
+        return f"Average Weighted Vector: {int(weight * 100)}%"
