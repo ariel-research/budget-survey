@@ -17,6 +17,9 @@ class ComparisonPair:
     option_1: List[int]
     option_2: List[int]
     user_choice: int
+    raw_user_choice: int = None
+    option1_strategy: str = None
+    option2_strategy: str = None
 
     def is_valid(self) -> bool:
         """
@@ -130,19 +133,31 @@ class SurveySubmission:
             for i in range(10):
                 option_1 = list(map(int, form_data.get(f"option1_{i}", "").split(",")))
                 option_2 = list(map(int, form_data.get(f"option2_{i}", "").split(",")))
-                user_choice = int(form_data.get(f"choice_{i}", 0))
+                raw_user_choice = int(form_data.get(f"choice_{i}", 0))
+                user_choice = raw_user_choice
                 was_swapped = form_data.get(f"was_swapped_{i}") == "true"
+                option1_strategy = form_data.get(f"option1_strategy_{i}")
+                option2_strategy = form_data.get(f"option2_strategy_{i}")
 
                 # If options were swapped during display, adjust choice and the options
                 # to match original option order
                 if was_swapped:
                     # Swap both options and adjust choice
                     option_1, option_2 = option_2, option_1
-                    user_choice = 3 - user_choice
+                    option1_strategy, option2_strategy = (
+                        option2_strategy,
+                        option1_strategy,
+                    )
+                    user_choice = 3 - raw_user_choice
 
                 pairs.append(
                     ComparisonPair(
-                        option_1=option_1, option_2=option_2, user_choice=user_choice
+                        option_1=option_1,
+                        option_2=option_2,
+                        user_choice=user_choice,
+                        raw_user_choice=raw_user_choice,
+                        option1_strategy=option1_strategy,
+                        option2_strategy=option2_strategy,
                     )
                 )
 
