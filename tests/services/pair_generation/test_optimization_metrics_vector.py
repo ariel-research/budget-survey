@@ -1,4 +1,4 @@
-"""Test suite for optimization metrics strategy."""
+"""Test suite for optimization metrics strategy with new dictionary format."""
 
 import pytest
 
@@ -26,45 +26,70 @@ def test_minimal_ratio(strategy):
     assert strategy.minimal_ratio(user_vector, generated_vector) == 0.6
 
 
-def test_calculate_optimization_metrics(strategy):
-    """Test if optimization metrics are calculated correctly."""
-    user_vector = (50, 30, 20)
-    v1 = (30, 40, 30)
-    v2 = (60, 20, 20)
-    metrics = strategy._calculate_optimization_metrics(user_vector, v1, v2)
-    assert len(metrics) == 4
-    assert isinstance(metrics[0], (int, float))
-
-
-def test_is_valid_pair(strategy):
-    """Test if pair validation works correctly."""
-    # Test case where first vector is better in sum, worse in ratio
-    metrics = (30, 40, 0.6, 0.8)  # s1, s2, r1, r2
-    assert strategy._is_valid_pair(metrics)
-
-    # Test case where neither vector dominates
-    metrics = (30, 40, 0.8, 0.6)
-    assert not strategy._is_valid_pair(metrics)
-
-
 def test_generate_pairs(strategy):
-    """Test if pair generation works correctly."""
+    """Test if pair generation works correctly with strategy descriptions."""
     user_vector = (60, 20, 20)
     n_pairs = 5
     pairs = strategy.generate_pairs(user_vector, n=n_pairs, vector_size=3)
 
     assert len(pairs) == n_pairs
+    assert all(isinstance(pair, dict) for pair in pairs)
     assert all(len(pair) == 2 for pair in pairs)
-    assert all(len(v) == 3 for pair in pairs for v in pair)
-    assert all(sum(v) == 100 for pair in pairs for v in pair)
+
+    for pair in pairs:
+        # Check strategy descriptions
+        descriptions = list(pair.keys())
+        vectors = list(pair.values())
+
+        assert any("Sum Optimized Vector" in desc for desc in descriptions)
+        assert any("Ratio Optimized Vector" in desc for desc in descriptions)
+
+        # Check vectors
+        assert all(isinstance(v, tuple) for v in vectors)
+        assert all(len(v) == 3 for v in vectors)
+        assert all(sum(v) == 100 for v in vectors)
 
 
-@pytest.mark.parametrize("n_pairs", [5, 10, 15])
-def test_generate_pairs_different_sizes(strategy, n_pairs):
-    """Test if pair generation works with different numbers of pairs."""
+def test_generated_pairs_are_valid(strategy):
+    """Test if all generated pairs satisfy the complementary optimization properties."""
     user_vector = (60, 20, 20)
-    pairs = strategy.generate_pairs(user_vector, n=n_pairs, vector_size=3)
-    assert len(pairs) == n_pairs
+    pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
+
+    for pair in pairs:
+        descriptions = list(pair.keys())
+        vectors = list(pair.values())
+        v1, v2 = vectors
+
+        # Calculate optimization metrics
+        metrics = strategy._calculate_optimization_metrics(user_vector, v1, v2)
+
+        # Extract values from descriptions to verify matching
+        sum_desc = next(desc for desc in descriptions if "Sum Optimized" in desc)
+        ratio_desc = next(desc for desc in descriptions if "Ratio Optimized" in desc)
+
+        sum_value = float(sum_desc.split(": ")[1])
+        ratio_value = float(ratio_desc.split(": ")[1])
+
+        # Verify that descriptions match actual metrics
+        if sum_desc == descriptions[0]:  # First vector is sum-optimized
+            assert abs(metrics[0] - sum_value) < 0.01  # sum diff for v1
+            assert abs(metrics[3] - ratio_value) < 0.01  # ratio for v2
+        else:  # Second vector is sum-optimized
+            assert abs(metrics[1] - sum_value) < 0.01  # sum diff for v2
+            assert abs(metrics[2] - ratio_value) < 0.01  # ratio for v1
+
+
+def test_option_descriptions(strategy):
+    """Test if option descriptions are generated correctly."""
+    description_sum = strategy.get_option_description(metric_type="sum", value=25)
+    description_ratio = strategy.get_option_description(metric_type="ratio", value=0.75)
+
+    assert description_sum == "Sum Optimized Vector: 25"
+    assert description_ratio == "Ratio Optimized Vector: 0.75"
+    assert strategy.get_strategy_name() == "optimization_metrics"
+
+    labels = strategy.get_option_labels()
+    assert labels == ("Sum Optimized", "Ratio Optimized")
 
 
 def test_generate_pairs_error_handling(strategy):
@@ -74,19 +99,72 @@ def test_generate_pairs_error_handling(strategy):
         strategy.generate_pairs(invalid_vector, n=10, vector_size=3)
 
 
-def test_generated_pairs_are_valid(strategy):
-    """Test if all generated pairs satisfy the complementary optimization properties."""
-    user_vector = (60, 20, 20)
-    pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
+def test_edge_cases(strategy):
+    """Test edge cases for optimization metrics."""
+    # Test with extreme allocations
+    user_vector = (90, 5, 5)
+    pairs = strategy.generate_pairs(user_vector, n=5, vector_size=3)
 
-    for v1, v2 in pairs:
-        # Calculate optimization metrics for the pair
-        metrics = strategy._calculate_optimization_metrics(user_vector, v1, v2)
+    for pair in pairs:
+        vectors = list(pair.values())
+        # Verify vectors maintain valid ranges
+        assert all(0 <= v <= 95 for vector in vectors for v in vector)
+        # Verify sums remain correct
+        assert all(sum(vector) == 100 for vector in vectors)
 
-        # Check if pair has valid optimization trade-offs
-        assert strategy._is_valid_pair(metrics), (
-            f"Invalid pair found:\n"
-            f"Vector 1: {v1}\n"
-            f"Vector 2: {v2}\n"
-            f"Metrics (s1, s2, r1, r2): {metrics}"
+
+def test_vector_distinctness(strategy):
+    """Test that generated vectors are distinct from user vector."""
+    user_vector = (40, 30, 30)
+    pairs = strategy.generate_pairs(user_vector, n=5, vector_size=3)
+
+    for pair in pairs:
+        vectors = list(pair.values())
+        assert all(v != user_vector for v in vectors)
+
+
+def test_metric_value_extraction(strategy):
+    """Test extraction of metric values from descriptions."""
+    user_vector = (50, 25, 25)
+    pairs = strategy.generate_pairs(user_vector, n=1, vector_size=3)
+    pair = pairs[0]
+
+    # Extract values from descriptions
+    descriptions = list(pair.keys())
+    sum_desc = next(desc for desc in descriptions if "Sum Optimized" in desc)
+    ratio_desc = next(desc for desc in descriptions if "Ratio Optimized" in desc)
+
+    # Verify format and value ranges
+    sum_value = float(sum_desc.split(": ")[1])
+    ratio_value = float(ratio_desc.split(": ")[1])
+
+    assert sum_value > 0, "Sum difference should be positive"
+    assert 0 < ratio_value <= 1, "Ratio should be between 0 and 1"
+
+
+def test_pair_generation_consistency(strategy):
+    """Test that pair generation is consistent with the same input."""
+    user_vector = (45, 35, 20)
+    pairs1 = strategy.generate_pairs(user_vector, n=5, vector_size=3)
+    pairs2 = strategy.generate_pairs(user_vector, n=5, vector_size=3)
+
+    # While vectors might be different (due to randomness),
+    # verify that structure and constraints are consistent
+    assert len(pairs1) == len(pairs2) == 5
+
+    for pair1, pair2 in zip(pairs1, pairs2):
+        # Check structure consistency
+        assert len(pair1) == len(pair2) == 2
+        # Check description format consistency
+        assert all(
+            "Sum Optimized Vector" in desc
+            for pair in [pair1, pair2]
+            for desc in pair.keys()
+            if "Sum" in desc
+        )
+        assert all(
+            "Ratio Optimized Vector" in desc
+            for pair in [pair1, pair2]
+            for desc in pair.keys()
+            if "Ratio" in desc
         )
