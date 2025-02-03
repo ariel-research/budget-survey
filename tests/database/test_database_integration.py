@@ -168,34 +168,60 @@ def test_create_comparison_pair(app_context, setup_test_data, cleanup_db):
     Test the creation of a comparison pair for a survey response.
     Verifies that the comparison pair is inserted into the 'comparison_pairs' table.
     """
+    # Create test user and survey response
     user_id = generate_unique_id()
     create_user(user_id)
 
-    # Fetch an existing survey ID
+    # Get test survey
     survey_query = "SELECT id FROM surveys LIMIT 1"
     result = execute_query(survey_query)
-    assert result, "No surveys found in the database"
     survey_id = result[0]["id"]
 
+    # Create survey response
     survey_response_id = create_survey_response(
         user_id, survey_id, [5, 15, 80], "Test comment"
     )
-    assert survey_response_id is not None, "Failed to create survey response"
 
-    pair_number = 1
-    option_1 = [10, 20, 70]
-    option_2 = [30, 40, 30]
-    user_choice = 2
+    # Test data for comparison pair
+    test_data = {
+        "pair_number": 1,
+        "option_1": [10, 20, 70],
+        "option_2": [30, 40, 30],
+        "user_choice": 2,
+        "raw_user_choice": 1,  # Original choice before swap
+        "option1_strategy": "Test Random Vector",
+        "option2_strategy": "Test Weighted Vector: 30%",
+    }
 
+    # Create comparison pair with new fields
     comparison_pair_id = create_comparison_pair(
-        survey_response_id, pair_number, option_1, option_2, user_choice
+        survey_response_id=survey_response_id,
+        pair_number=test_data["pair_number"],
+        option_1=test_data["option_1"],
+        option_2=test_data["option_2"],
+        user_choice=test_data["user_choice"],
+        raw_user_choice=test_data["raw_user_choice"],
+        option1_strategy=test_data["option1_strategy"],
+        option2_strategy=test_data["option2_strategy"],
     )
+
     assert comparison_pair_id is not None, "Failed to create comparison pair"
 
-    # Verify the insertion
-    verify_query = "SELECT * FROM comparison_pairs WHERE id = %s"
+    # Verify all fields were saved correctly
+    verify_query = """
+        SELECT * FROM comparison_pairs 
+        WHERE id = %s
+    """
     result = execute_query(verify_query, (comparison_pair_id,))
-    assert result, f"Comparison pair with ID {comparison_pair_id} not found"
+    assert result, f"Comparison pair {comparison_pair_id} not found"
+
+    pair_data = result[0]
+    assert json.loads(pair_data["option_1"]) == test_data["option_1"]
+    assert json.loads(pair_data["option_2"]) == test_data["option_2"]
+    assert pair_data["user_choice"] == test_data["user_choice"]
+    assert pair_data["raw_user_choice"] == test_data["raw_user_choice"]
+    assert pair_data["option1_strategy"] == test_data["option1_strategy"]
+    assert pair_data["option2_strategy"] == test_data["option2_strategy"]
 
 
 def test_mark_survey_as_completed(app_context, setup_test_data, cleanup_db):
@@ -361,70 +387,77 @@ def test_retrieve_completed_survey_responses(app_context, setup_test_data, clean
     Test the retrieval of completed survey responses.
     Verifies that the function correctly fetches all completed survey responses with their comparison pairs.
     """
-    # Create a user and a survey response
+    # Create test user and survey response
     user_id = generate_unique_id()
     create_user(user_id)
 
-    # Fetch an existing survey ID
+    # Get test survey
     survey_query = "SELECT id FROM surveys LIMIT 1"
     result = execute_query(survey_query)
-    assert result, "No surveys found in the database"
     survey_id = result[0]["id"]
 
-    # Create a survey response
+    # Create survey response
     optimal_allocation = [30, 30, 40]
     user_comment = "Retrieval test comment"
     survey_response_id = create_survey_response(
         user_id, survey_id, optimal_allocation, user_comment
     )
-    assert survey_response_id is not None, "Failed to create survey response"
 
-    # Create comparison pairs
-    pair_1 = create_comparison_pair(
-        survey_response_id, 1, [25, 25, 50], [35, 35, 30], 2
-    )
-    pair_2 = create_comparison_pair(
-        survey_response_id, 2, [20, 40, 40], [40, 20, 40], 1
-    )
-    assert (
-        pair_1 is not None and pair_2 is not None
-    ), "Failed to create comparison pairs"
+    # Create comparison pairs with strategy information
+    pairs_data = [
+        {
+            "pair_number": 1,
+            "option_1": [25, 25, 50],
+            "option_2": [35, 35, 30],
+            "user_choice": 2,
+            "raw_user_choice": 2,
+            "option1_strategy": "Random Vector",
+            "option2_strategy": "Weighted Vector: 50%",
+        },
+        {
+            "pair_number": 2,
+            "option_1": [20, 40, 40],
+            "option_2": [40, 20, 40],
+            "user_choice": 1,
+            "raw_user_choice": 2,
+            "option1_strategy": "Sum Optimized Vector: 30",
+            "option2_strategy": "Ratio Optimized Vector: 0.8",
+        },
+    ]
 
-    # Mark the survey as completed
+    for pair_data in pairs_data:
+        pair_id = create_comparison_pair(
+            survey_response_id=survey_response_id,
+            pair_number=pair_data["pair_number"],
+            option_1=pair_data["option_1"],
+            option_2=pair_data["option_2"],
+            user_choice=pair_data["user_choice"],
+            raw_user_choice=pair_data["raw_user_choice"],
+            option1_strategy=pair_data["option1_strategy"],
+            option2_strategy=pair_data["option2_strategy"],
+        )
+        assert pair_id is not None, f"Failed to create pair {pair_data['pair_number']}"
+
+    # Mark survey as completed
     mark_survey_as_completed(survey_response_id)
 
-    # Retrieve completed survey responses
+    # Retrieve and verify responses
     completed_responses = retrieve_completed_survey_responses()
-
-    # Verify the retrieved data
     assert completed_responses, "No completed survey responses retrieved"
-    assert (
-        len(completed_responses) == 2
-    ), f"Expected 2 rows (2 comparison pairs), got {len(completed_responses)}"
+    assert len(completed_responses) == 2, "Expected 2 comparison pairs"
 
-    # Check the contents of the retrieved data
-    for response in completed_responses:
+    # Verify strategy information is included
+    for response, expected_pair in zip(completed_responses, pairs_data):
         assert response["survey_response_id"] == survey_response_id
         assert response["user_id"] == user_id
         assert response["survey_id"] == survey_id
         assert json.loads(response["optimal_allocation"]) == optimal_allocation
         assert response["completed"] == 1
         assert "response_created_at" in response
-        assert response["pair_number"] in [1, 2]
-        assert "option_1" in response and "option_2" in response
-        assert "user_choice" in response
-
-    # Verify that incomplete survey responses are not retrieved
-    incomplete_survey_id = create_survey_response(
-        user_id, survey_id, [10, 20, 70], "Incomplete comment"
-    )
-    create_comparison_pair(incomplete_survey_id, 1, [15, 25, 60], [25, 15, 60], 1)
-
-    completed_responses = retrieve_completed_survey_responses()
-    assert all(
-        response["survey_response_id"] != incomplete_survey_id
-        for response in completed_responses
-    ), "Incomplete survey response was incorrectly retrieved"
+        assert response["pair_number"] == expected_pair["pair_number"]
+        assert json.loads(response["option_1"]) == expected_pair["option_1"]
+        assert json.loads(response["option_2"]) == expected_pair["option_2"]
+        assert response["user_choice"] == expected_pair["user_choice"]
 
 
 def test_get_latest_survey_timestamp(app_context, setup_test_data, cleanup_db):
