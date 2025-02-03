@@ -85,19 +85,23 @@ def test_generate_pairs(strategy):
     user_vector = (20, 30, 50)
     pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
 
+    # Basic structure tests
     assert len(pairs) == 10
+    assert all(isinstance(pair, dict) for pair in pairs)
     assert all(len(pair) == 2 for pair in pairs)
-    assert all(len(v) == 3 for pair in pairs for v in pair)
 
-    # Test that all vectors sum to 100 and are multiples of 5
-    for random_vector, weighted_vector in pairs:
-        assert sum(random_vector) == 100
-        assert sum(weighted_vector) == 100
-        assert all(v % 5 == 0 for v in random_vector)
-        assert all(v % 5 == 0 for v in weighted_vector)
+    # Test vectors in each pair
+    for pair in pairs:
+        vectors = list(pair.values())
+        # Check vector length
+        assert all(len(v) == 3 for v in vectors)
+        # Check sums and multiples of 5
+        assert all(sum(v) == 100 for v in vectors)
+        assert all(v % 5 == 0 for vector in vectors for v in vector)
 
-    # Test that no random vector is the same as user_vector
-    for random_vector, _ in pairs:
+        # Get the random vector (first vector in the pair)
+        random_vector = next(v for k, v in pair.items() if "Random Vector" in k)
+        # Test that random vector is different from user vector
         assert random_vector != user_vector
 
 
