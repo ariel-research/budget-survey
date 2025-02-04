@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 
 from application.services.pair_generation.weighted_average_vector import (
@@ -73,6 +75,9 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         """Get the unique identifier for this strategy."""
         return "rounded_weighted_average_vector"
 
+    def get_option_labels(self) -> Tuple[str, str]:
+        return ("Random Vector", "Rounded Weighted Average Vector")
+
     def get_option_description(self, **kwargs) -> str:
         """
         Get descriptive name for an option including weight parameter if applicable.
@@ -86,4 +91,4 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         weight = kwargs.get("weight")
         if weight is None:
             return "Random Vector"
-        return f"Rounded Weighted Vector: {int(weight * 100)}%"
+        return f"Rounded Weighted Average Vector: {int(weight * 100)}%"
