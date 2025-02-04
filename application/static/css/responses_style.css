@@ -140,6 +140,7 @@
    border-radius: 6px;
    margin: var(--spacing-md) 0;
    padding: var(--spacing-md);
+   position: relative;
 }
 
 .choice-pair h5 {
@@ -148,6 +149,49 @@
    letter-spacing: 0.5px;
    margin-bottom: var(--spacing-sm);
    text-transform: uppercase;
+}
+
+.pair-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: var(--spacing-sm);
+}
+
+.raw-choice-info {
+   position: absolute;
+   top: var(--spacing-sm);
+   right: var(--spacing-sm);
+   font-size: var(--font-size-xs);
+   padding: 4px 8px;
+   border-radius: 4px;
+   background-color: var(--color-background-alt);
+   color: var(--color-text-light);
+}
+
+.raw-choice-label {
+   color: var(--color-text-light);
+   margin-right: 4px;
+}
+
+.raw-choice-value {
+   color: var(--color-primary);
+   font-weight: 500;
+}
+
+/* When raw choice is available */
+.original-choice {
+   color: var(--color-text);
+}
+
+.original-choice .value {
+   color: var(--color-primary);
+   font-weight: 500;
+}
+
+.raw-choice-unavailable {
+   color: var(--color-text-light);
+   font-style: italic;
 }
 
 /* ==========================================================================
@@ -664,6 +708,13 @@ html {
       bottom: 1rem;
       right: 1rem;
   }
+
+  .raw-choice-info {
+   position: static;
+   margin-bottom: var(--spacing-sm);
+   text-align: right;
+ }
+  
 }
 
 @media (max-width: 480px) {

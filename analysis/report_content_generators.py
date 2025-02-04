@@ -408,15 +408,22 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
         strategy_1 = survey_labels[0]
         strategy_2 = survey_labels[1]
 
-    raw_choice_text = (
-        f" (Raw choice: {raw_choice})"
+    # Generate raw choice info HTML
+    raw_choice_html = (
+        f'<span class="raw-choice-label">Original choice:</span>'
+        f'<span class="raw-choice-value">Option {raw_choice}</span>'
         if raw_choice is not None
-        else " (Raw choice not available)"
+        else '<span class="raw-choice-unavailable">Raw choice not available</span>'
     )
 
     return f"""
     <div class="choice-pair">
-        <h5>Pair #{choice["pair_number"]}{raw_choice_text}</h5>
+        <div class="pair-header">
+            <h5>Pair #{choice["pair_number"]}</h5>
+            <div class="raw-choice-info">
+                {raw_choice_html}
+            </div>
+        </div>
         <div class="table-container">
             <table>
                 <tr>
