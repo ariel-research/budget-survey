@@ -167,6 +167,21 @@
    border-radius: 4px;
    background-color: var(--color-background-alt);
    color: var(--color-text-light);
+   transition: all 0.2s ease;
+}
+
+.raw-choice-info:hover {
+   background-color: var(--color-border);
+   box-shadow: var(--shadow-sm);
+}
+
+.raw-choice-info:hover .raw-choice-value {
+   color: var(--color-primary);
+}
+
+.raw-choice-info:hover .raw-choice-label,
+.raw-choice-info:hover .raw-choice-unavailable {
+    color: var(--color-text);
 }
 
 .raw-choice-label {
@@ -711,9 +726,16 @@ html {
 
   .raw-choice-info {
    position: static;
-   margin-bottom: var(--spacing-sm);
+   top: auto;
+   right: auto;
    text-align: right;
- }
+   margin-left: var(--spacing-sm);
+}
+
+.pair-header {
+   flex-wrap: wrap;
+   gap: var(--spacing-xs);
+}
   
 }
 
