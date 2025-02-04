@@ -28,43 +28,39 @@ responses_routes = Blueprint("responses", __name__)
 
 
 def get_user_responses(survey_id: Optional[int] = None) -> Dict[str, str]:
-    """
-    Get formatted user survey responses.
-
-    Args:
-        survey_id: Optional survey ID to filter responses
-
-    Returns:
-        Dictionary containing formatted response data
-
-    Raises:
-        SurveyNotFoundError: If survey not found
-        StrategyConfigError: If strategy configuration is invalid
-        ResponseProcessingError: If error processing responses
-    """
+    """Get formatted user survey responses."""
     try:
         choices = retrieve_user_survey_choices()
 
         if survey_id is not None:
+            # Filter for specific survey
             choices = [c for c in choices if c["survey_id"] == survey_id]
-
             if not choices:
                 logger.warning(f"No responses found for survey {survey_id}")
                 raise SurveyNotFoundError(survey_id)
 
-            strategy_config = get_survey_pair_generation_config(survey_id)
-            if not strategy_config:
-                logger.error(f"Invalid strategy config for survey {survey_id}")
-                raise StrategyConfigError(survey_id, "unknown")
+        # Group choices by survey_id to get proper strategy labels for each survey
+        choices_by_survey = {}
+        for choice in choices:
+            survey_id = choice["survey_id"]
+            if survey_id not in choices_by_survey:
+                choices_by_survey[survey_id] = []
+            choices_by_survey[survey_id].append(choice)
 
-            strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
-            option_labels = strategy.get_option_labels()
-        else:
-            option_labels = ("Option 1", "Option 2")
+        # Add strategy labels to each choice based on its survey
+        for survey_id, survey_choices in choices_by_survey.items():
+            strategy_config = get_survey_pair_generation_config(survey_id)
+            if strategy_config:
+                strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
+                option_labels = strategy.get_option_labels()
+                # Add strategy labels to each choice
+                for choice in survey_choices:
+                    choice["_strategy_labels"] = option_labels
 
         response_data = ResponseFormatter.format_response_data(choices)
+        # Pass default option labels that will be used if no strategy labels are found
         response_data["content"] = generate_detailed_user_choices(
-            choices, option_labels
+            choices, option_labels=("Option 1", "Option 2")
         )
         return response_data
 

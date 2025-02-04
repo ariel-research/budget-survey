@@ -372,21 +372,7 @@ def get_latest_survey_timestamp() -> float:
 
 
 def retrieve_user_survey_choices() -> List[Dict]:
-    """
-    Retrieves survey choices data organized by user and survey.
-    Returns user's optimal allocation and their choices for each comparison pair.
-
-    Returns:
-        List[Dict]: List of dictionaries containing user choices data, or empty list if error occurs.
-        Each dictionary contains:
-        - user_id
-        - survey_id
-        - optimal_allocation (JSON string)
-        - pair_number
-        - option_1 (JSON string)
-        - option_2 (JSON string)
-        - user_choice
-    """
+    """Retrieves survey choices data organized by user and survey."""
     query = """
     SELECT 
         sr.user_id,
@@ -395,7 +381,10 @@ def retrieve_user_survey_choices() -> List[Dict]:
         cp.pair_number,
         cp.option_1,
         cp.option_2,
-        cp.user_choice
+        cp.user_choice,
+        cp.raw_user_choice,
+        cp.option1_strategy,
+        cp.option2_strategy
     FROM 
         survey_responses sr
     JOIN 
@@ -407,16 +396,14 @@ def retrieve_user_survey_choices() -> List[Dict]:
         sr.survey_id,
         cp.pair_number
     """
-    logger.debug("Retrieving user survey choices for visualization")
 
     try:
         results = execute_query(query)
         if results:
             logger.debug(f"Retrieved choices data for {len(results)} comparison pairs")
             return results
-        else:
-            logger.warning("No survey choices data found")
-            return []
+        logger.warning("No survey choices data found")
+        return []
     except Exception as e:
         logger.error(f"Error retrieving survey choices: {str(e)}")
         return []

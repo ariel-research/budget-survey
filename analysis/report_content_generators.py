@@ -389,21 +389,34 @@ def choice_explanation_string_version2(
 
 
 def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> str:
-    """Generate HTML for a single choice pair.
-
-    Args:
-        choice: Dictionary containing choice data
-        option_labels: Tuple of labels for the two options
-    Returns:
-        str: HTML for the choice pair
-    """
+    """Generate HTML for a single choice pair."""
     option_1 = json.loads(choice["option_1"])
     option_2 = json.loads(choice["option_2"])
     user_choice = choice["user_choice"]
+    raw_choice = choice.get("raw_user_choice")
+
+    # Get strategy labels in order of preference:
+    # 1. Database strategy descriptions
+    # 2. Survey-specific strategy labels (stored in _strategy_labels)
+    # 3. Default option labels
+    strategy_1 = choice.get("option1_strategy")
+    strategy_2 = choice.get("option2_strategy")
+
+    if not strategy_1 and not strategy_2:
+        # Try survey-specific strategy labels, fall back to default labels
+        survey_labels = choice.get("_strategy_labels", option_labels)
+        strategy_1 = survey_labels[0]
+        strategy_2 = survey_labels[1]
+
+    raw_choice_text = (
+        f" (Raw choice: {raw_choice})"
+        if raw_choice is not None
+        else " (Raw choice not available)"
+    )
 
     return f"""
     <div class="choice-pair">
-        <h5>Pair #{choice["pair_number"]}</h5>
+        <h5>Pair #{choice["pair_number"]}{raw_choice_text}</h5>
         <div class="table-container">
             <table>
                 <tr>
@@ -414,12 +427,12 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
                 <tr>
                     <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
                     <td class="option-column">{str(option_1)}</td>
-                    <td>{option_labels[0]}</td>
+                    <td>{strategy_1}</td>
                 </tr>
                 <tr>
                     <td class="selection-column">{str('✓') if user_choice == 2 else ''}</td>
                     <td class="option-column">{str(option_2)}</td>
-                    <td>{option_labels[1]}</td>
+                    <td>{strategy_2}</td>
                 </tr>
             </table>
         </div>
