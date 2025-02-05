@@ -300,19 +300,23 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
 }
 
 
-def get_current_language() -> str:
+def get_current_language(default_lang="he") -> str:
     """
     Get the current language from URL parameter or session.
     Returns default 'he' if neither is set.
     """
-    # First check URL parameter
-    url_lang = request.args.get("lang")
-    if url_lang in ["he", "en"]:
-        session["language"] = url_lang  # Update session with URL parameter
-        return url_lang
+    try:
+        # First check URL parameter
+        url_lang = request.args.get("lang")
+        if url_lang in ["he", "en"]:
+            session["language"] = url_lang  # Update session with URL parameter
+            return url_lang
 
-    # Then fall back to session
-    return session.get("language", "he")
+        # Then fall back to session
+        return session.get("language", default_lang)
+    except RuntimeError:
+        # Outside request context, return default
+        return default_lang
 
 
 def get_translation(
