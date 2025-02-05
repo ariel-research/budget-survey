@@ -289,6 +289,13 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "survey_answers_tab": {"he": "תשובות הסקר", "en": "Survey Answers"},
         "survey_comments_tab": {"he": "הערות המשתתפים", "en": "Participant Comments"},
         "view_all_comments": {"he": "צפה בכל ההערות", "en": "View All Comments"},
+        "original_choice": {"he": "בחירה מקורית", "en": "Original choice"},
+        "not_available": {"he": "לא זמין", "en": "Not available"},
+        "pair_number": {"he": "זוג מספר", "en": "Pair"},
+        "table_choice": {"he": "בחירה", "en": "Choice"},
+        "table_option": {"he": "אפשרות", "en": "Option"},
+        "table_type": {"he": "סוג", "en": "Type"},
+        "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
     },
 }
 

@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 import pandas as pd
 
 from analysis.utils import is_sum_optimized
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -410,16 +411,17 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
 
     # Generate raw choice info HTML
     raw_choice_html = (
-        f'<span class="raw-choice-label">Original choice:</span>'
-        f'<span class="raw-choice-value">Option {raw_choice}</span>'
+        f'<span class="raw-choice-label">{get_translation("original_choice", "answers")}: '
+        f'{get_translation("option_number", "answers", number=raw_choice)}</span>'
         if raw_choice is not None
-        else '<span class="raw-choice-unavailable">Original choice: Not available</span>'
+        else f'<span class="raw-choice-unavailable">{get_translation("original_choice", "answers")}: '
+        f'{get_translation("not_available", "answers")}</span>'
     )
 
     return f"""
     <div class="choice-pair">
         <div class="pair-header">
-            <h5>Pair #{choice["pair_number"]}</h5>
+            <h5>{get_translation("pair_number", "answers")} #{choice["pair_number"]}</h5>
             <div class="raw-choice-info">
                 {raw_choice_html}
             </div>
@@ -427,9 +429,9 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
         <div class="table-container">
             <table>
                 <tr>
-                    <th>Choice</th>
-                    <th>Option</th>
-                    <th>Type</th>
+                    <th>{get_translation("table_choice", "answers")}</th>
+                    <th>{get_translation("table_option", "answers")}</th>
+                    <th>{get_translation("table_type", "answers")}</th>
                 </tr>
                 <tr>
                     <td class="selection-column">{str('✓') if user_choice == 1 else ''}</td>
