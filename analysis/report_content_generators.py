@@ -413,7 +413,7 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
         f'<span class="raw-choice-label">Original choice:</span>'
         f'<span class="raw-choice-value">Option {raw_choice}</span>'
         if raw_choice is not None
-        else '<span class="raw-choice-unavailable">Raw choice not available</span>'
+        else '<span class="raw-choice-unavailable">Original choice: Not available</span>'
     )
 
     return f"""
