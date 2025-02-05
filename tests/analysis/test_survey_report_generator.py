@@ -43,20 +43,32 @@ def test_generate_report(mock_generate_pdf, mock_render, mock_prepare, mock_load
 
 
 def test_prepare_report_data(
-    sample_summary_stats, sample_optimization_stats, sample_survey_responses, app
+    sample_summary_stats,
+    sample_optimization_stats,
+    sample_survey_responses,
+    app,
+    mock_translations,
 ):
     """Test preparation of report data using fixture data."""
-    sample_data = {
-        "summary": sample_summary_stats,
-        "optimization": sample_optimization_stats,
-        "responses": sample_survey_responses,
-    }
+    with app.test_request_context():
+        with patch(
+            "analysis.report_content_generators.get_translation"
+        ) as mock_get_translation:
+            mock_get_translation.side_effect = (
+                lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+            )
 
-    result = prepare_report_data(sample_data)
+            sample_data = {
+                "summary": sample_summary_stats,
+                "optimization": sample_optimization_stats,
+                "responses": sample_survey_responses,
+            }
 
-    assert isinstance(result, dict)
-    assert "metadata" in result
-    assert "sections" in result
+            result = prepare_report_data(sample_data)
+
+            assert isinstance(result, dict)
+            assert "metadata" in result
+            assert "sections" in result
 
     # Check metadata
     assert "generated_date" in result["metadata"]

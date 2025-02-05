@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from analysis.report_content_generators import (
     calculate_user_consistency,
@@ -111,16 +112,25 @@ def test_generate_methodology_description():
     assert "Reporting" in methodology
 
 
-def test_generate_detailed_user_choices_empty():
+def test_generate_detailed_user_choices_empty(test_request_context, mock_translations):
     """Test generate_detailed_user_choices with empty input."""
-    option_labels = ("Option 1", "Option 2")
-    result = generate_detailed_user_choices([], option_labels)
-    assert "No detailed user choice data available" in result
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_get_translation:
+        mock_get_translation.side_effect = (
+            lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+        )
+
+        option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
+        result = generate_detailed_user_choices([], option_labels)
+        assert "No detailed user choice data available" in result
 
 
-def test_generate_detailed_user_choices_single_user():
+def test_generate_detailed_user_choices_single_user(
+    test_request_context, mock_translations
+):
     """Test generate_detailed_user_choices with a single user's data."""
-    option_labels = ("Sum Optimized", "Ratio Optimized")
+    option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
     test_data = [
         {
             "user_id": "test123",
@@ -133,19 +143,28 @@ def test_generate_detailed_user_choices_single_user():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data, option_labels)
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_get_translation:
+        mock_get_translation.side_effect = (
+            lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+        )
 
-    # Check basic structure with corrected assertions
-    assert "User ID: test123" in result
-    assert "Survey ID: 1" in result
-    assert "Ideal budget: [50, 30, 20]" in result
-    assert "<td>Ratio Optimized</td>" in result
+        result = generate_detailed_user_choices(test_data, option_labels)
+
+        assert "User ID: test123" in result
+        assert "Survey ID: 1" in result
+        assert "Ideal budget: [50, 30, 20]" in result
+        assert "Sum Optimized Vector" in result
+        assert "Ratio Optimized Vector" in result
 
 
-def test_generate_detailed_user_choices_multiple_optimizations():
+def test_generate_detailed_user_choices_multiple_optimizations(
+    test_request_context, mock_translations
+):
     """Test generate_detailed_user_choices with both sum and ratio optimizations."""
     optimal = [50, 30, 20]  # Base optimal allocation
-    option_labels = ("Sum Optimized", "Ratio Optimized")
+    option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
     test_data = [
         {
             "user_id": "test123",
@@ -167,17 +186,26 @@ def test_generate_detailed_user_choices_multiple_optimizations():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data, option_labels)
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_get_translation:
+        mock_get_translation.side_effect = (
+            lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+        )
 
-    assert "<td>Sum Optimized</td>" in result
-    assert "<td>Ratio Optimized</td>" in result
-    assert "Pair #1" in result
-    assert "Pair #2" in result
+        result = generate_detailed_user_choices(test_data, option_labels)
+
+        assert "Sum Optimized Vector" in result
+        assert "Ratio Optimized Vector" in result
+        assert "Pair #1" in result
+        assert "Pair #2" in result
 
 
-def test_generate_detailed_user_choices_multiple_surveys():
+def test_generate_detailed_user_choices_multiple_surveys(
+    test_request_context, mock_translations
+):
     """Test generate_detailed_user_choices with multiple surveys for the same user."""
-    option_labels = ("Sum Optimized", "Ratio Optimized")
+    option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
     test_data = [
         {
             "user_id": "test123",
@@ -199,18 +227,27 @@ def test_generate_detailed_user_choices_multiple_surveys():
         },
     ]
 
-    result = generate_detailed_user_choices(test_data, option_labels)
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_get_translation:
+        mock_get_translation.side_effect = (
+            lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+        )
 
-    # Check multiple survey sections
-    assert "Survey ID: 1" in result
-    assert "Survey ID: 2" in result
-    assert "Ideal budget: [25, 25, 50]" in result
-    assert "Ideal budget: [40, 40, 20]" in result
+        result = generate_detailed_user_choices(test_data, option_labels)
+
+        # Check multiple survey sections
+        assert "Survey ID: 1" in result
+        assert "Survey ID: 2" in result
+        assert "Ideal budget: [25, 25, 50]" in result
+        assert "Ideal budget: [40, 40, 20]" in result
 
 
-def test_generate_detailed_user_choices_css_classes():
+def test_generate_detailed_user_choices_css_classes(
+    test_request_context, mock_translations
+):
     """Test that generate_detailed_user_choices includes correct CSS classes."""
-    option_labels = ("Sum Optimized", "Ratio Optimized")
+    option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
     test_data = [
         {
             "user_id": "test123",
@@ -223,12 +260,19 @@ def test_generate_detailed_user_choices_css_classes():
         }
     ]
 
-    result = generate_detailed_user_choices(test_data, option_labels)
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_get_translation:
+        mock_get_translation.side_effect = (
+            lambda key, section, **kwargs: mock_translations.get(key, f"[{key}]")
+        )
 
-    # Check CSS classes
-    assert 'class="user-choices"' in result
-    assert 'class="survey-choices"' in result
-    assert 'class="pairs-list"' in result
-    assert 'class="ideal-budget"' in result
-    assert 'class="selection-column"' in result
-    assert 'class="option-column"' in result
+        result = generate_detailed_user_choices(test_data, option_labels)
+
+        # Check CSS classes
+        assert 'class="user-choices"' in result
+        assert 'class="survey-choices"' in result
+        assert 'class="pairs-list"' in result
+        assert 'class="ideal-budget"' in result
+        assert 'class="selection-column"' in result
+        assert 'class="option-column"' in result

@@ -218,6 +218,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         return "optimization_metrics"
 
     def get_option_labels(self) -> Tuple[str, str]:
+        """Get the unique labels for this strategy's options."""
         return ("Sum Optimized Vector", "Ratio Optimized Vector")
 
     def get_option_description(self, **kwargs) -> str:

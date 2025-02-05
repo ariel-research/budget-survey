@@ -89,7 +89,7 @@ def test_option_descriptions(strategy):
     assert strategy.get_strategy_name() == "optimization_metrics"
 
     labels = strategy.get_option_labels()
-    assert labels == ("Sum Optimized", "Ratio Optimized")
+    assert labels == ("Sum Optimized Vector", "Ratio Optimized Vector")
 
 
 def test_generate_pairs_error_handling(strategy):
