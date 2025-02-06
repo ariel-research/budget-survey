@@ -463,12 +463,12 @@ def _generate_survey_summary_html(
     stats = calculate_choice_statistics(choices)
     return f"""
     <div class="survey-stats">
-        <h6 class="stats-title">Survey Summary</h6>
+        <h6 class="stats-title">{get_translation('survey_summary', 'answers')}</h6>
         <div class="table-container">
             <table>
                 <tr>
-                    <th>Choice</th>
-                    <th>Percentage</th>
+                    <th>{get_translation('choice', 'answers')}</th>
+                    <th>{get_translation('percentage', 'answers')}</th>
                 </tr>
                 <tr class="{'highlight-row' if stats['option1_percent'] > stats['option2_percent'] else ''}">
                     <td>{option_labels[0]}</td>
@@ -501,8 +501,8 @@ def _generate_survey_choices_html(
     choices_html = [
         f"""
         <div class="survey-choices">
-            <h4>Survey ID: {survey_id}</h4>
-            <div class="ideal-budget">Ideal budget: {optimal_allocation}</div>
+            <h4>{get_translation('survey_id', 'answers')}: {survey_id}</h4>
+            <div class="ideal-budget">{get_translation('ideal_budget', 'answers')}: {optimal_allocation}</div>
             <div class="pairs-list">
         """
     ]
@@ -566,7 +566,7 @@ def generate_detailed_user_choices(
     # 3. Detailed user choices with IDs for linking
     for user_id, surveys in grouped_choices.items():
         content.append(f'<section id="user-{user_id}" class="user-choices">')
-        content.append(f"<h3>User ID: {user_id}</h3>")
+        content.append(f"<h3>{get_translation('user_id', 'answers')}: {user_id}</h3>")
 
         for survey_id, choices in surveys.items():
             content.append(
@@ -616,7 +616,7 @@ def generate_detailed_breakdown_table(
     # Combine into final table
     table_html = f"""
     <div class="summary-table-container">
-        <h2>Survey Response Breakdown</h2>
+        <h2>{get_translation('survey_response_breakdown', 'answers')}</h2>
         <div class="table-container detailed-breakdown">
             <table>
                 <thead>
@@ -661,13 +661,13 @@ def generate_overall_statistics_table(
 
     overall_table = f"""
     <div class="summary-table-container">
-        <h2>Overall Survey Statistics</h2>
+        <h2>{get_translation('overall_statistics', 'answers')}</h2>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Metric</th>
-                        <th>Average Percentage</th>
+                        <th>{get_translation('metric', 'answers')}</th>
+                        <th>{get_translation('average_percentage', 'answers')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -682,7 +682,7 @@ def generate_overall_statistics_table(
                 </tbody>
             </table>
         </div>
-        <p class="summary-note">Based on {total_responses} survey responses</p>
+        <p class="summary-note">{get_translation('based_on_responses', 'answers', x=total_responses)}</p>
     </div>
     """
 

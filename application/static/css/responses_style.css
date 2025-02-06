@@ -445,7 +445,7 @@ html {
    color: var(--color-text-light);
    font-size: var(--font-size-sm);
    margin-top: var(--spacing-md);
-   text-align: right;
+   text-align: left;
    font-style: italic;
 }
 
@@ -642,6 +642,33 @@ html {
 @keyframes loading {
    0% { background-position: 200% 0; }
    100% { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+  RTL support
+  ========================================================================== */
+[dir="rtl"] .table-container th,
+[dir="rtl"] .table-container td {
+    text-align: right;
+}
+
+[dir="rtl"] .summary-note {
+    text-align: right;
+}
+
+[dir="rtl"] .ideal-budget {
+    font-family: var(--font-family-mono);
+    direction: ltr;
+    display: inline-block;
+}
+
+[dir="rtl"] .raw-choice-info {
+    right: auto;
+    left: var(--spacing-sm);
+}
+
+[dir="rtl"] .selection-column {
+    text-align: center;
 }
 
 /* ==========================================================================
