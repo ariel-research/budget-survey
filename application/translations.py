@@ -296,6 +296,30 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_option": {"he": "אפשרות", "en": "Option"},
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
+        # Main titles and sections
+        "overall_statistics": {
+            "he": "סטטיסטיקות כלליות",
+            "en": "Overall Survey Statistics",
+        },
+        "survey_response_breakdown": {
+            "he": "פילוח תשובות הסקר",
+            "en": "Survey Response Breakdown",
+        },
+        "survey_summary": {"he": "סיכום הסקר", "en": "Survey Summary"},
+        # Table headers and labels
+        "average_percentage": {"he": "אחוז ממוצע", "en": "Average Percentage"},
+        "metric": {"he": "מדד", "en": "Metric"},
+        "percentage": {"he": "אחוז", "en": "Percentage"},
+        "choice": {"he": "בחירה", "en": "Choice"},
+        # Identifiers and metadata
+        "survey_id": {"he": "מזהה סקר", "en": "Survey ID"},
+        "user_id": {"he": "מזהה משתמש", "en": "User ID"},
+        "ideal_budget": {"he": "תקציב אידיאלי", "en": "Ideal budget"},
+        # Response count template
+        "based_on_responses": {
+            "he": "מבוסס על {x} תשובות לסקר",
+            "en": "Based on {x} survey responses",
+        },
     },
 }
 
