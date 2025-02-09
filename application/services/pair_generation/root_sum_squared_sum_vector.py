@@ -18,20 +18,10 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
 
     This strategy generates pairs where one option minimizes the root of sum of squared
     differences while the other minimizes the regular sum of absolute differences.
+    A valid pair will have complementary properties: when one vector is better in
+    root sum squared, it must be worse in regular sum, and vice versa.
 
     Example:
-        For user_vector = (60, 25, 15):
-        - Vector1 (50, 35, 15): Multiple small changes
-            * Sum diff: |60-50| + |25-35| + |15-15| = 10 + 10 + 0 = 20
-            * Root squared: sqrt((60-50)² + (25-35)² + (15-15)²) = sqrt(100 + 100 + 0) = 14.14
-        - Vector2 (40, 25, 35): One large change, one small change
-            * Sum diff: |60-40| + |25-25| + |15-35| = 20 + 0 + 20 = 20
-            * Root squared: sqrt((60-40)² + (25-25)² + (15-35)²) = sqrt(400 + 0 + 400) = 28.28
-
-    This example shows how both vectors have the same sum of differences (20),
-    but Vector1 is preferred by the root squared metric because it spreads the
-    changes more evenly (two 10-point changes) rather than concentrating them
-    (two 20-point changes).
     """
 
     def root_sum_squared_differences(
