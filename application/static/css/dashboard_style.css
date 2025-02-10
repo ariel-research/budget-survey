@@ -6,7 +6,12 @@
     --color-primary: #3B82F6;    /* Blue */
     --color-success: #10B981;    /* Green */
     --color-purple: #8B5CF6;     /* Purple */
-    
+    --color-orange: #F97316;     /* Orange */
+    --color-teal: #14B8A6;       /* Teal */
+    --color-indigo: #6366F1;     /* Indigo */
+    --color-rose: #F43F5E;       /* Rose */
+    --color-amber: #F59E0B;      /* Amber */
+
     /* Text Colors */
     --color-text-dark: #1f2937;
     --color-text-light: #6b7280;
@@ -199,9 +204,26 @@
 }
 
 /* Strategy Badge Colors */
-.strategy-badge[data-strategy="optimization_metrics"] { background: var(--color-primary); }
-.strategy-badge[data-strategy="weighted_average_vector"] { background: var(--color-success); }
-.strategy-badge[data-strategy="rounded_weighted_average_vector"] { background: var(--color-purple); }
+.strategy-badge[data-strategy="optimization_metrics"] { 
+    background: var(--color-primary);     /* Blue */
+}
+.strategy-badge[data-strategy="weighted_average_vector"] { 
+    background: var(--color-success);     /* Green */
+}
+.strategy-badge[data-strategy="rounded_weighted_average_vector"] { 
+    background: var(--color-purple);      /* Purple */
+}
+.strategy-badge[data-strategy="root_sum_squared_sum"] { 
+    background: var(--color-teal);        /* Teal */
+}
+.strategy-badge[data-strategy="root_sum_squared_ratio"] { 
+    background: var(--color-rose);        /* Rose */
+}
+
+/* A default color for any future strategies */
+.strategy-badge {
+    background: var(--color-indigo);      /* Default color for unmatched strategies */
+}
 
 /* Card Content */
 .survey-content {

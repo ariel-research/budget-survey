@@ -40,7 +40,7 @@ def test_request_context(app):
 
 @pytest.fixture
 def mock_translations():
-    """Returns common test translations to avoid request context dependencies"""
+    """Returns all necessary test translations to avoid request context dependencies"""
     return {
         "original_choice": "Original choice",
         "option_number": "Option {number}",
@@ -49,4 +49,15 @@ def mock_translations():
         "table_choice": "Choice",
         "table_option": "Option",
         "table_type": "Type",
+        "user_id": "User ID",
+        "survey_id": "Survey ID",
+        "ideal_budget": "Ideal budget",
+        "survey_summary": "Survey Summary",
+        "overall_statistics": "Overall Survey Statistics",
+        "survey_response_breakdown": "Survey Response Breakdown",
+        "metric": "Metric",
+        "average_percentage": "Average Percentage",
+        "percentage": "Percentage",
+        "choice": "Choice",
+        "based_on_responses": "Based on {x} survey responses",
     }

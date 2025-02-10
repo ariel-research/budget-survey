@@ -139,30 +139,10 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         for i in range(len(vectors)):
             for j in range(i + 1, len(vectors)):
                 v1, v2 = vectors[i], vectors[j]
-                s1, s2, r1, r2 = self._calculate_optimization_metrics(
-                    user_vector, v1, v2
-                )
+                metrics = self._calculate_optimization_metrics(user_vector, v1, v2)
 
-                if self._is_valid_pair((s1, s2, r1, r2)):
-                    # Create pair with strategy descriptions
-                    if s1 < s2:  # v1 is better for sum
-                        pair = {
-                            self.get_option_description(
-                                metric_type="sum", value=s1
-                            ): v1,
-                            self.get_option_description(
-                                metric_type="ratio", value=r2
-                            ): v2,
-                        }
-                    else:  # v2 is better for sum
-                        pair = {
-                            self.get_option_description(
-                                metric_type="sum", value=s2
-                            ): v2,
-                            self.get_option_description(
-                                metric_type="ratio", value=r1
-                            ): v1,
-                        }
+                if self._is_valid_pair(metrics):
+                    pair = self._create_pair_description(metrics, v1, v2)
                     valid_pairs.append(pair)
 
         logger.debug(f"Found {len(valid_pairs)} valid pairs")
@@ -212,6 +192,39 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         except Exception as e:
             logger.error(f"Pair generation failed: {str(e)}")
             raise
+
+    def _create_pair_description(
+        self, metrics: tuple[float, float, float, float], v1: tuple, v2: tuple
+    ) -> dict[str, tuple]:
+        """
+        Create pair description with appropriate metrics.
+
+        Args:
+            metrics: Tuple of (m1_1, m1_2, m2_1, m2_2) where:
+                    m1_* is the first metric for each vector
+                    m2_* is the second metric for each vector
+            v1, v2: The vectors to compare
+
+        Returns:
+            Dict containing vector descriptions and values
+        """
+        m1_1, m1_2, m2_1, m2_2 = metrics
+        metric_type1, metric_type2 = self.get_metric_types()
+
+        if m1_1 < m1_2:  # v1 is better in first metric
+            return {
+                self.get_option_description(metric_type=metric_type1, value=m1_1): v1,
+                self.get_option_description(metric_type=metric_type2, value=m2_2): v2,
+            }
+        else:  # v2 is better in first metric
+            return {
+                self.get_option_description(metric_type=metric_type1, value=m1_2): v2,
+                self.get_option_description(metric_type=metric_type2, value=m2_1): v1,
+            }
+
+    def get_metric_types(self) -> tuple[str, str]:
+        """Get the metric types used by this strategy."""
+        return "sum", "ratio"
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""

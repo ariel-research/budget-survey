@@ -132,6 +132,32 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - After rounding to multiples of 5: [40, 40, 20]
      ```
 
+4. **Root Sum Squared Sum Strategy**
+   - Strategy name: `root_sum_squared_sum`
+   - Compares root of sum of squared differences vs regular sum of differences
+   - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of regular sum of differences
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 10)
+   - Example:
+     ```python
+     # User's ideal: (50, 25, 25)
+     # Option 1: (25, 70, 5)  Better root sum squared (55.23) but worse sum differences (90)
+     # Option 2: (10, 25, 65)  Better sum differences (80) but worse root sum squared (56.57)
+     ```
+
+5. **Root Sum Squared Ratio Strategy**
+   - Strategy name: `root_sum_squared_ratio`
+   - Compares root of sum of squared differences vs minimal ratio
+   - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of minimal ratio
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 10)
+   - Example:
+     ```python
+     # User's ideal: (60, 25, 15)
+     # Option 1: (50, 30, 20)  Better minimal ratio (0.83) but worse root sum squared (12.25)
+     # Option 2: (65, 25, 10)  Better root sum squared (7.07) but worse minimal ratio (0.67)
+     ```
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:
