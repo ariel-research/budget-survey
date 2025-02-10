@@ -140,7 +140,7 @@ def test_generate_detailed_user_choices_single_user(
             "option_1": json.dumps([50, 40, 10]),  # better sum
             "option_2": json.dumps([30, 50, 20]),  # better ratio
             "user_choice": 2,  # Choosing option 2 -- ratio optimization
-        },
+        }
     ]
 
     with patch(
@@ -236,7 +236,6 @@ def test_generate_detailed_user_choices_multiple_surveys(
 
         result = generate_detailed_user_choices(test_data, option_labels)
 
-        # Check multiple survey sections
         assert "Survey ID: 1" in result
         assert "Survey ID: 2" in result
         assert "Ideal budget: [25, 25, 50]" in result
