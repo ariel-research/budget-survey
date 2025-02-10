@@ -22,6 +22,13 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
     root sum squared, it must be worse in regular sum, and vice versa.
 
     Example:
+        For user_vector = (50, 25, 25):
+        - Root Sum Squared Optimized Vector: 55.23 → (25, 70, 5)
+            * RSS: 55.23, Sum Diff: 90
+        - Sum Optimized Vector: 80 → (10, 25, 65)
+            * RSS: 56.57, Sum Diff: 80
+        Valid because:
+            RSS₁ (55.23) < RSS₂ (56.57) AND SumDiff₁ (90) > SumDiff₂ (80)
     """
 
     def root_sum_squared_differences(

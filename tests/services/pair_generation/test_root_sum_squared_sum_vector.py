@@ -57,9 +57,9 @@ def test_is_valid_pair(strategy):
 def test_generate_pairs(strategy):
     """Test if pair generation works correctly."""
     user_vector = (50, 25, 25)
-    pairs = strategy.generate_pairs(user_vector, n=5, vector_size=3)
+    pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
 
-    assert len(pairs) == 5
+    assert len(pairs) == 10
     assert all(isinstance(pair, dict) for pair in pairs)
     assert all(len(pair) == 2 for pair in pairs)
 
