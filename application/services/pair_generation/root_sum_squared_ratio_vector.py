@@ -90,7 +90,7 @@ class RootSumSquaredRatioStrategy(OptimizationMetricsStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get the labels for the two types of optimization."""
-        return ("Root Sum Squared Optimized", "Ratio Optimized")
+        return ("Root Sum Squared Optimized Vector", "Ratio Optimized Vector")
 
     def get_option_description(self, **kwargs) -> str:
         """Get descriptive name for an option including the metric value."""
@@ -98,7 +98,7 @@ class RootSumSquaredRatioStrategy(OptimizationMetricsStrategy):
         value = kwargs.get("value")
 
         if metric_type == "rss":
-            return f"Root Sum Squared Optimized: {value:.2f}"
+            return f"Root Sum Squared Optimized Vector: {value:.2f}"
         elif metric_type == "ratio":
-            return f"Ratio Optimized: {value:.2f}"
+            return f"Ratio Optimized Vector: {value:.2f}"
         return "Unknown Vector"
