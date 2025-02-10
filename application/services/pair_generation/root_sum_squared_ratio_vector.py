@@ -84,6 +84,10 @@ class RootSumSquaredRatioStrategy(OptimizationMetricsStrategy):
         rss1, rss2, ratio1, ratio2 = metrics
         return (rss1 < rss2 and ratio1 < ratio2) or (rss2 < rss1 and ratio2 < ratio1)
 
+    def get_metric_types(self) -> tuple[str, str]:
+        """Get the metric types used by this strategy."""
+        return "rss", "ratio"
+
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
         return "root_sum_squared_ratio"
