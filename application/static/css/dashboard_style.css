@@ -205,19 +205,19 @@
 
 /* Strategy Badge Colors */
 .strategy-badge[data-strategy="optimization_metrics"] { 
-    background: var(--color-primary);     /* Blue - keep original */
+    background: var(--color-primary);     /* Blue */
 }
 .strategy-badge[data-strategy="weighted_average_vector"] { 
-    background: var(--color-success);     /* Green - keep original */
+    background: var(--color-success);     /* Green */
 }
 .strategy-badge[data-strategy="rounded_weighted_average_vector"] { 
-    background: var(--color-purple);      /* Purple - keep original */
+    background: var(--color-purple);      /* Purple */
 }
 .strategy-badge[data-strategy="root_sum_squared_sum"] { 
-    background: var(--color-teal);        /* Teal - new color */
+    background: var(--color-teal);        /* Teal */
 }
 .strategy-badge[data-strategy="root_sum_squared_ratio"] { 
-    background: var(--color-rose);        /* Rose - new color */
+    background: var(--color-rose);        /* Rose */
 }
 
 /* A default color for any future strategies */
