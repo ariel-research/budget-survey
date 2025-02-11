@@ -13,6 +13,7 @@ from flask import (
     url_for,
 )
 
+from application.decorators import check_survey_eligibility
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
@@ -106,6 +107,7 @@ def index():
 
 
 @survey_routes.route("/create_vector", methods=["GET", "POST"])
+@check_survey_eligibility
 def create_vector():
     """Budget vector creation route handler."""
     user_id, external_survey_id, internal_survey_id = get_required_params()
@@ -174,6 +176,7 @@ def create_vector():
 
 
 @survey_routes.route("/survey", methods=["GET", "POST"])
+@check_survey_eligibility
 def survey():
     """Main survey route handler."""
     user_id, external_survey_id, internal_survey_id = get_required_params()
