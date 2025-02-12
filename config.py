@@ -38,6 +38,13 @@ class Config:
         "STATUS": {"COMPLETE": "finish"},
     }
 
+    # Survey base URL
+    SURVEY_BASE_URL: str = (
+        "http://127.0.0.1:5000"
+        if os.getenv("FLASK_ENV") == "development"
+        else "https://survey.csariel.xyz"
+    )
+
 
 class TestConfig(Config):
     """Test-specific configuration."""
