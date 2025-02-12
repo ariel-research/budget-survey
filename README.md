@@ -306,64 +306,67 @@ Note: Make sure your .env file is properly configured with the correct database 
    - If using `python app.py`: http://localhost:5001
    - If using `flask run`: http://localhost:5000
 
-The live version of the application can be accessed at these endpoints:
-
-- Main Survey: 
-  - Default survey (uses config survey ID): 
-    - https://survey.csariel.xyz/?userID=...&surveyID=...
-  - Custom survey ID: 
-    - https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=2
-- Survey Report: https://survey.csariel.xyz/report
-- Development Report: https://survey.csariel.xyz/dev/report
-- Analytics Dashboard: https://survey.csariel.xyz/dashboard
-- Survey Responses: https://survey.csariel.xyz/surveys
-  - View all responses: https://survey.csariel.xyz/surveys/responses
-  - View responses by survey ID: https://survey.csariel.xyz/surveys/{survey_id}/responses
-  - View all comments: https://survey.csariel.xyz/surveys/comments
-  - View comments by survey ID: https://survey.csariel.xyz/surveys/{survey_id}/comments
-  
-Notes: 
-
-- For the main survey endpoint, both 'userID' and 'surveyID' parameters are required in the URL.
-- The 'userID' parameter is used to obtain the user_id.
-- While the 'surveyID' parameter is required in the URL, it is not used by the application. Instead, the survey ID is determined by:
-  1. Custom internal survey ID if provided via `internalID` parameter at root endpoint
-  2. Falls back to the survey ID from config file if no custom ID is provided
-
 ## Endpoints
 
 ### Main Routes
-- `/`: The first survey page, shows an introduction to the survey and consent form. 
-- `/create_vector`: second survey page, asks the user for his ideal budget.
-- `/survey`: The third survey page, asks the user to compare pairs of non-ideal budgets.
-- `/thank_you`: Thank you page, shown after survey completion.
-- `/report`: Displays the survey analysis report in PDF format. This endpoint:
-  - Automatically ensures the report is up-to-date with the latest survey data.
-  - Shows the PDF directly in the browser.
-  - Allows downloading the report.
-- `/dev/report`: Development endpoint for testing report modifications. This endpoint:
-  - Always generates a fresh PDF report regardless of database state.
-  - Creates the report as 'survey_analysis_report_dev.pdf'.
-  - Useful for testing report template changes without affecting the production report.
-  - Does not implement the automatic refresh mechanism of the main `/report` endpoint.
-- `/dashboard`: Analytics dashboard displaying visualizations and metrics of survey results.
-- `/surveys`: Survey answers and comments section:
-  - `/surveys/responses`: View all survey answers
-  - `/surveys/<survey_id>/responses`: View answers for a specific survey
-  - `/surveys/<survey_id>/comments`: View comments for a specific survey
-  - `/surveys/comments`: View all comments across all surveys
+1. Survey Taking
+   - `/?userID=...&surveyID=...` - Take survey (with default survey ID)
+   - `/?userID=...&surveyID=...&internalID=N` - Take survey with specific internal ID
+   - `/create_vector` - Create budget allocation
+   - `/survey` - Compare budget pairs
+   - `/thank_you` - Survey completion page
 
-Note: The `/report` endpoint includes an automatic refresh mechanism that:
-1. Checks if the CSV files are up-to-date with the database
-2. Regenerates CSVs if they're outdated or missing
-3. Checks if the PDF report is up-to-date with the CSVs
-4. Regenerates the PDF if needed
-This ensures that the report always reflects the most recent survey data without manual intervention.
+2. Analysis & Reports
+   - `/report` - View survey analysis report (PDF)
+     * Automatically refreshes based on latest data
+     * Updates CSVs and PDF as needed
+     * Shows PDF in browser with download option
+   - `/dev/report` - Development report for testing
+     * Always generates fresh report
+     * Useful for testing template changes
+     * Creates 'survey_analysis_report_dev.pdf'
 
-For development purposes, use the `/dev/report` endpoint when making changes to report templates or generation logic, as it will always create a fresh report without caching considerations.
+3. Survey Results
+   - `/surveys/dashboard` - Analytics dashboard
+   - `/surveys/responses` - View all responses across all surveys
+   - `/surveys/{survey_id}/responses` - View responses for specific survey
+   - `/surveys/users/{user_id}/responses` - View all responses from specific user
+   - `/surveys/comments` - View all comments
+   - `/surveys/{survey_id}/comments` - View comments for specific survey
 
 ### API Endpoints
-- `/get_messages`: Returns a JSON dictionary of all error messages used in the application. This endpoint is used by the frontend to display localized error messages to users.
+- `/get_messages` - Returns JSON dictionary of error messages
+
+Notes: 
+- For survey taking endpoints, both 'userID' and 'surveyID' parameters are required
+- The 'surveyID' parameter in the URL is required but not used internally
+- The survey ID is determined by either:
+  1. Custom internal survey ID via `internalID` parameter
+  2. Default survey ID from config file
+
+## Live Application Endpoints
+
+1. Survey Taking
+   - Default survey: https://survey.csariel.xyz/?userID=...&surveyID=...
+   - Custom survey: https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=N
+
+2. Analysis & Reports
+   - Survey Report: https://survey.csariel.xyz/report
+   - Development Report: https://survey.csariel.xyz/dev/report
+
+3. Survey Results
+   - Dashboard: https://survey.csariel.xyz/surveys/dashboard
+   - All Responses: https://survey.csariel.xyz/surveys/responses
+   - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
+   - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
+   - All Comments: https://survey.csariel.xyz/surveys/comments
+   - Survey Comments: https://survey.csariel.xyz/surveys/{survey_id}/comments
+
+Notes:
+- URL parameters required for survey taking:
+  * userID: Required for user identification
+  * surveyID: Required but not used internally
+  * internalID: Optional, overrides default survey ID from config
 
 ## Screen Text Locations
 To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
@@ -379,11 +382,18 @@ To modify the text displayed on each screen of the application, here's a guide t
    - Hebrew is the default language
    - Templates automatically handle RTL/LTR based on selected language
    - Files:
-     - `application/templates/index.html`
-     - `application/templates/create_vector.html`
-     - `application/templates/survey.html`
-     - `application/templates/thank_you.html`
-     - `application/templates/error.html`
+     * Survey Taking:
+       - `templates/index.html` - Landing/consent page
+       - `templates/create_vector.html` - Budget allocation
+       - `templates/survey.html` - Pair comparisons
+       - `templates/thank_you.html` - Completion page
+     * Survey Results:
+       - `templates/dashboard/surveys_overview.html` - Dashboard view
+       - `templates/responses/list.html` - All responses
+       - `templates/responses/detail.html` - Survey responses
+       - `templates/responses/user_detail.html` - User responses
+     * Common:
+       - `templates/error.html` - Error pages
 
 Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
 

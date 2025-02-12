@@ -24,7 +24,8 @@ def view_dashboard():
             "total_surveys": get_translation("total_surveys", "dashboard"),
             "total_participants": get_translation("total_participants", "dashboard"),
             "last_updated": get_translation("last_updated", "dashboard"),
-            "view_details": get_translation("view_details", "dashboard"),
+            "view_responses": get_translation("view_responses", "dashboard"),
+            "take_survey": get_translation("take_survey", "dashboard"),
         }
 
         return render_template(

@@ -270,12 +270,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "strategy": {"he": "אסטרטגיה", "en": "Strategy"},
         "title": {"he": "פאנל הסקרים", "en": "Surveys Overview"},
         "subtitle": {
-            "he": "צפה בכל הסקרים הפעילים והתוצאות שלהם",
-            "en": "View all active surveys and their results",
+            "he": "צפה ונהל את הסקרים הפעילים",
+            "en": "View and manage active surveys",
         },
         "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
         "total_participants": {"he": "סך כל המשתתפים", "en": "Total Participants"},
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
+        "view_responses": {"he": "צפה בתשובות", "en": "View Responses"},
+        "take_survey": {"he": "מלא סקר", "en": "Take Survey"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},
@@ -296,6 +298,15 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_option": {"he": "אפשרות", "en": "Option"},
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
+        "user_responses_title": {
+            "he": "תשובות משתמש {user_id}",
+            "en": "User {user_id} Responses",
+        },
+        "no_user_responses": {
+            "he": "לא נמצאו תשובות למשתמש {user_id}",
+            "en": "No responses found for user {user_id}",
+        },
+        "back_to_list": {"he": "חזרה לרשימת התשובות", "en": "Back to Responses List"},
         # Main titles and sections
         "overall_statistics": {
             "he": "סטטיסטיקות כלליות",

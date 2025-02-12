@@ -38,15 +38,15 @@
         <div class="surveys-grid">
             {% for survey in surveys %}
             <div class="survey-card">
-                <a href="{{ url_for('responses.get_survey_responses', survey_id=survey.id) }}" class="card-link">
-                    <div class="survey-header">
-                        <span class="survey-number">#{{ survey.id }}</span>
-                        <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">
-                            {{ survey.strategy_name }}
-                        </span>
-                    </div>
-                    
-                    <div class="survey-content">
+                <div class="survey-header">
+                    <span class="survey-number">#{{ survey.id }}</span>
+                    <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">
+                        {{ survey.strategy_name }}
+                    </span>
+                </div>
+                
+                <div class="survey-content">
+                    <div class="survey-info">
                         <h2 class="survey-title">{{ survey.name[get_current_language()] }}</h2>
                         {% if survey.description %}
                         <p class="survey-description">
@@ -54,14 +54,22 @@
                         </p>
                         {% endif %}
                     </div>
+                </div>
 
-                    <div class="survey-footer">
-                        <span class="btn btn-view">
-                            <span class="btn-text">{{ translations.view_details }}</span>
-                            <span class="btn-icon">→</span>
-                        </span>
-                    </div>
-                </a>
+                <div class="survey-actions">
+                    <a href="{{ url_for('responses.get_survey_responses', survey_id=survey.id) }}" 
+                       class="btn btn-responses">
+                        <span class="btn-icon">📊</span>
+                        <span class="btn-text">{{ translations.view_responses }}</span>
+                    </a>
+                    
+                    <a href="{{ config['SURVEY_BASE_URL'] }}/?userID=...&surveyID=...&internalID={{ survey.id }}"
+                        class="btn btn-participate"
+                        target="_blank">
+                        <span class="btn-icon">✏️</span>
+                        <span class="btn-text">{{ translations.take_survey }}</span>
+                    </a>
+                </div>
             </div>
             {% endfor %}
         </div>

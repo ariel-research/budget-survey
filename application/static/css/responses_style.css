@@ -500,6 +500,38 @@ html {
 }
 
 /* ==========================================================================
+  User Detail
+  ========================================================================== */
+  .header-content {
+   margin-bottom: var(--spacing-lg);
+}
+
+.back-link {
+   display: inline-flex;
+   align-items: center;
+   gap: var(--spacing-sm);
+   color: var(--color-primary);
+   text-decoration: none;
+   padding: var(--spacing-sm) var(--spacing-md);
+   border-radius: var(--radius-md);
+   transition: all 0.2s ease;
+   margin-top: var(--spacing-sm);
+   background-color: var(--color-background-alt);
+}
+
+.back-link:hover {
+   background-color: var(--color-background);
+   color: var(--color-primary-dark);
+   transform: translateX(-4px);
+}
+
+.back-icon {
+   font-size: 1.2em;
+   line-height: 1;
+}
+
+
+/* ==========================================================================
   Comments Grid Layout
   ========================================================================== */
 .comments-grid {
@@ -678,6 +710,14 @@ html {
 
 [dir="rtl"] .selection-column {
     text-align: center;
+}
+
+[dir="rtl"] .back-icon {
+   transform: scaleX(-1);
+}
+
+[dir="rtl"] .back-link:hover {
+   transform: translateX(4px);
 }
 
 /* ==========================================================================

@@ -23,7 +23,13 @@
     
     <div class="answers-content">
         {% if data.content %}
-            {{ data.content|safe }}
+            {% if show_tables_only %}
+                {# Show only until the first user section #}
+                {% set tables = data.content.split('<section')[0] %}
+                {{ tables|safe }}
+            {% else %}
+                {{ data.content|safe }}
+            {% endif %}
         {% else %}
             <p class="no-data">{{ get_translation('no_answers', 'answers') }}</p>
         {% endif %}
