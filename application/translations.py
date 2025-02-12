@@ -276,6 +276,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
         "total_participants": {"he": "סך כל המשתתפים", "en": "Total Participants"},
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
+        "view_responses": {"he": "צפה בתשובות", "en": "View Responses"},
+        "take_survey": {"he": "מלא סקר", "en": "Take Survey"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},
