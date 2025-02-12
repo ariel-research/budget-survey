@@ -184,6 +184,54 @@ def list_all_responses():
         )
 
 
+@responses_routes.route("/users/<string:user_id>/responses")
+def get_user_responses_detail(user_id: str):
+    """Get all responses from a specific user."""
+    try:
+        # Get all choices and filter for specific user
+        choices = retrieve_user_survey_choices()
+        user_choices = [c for c in choices if c["user_id"] == user_id]
+
+        if not user_choices:
+            logger.warning(f"No responses found for user {user_id}")
+            return (
+                render_template(
+                    "error.html",
+                    message=get_translation(
+                        "no_user_responses", "messages", user_id=user_id
+                    ),
+                ),
+                404,
+            )
+
+        # Add strategy labels
+        for choice in user_choices:
+            survey_id = choice["survey_id"]
+            strategy_config = get_survey_pair_generation_config(survey_id)
+            if strategy_config:
+                strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
+                choice["_strategy_labels"] = strategy.get_option_labels()
+
+        response_data = ResponseFormatter.format_response_data(user_choices)
+        response_data["content"] = generate_detailed_user_choices(
+            user_choices, option_labels=("Option 1", "Option 2")
+        )
+
+        return render_template(
+            "responses/user_detail.html", data=response_data, user_id=user_id
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving user responses: {str(e)}", exc_info=True)
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
 @responses_routes.route("/<int:survey_id>/comments")
 def get_survey_comments(survey_id: int):
     """

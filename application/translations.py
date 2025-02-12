@@ -296,6 +296,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_option": {"he": "אפשרות", "en": "Option"},
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
+        "user_responses_title": {
+            "he": "תשובות משתמש {user_id}",
+            "en": "User {user_id} Responses",
+        },
+        "no_user_responses": {
+            "he": "לא נמצאו תשובות למשתמש {user_id}",
+            "en": "No responses found for user {user_id}",
+        },
         # Main titles and sections
         "overall_statistics": {
             "he": "סטטיסטיקות כלליות",

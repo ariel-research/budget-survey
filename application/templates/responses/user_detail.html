@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responses_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="answers-container">
+    <div class="answers-header">
+        <h1>{{ get_translation('user_responses_title', 'answers', user_id=user_id) }}</h1>
+        
+        <a href="{{ url_for('responses.list_all_responses') }}" class="back-link">
+            ← {{ get_translation('back_to_list', 'answers') }}
+        </a>
+    </div>
+    
+    <div class="answers-content">
+        {% if data.content %}
+            <section class="user-choices">
+                {{ data.content|safe }}
+            </section>
+        {% else %}
+            <p class="no-data">{{ get_translation('no_answers', 'answers') }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
