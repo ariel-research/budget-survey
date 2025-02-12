@@ -87,9 +87,10 @@
 
 .header-description {
     color: var(--color-text-light);
-    font-size: var(--text-sm);
+    font-size: 0.875rem;
     margin: 0 auto;
     max-width: 450px;
+    opacity: 0.85;
 }
 
 /* ==========================================================================
@@ -127,6 +128,7 @@
 
 .metric-content {
     flex: 1;
+    text-align: center;
 }
 
 .metric-value {

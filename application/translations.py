@@ -270,8 +270,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "strategy": {"he": "אסטרטגיה", "en": "Strategy"},
         "title": {"he": "פאנל הסקרים", "en": "Surveys Overview"},
         "subtitle": {
-            "he": "צפה בכל הסקרים הפעילים והתוצאות שלהם",
-            "en": "View all active surveys and their results",
+            "he": "צפה ונהל את הסקרים הפעילים",
+            "en": "View and manage active surveys",
         },
         "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
         "total_participants": {"he": "סך כל המשתתפים", "en": "Total Participants"},
