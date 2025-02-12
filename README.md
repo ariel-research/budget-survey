@@ -347,8 +347,8 @@ Notes:
 ## Live Application Endpoints
 
 1. Survey Taking
-   - Default survey: https://survey.csariel.xyz/?userID=...&surveyID=...
-   - Custom survey: https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=N
+   - Default survey: <https://survey.csariel.xyz/?userID=...&surveyID=...>
+   - Custom survey: <https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=N>
 
 2. Analysis & Reports
    - Survey Report: https://survey.csariel.xyz/report
