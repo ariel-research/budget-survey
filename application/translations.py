@@ -304,6 +304,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "לא נמצאו תשובות למשתמש {user_id}",
             "en": "No responses found for user {user_id}",
         },
+        "back_to_list": {"he": "חזרה לרשימת התשובות", "en": "Back to Responses List"},
         # Main titles and sections
         "overall_statistics": {
             "he": "סטטיסטיקות כלליות",

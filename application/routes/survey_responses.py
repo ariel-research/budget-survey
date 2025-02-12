@@ -27,61 +27,65 @@ logger = logging.getLogger(__name__)
 responses_routes = Blueprint("responses", __name__)
 
 
-def get_user_responses(survey_id: Optional[int] = None) -> Dict[str, str]:
+def get_user_responses(
+    survey_id: Optional[int] = None,
+    user_choices: Optional[List[Dict]] = None,
+    show_tables_only: bool = False,
+) -> Dict[str, str]:
     """
     Get formatted user survey responses.
 
     Args:
-        survey_id (Optional[int]): The ID of the survey to filter responses for. If None, responses for all surveys are retrieved.
+        survey_id: Optional survey ID to filter responses
+        user_choices: Optional pre-filtered choices (if already fetched)
+        show_tables_only: If True, only show summary tables
 
     Returns:
         Dict[str, str]: A dictionary containing the formatted survey responses.
 
     Raises:
-        SurveyNotFoundError: If no responses are found for the specified survey ID.
-        StrategyConfigError: If there is an error in the strategy configuration.
-        ResponseProcessingError: If there is a general error processing the survey responses.
+        SurveyNotFoundError: If no responses found.
+        StrategyConfigError: If strategy configuration error.
+        ResponseProcessingError: If general processing error.
     """
     try:
-        choices = retrieve_user_survey_choices()
+        # Use provided choices or fetch new ones
+        choices = (
+            user_choices if user_choices is not None else retrieve_user_survey_choices()
+        )
 
-        if survey_id is not None:
-            # Filter for specific survey
+        if survey_id is not None and user_choices is None:
+            # Filter for specific survey if not pre-filtered
             choices = [c for c in choices if c["survey_id"] == survey_id]
             if not choices:
                 logger.warning(f"No responses found for survey {survey_id}")
                 raise SurveyNotFoundError(survey_id)
 
-        # Group choices by survey_id to get proper strategy labels for each survey
-        choices_by_survey = {}
-        for choice in choices:
-            current_survey_id = choice["survey_id"]
-            if current_survey_id not in choices_by_survey:
-                choices_by_survey[current_survey_id] = []
-            choices_by_survey[current_survey_id].append(choice)
-
         # Add strategy labels to each choice based on its survey
         survey_labels = {}  # Store labels for each survey
-        for current_survey_id, survey_choices in choices_by_survey.items():
-            strategy_config = get_survey_pair_generation_config(current_survey_id)
-            if strategy_config:
-                strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
-                option_labels = strategy.get_option_labels()
-                survey_labels[current_survey_id] = option_labels
-                # Add strategy labels to each choice
-                for choice in survey_choices:
-                    choice["_strategy_labels"] = option_labels
+        for choice in choices:
+            current_survey_id = choice["survey_id"]
+            if current_survey_id not in survey_labels:
+                strategy_config = get_survey_pair_generation_config(current_survey_id)
+                if strategy_config:
+                    strategy = StrategyRegistry.get_strategy(
+                        strategy_config["strategy"]
+                    )
+                    survey_labels[current_survey_id] = strategy.get_option_labels()
 
-        # Get the appropriate labels for single survey view
+            # Add labels to choice
+            if current_survey_id in survey_labels:
+                choice["_strategy_labels"] = survey_labels[current_survey_id]
+
+        # Get the appropriate labels
         if survey_id is not None and survey_id in survey_labels:
             option_labels = survey_labels[survey_id]
         else:
-            # For all surveys view, use default labels
             option_labels = ("Option 1", "Option 2")
 
         response_data = ResponseFormatter.format_response_data(choices)
         response_data["content"] = generate_detailed_user_choices(
-            choices, option_labels=option_labels
+            choices, option_labels=option_labels, show_tables_only=show_tables_only
         )
         return response_data
 
@@ -138,8 +142,19 @@ def get_survey_responses(survey_id: int):
         Rendered template with survey responses
     """
     try:
-        data = get_user_responses(survey_id)
+        # Get all choices and filter for specific survey
+        choices = retrieve_user_survey_choices()
+        survey_choices = [c for c in choices if c["survey_id"] == survey_id]
+
+        if not survey_choices:
+            logger.warning(f"No responses found for survey {survey_id}")
+            raise SurveyNotFoundError(survey_id)
+
+        # Use get_user_responses with show_tables_only=True for summary view
+        data = get_user_responses(user_choices=survey_choices, show_tables_only=True)
+
         return render_template("responses/detail.html", data=data, survey_id=survey_id)
+
     except SurveyNotFoundError as e:
         logger.warning(str(e))
         return (
@@ -204,22 +219,10 @@ def get_user_responses_detail(user_id: str):
                 404,
             )
 
-        # Add strategy labels
-        for choice in user_choices:
-            survey_id = choice["survey_id"]
-            strategy_config = get_survey_pair_generation_config(survey_id)
-            if strategy_config:
-                strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
-                choice["_strategy_labels"] = strategy.get_option_labels()
+        # Use get_user_responses with show_tables_only=False for full details
+        data = get_user_responses(user_choices=user_choices, show_tables_only=False)
 
-        response_data = ResponseFormatter.format_response_data(user_choices)
-        response_data["content"] = generate_detailed_user_choices(
-            user_choices, option_labels=("Option 1", "Option 2")
-        )
-
-        return render_template(
-            "responses/user_detail.html", data=response_data, user_id=user_id
-        )
+        return render_template("responses/user_detail.html", data=data, user_id=user_id)
 
     except Exception as e:
         logger.error(f"Error retrieving user responses: {str(e)}", exc_info=True)

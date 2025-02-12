@@ -520,13 +520,17 @@ def _generate_survey_choices_html(
 
 
 def generate_detailed_user_choices(
-    user_choices: List[Dict], option_labels: Tuple[str, str]
+    user_choices: List[Dict],
+    option_labels: Tuple[str, str],
+    show_tables_only: bool = False,
 ) -> str:
     """Generate detailed analysis of each user's choices for each survey.
 
     Args:
         user_choices: List of dictionaries containing user choices data
         option_labels: Tuple of labels for the two options
+        show_tables_only: If True, only show summary tables without detailed choices
+
     Returns:
         str: HTML-formatted string with detailed user choices
     """
@@ -563,17 +567,21 @@ def generate_detailed_user_choices(
     # 2. Detailed breakdown table
     content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
 
-    # 3. Detailed user choices with IDs for linking
-    for user_id, surveys in grouped_choices.items():
-        content.append(f'<section id="user-{user_id}" class="user-choices">')
-        content.append(f"<h3>{get_translation('user_id', 'answers')}: {user_id}</h3>")
-
-        for survey_id, choices in surveys.items():
+    # Include detailed user choices only if not show_tables_only
+    if not show_tables_only:
+        # 3. Detailed user choices with IDs for linking
+        for user_id, surveys in grouped_choices.items():
+            content.append(f'<section id="user-{user_id}" class="user-choices">')
             content.append(
-                _generate_survey_choices_html(survey_id, choices, option_labels)
+                f"<h3>{get_translation('user_id', 'answers')}: {user_id}</h3>"
             )
 
-        content.append("</section>")
+            for survey_id, choices in surveys.items():
+                content.append(
+                    _generate_survey_choices_html(survey_id, choices, option_labels)
+                )
+
+            content.append("</section>")
 
     return "\n".join(content)
 
