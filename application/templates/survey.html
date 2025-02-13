@@ -34,8 +34,15 @@ and collects the user's preferences through a form submission.
         
         {% for pair in comparison_pairs %}
         <div class="pair-container">
-            <h3>{{ get_translation('pair') }} {{ loop.index }}</h3>
-            <input type="hidden" name="was_swapped_{{ loop.index0 }}" value="{{ 'true' if pair.was_swapped else 'false' }}">
+            <h3>{{ get_translation('pair') }} {{ pair.question_number }}</h3>
+            {% if pair.is_awareness %}
+                <div class="awareness-check">
+                    <h4>{{ get_translation('awareness_check') }}</h4>
+                </div>
+            {% endif %}
+            <input type="hidden" name="is_awareness_{{ loop.index0 }}" value="{{ 'true' if pair.is_awareness else 'false' }}">
+            <input type="hidden" name="was_swapped_{{ loop.index0 }}" value="{{ 'true' if pair.was_swapped|default(false) else 'false' }}">
+            
             <div class="options-container">
                 <div class="option">
                     <h4>{{ get_translation('option') }} 1:</h4>
@@ -45,9 +52,11 @@ and collects the user's preferences through a form submission.
                         <span class="value">{{ value }}</span>
                     </div>
                     {% endfor %}
-                    <input type="radio" name="choice_{{ loop.index0 }}" value="1">
+                    <input type="radio" name="{% if pair.is_awareness %}awareness_check_{{ loop.index0 // 6 }}{% else %}choice_{{ loop.index0 }}{% endif %}" value="1">
+                    {% if not pair.is_awareness %}
                     <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair.display[0]|join(',') }}">
                     <input type="hidden" name="option1_strategy_{{ loop.index0 }}" value="{{ pair.option1_strategy }}">
+                    {% endif %}
                 </div>
                 <div class="option">
                     <h4>{{ get_translation('option') }} 2:</h4>
@@ -57,40 +66,15 @@ and collects the user's preferences through a form submission.
                         <span class="value">{{ value }}</span>
                     </div>
                     {% endfor %}
-                    <input type="radio" name="choice_{{ loop.index0 }}" value="2">
+                    <input type="radio" name="{% if pair.is_awareness %}awareness_check_{{ loop.index0 // 6 }}{% else %}choice_{{ loop.index0 }}{% endif %}" value="2">
+                    {% if not pair.is_awareness %}
                     <input type="hidden" name="option2_{{ loop.index0 }}" value="{{ pair.display[1]|join(',') }}">
                     <input type="hidden" name="option2_strategy_{{ loop.index0 }}" value="{{ pair.option2_strategy }}">
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% endfor %}
-
-        <!-- Awareness Check Question -->
-        <div class="pair-container awareness-check">
-            <h3>{{ get_translation('awareness_check') }}</h3>
-            <div class="options-container">
-                <div class="option">
-                    <h4>{{ get_translation('option') }} 1:</h4>
-                    {% for subject, value in zip(subjects, awareness_check['option1']) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
-                    </div>
-                    {% endfor %}
-                    <input type="radio" name="awareness_check" value="1">
-                </div>
-                <div class="option">
-                    <h4>{{ get_translation('option') }} 2:</h4>
-                    {% for subject, value in zip(subjects, awareness_check['option2']) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
-                    </div>
-                    {% endfor %}
-                    <input type="radio" name="awareness_check" value="2">
-                </div>
-            </div>
-        </div>
 
         <div class="comment-section">
             <h3>{{ get_translation('comments') }}</h3>
@@ -102,6 +86,5 @@ and collects the user's preferences through a form submission.
             <button type="submit" class="btn">{{ get_translation('submit_final') }}</button>
         </div>
     </form>
-
 </div>
 {% endblock %}
