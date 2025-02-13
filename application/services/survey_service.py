@@ -18,9 +18,7 @@ from database.queries import (
     user_exists,
 )
 
-from .awareness_check import (
-    generate_awareness_check,
-)
+from .awareness_check import generate_awareness_questions
 
 logger = logging.getLogger(__name__)
 
@@ -101,9 +99,9 @@ class SurveyService:
     @staticmethod
     def generate_survey_pairs(
         user_vector: List[int], num_subjects: int, survey_id: int
-    ) -> Tuple[List[Dict], Dict]:
+    ) -> Tuple[List[Dict], List[Dict]]:
         """
-        Generate survey pairs and awareness check, using configured strategy.
+        Generate survey pairs and awareness questions.
 
         Args:
             user_vector: User's ideal budget allocation
@@ -111,7 +109,7 @@ class SurveyService:
             survey_id: The internal survey identifier
 
         Returns:
-            Tuple of (comparison_pairs, awareness_check)
+            Tuple of (comparison_pairs, awareness_questions)
 
         Raises:
             ValueError: If strategy configuration is invalid
@@ -140,11 +138,15 @@ class SurveyService:
                 vector_size=num_subjects,
             )
 
-            # Generate awareness check
-            awareness_check = generate_awareness_check(user_vector, num_subjects)
+            # Generate two awareness questions
+            awareness_questions = generate_awareness_questions(
+                user_vector, num_subjects
+            )
 
-            logger.info(f"Successfully generated {len(comparison_pairs)} pairs")
-            return comparison_pairs, awareness_check
+            logger.info(
+                f"Successfully generated {len(comparison_pairs)} pairs and {len(awareness_questions)} awareness questions"
+            )
+            return comparison_pairs, awareness_questions
 
         except Exception as e:
             logger.error(f"Error generating pairs: {str(e)}")
@@ -268,29 +270,75 @@ class SurveySessionData:
 
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
-        original_pairs, awareness_check = SurveyService.generate_survey_pairs(
+        original_pairs, awareness_questions = SurveyService.generate_survey_pairs(
             self.user_vector, len(self.subjects), self.internal_survey_id
         )
 
         # Combine pair data with its presentation state
         presentation_pairs = []
-        for pair in original_pairs:
+
+        # Add first awareness question
+        presentation_pairs.append(
+            {
+                "display": (
+                    awareness_questions[0]["option1"],
+                    awareness_questions[0]["option2"],
+                ),
+                "was_swapped": False,
+                "is_awareness": True,
+                "question_number": 1,
+            }
+        )
+
+        # Add first half of comparison pairs
+        midpoint = len(original_pairs) // 2
+        for i, pair in enumerate(original_pairs[:midpoint]):
             option1, option2, was_swapped, option1_strategy, option2_strategy = (
                 self._randomize_pair_options(pair)
             )
             presentation_pairs.append(
                 {
-                    "display": (option1, option2),  # What user sees
-                    "was_swapped": was_swapped,  # Track if swapped
-                    "option1_strategy": option1_strategy,  # Strategy description for option 1
-                    "option2_strategy": option2_strategy,  # Strategy description for option 2
+                    "display": (option1, option2),
+                    "was_swapped": was_swapped,
+                    "option1_strategy": option1_strategy,
+                    "option2_strategy": option2_strategy,
+                    "is_awareness": False,
+                    "question_number": i + 2,
+                }
+            )
+
+        # Add second awareness question
+        presentation_pairs.append(
+            {
+                "display": (
+                    awareness_questions[1]["option1"],
+                    awareness_questions[1]["option2"],
+                ),
+                "was_swapped": False,
+                "is_awareness": True,
+                "question_number": midpoint + 2,
+            }
+        )
+
+        # Add remaining comparison pairs
+        for i, pair in enumerate(original_pairs[midpoint:]):
+            option1, option2, was_swapped, option1_strategy, option2_strategy = (
+                self._randomize_pair_options(pair)
+            )
+            presentation_pairs.append(
+                {
+                    "display": (option1, option2),
+                    "was_swapped": was_swapped,
+                    "option1_strategy": option1_strategy,
+                    "option2_strategy": option2_strategy,
+                    "is_awareness": False,
+                    "question_number": i + midpoint + 3,
                 }
             )
 
         return {
             "user_vector": self.user_vector,
             "comparison_pairs": presentation_pairs,
-            "awareness_check": awareness_check,
             "subjects": self.subjects,
             "user_id": self.user_id,
             "survey_id": self.external_survey_id,

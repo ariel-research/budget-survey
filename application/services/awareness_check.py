@@ -6,6 +6,49 @@ from typing import Any, Dict, List
 logger = logging.getLogger(__name__)
 
 
+def generate_awareness_questions(
+    user_vector: List[int], num_of_subjects: int
+) -> List[Dict[str, Any]]:
+    """
+    Generate two different awareness test questions.
+
+    Args:
+        user_vector (List[int]): The user's original budget allocation vector.
+        num_of_subjects (int): The number of subjects in the budget allocation.
+
+    Returns:
+        List[Dict[str, Any]]: List of two different awareness questions, each containing:
+            - 'option1': A modified version of the user's vector
+            - 'option2': The user's original vector
+            - 'correct_answer': Always 2, indicating that option2 is correct
+
+    Raises:
+        ValueError: If unable to generate two different awareness questions
+    """
+    logger.debug(f"Generating two awareness questions for user vector: {user_vector}")
+
+    questions = []
+    attempts = 0
+    max_attempts = 10  # Prevent infinite loops
+
+    while len(questions) < 2 and attempts < max_attempts:
+        try:
+            question = generate_awareness_check(user_vector, num_of_subjects)
+            # Ensure questions are different
+            if not questions or question["option1"] != questions[0]["option1"]:
+                questions.append(question)
+        except ValueError as e:
+            logger.warning(f"Failed attempt to generate awareness question: {e}")
+        attempts += 1
+
+    if len(questions) < 2:
+        logger.error("Failed to generate two different awareness questions")
+        raise ValueError("Could not generate two different awareness questions")
+
+    logger.debug(f"Successfully generated {len(questions)} awareness questions")
+    return questions
+
+
 def generate_awareness_check(
     user_vector: List[int], num_of_subjects: int
 ) -> Dict[str, Any]:
