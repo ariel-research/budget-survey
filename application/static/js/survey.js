@@ -6,7 +6,7 @@
 // Configuration object for constants and settings
 const CONFIG = {
     TOTAL_EXPECTED: 100,
-    TOTAL_RADIO_GROUPS: 11, // 10 comparison pairs + 1 awareness check
+    TOTAL_QUESTIONS: 12, // 10 comparison pairs + 2 awareness check
     MIN_DEPARTMENTS: 2,
     MIN_ALLOCATION: 5,
     SCALING_STEP: 5,
@@ -257,7 +257,7 @@ function initializeSurveyForm() {
  */
 function updateSubmitButtonState(submitBtn) {
     const selectedPairs = document.querySelectorAll('input[type="radio"]:checked').length;
-    const isComplete = selectedPairs === CONFIG.TOTAL_RADIO_GROUPS;
+    const isComplete = selectedPairs === CONFIG.TOTAL_QUESTIONS;
 
     submitBtn.disabled = !isComplete;
     submitBtn.classList.toggle('btn-disabled', !isComplete);
@@ -271,7 +271,7 @@ function handleSurveySubmission(e) {
     e.preventDefault();
     
     const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
-    if (radioGroups.length !== CONFIG.TOTAL_RADIO_GROUPS) {
+    if (radioGroups.length !== CONFIG.TOTAL_QUESTIONS) {
         showAlert(state.messages.choose_all_pairs);
         return;
     }
