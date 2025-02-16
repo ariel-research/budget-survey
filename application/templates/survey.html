@@ -37,7 +37,6 @@ and collects the user's preferences through a form submission.
             <h3>{{ get_translation('pair') }} {{ pair.question_number }}</h3>
             {% if pair.is_awareness %}
                 <div class="awareness-check">
-                    <h4>{{ get_translation('awareness_check') }}</h4>
                 </div>
             {% endif %}
             <input type="hidden" name="is_awareness_{{ loop.index0 }}" value="{{ 'true' if pair.is_awareness else 'false' }}">
