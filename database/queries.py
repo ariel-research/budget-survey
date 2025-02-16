@@ -282,7 +282,7 @@ def get_subjects(survey_id: int) -> List[str]:
 def check_user_participation(user_id: int, survey_id: int) -> bool:
     """
     Checks if a user has successfully completed a specific survey.
-    Only counts completions where attention checks were passed.
+    Counts also completions where attention checks were not passed.
 
     Args:
         user_id (int): The ID of the user.
@@ -297,7 +297,6 @@ def check_user_participation(user_id: int, survey_id: int) -> bool:
         WHERE user_id = %s 
         AND survey_id = %s 
         AND completed = TRUE
-        AND attention_check_failed = FALSE
     ) as participated
     """
     logger.debug(
