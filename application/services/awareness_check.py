@@ -19,7 +19,15 @@ def _get_valid_modifications(
 
     Returns:
         List of tuples (inc_idx, dec_idx, amount) representing valid modifications
+
+    Raises:
+        ValueError: If vector length doesn't match num_of_subjects
     """
+    if len(vector) != num_of_subjects:
+        raise ValueError(
+            f"Vector length {len(vector)} does not match number of subjects {num_of_subjects}"
+        )
+
     valid_mods = []
 
     for inc_idx in range(num_of_subjects):
@@ -46,9 +54,24 @@ def generate_awareness_questions(
         List of two different awareness questions
 
     Raises:
-        ValueError: If unable to generate two different questions
+        ValueError: If unable to generate two different questions or if input validation fails
     """
     logger.debug(f"Generating two awareness questions for user vector: {user_vector}")
+
+    # Validate inputs
+    if len(user_vector) != num_of_subjects:
+        raise ValueError(
+            f"Vector length {len(user_vector)} does not match number of subjects {num_of_subjects}"
+        )
+
+    if sum(user_vector) != 100:
+        raise ValueError(f"Vector sum must be 100, got {sum(user_vector)}")
+
+    if any(v < 0 or v > 95 for v in user_vector):
+        raise ValueError("Vector values must be between 0 and 95")
+
+    if any(v < 5 for v in user_vector if v != 0):
+        raise ValueError("Non-zero vector values must be at least 5")
 
     # Get all valid modifications
     valid_mods = _get_valid_modifications(user_vector, num_of_subjects)

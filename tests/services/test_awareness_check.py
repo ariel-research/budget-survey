@@ -2,7 +2,10 @@
 
 import pytest
 
-from application.services.awareness_check import generate_awareness_check
+from application.services.awareness_check import (
+    generate_awareness_check,
+    generate_awareness_questions,
+)
 
 
 def test_generate_awareness_check():
@@ -32,3 +35,34 @@ def test_generate_awareness_check_various_inputs(user_vector, num_subjects):
     result = generate_awareness_check(user_vector, num_subjects)
     assert sum(result["option1"]) == 100
     assert sum(result["option2"]) == 100
+
+
+def test_generate_awareness_questions():
+    """Test generation of multiple awareness questions."""
+    user_vector = [60, 20, 20]
+    questions = generate_awareness_questions(user_vector, 3)
+
+    # Verify structure
+    assert len(questions) == 2, "Should generate exactly 2 questions"
+    for q in questions:
+        assert "option1" in q
+        assert "option2" in q
+        assert "correct_answer" in q
+        assert q["correct_answer"] == 2
+        assert q["option2"] == user_vector
+        assert sum(q["option1"]) == 100
+        assert all(0 <= v <= 95 for v in q["option1"])
+
+    # Verify questions are different
+    assert questions[0]["option1"] != questions[1]["option1"]
+
+
+def test_awareness_questions_validation():
+    """Test validation constraints for awareness questions."""
+    # Test with incorrect number of subjects
+    with pytest.raises(ValueError):
+        generate_awareness_questions([50, 50], 3)  # Wrong vector length
+
+    # Test vector sum not 100
+    with pytest.raises(ValueError):
+        generate_awareness_questions([40, 40, 40], 3)  # Sum exceeds 100
