@@ -153,13 +153,16 @@ class SurveyService:
             raise ValueError(get_translation("pair_generation_error", "messages"))
 
     @staticmethod
-    def process_survey_submission(submission: SurveySubmission) -> None:
+    def process_survey_submission(
+        submission: SurveySubmission, attention_check_failed: bool = False
+    ) -> None:
         """
-        Process and store a complete survey submission.
+        Process and store a survey submission.
         Creates user if needed, stores responses, and marks survey as complete.
 
         Args:
             submission: Validated survey submission data
+            attention_check_failed: Whether the submission failed attention checks
 
         Raises:
             Exception: If database operations fail
@@ -170,14 +173,18 @@ class SurveyService:
                 create_user(submission.user_id)
                 logger.info(f"Created new user: {submission.user_id}")
 
-            # Create survey response
+            # Create survey response with attention check status
             survey_response_id = create_survey_response(
                 submission.user_id,
                 submission.survey_id,
                 submission.user_vector,
                 submission.user_comment,
+                attention_check_failed,
             )
-            logger.info(f"Created survey response: {survey_response_id}")
+            logger.info(
+                f"Created survey response: {survey_response_id} "
+                f"(attention_check_failed={attention_check_failed})"
+            )
 
             # Store comparison pairs
             for idx, pair in enumerate(submission.comparison_pairs, 1):

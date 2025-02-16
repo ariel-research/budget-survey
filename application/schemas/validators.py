@@ -64,46 +64,70 @@ class SurveySubmission:
     awareness_answers: List[int] = field(default_factory=list)
     comparison_pairs: List[ComparisonPair] = field(default_factory=list)
 
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> tuple[bool, Optional[str], Optional[str]]:
         """
         Validates the complete survey submission.
 
+        Checks in order:
+        1. Awareness checks (must both be correct)
+        2. User vector validation (must have values and sum to 100)
+        3. Value range validation
+        4. Comparison pairs validation
+
         Returns:
-            tuple[bool, Optional[str]]: (is_valid, error_message)
+            tuple[bool, Optional[str], Optional[str]]: A tuple containing:
+                - is_valid: Whether the submission is valid
+                - error_message: Error message if invalid, None if valid
+                - submission_status: 'attention_failed', 'complete', or None if other error
         """
         try:
-            # Validate user_vector
-            if not self.user_vector:
-                return False, get_translation("missing_budget", "messages")
-
-            if sum(self.user_vector) != 100:
-                return False, get_translation("budget_sum_error", "messages")
-
-            if any(v < 0 or v > 95 for v in self.user_vector):
-                return False, get_translation("budget_range_error", "messages")
-
-            # Validate awareness checks (must both be 2)
+            # Validate awareness checks first (must both be 2)
             if len(self.awareness_answers) != 2 or not all(
                 a == 2 for a in self.awareness_answers
             ):
-                return False, get_translation("failed_awareness", "messages")
+                logger.info(
+                    f"User {self.user_id} failed awareness checks with answers: {self.awareness_answers}"
+                )
+                return (
+                    False,
+                    get_translation("failed_awareness", "messages"),
+                    "attention_failed",
+                )
+
+            # Validate user_vector exists
+            if not self.user_vector:
+                return (False, get_translation("missing_budget", "messages"), None)
+
+            # Validate sum is 100
+            if sum(self.user_vector) != 100:
+                return (False, get_translation("budget_sum_error", "messages"), None)
+
+            # Validate value ranges
+            if any(v < 0 or v > 95 for v in self.user_vector):
+                return (False, get_translation("budget_range_error", "messages"), None)
 
             # Validate comparison pairs
             if len(self.comparison_pairs) != 10:
-                return False, get_translation("invalid_pairs_count", "messages")
+                return (False, get_translation("invalid_pairs_count", "messages"), None)
 
             # Validate each comparison pair
             for idx, pair in enumerate(self.comparison_pairs):
                 if not pair.is_valid():
-                    return False, get_translation(
-                        "invalid_pair_at_position", "messages", position=str(idx + 1)
+                    return (
+                        False,
+                        get_translation(
+                            "invalid_pair_at_position",
+                            "messages",
+                            position=str(idx + 1),
+                        ),
+                        None,
                     )
 
-            return True, None
+            return True, None, "complete"
 
         except Exception as e:
             logger.error(f"Survey validation error: {str(e)}")
-            return False, get_translation("validation_error", "messages")
+            return (False, get_translation("validation_error", "messages"), None)
 
     @classmethod
     def from_form_data(
