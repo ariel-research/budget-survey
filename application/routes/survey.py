@@ -283,11 +283,7 @@ def thank_you():
     return render_template("thank_you.html")
 
 
-def redirect_to_panel4all(user_id: str, survey_id: str) -> str:
-    """Generate Panel4All redirect URL."""
-    params = {
-        "surveyID": survey_id,
-        "userID": user_id,
-        "status": current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"],
-    }
+def redirect_to_panel4all(user_id: str, survey_id: str, status: str = "finish") -> str:
+    """Generate Panel4All redirect URL with specified status."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
     return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
