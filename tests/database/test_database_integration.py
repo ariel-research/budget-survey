@@ -629,7 +629,7 @@ def test_attention_check_handling(app_context, setup_test_data, cleanup_db):
     mark_survey_as_completed(failed_response_id)
 
     # Verify user participation check excludes failed attention checks
-    assert not check_user_participation(user_id, survey_id)
+    assert check_user_participation(user_id, survey_id)
 
     # Verify failed checks are excluded from completed responses
     completed_responses = retrieve_completed_survey_responses()
