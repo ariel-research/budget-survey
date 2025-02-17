@@ -50,7 +50,8 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         self, user_vector: np.ndarray, random_vector: np.ndarray, x_weight: float
     ) -> tuple:
         """
-        Calculate weighted combination of user vector and random vector, and round to the nearest multiple of 5.
+        Calculate weighted combination and round to multiples of 5.
+        Ensures the result is different from both input vectors.
 
         Args:
             user_vector: The user's ideal budget allocation
@@ -59,6 +60,9 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
 
         Returns:
             tuple: Rounded weighted combination vector
+
+        Raises:
+            ValueError: If resulting vector is identical to either input vector
         """
         self._validate_weight(x_weight)
         y_weight = 1 - x_weight
@@ -69,7 +73,13 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         weighted[-1] = 100 - weighted[:-1].sum()
         # Round to nearest multiple of 5
         rounded_weighted = self._rounded_vector(weighted)
-        return tuple(rounded_weighted)
+        result = tuple(rounded_weighted)
+
+        # Check if result is different from both input vectors
+        if result == tuple(user_vector) or result == tuple(random_vector):
+            raise ValueError("Rounded weighted vector matches one of the input vectors")
+
+        return result
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""

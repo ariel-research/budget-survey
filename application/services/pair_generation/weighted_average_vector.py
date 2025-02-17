@@ -78,6 +78,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
     ) -> tuple:
         """
         Calculate weighted combination of user vector and random vector.
+        Ensures the result is different from both input vectors.
 
         Args:
             user_vector: The user's ideal budget allocation
@@ -86,6 +87,9 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
         Returns:
             tuple: Weighted combination vector
+
+        Raises:
+            ValueError: If resulting vector is identical to either input vector
         """
         self._validate_weight(x_weight)
         y_weight = 1 - x_weight
@@ -94,13 +98,20 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         weighted = np.round(weighted).astype(int)
         # Adjust last element to ensure sum is exactly 100
         weighted[-1] = 100 - weighted[:-1].sum()
-        return tuple(weighted)
+        result = tuple(weighted)
+
+        # Check if result is different from both input vectors
+        if result == tuple(user_vector) or result == tuple(random_vector):
+            raise ValueError("Weighted vector matches one of the input vectors")
+
+        return result
 
     def generate_pairs(
         self, user_vector: tuple, n: int = 10, vector_size: int = 3
     ) -> List[Dict[str, tuple]]:
         """
         Generate pairs using weighted combinations.
+        Ensures vectors in each pair are different from each other.
 
         Args:
             user_vector: The user's ideal budget allocation
@@ -108,12 +119,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             vector_size: Size of each vector (default: 3)
 
         Returns:
-            List[Dict[str, tuple]]: List of pairs, each containing:
-                {
-                    'Random Vector': random_vector,
-                    'Average Weighted Vector: X%': weighted_vector
-                }
-                where X is the weight percentage used
+            List[Dict[str, tuple]]: List of pairs with different vectors
 
         Raises:
             ValueError: If parameters are invalid or generation fails
@@ -124,28 +130,44 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
             user_vector_array = np.array(user_vector)
             pairs = []
-            existing_vectors = {
-                user_vector
-            }  # Track generated vectors to avoid duplicates
+            existing_vectors = {user_vector}  # Track generated vectors
+            attempts = 0
+            max_attempts = self.MAX_ATTEMPTS
 
-            for x_weight in self.WEIGHTS:
-                # Generate new random vector
-                random_vector = self._generate_different_random_vector(
-                    user_vector, vector_size, existing_vectors
+            while len(pairs) < n and attempts < max_attempts:
+                try:
+                    # Generate new random vector
+                    random_vector = self._generate_different_random_vector(
+                        user_vector, vector_size, existing_vectors
+                    )
+                    random_vector_array = np.array(random_vector)
+
+                    x_weight = self.WEIGHTS[len(pairs)]
+                    weighted_vector = self._calculate_weighted_vector(
+                        user_vector_array, random_vector_array, x_weight
+                    )
+
+                    # Ensure weighted vector is different from random vector
+                    if weighted_vector != random_vector:
+                        pair = {
+                            self.get_option_description(): random_vector,
+                            self.get_option_description(
+                                weight=x_weight
+                            ): weighted_vector,
+                        }
+                        pairs.append(pair)
+                        existing_vectors.add(weighted_vector)
+
+                except ValueError:
+                    # If vector generation or weighting fails, try again
+                    pass
+
+                attempts += 1
+
+            if len(pairs) < n:
+                raise ValueError(
+                    f"Could not generate {n} unique pairs after {max_attempts} attempts"
                 )
-                existing_vectors.add(random_vector)
-                random_vector_array = np.array(random_vector)
-
-                weighted_vector = self._calculate_weighted_vector(
-                    user_vector_array, random_vector_array, x_weight
-                )
-
-                pair = {
-                    self.get_option_description(): random_vector,
-                    self.get_option_description(weight=x_weight): weighted_vector,
-                }
-
-                pairs.append(pair)
 
             # Shuffle pairs for random presentation order
             random.shuffle(pairs)
