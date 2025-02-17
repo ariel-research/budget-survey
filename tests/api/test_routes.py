@@ -172,3 +172,11 @@ def test_missing_parameters(client):
 
     response = client.get("/?surveyID=123")
     assert response.status_code == 400
+
+
+def test_panel4all_status_codes(app):
+    """Test Panel4All status code configuration."""
+    assert "PANEL4ALL" in app.config
+    assert "STATUS" in app.config["PANEL4ALL"]
+    assert app.config["PANEL4ALL"]["STATUS"]["COMPLETE"] == "finish"
+    assert app.config["PANEL4ALL"]["STATUS"]["ATTENTION_FAILED"] == "attentionfilter"

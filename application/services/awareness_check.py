@@ -1,70 +1,121 @@
 """Module for handling survey awareness check generation."""
 
 import logging
-from typing import Any, Dict, List
+import random
+from typing import Any, Dict, List, Set, Tuple
 
 logger = logging.getLogger(__name__)
+
+
+def _get_valid_modifications(
+    vector: List[int], num_of_subjects: int
+) -> List[Tuple[int, int, int]]:
+    """
+    Find all valid index pairs for vector modification.
+
+    Args:
+        vector: The original vector
+        num_of_subjects: Number of subjects
+
+    Returns:
+        List of tuples (inc_idx, dec_idx, amount) representing valid modifications
+
+    Raises:
+        ValueError: If vector length doesn't match num_of_subjects
+    """
+    if len(vector) != num_of_subjects:
+        raise ValueError(
+            f"Vector length {len(vector)} does not match number of subjects {num_of_subjects}"
+        )
+
+    valid_mods = []
+
+    for inc_idx in range(num_of_subjects):
+        for dec_idx in range(num_of_subjects):
+            if inc_idx != dec_idx:
+                for amount in [5, 10, 15]:  # Try different modification amounts
+                    if vector[inc_idx] + amount <= 95 and vector[dec_idx] - amount >= 5:
+                        valid_mods.append((inc_idx, dec_idx, amount))
+
+    return valid_mods
+
+
+def generate_awareness_questions(
+    user_vector: List[int], num_of_subjects: int
+) -> List[Dict[str, Any]]:
+    """
+    Generate two different awareness test questions.
+
+    Args:
+        user_vector: The user's original budget allocation vector
+        num_of_subjects: The number of subjects in the budget allocation
+
+    Returns:
+        List of two different awareness questions
+
+    Raises:
+        ValueError: If unable to generate two different questions or if input validation fails
+    """
+    logger.debug(f"Generating two awareness questions for user vector: {user_vector}")
+
+    # Validate inputs
+    if len(user_vector) != num_of_subjects:
+        raise ValueError(
+            f"Vector length {len(user_vector)} does not match number of subjects {num_of_subjects}"
+        )
+
+    if sum(user_vector) != 100:
+        raise ValueError(f"Vector sum must be 100, got {sum(user_vector)}")
+
+    if any(v < 0 or v > 95 for v in user_vector):
+        raise ValueError("Vector values must be between 0 and 95")
+
+    if any(v < 5 for v in user_vector if v != 0):
+        raise ValueError("Non-zero vector values must be at least 5")
+
+    # Get all valid modifications
+    valid_mods = _get_valid_modifications(user_vector, num_of_subjects)
+    if not valid_mods:
+        raise ValueError("No valid modifications possible for this vector")
+
+    # Shuffle modifications to ensure randomness
+    random.shuffle(valid_mods)
+
+    used_vectors: Set[Tuple[int, ...]] = set()
+    questions = []
+
+    # Try to generate two different questions
+    for inc_idx, dec_idx, amount in valid_mods:
+        test_vector = user_vector.copy()
+        test_vector[inc_idx] += amount
+        test_vector[dec_idx] -= amount
+
+        vector_tuple = tuple(test_vector)
+        if vector_tuple not in used_vectors:
+            used_vectors.add(vector_tuple)
+            questions.append(
+                {
+                    "option1": test_vector,
+                    "option2": user_vector,
+                    "correct_answer": 2,
+                }
+            )
+
+            if len(questions) == 2:
+                logger.debug("Successfully generated two different awareness questions")
+                return questions
+
+    logger.error("Failed to generate two different awareness questions")
+    raise ValueError("Could not generate two different awareness questions")
 
 
 def generate_awareness_check(
     user_vector: List[int], num_of_subjects: int
 ) -> Dict[str, Any]:
     """
-    Generate an awareness check question based on the user's vector.
+    Generate a single awareness check question.
 
-    Args:
-        user_vector (List[int]): The user's original budget allocation vector.
-        num_of_subjects (int): The number of subjects in the budget allocation.
-
-    Returns:
-        Dict[str, Any]: A dictionary containing:
-            - 'option1': A modified version of the user's vector
-            - 'option2': The user's original vector
-            - 'correct_answer': Always 2, indicating that option2 is correct
-
-    This function creates a fake vector by modifying two elements of the user's vector
-    by ±5, maintaining the sum of 100 and ensuring all values stay within [0-95].
-
-    Example:
-        >>> generate_awareness_check([30, 40, 30], 3)
-        {'option1': [35, 35, 30], 'option2': [30, 40, 30], 'correct_answer': 2}
+    This function is maintained for backward compatibility.
     """
-    logger.debug(f"Generating awareness check for user vector: {user_vector}")
-
-    # Create a copy to avoid modifying the original vector
-    fake_vector = user_vector.copy()
-
-    # Find indices where values can be increased (<=90) or decreased (>=5)
-    valid_increase = [i for i in range(num_of_subjects) if fake_vector[i] <= 95]
-    valid_decrease = [i for i in range(num_of_subjects) if fake_vector[i] >= 5]
-
-    logger.debug(
-        f"Valid indices for increase: {valid_increase}, decrease: {valid_decrease}"
-    )
-
-    # Systematically check each possible combination of increase/decrease indices
-    for inc_idx in valid_increase:
-        for dec_idx in valid_decrease:
-            if inc_idx != dec_idx:
-                test_vector = fake_vector.copy()
-                test_vector[inc_idx] += 5
-                test_vector[dec_idx] -= 5
-
-                if test_vector != user_vector:
-                    logger.debug(
-                        f"Generated fake vector by increasing index {inc_idx} "
-                        f"and decreasing index {dec_idx}: {test_vector}"
-                    )
-                    return {
-                        "option1": test_vector,
-                        "option2": user_vector,
-                        "correct_answer": 2,
-                    }
-
-    logger.error(
-        f"Could not generate valid fake vector. User vector: {user_vector}, "
-        f"Valid increase indices: {valid_increase}, Valid decrease indices: {valid_decrease}"
-    )
-    raise ValueError(
-        "Could not generate valid fake vector: no valid indices for modification"
-    )
+    questions = generate_awareness_questions(user_vector, num_of_subjects)
+    return questions[0]

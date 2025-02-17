@@ -238,15 +238,43 @@ def handle_survey_get(
 def handle_survey_post(
     user_id: str, external_survey_id: str, internal_survey_id: int
 ) -> str:
-    """Handle POST request for survey submission."""
+    """
+    Handle POST request for survey submission.
+
+    Args:
+        user_id: The user's identifier
+        external_survey_id: External survey identifier (for PANEL4ALL)
+        internal_survey_id: Internal survey identifier
+
+    Returns:
+        str: Redirect response to appropriate destination
+    """
     try:
         # Create and validate submission
         submission = SurveySubmission.from_form_data(
             request.form, user_id, internal_survey_id
         )
 
-        is_valid, error_message = submission.validate()
+        is_valid, error_message, status = submission.validate()
+
         if not is_valid:
+            if status == "attention_failed":
+                logger.info(f"User {user_id} failed attention checks")
+                # Store failed submission
+                SurveyService.process_survey_submission(
+                    submission, attention_check_failed=True
+                )
+                # Redirect to Panel4All with attention filter status
+                return redirect(
+                    redirect_to_panel4all(
+                        user_id,
+                        external_survey_id,
+                        status=current_app.config["PANEL4ALL"]["STATUS"][
+                            "ATTENTION_FAILED"
+                        ],
+                    )
+                )
+
             flash(error_message, "error")
             return redirect(
                 url_for(
@@ -259,15 +287,15 @@ def handle_survey_post(
                 )
             )
 
-        # Process submission
+        # Process valid submission
         SurveyService.process_survey_submission(submission)
-
-        # Redirect to Panel4All
-        panel4all_url = redirect_to_panel4all(user_id, external_survey_id)
-        logger.info(
-            f"Redirecting user {user_id} to Panel4All with survey {external_survey_id}"
+        return redirect(
+            redirect_to_panel4all(
+                user_id,
+                external_survey_id,
+                status=current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"],
+            )
         )
-        return redirect(panel4all_url)
 
     except Exception as e:
         logger.error(f"Error in survey POST: {str(e)}", exc_info=True)
@@ -283,11 +311,7 @@ def thank_you():
     return render_template("thank_you.html")
 
 
-def redirect_to_panel4all(user_id: str, survey_id: str) -> str:
-    """Generate Panel4All redirect URL."""
-    params = {
-        "surveyID": survey_id,
-        "userID": user_id,
-        "status": current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"],
-    }
+def redirect_to_panel4all(user_id: str, survey_id: str, status: str = "finish") -> str:
+    """Generate Panel4All redirect URL with specified status."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
     return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"

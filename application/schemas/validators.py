@@ -54,54 +54,80 @@ class SurveySubmission:
     """
     Represents a complete survey submission.
     Handles validation of the entire survey response including
-    budget vector, comparison pairs, and awareness check.
+    budget vector, comparison pairs, and awareness checks.
     """
 
     user_id: str
     survey_id: int
     user_vector: List[int] = field(default_factory=list)
     user_comment: Optional[str] = ""
-    awareness_answer: int = 0
+    awareness_answers: List[int] = field(default_factory=list)
     comparison_pairs: List[ComparisonPair] = field(default_factory=list)
 
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> tuple[bool, Optional[str], Optional[str]]:
         """
         Validates the complete survey submission.
 
+        Checks in order:
+        1. Awareness checks (must both be correct)
+        2. User vector validation (must have values and sum to 100)
+        3. Value range validation
+        4. Comparison pairs validation
+
         Returns:
-            tuple[bool, Optional[str]]: (is_valid, error_message)
+            tuple[bool, Optional[str], Optional[str]]: A tuple containing:
+                - is_valid: Whether the submission is valid
+                - error_message: Error message if invalid, None if valid
+                - submission_status: 'attention_failed', 'complete', or None if other error
         """
         try:
-            # Validate user_vector
+            # Validate awareness checks first (must both be 2)
+            if len(self.awareness_answers) != 2 or not all(
+                a == 2 for a in self.awareness_answers
+            ):
+                logger.info(
+                    f"User {self.user_id} failed awareness checks with answers: {self.awareness_answers}"
+                )
+                return (
+                    False,
+                    get_translation("failed_awareness", "messages"),
+                    "attention_failed",
+                )
+
+            # Validate user_vector exists
             if not self.user_vector:
-                return False, get_translation("missing_budget", "messages")
+                return (False, get_translation("missing_budget", "messages"), None)
 
+            # Validate sum is 100
             if sum(self.user_vector) != 100:
-                return False, get_translation("budget_sum_error", "messages")
+                return (False, get_translation("budget_sum_error", "messages"), None)
 
+            # Validate value ranges
             if any(v < 0 or v > 95 for v in self.user_vector):
-                return False, get_translation("budget_range_error", "messages")
-
-            # Validate awareness check (must be 2)
-            if self.awareness_answer != 2:
-                return False, get_translation("failed_awareness", "messages")
+                return (False, get_translation("budget_range_error", "messages"), None)
 
             # Validate comparison pairs
             if len(self.comparison_pairs) != 10:
-                return False, get_translation("invalid_pairs_count", "messages")
+                return (False, get_translation("invalid_pairs_count", "messages"), None)
 
             # Validate each comparison pair
             for idx, pair in enumerate(self.comparison_pairs):
                 if not pair.is_valid():
-                    return False, get_translation(
-                        "invalid_pair_at_position", "messages", position=str(idx + 1)
+                    return (
+                        False,
+                        get_translation(
+                            "invalid_pair_at_position",
+                            "messages",
+                            position=str(idx + 1),
+                        ),
+                        None,
                     )
 
-            return True, None
+            return True, None, "complete"
 
         except Exception as e:
             logger.error(f"Survey validation error: {str(e)}")
-            return False, get_translation("validation_error", "messages")
+            return (False, get_translation("validation_error", "messages"), None)
 
     @classmethod
     def from_form_data(
@@ -128,9 +154,18 @@ class SurveySubmission:
             # Process user vector
             user_vector = list(map(int, form_data.get("user_vector", "").split(",")))
 
-            # Process comparison pairs
+            # Process awareness answers
+            awareness_answers = [
+                int(form_data.get(f"awareness_check_{i}", 0)) for i in range(2)
+            ]
+
+            # Process comparison pairs (skip awareness questions)
             pairs = []
-            for i in range(10):
+            pair_count = 0
+            for i in range(12):  # Total questions (10 pairs + 2 awareness)
+                if form_data.get(f"is_awareness_{i}") == "true":
+                    continue
+
                 option_1 = list(map(int, form_data.get(f"option1_{i}", "").split(",")))
                 option_2 = list(map(int, form_data.get(f"option2_{i}", "").split(",")))
                 raw_user_choice = int(form_data.get(f"choice_{i}", 0))
@@ -139,10 +174,7 @@ class SurveySubmission:
                 option1_strategy = form_data.get(f"option1_strategy_{i}")
                 option2_strategy = form_data.get(f"option2_strategy_{i}")
 
-                # If options were swapped during display, adjust choice and the options
-                # to match original option order
                 if was_swapped:
-                    # Swap both options and adjust choice
                     option_1, option_2 = option_2, option_1
                     option1_strategy, option2_strategy = (
                         option2_strategy,
@@ -160,13 +192,14 @@ class SurveySubmission:
                         option2_strategy=option2_strategy,
                     )
                 )
+                pair_count += 1
 
             return cls(
                 user_id=user_id,
                 survey_id=survey_id,
                 user_vector=user_vector,
                 user_comment=form_data.get("user_comment", "").strip(),
-                awareness_answer=int(form_data.get("awareness_check", 0)),
+                awareness_answers=awareness_answers,
                 comparison_pairs=pairs,
             )
 

@@ -33,7 +33,11 @@ def create_user(user_id: str) -> str:
 
 
 def create_survey_response(
-    user_id: int, survey_id: int, optimal_allocation: list, user_comment: str
+    user_id: int,
+    survey_id: int,
+    optimal_allocation: list,
+    user_comment: str,
+    attention_check_failed: bool = False,
 ) -> int:
     """
     Inserts a new survey response into the survey_responses table.
@@ -43,13 +47,15 @@ def create_survey_response(
         survey_id (int): The ID of the survey.
         optimal_allocation (list): The user optimal allocation in JSON format.
         user_comment (str): The user's comment on the survey.
+        attention_check_failed (bool): Whether the user failed the attention check.
 
     Returns:
         int: The ID of the newly created survey response, or None if an error occurs.
     """
     query = """
-        INSERT INTO survey_responses (user_id, survey_id, optimal_allocation, user_comment)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO survey_responses 
+        (user_id, survey_id, optimal_allocation, user_comment, attention_check_failed)
+        VALUES (%s, %s, %s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
     logger.debug(
@@ -58,7 +64,14 @@ def create_survey_response(
 
     try:
         return execute_query(
-            query, (user_id, survey_id, optimal_allocation_json, user_comment)
+            query,
+            (
+                user_id,
+                survey_id,
+                optimal_allocation_json,
+                user_comment,
+                attention_check_failed,
+            ),
         )
     except Exception as e:
         logger.error("Error inserting survey response: %s", str(e))
@@ -268,19 +281,22 @@ def get_subjects(survey_id: int) -> List[str]:
 
 def check_user_participation(user_id: int, survey_id: int) -> bool:
     """
-    Checks if a user has participated in a specific survey.
+    Checks if a user has successfully completed a specific survey.
+    Counts also completions where attention checks were not passed.
 
     Args:
         user_id (int): The ID of the user.
         survey_id (int): The ID of the survey.
 
     Returns:
-        bool: True if the user has participated in the survey, False otherwise.
+        bool: True if the user has successfully completed the survey, False otherwise.
     """
     query = """
     SELECT EXISTS(
         SELECT 1 FROM survey_responses
-        WHERE user_id = %s AND survey_id = %s AND completed = TRUE
+        WHERE user_id = %s 
+        AND survey_id = %s 
+        AND completed = TRUE
     ) as participated
     """
     logger.debug(
@@ -297,10 +313,12 @@ def check_user_participation(user_id: int, survey_id: int) -> bool:
 
 def retrieve_completed_survey_responses() -> List[Dict]:
     """
-    Retrieves all completed survey responses with proper NULL handling.
+    Retrieves all successfully completed survey responses.
+    Excludes responses where attention checks failed.
 
     Returns:
         list: A list of dictionaries containing raw survey response data.
+              Only includes responses where attention checks were passed.
     """
     query = """
     SELECT 
@@ -310,7 +328,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         sr.optimal_allocation,
         sr.completed,
         sr.created_at AS response_created_at,
-        COALESCE(sr.user_comment, '') as user_comment,  -- Convert NULL to empty string
+        COALESCE(sr.user_comment, '') as user_comment,
         cp.pair_number,
         cp.option_1,
         cp.option_2,
@@ -321,10 +339,11 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         comparison_pairs cp ON sr.id = cp.survey_response_id
     WHERE
         sr.completed = TRUE
+        AND sr.attention_check_failed = FALSE
     ORDER BY 
         sr.id, cp.pair_number
     """
-    logger.debug("Retrieving all completed survey responses and comparison pairs")
+    logger.debug("Retrieving all successfully completed survey responses")
 
     try:
         results = execute_query(query)
@@ -372,7 +391,15 @@ def get_latest_survey_timestamp() -> float:
 
 
 def retrieve_user_survey_choices() -> List[Dict]:
-    """Retrieves survey choices data organized by user and survey."""
+    """
+    Retrieves survey choices data organized by user and survey.
+    Only includes choices from successfully completed surveys where attention checks passed.
+
+    Returns:
+        List[Dict]: List of dictionaries containing survey choice data.
+                   Each dictionary contains user_id, survey_id, and choice details.
+                   Only includes data from surveys where attention checks were passed.
+    """
     query = """
     SELECT 
         sr.user_id,
@@ -391,6 +418,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
         comparison_pairs cp ON sr.id = cp.survey_response_id
     WHERE
         sr.completed = TRUE
+        AND sr.attention_check_failed = FALSE
     ORDER BY 
         sr.user_id,
         sr.survey_id,

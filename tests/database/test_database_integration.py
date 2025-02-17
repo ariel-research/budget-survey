@@ -153,7 +153,11 @@ def test_create_survey_response(app_context, setup_test_data, cleanup_db):
     user_comment = "This is a test comment"
 
     survey_response_id = create_survey_response(
-        user_id, survey_id, optimal_allocation, user_comment
+        user_id,
+        survey_id,
+        optimal_allocation,
+        user_comment,
+        attention_check_failed=False,
     )
     assert survey_response_id is not None, "Failed to create survey response"
 
@@ -161,6 +165,11 @@ def test_create_survey_response(app_context, setup_test_data, cleanup_db):
     verify_query = "SELECT * FROM survey_responses WHERE id = %s"
     result = execute_query(verify_query, (survey_response_id,))
     assert result, f"Survey response with ID {survey_response_id} not found"
+
+    # Verify attention check field
+    assert (
+        result[0]["attention_check_failed"] == 0
+    ), "Attention check should default to false"
 
 
 def test_create_comparison_pair(app_context, setup_test_data, cleanup_db):
@@ -179,7 +188,7 @@ def test_create_comparison_pair(app_context, setup_test_data, cleanup_db):
 
     # Create survey response
     survey_response_id = create_survey_response(
-        user_id, survey_id, [5, 15, 80], "Test comment"
+        user_id, survey_id, [5, 15, 80], "Test comment", attention_check_failed=False
     )
 
     # Test data for comparison pair
@@ -239,7 +248,11 @@ def test_mark_survey_as_completed(app_context, setup_test_data, cleanup_db):
     survey_id = result[0]["id"]
 
     survey_response_id = create_survey_response(
-        user_id, survey_id, [15, 25, 60], "Completion test comment"
+        user_id,
+        survey_id,
+        [15, 25, 60],
+        "Completion test comment",
+        attention_check_failed=False,
     )
     assert survey_response_id is not None, "Failed to create survey response"
 
@@ -354,7 +367,9 @@ def test_check_user_participation(app_context, setup_test_data, cleanup_db):
         user_id, survey_id
     ), "User shouldn't have participated initially"
 
-    survey_response_id = create_survey_response(user_id, survey_id, [50, 50], "")
+    survey_response_id = create_survey_response(
+        user_id, survey_id, [50, 50], "", attention_check_failed=False
+    )
     assert survey_response_id is not None, "Failed to create survey response"
 
     # User still shouldn't be marked as participated (survey not completed)
@@ -400,7 +415,11 @@ def test_retrieve_completed_survey_responses(app_context, setup_test_data, clean
     optimal_allocation = [30, 30, 40]
     user_comment = "Retrieval test comment"
     survey_response_id = create_survey_response(
-        user_id, survey_id, optimal_allocation, user_comment
+        user_id,
+        survey_id,
+        optimal_allocation,
+        user_comment,
+        attention_check_failed=False,
     )
 
     # Create comparison pairs with strategy information
@@ -475,7 +494,7 @@ def test_get_latest_survey_timestamp(app_context, setup_test_data, cleanup_db):
 
     # Create and complete a survey response
     survey_response_id = create_survey_response(
-        user_id, survey_id, [30, 30, 40], "Test comment"
+        user_id, survey_id, [30, 30, 40], "Test comment", attention_check_failed=False
     )
     mark_survey_as_completed(survey_response_id)
 
@@ -578,6 +597,44 @@ def test_get_survey_name_multiple_languages(
         assert en_name == "Test Survey", f"Expected 'Test Survey' but got '{en_name}'"
 
         ctx.pop()  # Pop the context when done
+
+
+def test_attention_check_handling(app_context, setup_test_data, cleanup_db):
+    """Test the handling of attention check failures in survey responses."""
+    user_id = generate_unique_id()
+    create_user(user_id)
+
+    # Get test survey
+    survey_query = "SELECT id FROM surveys LIMIT 1"
+    result = execute_query(survey_query)
+    survey_id = result[0]["id"]
+
+    # Create failed attention check response
+    failed_response_id = create_survey_response(
+        user_id=user_id,
+        survey_id=survey_id,
+        optimal_allocation=[50, 50],
+        user_comment="Failed attention check",
+        attention_check_failed=True,
+    )
+
+    # Verify attention check status
+    query = "SELECT attention_check_failed FROM survey_responses WHERE id = %s"
+    result = execute_query(query, (failed_response_id,), fetch_one=True)
+    assert (
+        result["attention_check_failed"] == 1
+    ), "Attention check should be marked as failed"
+
+    # Mark as completed
+    mark_survey_as_completed(failed_response_id)
+
+    # Verify user participation check excludes failed attention checks
+    assert not check_user_participation(user_id, survey_id)
+
+    # Verify failed checks are excluded from completed responses
+    completed_responses = retrieve_completed_survey_responses()
+    response_ids = [r["survey_response_id"] for r in completed_responses]
+    assert failed_response_id not in response_ids
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ CREATE TABLE survey_responses (
   optimal_allocation JSON NOT NULL,
   user_comment TEXT,
   completed BOOLEAN DEFAULT FALSE,
+  attention_check_failed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 );
 

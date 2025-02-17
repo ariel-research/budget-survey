@@ -7,6 +7,7 @@
   - [Automatic Budget Rescaling](#automatic-budget-rescaling)
   - [Pair Generation Strategies](#pair-generation-strategies)
   - [Language Support](#language-support)
+  - [Attention Check Handling](#attention-check-handling)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Database Setup](#database-setup)
@@ -218,6 +219,25 @@ The application provides comprehensive bilingual support:
 
 All translations are managed through the translations system, making it easy to maintain and update content in both languages.
 
+### Attention Check Handling
+The application includes an attention check mechanism to ensure survey quality:
+
+- **Purpose**: Validate user attention during survey completion
+- **Implementation**:
+  - Two attention check questions mixed within comparison pairs
+  - Validates that users recognize their own optimal allocation
+  - Failed checks are recorded and do not allow retries
+
+- **Panel4All Integration**:
+  - Sends "attentionfilter" status for failed attention checks
+  - Sends "finish" status for successful completions
+  - Allows proper handling by survey management system
+
+- **Data Storage**:
+  - Failed checks are stored with `attention_check_failed` flag
+  - Maintains data for analysis while excluding from main results
+  - Supports research on survey response quality
+
 ## Prerequisites
 - Python 3.8+
 - MySQL 8.0+
@@ -397,7 +417,7 @@ To modify the text displayed on each screen of the application, here's a guide t
 
 Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
 
-## Database
+## §
 The application uses a MySQL database with multilingual support. Here's the schema:
 
 ![Database Schema](docs/db_schema_diagram.png)
@@ -690,3 +710,5 @@ Note: It's crucial to have your application server running before starting the L
 - Use the provided `.pre-commit-config.yaml` for code formatting and linting
 - Run tests using `pytest`
 - Logs are stored in the `logs` directory
+- Database migrations are stored in `migrations/` directory
+- Follow the timestamp-based naming convention (e.g., `20250216_add_attention_check_column.sql`)
