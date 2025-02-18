@@ -213,13 +213,21 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
         if m1_1 < m1_2:  # v1 is better in first metric
             return {
-                self.get_option_description(metric_type=metric_type1, value=m1_1): v1,
-                self.get_option_description(metric_type=metric_type2, value=m2_2): v2,
+                self.get_option_description(
+                    metric_type=metric_type1, best_value=m1_1, worse_value=m1_2
+                ): v1,
+                self.get_option_description(
+                    metric_type=metric_type2, best_value=m2_2, worse_value=m2_1
+                ): v2,
             }
         else:  # v2 is better in first metric
             return {
-                self.get_option_description(metric_type=metric_type1, value=m1_2): v2,
-                self.get_option_description(metric_type=metric_type2, value=m2_1): v1,
+                self.get_option_description(
+                    metric_type=metric_type1, best_value=m1_2, worse_value=m1_1
+                ): v2,
+                self.get_option_description(
+                    metric_type=metric_type2, best_value=m2_1, worse_value=m2_2
+                ): v1,
             }
 
     def get_metric_types(self) -> tuple[str, str]:
@@ -234,12 +242,9 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         """Get the unique labels for this strategy's options."""
         return ("Sum Optimized Vector", "Ratio Optimized Vector")
 
-    def get_option_description(self, **kwargs) -> str:
-        metric_type = kwargs.get("metric_type")
-        value = kwargs.get("value")
-
+    def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "sum":
-            return f"Sum Optimized Vector: {int(value)}"
+            return "Sum Optimized Vector"
         elif metric_type == "ratio":
-            return f"Ratio Optimized Vector: {value:.2f}"
+            return "Ratio Optimized Vector"
         return "Unknown Vector"
