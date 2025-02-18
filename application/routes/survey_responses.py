@@ -50,20 +50,22 @@ def get_user_responses(
     """
     try:
         # Use provided choices or fetch new ones
-        choices = (
-            user_choices if user_choices is not None else retrieve_user_survey_choices()
-        )
+        if user_choices is None:
+            user_choices = retrieve_user_survey_choices()
+            if survey_id is not None:
+                user_choices = [
+                    choice
+                    for choice in user_choices
+                    if choice["survey_id"] == survey_id
+                ]
 
-        if survey_id is not None and user_choices is None:
-            # Filter for specific survey if not pre-filtered
-            choices = [c for c in choices if c["survey_id"] == survey_id]
-            if not choices:
+            if survey_id is not None and not user_choices:
                 logger.warning(f"No responses found for survey {survey_id}")
                 raise SurveyNotFoundError(survey_id)
 
         # Add strategy labels to each choice based on its survey
         survey_labels = {}  # Store labels for each survey
-        for choice in choices:
+        for choice in user_choices:
             current_survey_id = choice["survey_id"]
             if current_survey_id not in survey_labels:
                 strategy_config = get_survey_pair_generation_config(current_survey_id)
@@ -83,9 +85,9 @@ def get_user_responses(
         else:
             option_labels = ("Option 1", "Option 2")
 
-        response_data = ResponseFormatter.format_response_data(choices)
+        response_data = ResponseFormatter.format_response_data(user_choices)
         response_data["content"] = generate_detailed_user_choices(
-            choices, option_labels=option_labels, show_tables_only=show_tables_only
+            user_choices, option_labels=option_labels, show_tables_only=show_tables_only
         )
         return response_data
 
@@ -142,17 +144,8 @@ def get_survey_responses(survey_id: int):
         Rendered template with survey responses
     """
     try:
-        # Get all choices and filter for specific survey
-        choices = retrieve_user_survey_choices()
-        survey_choices = [c for c in choices if c["survey_id"] == survey_id]
-
-        if not survey_choices:
-            logger.warning(f"No responses found for survey {survey_id}")
-            raise SurveyNotFoundError(survey_id)
-
-        # Use get_user_responses with show_tables_only=True for summary view
-        data = get_user_responses(user_choices=survey_choices, show_tables_only=True)
-
+        # Get user responses filtered by survey_id
+        data = get_user_responses(survey_id=survey_id, show_tables_only=True)
         return render_template("responses/detail.html", data=data, survey_id=survey_id)
 
     except SurveyNotFoundError as e:
