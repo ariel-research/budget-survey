@@ -143,22 +143,22 @@ class PairGenerationStrategy(ABC):
         Args:
             metric_type: Type of metric (e.g., 'sum', 'ratio', 'rss')
             best_value: The best value for this metric
-            worse_value: The worse value for this metric
+            worst_value: The worst value for this metric
 
         Returns:
             str: Description with both metric values
         """
         metric_type = kwargs.get("metric_type")
         best_value = kwargs.get("best_value")
-        worse_value = kwargs.get("worse_value")
+        worst_value = kwargs.get("worst_value")
 
-        if any(val is None for val in [metric_type, best_value, worse_value]):
+        if any(val is None for val in [metric_type, best_value, worst_value]):
             import json
 
             logger.warning("Kwargs received: %s", json.dumps(kwargs, indent=2))
             return "Unknown Vector"
 
-        return f"{self._get_metric_name(metric_type)}: {{best: {best_value:.2f}, worse: {worse_value:.2f}}}"
+        return f"{self._get_metric_name(metric_type)}: {{best: {best_value:.2f}, worst: {worst_value:.2f}}}"
 
     @abstractmethod
     def _get_metric_name(self, metric_type: str) -> str:
