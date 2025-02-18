@@ -275,6 +275,7 @@
 .option-column {
    font-family: var(--font-family-mono);
    letter-spacing: -0.5px;
+   white-space: nowrap;
 }
 
 .table-container tr:hover {
