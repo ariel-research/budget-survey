@@ -91,12 +91,25 @@ def test_generate_pairs(strategy):
 
 def test_option_descriptions(strategy):
     """Test if option descriptions are generated correctly."""
-    desc_rss = strategy.get_option_description(metric_type="rss", value=15.5)
-    desc_ratio = strategy.get_option_description(metric_type="ratio", value=0.75)
+    # Updated to include both best and worst values
+    desc_rss = strategy.get_option_description(
+        metric_type="rss", best_value=15.5, worst_value=20.0
+    )
+    desc_ratio = strategy.get_option_description(
+        metric_type="ratio", best_value=0.75, worst_value=0.60
+    )
 
-    assert desc_rss == "Root Sum Squared Optimized Vector: 15.50"
-    assert desc_ratio == "Ratio Optimized Vector: 0.75"
+    # Root Sum Squared vector checks
+    assert "Root Sum Squared Optimized Vector" in desc_rss
+    assert "best: 15.50" in desc_rss
+    assert "worst: 20.00" in desc_rss
 
+    # Ratio vector checks
+    assert "Ratio Optimized Vector" in desc_ratio
+    assert "best: 0.75" in desc_ratio
+    assert "worst: 0.60" in desc_ratio
+
+    # Label checks
     labels = strategy.get_option_labels()
     assert labels == ("Root Sum Squared Optimized Vector", "Ratio Optimized Vector")
 

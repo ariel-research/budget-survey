@@ -214,19 +214,19 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         if m1_1 < m1_2:  # v1 is better in first metric
             return {
                 self.get_option_description(
-                    metric_type=metric_type1, best_value=m1_1, worse_value=m1_2
+                    metric_type=metric_type1, best_value=m1_1, worst_value=m1_2
                 ): v1,
                 self.get_option_description(
-                    metric_type=metric_type2, best_value=m2_2, worse_value=m2_1
+                    metric_type=metric_type2, best_value=m2_2, worst_value=m2_1
                 ): v2,
             }
         else:  # v2 is better in first metric
             return {
                 self.get_option_description(
-                    metric_type=metric_type1, best_value=m1_2, worse_value=m1_1
+                    metric_type=metric_type1, best_value=m1_2, worst_value=m1_1
                 ): v2,
                 self.get_option_description(
-                    metric_type=metric_type2, best_value=m2_1, worse_value=m2_2
+                    metric_type=metric_type2, best_value=m2_1, worst_value=m2_2
                 ): v1,
             }
 
