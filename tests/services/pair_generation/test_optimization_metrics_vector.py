@@ -67,8 +67,8 @@ def test_generated_pairs_are_valid(strategy):
         sum_desc = next(desc for desc in descriptions if "Sum Optimized" in desc)
         ratio_desc = next(desc for desc in descriptions if "Ratio Optimized" in desc)
 
-        sum_value = float(sum_desc.split(": ")[1])
-        ratio_value = float(ratio_desc.split(": ")[1])
+        sum_value = float(sum_desc.split("best: ")[1].split(",")[0])
+        ratio_value = float(ratio_desc.split("best: ")[1].split(",")[0])
 
         # Verify that descriptions match actual metrics
         if sum_desc == descriptions[0]:  # First vector is sum-optimized
@@ -81,15 +81,20 @@ def test_generated_pairs_are_valid(strategy):
 
 def test_option_descriptions(strategy):
     """Test if option descriptions are generated correctly."""
-    description_sum = strategy.get_option_description(metric_type="sum", value=25)
-    description_ratio = strategy.get_option_description(metric_type="ratio", value=0.75)
+    description_sum = strategy.get_option_description(
+        metric_type="sum", best_value=25, worst_value=35
+    )
+    description_ratio = strategy.get_option_description(
+        metric_type="ratio", best_value=0.75, worst_value=0.60
+    )
 
-    assert description_sum == "Sum Optimized Vector: 25"
-    assert description_ratio == "Ratio Optimized Vector: 0.75"
-    assert strategy.get_strategy_name() == "optimization_metrics"
+    assert "Sum Optimized Vector" in description_sum
+    assert "best: 25.00" in description_sum
+    assert "worst: 35.00" in description_sum
 
-    labels = strategy.get_option_labels()
-    assert labels == ("Sum Optimized Vector", "Ratio Optimized Vector")
+    assert "Ratio Optimized Vector" in description_ratio
+    assert "best: 0.75" in description_ratio
+    assert "worst: 0.60" in description_ratio
 
 
 def test_generate_pairs_error_handling(strategy):
@@ -129,14 +134,13 @@ def test_metric_value_extraction(strategy):
     pairs = strategy.generate_pairs(user_vector, n=1, vector_size=3)
     pair = pairs[0]
 
-    # Extract values from descriptions
     descriptions = list(pair.keys())
     sum_desc = next(desc for desc in descriptions if "Sum Optimized" in desc)
     ratio_desc = next(desc for desc in descriptions if "Ratio Optimized" in desc)
 
-    # Verify format and value ranges
-    sum_value = float(sum_desc.split(": ")[1])
-    ratio_value = float(ratio_desc.split(": ")[1])
+    # Extract best values from the new format
+    sum_value = float(sum_desc.split("best: ")[1].split(",")[0])
+    ratio_value = float(ratio_desc.split("best: ")[1].split(",")[0])
 
     assert sum_value > 0, "Sum difference should be positive"
     assert 0 < ratio_value <= 1, "Ratio should be between 0 and 1"

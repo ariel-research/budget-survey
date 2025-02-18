@@ -98,13 +98,9 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
         """Get the labels for the two types of optimization."""
         return ("Root Sum Squared Optimized Vector", "Sum Optimized Vector")
 
-    def get_option_description(self, **kwargs) -> str:
-        """Get descriptive name for an option including the metric value."""
-        metric_type = kwargs.get("metric_type")
-        value = kwargs.get("value")
-
+    def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "rss":
-            return f"Root Sum Squared Optimized Vector: {value:.2f}"
+            return "Root Sum Squared Optimized Vector"
         elif metric_type == "sum":
-            return f"Sum Optimized Vector: {int(value)}"
+            return "Sum Optimized Vector"
         return "Unknown Vector"

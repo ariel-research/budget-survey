@@ -275,7 +275,8 @@
 .option-column {
    font-family: var(--font-family-mono);
    letter-spacing: -0.5px;
-}
+   white-space: nowrap;
+}clear
 
 .table-container tr:hover {
    background-color: var(--color-background-alt);

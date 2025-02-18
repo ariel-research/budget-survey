@@ -193,18 +193,14 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
     def get_option_labels(self) -> Tuple[str, str]:
         return ("Random Vector", "Weighted Average Vector")
 
+    def _get_metric_name(self, metric_type: str) -> str:
+        if metric_type == "weight":
+            return "Average Weighted Vector"
+        return "Random Vector"
+
     def get_option_description(self, **kwargs) -> str:
-        """
-        Get descriptive name for an option including weight parameter if applicable.
-
-        Args:
-            weight: Optional weight parameter for weighted vectors
-
-        Returns:
-            str: Description like "Average Weighted Vector: 70%"
-        """
+        """Override for weight-based description."""
         weight = kwargs.get("weight")
-        logger.debug(f"get_option_description - weight: {weight}")
         if weight is None:
             return "Random Vector"
         return f"Average Weighted Vector: {int(weight * 100)}%"

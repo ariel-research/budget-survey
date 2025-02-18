@@ -28,6 +28,10 @@ class TestStrategy(PairGenerationStrategy):
         type_str = kwargs.get("type", "default")
         return f"Test {type_str.capitalize()} Vector"
 
+    def _get_metric_name(self, metric_type: str) -> str:
+        """Get the display name for a metric type."""
+        return f"Test {metric_type.capitalize()} Vector"
+
 
 @pytest.fixture
 def strategy():

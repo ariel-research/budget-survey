@@ -70,10 +70,16 @@ def get_user_responses(
             if current_survey_id not in survey_labels:
                 strategy_config = get_survey_pair_generation_config(current_survey_id)
                 if strategy_config:
-                    strategy = StrategyRegistry.get_strategy(
-                        strategy_config["strategy"]
-                    )
-                    survey_labels[current_survey_id] = strategy.get_option_labels()
+                    try:
+                        strategy = StrategyRegistry.get_strategy(
+                            strategy_config["strategy"]
+                        )
+                        survey_labels[current_survey_id] = strategy.get_option_labels()
+                    except ValueError as e:
+                        logger.warning(
+                            f"Strategy not found for survey {current_survey_id}: {e}"
+                        )
+                        survey_labels[current_survey_id] = ("Option 1", "Option 2")
 
             # Add labels to choice
             if current_survey_id in survey_labels:

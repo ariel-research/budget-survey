@@ -88,16 +88,13 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
     def get_option_labels(self) -> Tuple[str, str]:
         return ("Random Vector", "Rounded Weighted Average Vector")
 
+    def _get_metric_name(self, metric_type: str) -> str:
+        if metric_type == "weight":
+            return "Rounded Weighted Average Vector"
+        return "Random Vector"
+
     def get_option_description(self, **kwargs) -> str:
-        """
-        Get descriptive name for an option including weight parameter if applicable.
-
-        Args:
-            weight: Optional weight parameter for weighted vectors
-
-        Returns:
-            str: Description like "Rounded Weighted Vector: 70%"
-        """
+        """Override for rounded weight-based description."""
         weight = kwargs.get("weight")
         if weight is None:
             return "Random Vector"
