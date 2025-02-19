@@ -258,7 +258,9 @@ def get_user_survey_response(survey_id: int, user_id: str):
             )
 
         data = get_user_responses(
-            user_choices=user_survey_choices, show_tables_only=False
+            survey_id=survey_id,
+            user_choices=user_survey_choices,
+            show_tables_only=False,
         )
         return render_template("responses/user_detail.html", data=data, user_id=user_id)
 
