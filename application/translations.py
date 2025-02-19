@@ -331,6 +331,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מבוסס על {x} תשובות לסקר",
             "en": "Based on {x} survey responses",
         },
+        "view_response": {"he": "צפה בתשובה", "en": "View Response"},
     },
 }
 
