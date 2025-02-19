@@ -654,7 +654,7 @@ def generate_detailed_breakdown_table(
                         <th>Survey ID</th>
                         <th>{option_labels[0]}</th>
                         <th>{option_labels[1]}</th>
-                        <th>{get_translation('view_response', 'answers')}</th>
+                        <th>View Response</th>
                     </tr>
                 </thead>
                 <tbody>
