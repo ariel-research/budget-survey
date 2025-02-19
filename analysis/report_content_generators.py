@@ -610,23 +610,33 @@ def generate_detailed_breakdown_table(
     for summary in sorted_summaries:
         opt1_percent = summary["stats"]["option1_percent"]
         opt2_percent = summary["stats"]["option2_percent"]
+        survey_id = summary["survey_id"]
+        user_id = summary["user_id"]
 
-        # Generate user link with a URL pattern
-        user_link = f"/surveys/users/{summary['user_id']}/responses"
+        # Generate links
+        all_responses_link = f"/surveys/users/{user_id}/responses"
+        survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
 
         row = f"""
         <tr>
             <td>
-                <a href="{user_link}" class="user-link" target="_blank">
-                    {summary['user_id']}
+                <a href="{all_responses_link}" class="user-link" target="_blank">
+                    {user_id}
                 </a>
             </td>
-            <td>{summary['survey_id']}</td>
+            <td>{survey_id}</td>
             <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
                 {format(opt1_percent, '.1f')}%
             </td>
             <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">
                 {format(opt2_percent, '.1f')}%
+            </td>
+            <td>
+                <a href="{survey_response_link}" 
+                   class="survey-response-link" 
+                   target="_blank">
+                    {get_translation('view_response', 'answers')}
+                </a>
             </td>
         </tr>
         """
@@ -644,6 +654,7 @@ def generate_detailed_breakdown_table(
                         <th>Survey ID</th>
                         <th>{option_labels[0]}</th>
                         <th>{option_labels[1]}</th>
+                        <th>View Response</th>
                     </tr>
                 </thead>
                 <tbody>

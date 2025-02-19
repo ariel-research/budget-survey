@@ -351,6 +351,7 @@ Note: Make sure your .env file is properly configured with the correct database 
    - `/surveys/responses` - View all responses across all surveys
    - `/surveys/{survey_id}/responses` - View responses for specific survey
    - `/surveys/users/{user_id}/responses` - View all responses from specific user
+   - `/surveys/{survey_id}/users/{user_id}/responses` - View specific user's response for a survey
    - `/surveys/comments` - View all comments
    - `/surveys/{survey_id}/comments` - View comments for specific survey
 
@@ -379,6 +380,7 @@ Notes:
    - All Responses: https://survey.csariel.xyz/surveys/responses
    - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
    - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
+   - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
    - All Comments: https://survey.csariel.xyz/surveys/comments
    - Survey Comments: https://survey.csariel.xyz/surveys/{survey_id}/comments
 

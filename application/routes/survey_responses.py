@@ -234,6 +234,47 @@ def get_user_responses_detail(user_id: str):
         )
 
 
+@responses_routes.route("/<int:survey_id>/users/<string:user_id>/responses")
+def get_user_survey_response(survey_id: int, user_id: str):
+    """Get specific user's response for a particular survey."""
+    try:
+        # Get all choices and filter for specific user and survey
+        choices = retrieve_user_survey_choices()
+        user_survey_choices = [
+            c
+            for c in choices
+            if c["user_id"] == user_id and c["survey_id"] == survey_id
+        ]
+
+        if not user_survey_choices:
+            return (
+                render_template(
+                    "error.html",
+                    message=get_translation(
+                        "no_user_responses", "messages", user_id=user_id
+                    ),
+                ),
+                404,
+            )
+
+        data = get_user_responses(
+            survey_id=survey_id,
+            user_choices=user_survey_choices,
+            show_tables_only=False,
+        )
+        return render_template("responses/user_detail.html", data=data, user_id=user_id)
+
+    except Exception as e:
+        logger.error(f"Error retrieving user survey response: {str(e)}", exc_info=True)
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
 @responses_routes.route("/<int:survey_id>/comments")
 def get_survey_comments(survey_id: int):
     """

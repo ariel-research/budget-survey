@@ -495,9 +495,22 @@ html {
 .detailed-breakdown table th:nth-child(1) { width: 25%; }
 .detailed-breakdown table th:nth-child(2) { width: 15%; }
 .detailed-breakdown table th:nth-child(3),
-.detailed-breakdown table th:nth-child(4) {
-   width: 30%;
-   text-align: center;
+.detailed-breakdown table th:nth-child(4) { width: 20%; }
+.detailed-breakdown table th:nth-child(5) { width: 20%; }
+
+.survey-response-link {
+   color: var(--color-primary);
+   text-decoration: none;
+   padding: 0.25rem 0.5rem;
+   border-radius: 4px;
+   transition: all 0.2s ease;
+   display: inline-block;
+}
+
+.survey-response-link:hover {
+   background-color: var(--color-primary);
+   color: white;
+   transform: translateY(-1px);
 }
 
 /* ==========================================================================
