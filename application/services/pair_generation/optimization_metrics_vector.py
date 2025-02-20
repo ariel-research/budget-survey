@@ -240,7 +240,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get the unique labels for this strategy's options."""
-        return ("Sum Optimized Vector", "Ratio Optimized Vector")
+        return ("Sum", "Ratio")
 
     def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "sum":

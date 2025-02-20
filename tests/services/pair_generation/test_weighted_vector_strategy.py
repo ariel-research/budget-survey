@@ -61,12 +61,12 @@ def test_generate_pairs(strategy):
         descriptions = list(pair.keys())
         vectors = list(pair.values())
 
-        assert any("Random Vector" in desc for desc in descriptions)
-        assert any("Average Weighted Vector" in desc for desc in descriptions)
+        assert any("Random" in desc for desc in descriptions)
+        assert any("Average Weighted" in desc for desc in descriptions)
 
         # Check that percentage is included in weighted vector description
         weighted_desc = next(
-            desc for desc in descriptions if "Average Weighted Vector" in desc
+            desc for desc in descriptions if "Average Weighted" in desc
         )
         assert "%" in weighted_desc
 
@@ -110,7 +110,7 @@ def test_option_descriptions(strategy):
     assert description_weighted == "Average Weighted Vector: 30%"
 
     labels = strategy.get_option_labels()
-    assert labels == ("Random Vector", "Weighted Average Vector")
+    assert labels == ("Random", "Weighted Average")
 
 
 def test_generate_pairs_error_handling(strategy):

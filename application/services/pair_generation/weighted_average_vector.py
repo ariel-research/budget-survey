@@ -191,7 +191,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         return "weighted_average_vector"
 
     def get_option_labels(self) -> Tuple[str, str]:
-        return ("Random Vector", "Weighted Average Vector")
+        return ("Random", "Weighted Average")
 
     def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "weight":

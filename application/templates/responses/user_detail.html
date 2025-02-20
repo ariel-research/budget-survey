@@ -8,8 +8,12 @@
 <div class="answers-container">
     <div class="answers-header">
         <div class="header-content">
-            <h1>{{ get_translation('user_responses_title', 'answers', user_id=user_id) }}</h1>
-            
+            {% if full_title and survey_id %}
+            <h1>{{ get_translation('user_responses_title', 'answers', user_id=user_id, survey_id=survey_id) }}</h1>
+            {% else %}
+            <h1>{{ get_translation('user_responses_title_short', 'answers', user_id=user_id) }}</h1>
+            {% endif %}
+
             <a href="{{ url_for('responses.list_all_responses') }}" class="back-link">
                 <span class="back-icon">←</span>
                 {{ get_translation('back_to_list', 'answers') }}

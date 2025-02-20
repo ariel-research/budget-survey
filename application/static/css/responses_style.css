@@ -499,18 +499,91 @@ html {
 .detailed-breakdown table th:nth-child(5) { width: 20%; }
 
 .survey-response-link {
-   color: var(--color-primary);
+   display: inline-flex;
+   align-items: center;
+   gap: 0.5rem;
+   padding: 0.1rem 0.3rem;
+   background-color: var(--color-primary);
+   color: white;
+   border-radius: 6px;
    text-decoration: none;
-   padding: 0.25rem 0.5rem;
-   border-radius: 4px;
    transition: all 0.2s ease;
-   display: inline-block;
+   font-weight: 300;
+   border: 1px solid transparent;
 }
 
 .survey-response-link:hover {
-   background-color: var(--color-primary);
-   color: white;
+   background-color: var(--color-background);
+   color: var(--color-primary);
+   border-color: var(--color-primary);
    transform: translateY(-1px);
+}
+
+.survey-response-link:focus {
+   outline: 2px solid var(--color-primary);
+   outline-offset: 2px;
+}
+
+.survey-response-link:active {
+   transform: translateY(0);
+}
+
+/* Icon styles */
+.response-link-icon {
+   width: 1.2em;
+   height: 1.2em;
+}
+
+.user-id-cell {
+   position: relative;
+}
+
+.user-id-tooltip {
+   visibility: hidden;
+   background-color: var(--color-primary);
+   color: var(--color-background);
+   padding: var(--spacing-xs) var(--spacing-sm);
+   border-radius: 4px;
+   position: absolute;
+   z-index: 1000;
+   bottom: 125%;
+   left: 50%;
+   transform: translateX(-40%);
+   white-space: nowrap;
+   font-size: var(--font-size-xs);
+   opacity: 0;
+   transition: opacity 0.2s ease;
+   box-shadow: var(--shadow-md);
+   pointer-events: none;
+}
+
+.user-id-tooltip::after {
+   content: "";
+   position: absolute;
+   top: 100%;
+   left: 50%;
+   margin-left: -5px;
+   border-width: 5px;
+   border-style: solid;
+   border-color: var(--color-primary) transparent transparent transparent;
+}
+
+.user-id-cell:hover .user-id-tooltip {
+   visibility: visible;
+   opacity: 1;
+}
+
+/* RTL adjustments */
+[dir="rtl"] .user-id-tooltip {
+   left: auto;
+   right: 50%;
+   transform: translateX(50%);
+}
+
+[dir="rtl"] .user-id-tooltip::after {
+   left: auto;
+   right: 50%;
+   margin-right: -5px;
 }
 
 /* ==========================================================================
@@ -737,7 +810,7 @@ html {
 /* ==========================================================================
   Responsive Adjustments
   ========================================================================== */
-@media (max-width: 1024px) {
+  @media (max-width: 1024px) {
    .comments-grid {
        grid-template-columns: 1fr;
        gap: 2rem;
@@ -917,6 +990,10 @@ html {
       background-color: #000;
       color: #fff;
   }
+
+  .survey-response-link {
+   border: 2px solid currentColor;
+  }
 }
 
 /* ==========================================================================
@@ -928,6 +1005,9 @@ html {
       transition: none;
   }
   .back-to-top {
+   transition: none;
+  }
+  .survey-response-link {
    transition: none;
   }
 }

@@ -523,6 +523,7 @@ def generate_detailed_user_choices(
     user_choices: List[Dict],
     option_labels: Tuple[str, str],
     show_tables_only: bool = False,
+    show_detailed_breakdown_table: bool = True,
 ) -> str:
     """Generate detailed analysis of each user's choices for each survey.
 
@@ -530,6 +531,7 @@ def generate_detailed_user_choices(
         user_choices: List of dictionaries containing user choices data
         option_labels: Tuple of labels for the two options
         show_tables_only: If True, only show summary tables without detailed choices
+        show_detailed_breakdown_table: If True, include detailed breakdown table
 
     Returns:
         str: HTML-formatted string with detailed user choices
@@ -564,8 +566,9 @@ def generate_detailed_user_choices(
     # 1. Overall statistics table
     content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
-    # 2. Detailed breakdown table
-    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+    if show_detailed_breakdown_table:
+        # 2. Detailed breakdown table
+        content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
 
     # Include detailed user choices only if not show_tables_only
     if not show_tables_only:
@@ -612,6 +615,7 @@ def generate_detailed_breakdown_table(
         opt2_percent = summary["stats"]["option2_percent"]
         survey_id = summary["survey_id"]
         user_id = summary["user_id"]
+        display_id, is_truncated = _format_user_id(user_id)
 
         # Generate links
         all_responses_link = f"/surveys/users/{user_id}/responses"
@@ -619,10 +623,11 @@ def generate_detailed_breakdown_table(
 
         row = f"""
         <tr>
-            <td>
+            <td class="user-id-cell{' truncated' if is_truncated else ''}">
                 <a href="{all_responses_link}" class="user-link" target="_blank">
-                    {user_id}
+                    {display_id}
                 </a>
+                {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
             </td>
             <td>{survey_id}</td>
             <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
@@ -633,8 +638,8 @@ def generate_detailed_breakdown_table(
             </td>
             <td>
                 <a href="{survey_response_link}" 
-                   class="survey-response-link" 
-                   target="_blank">
+                class="survey-response-link" 
+                target="_blank">
                     {get_translation('view_response', 'answers')}
                 </a>
             </td>
@@ -796,6 +801,22 @@ def generate_user_comments_section(responses_df: pd.DataFrame) -> str:
     except Exception as e:
         logger.error(f"Error generating user comments section: {str(e)}", exc_info=True)
         return '<div class="comments-container"><p class="error">Error generating comments section.</p></div>'
+
+
+def _format_user_id(user_id: str, max_length: int = 12) -> tuple[str, bool]:
+    """
+    Format user ID for display, truncating if too long.
+
+    Args:
+        user_id: The user identifier
+        max_length: Maximum length before truncating
+
+    Returns:
+        Tuple of (display_id, is_truncated)
+    """
+    if len(user_id) > max_length:
+        return f"{user_id[:8]}...", True
+    return user_id, False
 
 
 def generate_key_findings(
