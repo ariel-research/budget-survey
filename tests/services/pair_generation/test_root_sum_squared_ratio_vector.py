@@ -100,18 +100,18 @@ def test_option_descriptions(strategy):
     )
 
     # Root Sum Squared vector checks
-    assert "Root Sum Squared Optimized Vector" in desc_rss
+    assert "Root Sum Squared" in desc_rss
     assert "best: 15.50" in desc_rss
     assert "worst: 20.00" in desc_rss
 
     # Ratio vector checks
-    assert "Ratio Optimized Vector" in desc_ratio
+    assert "Ratio" in desc_ratio
     assert "best: 0.75" in desc_ratio
     assert "worst: 0.60" in desc_ratio
 
     # Label checks
     labels = strategy.get_option_labels()
-    assert labels == ("Root Sum Squared Optimized Vector", "Ratio Optimized Vector")
+    assert labels == ("Root Sum Squared", "Ratio")
 
 
 def test_pair_optimization_properties(strategy):

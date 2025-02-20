@@ -31,6 +31,7 @@ def get_user_responses(
     survey_id: Optional[int] = None,
     user_choices: Optional[List[Dict]] = None,
     show_tables_only: bool = False,
+    show_detailed_breakdown_table: bool = True,
 ) -> Dict[str, str]:
     """
     Get formatted user survey responses.
@@ -39,6 +40,7 @@ def get_user_responses(
         survey_id: Optional survey ID to filter responses
         user_choices: Optional pre-filtered choices (if already fetched)
         show_tables_only: If True, only show summary tables
+        show_detailed_breakdown_table: If True, show detailed breakdown table
 
     Returns:
         Dict[str, str]: A dictionary containing the formatted survey responses.
@@ -93,7 +95,10 @@ def get_user_responses(
 
         response_data = ResponseFormatter.format_response_data(user_choices)
         response_data["content"] = generate_detailed_user_choices(
-            user_choices, option_labels=option_labels, show_tables_only=show_tables_only
+            user_choices,
+            option_labels=option_labels,
+            show_tables_only=show_tables_only,
+            show_detailed_breakdown_table=show_detailed_breakdown_table,
         )
         return response_data
 
@@ -263,6 +268,7 @@ def get_user_survey_response(survey_id: int, user_id: str):
             survey_id=survey_id,
             user_choices=user_survey_choices,
             show_tables_only=False,
+            show_detailed_breakdown_table=False,
         )
         return render_template(
             "responses/user_detail.html",

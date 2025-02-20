@@ -523,6 +523,7 @@ def generate_detailed_user_choices(
     user_choices: List[Dict],
     option_labels: Tuple[str, str],
     show_tables_only: bool = False,
+    show_detailed_breakdown_table: bool = True,
 ) -> str:
     """Generate detailed analysis of each user's choices for each survey.
 
@@ -530,6 +531,7 @@ def generate_detailed_user_choices(
         user_choices: List of dictionaries containing user choices data
         option_labels: Tuple of labels for the two options
         show_tables_only: If True, only show summary tables without detailed choices
+        show_detailed_breakdown_table: If True, include detailed breakdown table
 
     Returns:
         str: HTML-formatted string with detailed user choices
@@ -564,8 +566,9 @@ def generate_detailed_user_choices(
     # 1. Overall statistics table
     content.append(generate_overall_statistics_table(all_summaries, option_labels))
 
-    # 2. Detailed breakdown table
-    content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+    if show_detailed_breakdown_table:
+        # 2. Detailed breakdown table
+        content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
 
     # Include detailed user choices only if not show_tables_only
     if not show_tables_only:
