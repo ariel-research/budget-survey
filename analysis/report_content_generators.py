@@ -612,6 +612,7 @@ def generate_detailed_breakdown_table(
         opt2_percent = summary["stats"]["option2_percent"]
         survey_id = summary["survey_id"]
         user_id = summary["user_id"]
+        display_id, is_truncated = _format_user_id(user_id)
 
         # Generate links
         all_responses_link = f"/surveys/users/{user_id}/responses"
@@ -619,9 +620,9 @@ def generate_detailed_breakdown_table(
 
         row = f"""
         <tr>
-            <td>
+            <td class="user-id-cell{' truncated' if is_truncated else ''}"{' data-full-id="' + user_id + '"' if is_truncated else ''}>
                 <a href="{all_responses_link}" class="user-link" target="_blank">
-                    {user_id}
+                    {display_id}
                 </a>
             </td>
             <td>{survey_id}</td>
@@ -796,6 +797,22 @@ def generate_user_comments_section(responses_df: pd.DataFrame) -> str:
     except Exception as e:
         logger.error(f"Error generating user comments section: {str(e)}", exc_info=True)
         return '<div class="comments-container"><p class="error">Error generating comments section.</p></div>'
+
+
+def _format_user_id(user_id: str, max_length: int = 12) -> tuple[str, bool]:
+    """
+    Format user ID for display, truncating if too long.
+
+    Args:
+        user_id: The user identifier
+        max_length: Maximum length before truncating
+
+    Returns:
+        Tuple of (display_id, is_truncated)
+    """
+    if len(user_id) > max_length:
+        return f"{user_id[:8]}...", True
+    return user_id, False
 
 
 def generate_key_findings(
