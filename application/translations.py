@@ -299,6 +299,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
         "user_responses_title": {
+            "he": "תשובות משתמש {user_id} לסקר {survey_id}",
+            "en": "User {user_id} Responses to survey {survey_id}",
+        },
+        "user_responses_title_short": {
             "he": "תשובות משתמש {user_id}",
             "en": "User {user_id} Responses",
         },

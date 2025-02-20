@@ -221,7 +221,9 @@ def get_user_responses_detail(user_id: str):
         # Use get_user_responses with show_tables_only=False for full details
         data = get_user_responses(user_choices=user_choices, show_tables_only=False)
 
-        return render_template("responses/user_detail.html", data=data, user_id=user_id)
+        return render_template(
+            "responses/user_detail.html", data=data, user_id=user_id, full_title=False
+        )
 
     except Exception as e:
         logger.error(f"Error retrieving user responses: {str(e)}", exc_info=True)
@@ -262,7 +264,13 @@ def get_user_survey_response(survey_id: int, user_id: str):
             user_choices=user_survey_choices,
             show_tables_only=False,
         )
-        return render_template("responses/user_detail.html", data=data, user_id=user_id)
+        return render_template(
+            "responses/user_detail.html",
+            data=data,
+            user_id=user_id,
+            survey_id=survey_id,
+            full_title=True,
+        )
 
     except Exception as e:
         logger.error(f"Error retrieving user survey response: {str(e)}", exc_info=True)

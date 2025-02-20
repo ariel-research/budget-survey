@@ -502,7 +502,7 @@ html {
    display: inline-flex;
    align-items: center;
    gap: 0.5rem;
-   padding: 0.5rem 1rem;
+   padding: 0.1rem 0.3rem;
    background-color: var(--color-primary);
    color: white;
    border-radius: 6px;
