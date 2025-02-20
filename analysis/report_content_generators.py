@@ -634,8 +634,14 @@ def generate_detailed_breakdown_table(
             </td>
             <td>
                 <a href="{survey_response_link}" 
-                   class="survey-response-link" 
-                   target="_blank">
+                class="survey-response-link" 
+                role="button"
+                aria-label="{get_translation('view_response', 'answers')} {get_translation('for_user', 'answers', user_id=user_id)}"
+                target="_blank">
+                    <svg class="response-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
                     {get_translation('view_response', 'answers')}
                 </a>
             </td>

@@ -499,18 +499,39 @@ html {
 .detailed-breakdown table th:nth-child(5) { width: 20%; }
 
 .survey-response-link {
-   color: var(--color-primary);
+   display: inline-flex;
+   align-items: center;
+   gap: 0.5rem;
+   padding: 0.5rem 1rem;
+   background-color: var(--color-primary);
+   color: white;
+   border-radius: 6px;
    text-decoration: none;
-   padding: 0.25rem 0.5rem;
-   border-radius: 4px;
    transition: all 0.2s ease;
-   display: inline-block;
+   font-weight: 300;
+   border: 1px solid transparent;
 }
 
 .survey-response-link:hover {
-   background-color: var(--color-primary);
-   color: white;
+   background-color: var(--color-background);
+   color: var(--color-primary);
+   border-color: var(--color-primary);
    transform: translateY(-1px);
+}
+
+.survey-response-link:focus {
+   outline: 2px solid var(--color-primary);
+   outline-offset: 2px;
+}
+
+.survey-response-link:active {
+   transform: translateY(0);
+}
+
+/* Icon styles */
+.response-link-icon {
+   width: 1.2em;
+   height: 1.2em;
 }
 
 .user-id-cell {
@@ -763,7 +784,7 @@ html {
 /* ==========================================================================
   Responsive Adjustments
   ========================================================================== */
-@media (max-width: 1024px) {
+  @media (max-width: 1024px) {
    .comments-grid {
        grid-template-columns: 1fr;
        gap: 2rem;
@@ -943,6 +964,10 @@ html {
       background-color: #000;
       color: #fff;
   }
+
+  .survey-response-link {
+   border: 2px solid currentColor;
+  }
 }
 
 /* ==========================================================================
@@ -954,6 +979,9 @@ html {
       transition: none;
   }
   .back-to-top {
+   transition: none;
+  }
+  .survey-response-link {
    transition: none;
   }
 }
