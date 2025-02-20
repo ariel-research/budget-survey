@@ -96,7 +96,7 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get the labels for the two types of optimization."""
-        return ("Root Sum Squared Optimized Vector", "Sum Optimized Vector")
+        return ("Root Sum Squared", "Sum")
 
     def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "rss":
