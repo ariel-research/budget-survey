@@ -620,10 +620,11 @@ def generate_detailed_breakdown_table(
 
         row = f"""
         <tr>
-            <td class="user-id-cell{' truncated' if is_truncated else ''}"{' data-full-id="' + user_id + '"' if is_truncated else ''}>
+            <td class="user-id-cell{' truncated' if is_truncated else ''}">
                 <a href="{all_responses_link}" class="user-link" target="_blank">
                     {display_id}
                 </a>
+                {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
             </td>
             <td>{survey_id}</td>
             <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
@@ -635,13 +636,7 @@ def generate_detailed_breakdown_table(
             <td>
                 <a href="{survey_response_link}" 
                 class="survey-response-link" 
-                role="button"
-                aria-label="{get_translation('view_response', 'answers')} {get_translation('for_user', 'answers', user_id=user_id)}"
                 target="_blank">
-                    <svg class="response-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
                     {get_translation('view_response', 'answers')}
                 </a>
             </td>

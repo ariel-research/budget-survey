@@ -535,29 +535,55 @@ html {
 }
 
 .user-id-cell {
-   max-width: 200px;
-   overflow: hidden;
-   text-overflow: ellipsis;
-   white-space: nowrap;
-}
-
-.user-id-cell:hover {
    position: relative;
 }
 
-.user-id-cell:hover::after {
-   content: attr(data-full-id);
-   position: absolute;
-   left: 0;
-   top: 100%;
-   background: white;
-   padding: 0.5rem;
-   border: 1px solid var(--color-border);
+.user-id-tooltip {
+   visibility: hidden;
+   background-color: var(--color-primary);
+   color: var(--color-background);
+   padding: var(--spacing-xs) var(--spacing-sm);
    border-radius: 4px;
-   box-shadow: var(--shadow-sm);
-   z-index: 1;
-   white-space: normal;
-   word-break: break-all;
+   position: absolute;
+   z-index: 1000;
+   bottom: 125%;
+   left: 50%;
+   transform: translateX(-40%);
+   white-space: nowrap;
+   font-size: var(--font-size-xs);
+   opacity: 0;
+   transition: opacity 0.2s ease;
+   box-shadow: var(--shadow-md);
+   pointer-events: none;
+}
+
+.user-id-tooltip::after {
+   content: "";
+   position: absolute;
+   top: 100%;
+   left: 50%;
+   margin-left: -5px;
+   border-width: 5px;
+   border-style: solid;
+   border-color: var(--color-primary) transparent transparent transparent;
+}
+
+.user-id-cell:hover .user-id-tooltip {
+   visibility: visible;
+   opacity: 1;
+}
+
+/* RTL adjustments */
+[dir="rtl"] .user-id-tooltip {
+   left: auto;
+   right: 50%;
+   transform: translateX(50%);
+}
+
+[dir="rtl"] .user-id-tooltip::after {
+   left: auto;
+   right: 50%;
+   margin-right: -5px;
 }
 
 /* ==========================================================================
