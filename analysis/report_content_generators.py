@@ -492,11 +492,17 @@ def _generate_survey_choices_html(
     Args:
         survey_id: ID of the survey
         choices: List of choices for the survey
-        option_labels: Tuple of labels for the two options
+        option_labels: Tuple of labels for the two options (fallback)
     Returns:
         str: HTML for the survey choices
     """
     optimal_allocation = json.loads(choices[0]["optimal_allocation"])
+
+    # Get survey-specific labels if available
+    survey_labels = None
+    if choices and "strategy_labels" in choices[0]:
+        survey_labels = choices[0]["strategy_labels"]
+    labels = survey_labels or option_labels
 
     choices_html = [
         f"""
@@ -509,11 +515,15 @@ def _generate_survey_choices_html(
 
     # Add all pairs
     for choice in choices:
-        choices_html.append(_generate_choice_pair_html(choice, option_labels))
+        choices_html.append(
+            _generate_choice_pair_html(choice, labels)
+        )  # Use survey-specific labels
 
-    # Add summary
+    # Add summary with correct labels
     choices_html.append("</div>")  # Close pairs-list
-    choices_html.append(_generate_survey_summary_html(choices, option_labels))
+    choices_html.append(
+        _generate_survey_summary_html(choices, labels)
+    )  # Use survey-specific labels
     choices_html.append("</div>")  # Close survey-choices
 
     return "\n".join(choices_html)
