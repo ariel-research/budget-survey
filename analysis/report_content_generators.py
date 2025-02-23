@@ -398,14 +398,14 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
 
     # Get strategy labels in order of preference:
     # 1. Database strategy descriptions
-    # 2. Survey-specific strategy labels (stored in _strategy_labels)
+    # 2. Survey-specific strategy labels (stored in strategy_labels)
     # 3. Default option labels
     strategy_1 = choice.get("option1_strategy")
     strategy_2 = choice.get("option2_strategy")
 
     if not strategy_1 and not strategy_2:
         # Try survey-specific strategy labels, fall back to default labels
-        survey_labels = choice.get("_strategy_labels", option_labels)
+        survey_labels = choice.get("strategy_labels", option_labels)
         strategy_1 = survey_labels[0]
         strategy_2 = survey_labels[1]
 
@@ -558,9 +558,11 @@ def generate_detailed_user_choices(
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
-            all_summaries.append(
-                {"user_id": user_id, "survey_id": survey_id, "stats": stats}
-            )
+            summary = {"user_id": user_id, "survey_id": survey_id, "stats": stats}
+            # Add strategy labels from the first choice (they're same for all choices in a survey)
+            if choices and "strategy_labels" in choices[0]:
+                summary["strategy_labels"] = choices[0]["strategy_labels"]
+            all_summaries.append(summary)
 
     # Generate content
     content = []
@@ -596,84 +598,97 @@ def generate_detailed_breakdown_table(
     summaries: List[Dict], option_labels: Tuple[str, str]
 ) -> str:
     """
-    Generate detailed breakdown table with user links.
+    Generate detailed breakdown tables grouped by survey.
 
     Args:
         summaries: List of dictionaries containing survey summaries
-        option_labels: Tuple of labels for the two options
+        option_labels: Default labels (fallback if survey-specific labels not found)
 
     Returns:
-        str: HTML table showing detailed breakdown
+        str: HTML tables showing detailed breakdown by survey
     """
     if not summaries:
         return ""
 
-    # Sort summaries by survey_id, then user_id for consistent display
-    sorted_summaries = sorted(summaries, key=lambda x: (x["survey_id"], x["user_id"]))
-
-    # Generate table rows separately
-    rows = []
-    for summary in sorted_summaries:
-        opt1_percent = summary["stats"]["option1_percent"]
-        opt2_percent = summary["stats"]["option2_percent"]
+    # Group summaries by survey_id
+    survey_groups = {}
+    for summary in summaries:
         survey_id = summary["survey_id"]
-        user_id = summary["user_id"]
-        display_id, is_truncated = _format_user_id(user_id)
+        if survey_id not in survey_groups:
+            survey_groups[survey_id] = []
+        survey_groups[survey_id].append(summary)
 
-        # Generate links
-        all_responses_link = f"/surveys/users/{user_id}/responses"
-        survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
+    # Generate table for each survey
+    tables = []
+    for survey_id, survey_summaries in survey_groups.items():
+        # Get survey-specific labels
+        survey_labels = None
+        if survey_summaries and "strategy_labels" in survey_summaries[0]:
+            survey_labels = survey_summaries[0]["strategy_labels"]
+        labels = survey_labels or option_labels
 
-        row = f"""
-        <tr>
-            <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                <a href="{all_responses_link}" class="user-link" target="_blank">
-                    {display_id}
-                </a>
-                {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
-            </td>
-            <td>{survey_id}</td>
-            <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
-                {format(opt1_percent, '.1f')}%
-            </td>
-            <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">
-                {format(opt2_percent, '.1f')}%
-            </td>
-            <td>
-                <a href="{survey_response_link}" 
-                class="survey-response-link" 
-                target="_blank">
-                    {get_translation('view_response', 'answers')}
-                </a>
-            </td>
-        </tr>
-        """
-        rows.append(row)
+        # Sort summaries by user_id for consistent display
+        sorted_summaries = sorted(survey_summaries, key=lambda x: x["user_id"])
 
-    # Combine into final table
-    table_html = f"""
-    <div class="summary-table-container">
-        <h2>{get_translation('survey_response_breakdown', 'answers')}</h2>
-        <div class="table-container detailed-breakdown">
-            <table>
-                <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>Survey ID</th>
-                        <th>{option_labels[0]}</th>
-                        <th>{option_labels[1]}</th>
-                        <th>View Response</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {''.join(rows)}
-                </tbody>
-            </table>
+        # Generate table rows
+        rows = []
+        for summary in sorted_summaries:
+            opt1_percent = summary["stats"]["option1_percent"]
+            opt2_percent = summary["stats"]["option2_percent"]
+            user_id = summary["user_id"]
+            display_id, is_truncated = _format_user_id(user_id)
+
+            # Generate links
+            all_responses_link = f"/surveys/users/{user_id}/responses"
+            survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
+
+            row = f"""
+            <tr>
+                <td class="user-id-cell{' truncated' if is_truncated else ''}">
+                    <a href="{all_responses_link}" class="user-link" target="_blank">
+                        {display_id}
+                    </a>
+                    {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
+                </td>
+                <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
+                    {format(opt1_percent, '.1f')}%
+                </td>
+                <td class="{'highlight-row' if opt2_percent > opt1_percent else ''}">
+                    {format(opt2_percent, '.1f')}%
+                </td>
+                <td>
+                    <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                        {get_translation('view_response', 'answers')}
+                    </a>
+                </td>
+            </tr>
+            """
+            rows.append(row)
+
+        # Generate table for this survey
+        table = f"""
+        <div class="summary-table-container">
+            <h2>{get_translation('survey_response_breakdown', 'answers')} - Survey {survey_id}</h2>
+            <div class="table-container detailed-breakdown">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>{labels[0]}</th>
+                            <th>{labels[1]}</th>
+                            <th>View Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join(rows)}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    """
+        """
+        tables.append(table)
 
-    return table_html
+    return "\n".join(tables)
 
 
 def generate_overall_statistics_table(

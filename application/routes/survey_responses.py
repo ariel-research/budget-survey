@@ -87,7 +87,7 @@ def get_user_responses(
 
             # Add labels to choice
             if current_survey_id in survey_labels:
-                choice["_strategy_labels"] = survey_labels[current_survey_id]
+                choice["strategy_labels"] = survey_labels[current_survey_id]
 
         # Get the appropriate labels
         if survey_id is not None and survey_id in survey_labels:
