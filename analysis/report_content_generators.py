@@ -618,9 +618,13 @@ def generate_detailed_breakdown_table(
             survey_groups[survey_id] = []
         survey_groups[survey_id].append(summary)
 
+    # Sort survey_groups by survey_id
+    sorted_survey_ids = sorted(survey_groups.keys())
+
     # Generate table for each survey
     tables = []
-    for survey_id, survey_summaries in survey_groups.items():
+    for survey_id in sorted_survey_ids:
+        survey_summaries = survey_groups[survey_id]
         # Get survey-specific labels
         survey_labels = None
         if survey_summaries and "strategy_labels" in survey_summaries[0]:
