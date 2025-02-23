@@ -45,6 +45,7 @@ def generate_awareness_questions(
 ) -> List[Dict[str, Any]]:
     """
     Generate two different awareness test questions.
+    First question's correct answer is option 1, second question's correct answer is option 2.
 
     Args:
         user_vector: The user's original budget allocation vector
@@ -93,13 +94,25 @@ def generate_awareness_questions(
         vector_tuple = tuple(test_vector)
         if vector_tuple not in used_vectors:
             used_vectors.add(vector_tuple)
-            questions.append(
-                {
-                    "option1": test_vector,
-                    "option2": user_vector,
-                    "correct_answer": 2,
-                }
-            )
+
+            # First question: correct answer is option 1
+            if len(questions) == 0:
+                questions.append(
+                    {
+                        "option1": user_vector,  # Original vector is option 1
+                        "option2": test_vector,
+                        "correct_answer": 1,  # Correct answer is option 1
+                    }
+                )
+            # Second question: correct answer is option 2
+            else:
+                questions.append(
+                    {
+                        "option1": test_vector,
+                        "option2": user_vector,  # Original vector is option 2
+                        "correct_answer": 2,  # Correct answer is option 2
+                    }
+                )
 
             if len(questions) == 2:
                 logger.debug("Successfully generated two different awareness questions")
