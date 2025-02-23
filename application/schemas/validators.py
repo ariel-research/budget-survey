@@ -69,7 +69,7 @@ class SurveySubmission:
         Validates the complete survey submission.
 
         Checks in order:
-        1. Awareness checks (must both be correct)
+        1. Awareness checks (first check answer must be 1, second check answer must be 2)
         2. User vector validation (must have values and sum to 100)
         3. Value range validation
         4. Comparison pairs validation
@@ -81,10 +81,12 @@ class SurveySubmission:
                 - submission_status: 'attention_failed', 'complete', or None if other error
         """
         try:
-            # Validate awareness checks first (must both be 2)
-            if len(self.awareness_answers) != 2 or not all(
-                a == 2 for a in self.awareness_answers
-            ):
+            # Validate awareness checks
+            if (
+                len(self.awareness_answers) != 2
+                or self.awareness_answers[0] != 1  # First check must be 1
+                or self.awareness_answers[1] != 2
+            ):  # Second check must be 2
                 logger.info(
                     f"User {self.user_id} failed awareness checks with answers: {self.awareness_answers}"
                 )
