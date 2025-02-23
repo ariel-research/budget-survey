@@ -193,7 +193,7 @@ def list_all_responses():
         Rendered template with all survey responses
     """
     try:
-        data = get_user_responses()
+        data = get_user_responses(show_overall_survey_table=False)
         return render_template("responses/list.html", data=data)
     except ResponseProcessingError as e:
         logger.error(str(e))
