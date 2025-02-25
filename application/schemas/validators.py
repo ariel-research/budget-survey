@@ -63,6 +63,7 @@ class SurveySubmission:
     user_comment: Optional[str] = ""
     awareness_answers: List[int] = field(default_factory=list)
     comparison_pairs: List[ComparisonPair] = field(default_factory=list)
+    expected_pairs: int = 10  # Default for backward compatibility
 
     def validate(self) -> tuple[bool, Optional[str], Optional[str]]:
         """
@@ -108,8 +109,8 @@ class SurveySubmission:
             if any(v < 0 or v > 95 for v in self.user_vector):
                 return (False, get_translation("budget_range_error", "messages"), None)
 
-            # Validate comparison pairs
-            if len(self.comparison_pairs) != 10:
+            # Validate comparison pairs count
+            if len(self.comparison_pairs) != self.expected_pairs:
                 return (False, get_translation("invalid_pairs_count", "messages"), None)
 
             # Validate each comparison pair
@@ -133,7 +134,11 @@ class SurveySubmission:
 
     @classmethod
     def from_form_data(
-        cls, form_data: Dict[str, Any], user_id: str, survey_id: int
+        cls,
+        form_data: Dict[str, Any],
+        user_id: str,
+        survey_id: int,
+        total_questions: int = None,
     ) -> "SurveySubmission":
         """
         Creates a SurveySubmission instance from form data.
@@ -143,6 +148,7 @@ class SurveySubmission:
             form_data: The raw form data from the request
             user_id: The user's identifier
             survey_id: The internal survey identifier
+            total_questions: Total number of questions including awareness checks (default: inferred from form data)
 
         Returns:
             SurveySubmission: A new instance with processed form data, where:
@@ -161,10 +167,32 @@ class SurveySubmission:
                 int(form_data.get(f"awareness_check_{i}", 0)) for i in range(2)
             ]
 
+            # Determine the total questions dynamically if not provided
+            if total_questions is None:
+                # Find the highest question index in the form data
+                max_question_idx = -1
+                for key in form_data:
+                    if key.startswith("choice_"):
+                        try:
+                            idx = int(key.split("_")[1])
+                            max_question_idx = max(max_question_idx, idx)
+                        except (ValueError, IndexError):
+                            continue
+
+                total_questions = max_question_idx + 1
+                logger.debug(f"Inferred total questions: {total_questions}")
+
+            # Count awareness questions to calculate expected pairs
+            awareness_count = sum(
+                1
+                for i in range(total_questions)
+                if form_data.get(f"is_awareness_{i}") == "true"
+            )
+            expected_pairs = total_questions - awareness_count
+
             # Process comparison pairs (skip awareness questions)
             pairs = []
-            pair_count = 0
-            for i in range(12):  # Total questions (10 pairs + 2 awareness)
+            for i in range(total_questions):
                 if form_data.get(f"is_awareness_{i}") == "true":
                     continue
 
@@ -194,7 +222,6 @@ class SurveySubmission:
                         option2_strategy=option2_strategy,
                     )
                 )
-                pair_count += 1
 
             return cls(
                 user_id=user_id,
@@ -203,6 +230,7 @@ class SurveySubmission:
                 user_comment=form_data.get("user_comment", "").strip(),
                 awareness_answers=awareness_answers,
                 comparison_pairs=pairs,
+                expected_pairs=expected_pairs,
             )
 
         except (ValueError, KeyError, AttributeError) as e:

@@ -250,9 +250,21 @@ def handle_survey_post(
         str: Redirect response to appropriate destination
     """
     try:
-        # Create and validate submission
+        # Get the total number of questions from the form data
+        total_questions = 0
+        for key in request.form:
+            if key.startswith("choice_"):
+                try:
+                    question_idx = int(key.split("_")[1])
+                    total_questions = max(total_questions, question_idx + 1)
+                except (ValueError, IndexError):
+                    continue
+
+        logger.debug(f"Detected {total_questions} total questions in form submission")
+
+        # Create and validate submission with total questions
         submission = SurveySubmission.from_form_data(
-            request.form, user_id, internal_survey_id
+            request.form, user_id, internal_survey_id, total_questions
         )
 
         is_valid, error_message, status = submission.validate()
