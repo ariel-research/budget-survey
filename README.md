@@ -159,6 +159,28 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 2: (65, 25, 10)  Better root sum squared (7.07) but worse minimal ratio (0.67)
      ```
 
+6. **Extreme Vectors Strategy**
+   - Strategy name: `extreme_vectors`
+   - Tests user preferences between extreme allocations and their weighted combinations with the ideal vector
+   - Generates two types of pairs:
+     - Extreme vector pairs: Each extreme vector allocates 100% to one department
+     - Weighted average pairs: Combines user's ideal vector with extreme vectors using weights of 25%, 50%, and 75%
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 9)
+   - Example:
+     ```python
+     # For vector_size=3 and user_vector = [70, 20, 10]:
+     
+     # Extreme pairs:
+     # [100, 0, 0] vs [0, 100, 0]
+     # [100, 0, 0] vs [0, 0, 100]
+     # [0, 100, 0] vs [0, 0, 100]
+     
+     # Weighted average pairs (50% weight):
+     # [85, 10, 5] vs [35, 60, 5] (weighted averages with [100,0,0] and [0,100,0])
+     ```
+   - Purpose: Tests the hypothesis that if a user prefers extreme vector A over extreme vector B, they will also prefer weighted averages that incorporate extreme vector A over those with extreme vector B
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:
