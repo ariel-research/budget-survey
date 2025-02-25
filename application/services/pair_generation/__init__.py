@@ -1,6 +1,7 @@
 """Package for survey pair generation strategies."""
 
 from .base import PairGenerationStrategy, StrategyRegistry
+from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .root_sum_squared_ratio_vector import RootSumSquaredRatioStrategy
 from .root_sum_squared_sum_vector import RootSumSquaredSumStrategy
@@ -13,6 +14,7 @@ StrategyRegistry.register(WeightedAverageVectorStrategy)
 StrategyRegistry.register(RoundedWeightedAverageVectorStrategy)
 StrategyRegistry.register(RootSumSquaredSumStrategy)
 StrategyRegistry.register(RootSumSquaredRatioStrategy)
+StrategyRegistry.register(ExtremeVectorsStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -22,4 +24,5 @@ __all__ = [
     "RoundedWeightedAverageVectorStrategy",
     "RootSumSquaredSumStrategy",
     "RootSumSquaredRatioStrategy",
+    "ExtremeVectorsStrategy",
 ]

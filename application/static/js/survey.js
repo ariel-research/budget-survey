@@ -243,12 +243,18 @@ function initializeSurveyForm() {
         return;
     }
 
-    form.addEventListener('submit', handleSurveySubmission);
-    
+    // Dynamically count the total number of radio groups on the page
+    const radioGroups = new Set();
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radioGroups.add(radio.name);
         radio.addEventListener('change', () => updateSubmitButtonState(submitBtn));
     });
+    
+    // Update the CONFIG to match the actual number of question pairs
+    CONFIG.TOTAL_QUESTIONS = radioGroups.size;
+    console.log(`Detected ${CONFIG.TOTAL_QUESTIONS} question pairs in this survey`);
 
+    form.addEventListener('submit', handleSurveySubmission);
     updateSubmitButtonState(submitBtn);
 }
 
