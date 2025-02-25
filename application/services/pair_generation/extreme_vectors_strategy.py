@@ -44,7 +44,7 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
         """
         extremes = []
         for i in range(vector_size):
-            extreme = np.zeros(vector_size)
+            extreme = np.zeros(vector_size, dtype=int)
             extreme[i] = 100
             extremes.append(extreme)
         return extremes
