@@ -310,7 +310,12 @@ You can set up the database using one of two methods:
    USE survey;
    ```
 
-4. Run the SQL commands from the database/schema.sql file to create the necessary tables and structure.
+4. Run the SQL commands from the database/schema.sql file to create the necessary tables and structure:
+
+
+  ```
+  
+  ```
 
 ### Method 2: Using Docker Compose
 
@@ -496,7 +501,7 @@ To add new surveys or modify existing ones, follow these steps:
        ),
        TRUE,
        JSON_OBJECT(
-           'strategy', 'optimization_metrics',
+           'strategy', 'extreme_vectors',
            'params', JSON_OBJECT('num_pairs', 10)
        )
    );

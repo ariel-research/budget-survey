@@ -2,7 +2,6 @@ import logging
 
 from flask import Blueprint, render_template, send_file
 
-from analysis.survey_report_generator import generate_report
 from analysis.utils.report_utils import ensure_fresh_csvs, ensure_fresh_report
 from application.translations import get_translation
 
@@ -32,8 +31,11 @@ def view_report():
         )
 
 
+# This route was used to generate PDF reports.
+# Currently it is not used.
 @report_routes.route("/dev/report")
 def dev_report():
+    from analysis.survey_report_generator import generate_report
     """
     Development endpoint for generating and displaying a fresh analysis report.
     Always generates a new PDF regardless of database state.

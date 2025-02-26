@@ -5,15 +5,16 @@ CREATE TABLE users (
 
 CREATE TABLE surveys (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  -- external_id VARCHAR(128),
   name VARCHAR(255) NOT NULL,
   description TEXT,
   subjects JSON NOT NULL,
   active BOOLEAN DEFAULT TRUE,
   pair_generation_config JSON NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_external_id (external_id),
-  UNIQUE KEY uq_external_id (external_id)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  -- INDEX idx_external_id (external_id),
+  -- UNIQUE KEY uq_external_id (external_id)
 );
 
 CREATE TABLE survey_responses (
@@ -24,7 +25,7 @@ CREATE TABLE survey_responses (
   user_comment TEXT,
   completed BOOLEAN DEFAULT FALSE,
   attention_check_failed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE comparison_pairs (
