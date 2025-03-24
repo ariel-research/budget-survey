@@ -417,6 +417,15 @@ Notes:
   * surveyID: Required but not used internally
   * internalID: Optional, overrides default survey ID from config
 
+## Live Application Update
+
+To update the live application after code changes:
+
+* Log into the server (ssh survey@csariel.xyz)
+* Inside the `app` folder, do `git pull`
+* `sudo myservice status` - check that the service is running;
+* `sudo myservice restart`
+
 ## Screen Text Locations
 To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
 
@@ -445,6 +454,7 @@ To modify the text displayed on each screen of the application, here's a guide t
        - `templates/error.html` - Error pages
 
 Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
+
 
 ## §
 The application uses a MySQL database with multilingual support. Here's the schema:
