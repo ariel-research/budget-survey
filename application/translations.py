@@ -73,12 +73,12 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Cannot rescale when the total sum is 0",
         },
         "rescale_error_too_many_zeros": {
-            "he": "לא ניתן לשנות קנה מידה כאשר יותר ממשרד אחד מקבל 0. שנו לפחות אחד מהערכים להיות מעל 0.",
-            "en": "Cannot rescale when more than one ministry has 0. Change at least one value to be above 0.",
+            "he": "לא ניתן לשנות קנה מידה כאשר יותר מנושא אחד מקבל 0. שנו לפחות אחד מהערכים להיות מעל 0.",
+            "en": "Cannot rescale when more than one issue has 0. Change at least one value to be above 0.",
         },
         "min_two_departments": {
-            "he": "יש להקצות תקציב לשני משרדים לפחות.",
-            "en": "Budget must be allocated to at least two departments.",
+            "he": "יש להקצות תקציב לשני נושאים שונים לפחות.",
+            "en": "Budget must be allocated to at least two issues.",
         },
         "missing_budget": {
             "he": "נא להזין את הקצאת התקציב",
@@ -177,25 +177,25 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "What is the best budget allocation in your opinion?",
         },
         "budget_instructions": {
-            "he": 'חלקו תקציב של 100 מיליארד ש"ח בין שלושה משרדים: {subjects}.',
-            "en": "Allocate a budget of 100 billion NIS between three ministries: {subjects}.",
+            "he": 'חלקו תקציב של 100 מיליארד ש"ח בין שלושה נושאים: {subjects}.',
+            "en": "Allocate a budget of 100 billion NIS between three issues: {subjects}.",
         },
         "sum_note": {
             "he": {
                 "title": "שימו לב",
                 "rules": [
-                    "הזינו ערכים עבור כל משרד",
-                    "ניתן להשתמש בכפתור 'שנה קנה מידה' כדי להתאים את הערכים באופן יחסי לסכום של 100",
-                    "יש להקצות תקציב לשני משרדים לפחות",
+                    "הזינו ערכים עבור כל נושא",
+                    "ניתן להשתמש בכפתור 'התאם את הסכום' כדי להתאים את הערכים באופן יחסי לסכום של 100",
+                    "יש להקצות תקציב לשני נושאים שונים לפחות",
                     "בסוף התהליך הסכום הכולל חייב להיות בדיוק 100",
                 ],
             },
             "en": {
                 "title": "Instructions",
                 "rules": [
-                    "Enter values for each ministry",
+                    "Enter monetary value for each issue",
                     "Use the 'Rescale' button to proportionally adjust your values to sum to 100",
-                    "The budget must be allocated to at least two departments",
+                    "The budget must be allocated to at least two different issues",
                     "The final total must equal exactly 100",
                 ],
             },
