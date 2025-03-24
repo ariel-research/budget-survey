@@ -35,7 +35,11 @@ class Config:
     # Panel4All settings
     PANEL4ALL = {
         "BASE_URL": "http://www.panel4all.co.il/survey_runtime/external_survey_status.php",
-        "STATUS": {"COMPLETE": "finish", "ATTENTION_FAILED": "attentionfilter"},
+        "STATUS": {
+            # "COMPLETE": "finish", 
+            "COMPLETE": "run",   # By request from Shaked 
+            "ATTENTION_FAILED": "attentionfilter"
+        },
     }
 
     # Survey base URL
