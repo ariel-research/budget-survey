@@ -30,12 +30,12 @@ def before_request():
         set_language(lang)
 
 
-def get_required_params() -> Tuple[str, str, int]:
+def get_required_params() -> Tuple[str, str, int, int]:
     """
     Get and validate required URL parameters.
 
     Returns:
-        Tuple[str, str, int]: user_id, external_survey_id, internal_survey_id
+        Tuple[str, str, int, int]: user_id, external_survey_id, internal_survey_id, external_q_argument
 
     Raises:
         abort(400): If required parameters are missing or invalid
@@ -44,6 +44,7 @@ def get_required_params() -> Tuple[str, str, int]:
         user_id = request.args.get("userID")
         external_survey_id = request.args.get("surveyID")
         custom_internal_id = request.args.get("internalID")
+        external_q_argument = request.args.get("q")   # Optional parameter; default is None
 
         if not user_id or not external_survey_id:
             missing_param = "userID" if not user_id else "surveyID"
@@ -60,7 +61,7 @@ def get_required_params() -> Tuple[str, str, int]:
                 )
                 abort(400, description=get_translation("invalid_parameter", "messages"))
 
-        return user_id, external_survey_id, internal_survey_id
+        return user_id, external_survey_id, internal_survey_id, external_q_argument
 
     except ValueError as e:
         logger.warning(f"Missing required parameter: {str(e)}")
@@ -73,7 +74,7 @@ def get_required_params() -> Tuple[str, str, int]:
 @survey_routes.route("/")
 def index():
     """Landing page route handler."""
-    user_id, external_survey_id, internal_survey_id = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
 
     # Verify survey exists
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
@@ -102,6 +103,7 @@ def index():
         user_id=user_id,
         external_survey_id=external_survey_id,
         internal_survey_id=internal_survey_id,
+        external_q_argument=external_q_argument,
         survey_name=survey_data["name"],
     )
 
