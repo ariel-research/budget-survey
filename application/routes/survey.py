@@ -112,7 +112,7 @@ def index():
 @check_survey_eligibility
 def create_vector():
     """Budget vector creation route handler."""
-    user_id, external_survey_id, internal_survey_id = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
     current_lang = get_current_language()
 
     # Verify survey exists and get data
@@ -181,7 +181,7 @@ def create_vector():
 @check_survey_eligibility
 def survey():
     """Main survey route handler."""
-    user_id, external_survey_id, internal_survey_id = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
 
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
         internal_survey_id
