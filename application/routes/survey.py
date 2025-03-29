@@ -95,6 +95,7 @@ def index():
                 userID=user_id,
                 surveyID=external_survey_id,
                 internalID=internal_survey_id,
+                q=external_q_argument,
             )
         )
 
@@ -140,6 +141,7 @@ def create_vector():
                     user_id=user_id,
                     external_survey_id=external_survey_id,
                     internal_survey_id=internal_survey_id,
+                    external_q_argument=external_q_argument,
                 )
 
             logger.info(f"Valid vector created by user {user_id}: {user_vector}")
@@ -151,6 +153,7 @@ def create_vector():
                     surveyID=external_survey_id,
                     internalID=internal_survey_id,
                     lang=current_lang,
+                    q=external_q_argument,
                 )
             )
 
@@ -163,6 +166,7 @@ def create_vector():
                 user_id=user_id,
                 external_survey_id=external_survey_id,
                 internal_survey_id=internal_survey_id,
+                external_q_argument=external_q_argument,
             )
 
     logger.debug(
@@ -174,6 +178,7 @@ def create_vector():
         user_id=user_id,
         external_survey_id=external_survey_id,
         internal_survey_id=internal_survey_id,
+        external_q_argument=external_q_argument,
     )
 
 
