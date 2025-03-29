@@ -200,7 +200,7 @@ def survey():
             user_id, external_survey_id, internal_survey_id, survey_data["subjects"]
         )
     elif request.method == "POST":
-        return handle_survey_post(user_id, external_survey_id, internal_survey_id)
+        return handle_survey_post(user_id, external_survey_id, internal_survey_id, external_q_argument=external_q_argument)
     else:
         abort(405)  # Method Not Allowed
 
