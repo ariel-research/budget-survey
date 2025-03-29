@@ -236,7 +236,7 @@ def handle_survey_get(
 
 
 def handle_survey_post(
-    user_id: str, external_survey_id: str, internal_survey_id: int
+    user_id: str, external_survey_id: str, internal_survey_id: int, external_q_argument: int = None
 ) -> str:
     """
     Handle POST request for survey submission.
@@ -245,6 +245,7 @@ def handle_survey_post(
         user_id: The user's identifier
         external_survey_id: External survey identifier (for PANEL4ALL)
         internal_survey_id: Internal survey identifier
+        external_q_argument: the "q" argument that is sent (sometimes) by PANEL4ALL
 
     Returns:
         str: Redirect response to appropriate destination
@@ -277,13 +278,13 @@ def handle_survey_post(
                     submission, attention_check_failed=True
                 )
                 # Redirect to Panel4All with attention filter status
+                panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["ATTENTION_FAILED"]
                 return redirect(
                     redirect_to_panel4all(
                         user_id,
                         external_survey_id,
-                        status=current_app.config["PANEL4ALL"]["STATUS"][
-                            "ATTENTION_FAILED"
-                        ],
+                        status=panel4all_status,
+                        q = external_q_argument,
                     )
                 )
 
@@ -301,11 +302,13 @@ def handle_survey_post(
 
         # Process valid submission
         SurveyService.process_survey_submission(submission)
+        panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"]
         return redirect(
             redirect_to_panel4all(
                 user_id,
                 external_survey_id,
-                status=current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"],
+                status=panel4all_status,
+                q = external_q_argument,
             )
         )
 
@@ -323,7 +326,9 @@ def thank_you():
     return render_template("thank_you.html")
 
 
-def redirect_to_panel4all(user_id: str, survey_id: str, status: str = "finish") -> str:
+def redirect_to_panel4all(user_id: str, survey_id: str, status: str = "finish", q: str = None) -> str:
     """Generate Panel4All redirect URL with specified status."""
     params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if q is not None:
+        params["q"] = q
     return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
