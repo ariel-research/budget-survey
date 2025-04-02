@@ -48,36 +48,64 @@ def mock_language():
 
 @pytest.fixture(scope="session")
 def setup_test_data(app):
-    """Create the surveys once for all tests and delete them only after all the tests done."""
+    """Create the stories and surveys once for all tests."""
     with app.app_context():
-        # Insert test surveys with multilingual support
-        survey_query = """
-        INSERT INTO surveys 
-            (name, description, subjects, active) 
+        # 1. Insert test stories
+        story_query = """
+        INSERT INTO stories 
+            (code, title, description, subjects) 
         VALUES 
             (%s, %s, %s, %s)
         """
 
-        # First survey
-        name_json = json.dumps({"en": "Test Survey", "he": "סקר בדיקה"})
-        description = json.dumps({"en": "Description 1", "he": "תיאור 1"})
-        subjects_json = json.dumps(
+        # First story
+        code1 = "test_story_1"
+        title_json1 = json.dumps({"en": "Test Survey", "he": "סקר בדיקה"})
+        description_json1 = json.dumps({"en": "Description 1", "he": "תיאור 1"})
+        subjects_json1 = json.dumps(
             [{"en": "Subject1", "he": "נושא1"}, {"en": "Subject2", "he": "נושא2"}]
         )
-        execute_query(survey_query, (name_json, description, subjects_json, True))
+        execute_query(
+            story_query, (code1, title_json1, description_json1, subjects_json1)
+        )
 
-        # Second survey
-        name_json2 = json.dumps({"en": "Another Test Survey", "he": "סקר בדיקה נוסף"})
-        description2 = json.dumps({"en": "Description 2", "he": "תיאור 2"})
+        # Second story
+        code2 = "test_story_2"
+        title_json2 = json.dumps({"en": "Another Test Survey", "he": "סקר בדיקה נוסף"})
+        description_json2 = json.dumps({"en": "Description 2", "he": "תיאור 2"})
         subjects_json2 = json.dumps(
             [{"en": "Subject3", "he": "נושא3"}, {"en": "Subject4", "he": "נושא4"}]
         )
-        execute_query(survey_query, (name_json2, description2, subjects_json2, True))
+        execute_query(
+            story_query, (code2, title_json2, description_json2, subjects_json2)
+        )
+
+        # 2. Insert test surveys that reference the stories
+        survey_query = """
+        INSERT INTO surveys 
+            (story_code, active, pair_generation_config) 
+        VALUES 
+            (%s, %s, %s)
+        """
+
+        # First survey
+        pair_gen_config1 = json.dumps(
+            {"strategy": "optimization_metrics", "params": {"num_pairs": 10}}
+        )
+        execute_query(survey_query, (code1, True, pair_gen_config1))
+
+        # Second survey
+        pair_gen_config2 = json.dumps(
+            {"strategy": "weighted_average_vector", "params": {"num_pairs": 10}}
+        )
+        execute_query(survey_query, (code2, True, pair_gen_config2))
 
     yield
     with app.app_context():
         execute_query("DELETE FROM surveys")
+        execute_query("DELETE FROM stories")
         execute_query("ALTER TABLE surveys AUTO_INCREMENT = 1")
+        execute_query("ALTER TABLE stories AUTO_INCREMENT = 1")
 
 
 @pytest.fixture(scope="function")
@@ -313,7 +341,12 @@ def test_get_subjects(app_context, setup_test_data, mock_language, app):
 
     with app.test_request_context():
         # Fetch an existing survey ID
-        survey_query = "SELECT id, subjects FROM surveys LIMIT 1"
+        survey_query = """
+            SELECT s.id, st.subjects 
+            FROM surveys s
+            JOIN stories st ON s.story_code = st.code
+            LIMIT 1
+        """
         result = execute_query(survey_query)
         assert result, "No surveys found in the database"
         survey_id = result[0]["id"]
@@ -345,7 +378,12 @@ def test_get_survey_name(app_context, setup_test_data, mock_language, app):
 
     with app.test_request_context():
         # Fetch an existing survey ID and name
-        survey_query = "SELECT id, name FROM surveys LIMIT 1"
+        survey_query = """
+            SELECT s.id, st.title as name
+            FROM surveys s
+            JOIN stories st ON s.story_code = st.code
+            LIMIT 1
+        """
         result = execute_query(survey_query)
         assert result, "No surveys found in the database"
         survey_id = result[0]["id"]
@@ -559,7 +597,12 @@ def test_get_subjects_multiple_languages(
         # Keep the context active for the entire test
         ctx.push()  # Push the context
 
-        survey_query = "SELECT id, subjects FROM surveys LIMIT 1"
+        survey_query = """
+            SELECT s.id, st.subjects 
+            FROM surveys s
+            JOIN stories st ON s.story_code = st.code
+            LIMIT 1
+        """
         result = execute_query(survey_query)
         assert result, "No surveys found in the database"
         survey_id = result[0]["id"]
@@ -598,7 +641,12 @@ def test_get_survey_name_multiple_languages(
         # Keep the context active for the entire test
         ctx.push()  # Push the context
 
-        survey_query = "SELECT id, name FROM surveys LIMIT 1"
+        survey_query = """
+            SELECT s.id, st.title as name
+            FROM surveys s
+            JOIN stories st ON s.story_code = st.code
+            LIMIT 1
+        """
         result = execute_query(survey_query)
         assert result, "No surveys found in the database"
         survey_id = result[0]["id"]
