@@ -2,11 +2,12 @@ import json
 import random
 import time
 
+import mysql.connector
 import pytest
 from flask import session
 
 from app import create_app
-from database.db import execute_query, get_db_connection
+from database.db import execute_query
 from database.queries import (
     check_user_participation,
     create_comparison_pair,
@@ -97,14 +98,30 @@ def cleanup_db(app):
 @pytest.fixture(scope="module")
 def db_connection(app):
     """
-    Establish a connection to the database for the entire module.
+    Establish a direct database connection for the test module using app config.
     Closes the connection after all tests in this module are complete.
     """
-    with app.app_context():
-        conn = get_db_connection()
-        yield conn
-        if conn:
-            conn.close()
+    conn = None  # Initialize connection variable
+    with app.app_context():  # Need app context to access app.config
+        try:
+            conn = mysql.connector.connect(
+                host=app.config["MYSQL_HOST"],
+                port=app.config["MYSQL_PORT"],
+                database=app.config["MYSQL_DATABASE"],
+                user=app.config["MYSQL_USER"],
+                password=app.config["MYSQL_PASSWORD"],
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_ci",
+            )
+            print("\n--- Test DB Connection Established ---")
+            yield conn  # Provide the connection to the tests
+        except mysql.connector.Error as e:
+            pytest.fail(f"Failed to establish direct test DB connection: {e}")
+        finally:
+            # Ensure connection is closed even if errors occur during yield
+            if conn and conn.is_connected():
+                conn.close()
+                print("\n--- Test DB Connection Closed ---")
 
 
 def generate_unique_id():
