@@ -1,77 +1,123 @@
 import logging
+from typing import Any, Dict, List, Optional, Union
 
 import mysql.connector
 from flask import current_app as app
+from flask import g  # Flask's application context global
 from mysql.connector import Error
 
 logger = logging.getLogger(__name__)
 
-
-def get_db_connection():
-    try:
-        connection = mysql.connector.connect(
-            host=app.config["MYSQL_HOST"],
-            port=app.config["MYSQL_PORT"],
-            database=app.config["MYSQL_DATABASE"],
-            user=app.config["MYSQL_USER"],
-            password=app.config["MYSQL_PASSWORD"],
-        )
-        logger.info("Database connection established")
-        return connection
-    except Error as e:
-        logger.error(f"Error connecting to MySQL database: {e}")
-        return None
+# --- Connection Management using Flask's 'g' object ---
 
 
-def execute_query(query, params=None, fetch_one=False):
+def get_db() -> Optional[mysql.connector.MySQLConnection]:
     """
-    Executes a SQL query against the MySQL database.
+    Opens a new database connection if there is none yet for the
+    current application context ('g'). Adds the 'charset' parameter
+    to ensure UTF-8 communication.
+    """
+    if "db" not in g:
+        # First connection for this request
+        try:
+            g.db = mysql.connector.connect(
+                host=app.config["MYSQL_HOST"],
+                port=app.config["MYSQL_PORT"],
+                database=app.config["MYSQL_DATABASE"],
+                user=app.config["MYSQL_USER"],
+                password=app.config["MYSQL_PASSWORD"],
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_ci",
+            )
+            logger.debug("Database connection established for this request.")
+        except Error as e:
+            logger.error(f"Error connecting to MySQL database: {e}")
+            g.db = None  # Store None in 'g' if connection failed
+    return g.db
+
+
+def close_db(e: Optional[Exception] = None) -> None:
+    """
+    Closes the database connection at the end of the request.
+    This function is registered to run automatically by Flask.
+    """
+    db = g.pop(
+        "db", None
+    )  # Get connection from 'g' and removes the key or returns None if not exists
+
+    if db is not None and db.is_connected():
+        db.close()
+        logger.debug("Database connection closed for this request.")
+
+
+def init_app(flask_app) -> None:
+    """
+    Register database functions with the Flask app.
+    This is called from the Flask app factory.
+    """
+    # Tells Flask to call 'close_db' when cleaning up after returning the response
+    flask_app.teardown_appcontext(close_db)
+    logger.info("Database teardown function registered.")
+
+
+# --- Query Execution ---
+
+
+def execute_query(
+    query: str, params: Optional[tuple] = None, fetch_one: bool = False
+) -> Optional[Union[Dict[str, Any], List[Dict[str, Any]], int]]:
+    """
+    Executes a SQL query using the request-scoped database connection.
 
     Args:
-        query (str): The SQL query to execute.
-        params (tuple, optional): Parameters to pass with the query.
-        fetch_one (bool, optional): If True, returns only the first row for SELECT queries.
+        query (str): The SQL query string.
+        params (tuple, optional): Parameters to bind to the query (prevents SQL injection).
+        fetch_one (bool, optional): True to fetch only the first result row for SELECT.
 
     Returns:
-        dict or list or int or None:
-            - For SELECT: Single row (dict) if fetch_one=True, list of rows otherwise
-            - For INSERT: Last row ID (int)
-            - For UPDATE/DELETE: Number of affected rows
-            - None if an error occurs
+        Optional[Union[Dict, List[Dict], int]]:
+            - For SELECT: A single dict (fetch_one=True) or a list of dicts.
+            - For INSERT: The last inserted row ID (int).
+            - For UPDATE/DELETE: The number of affected rows (int).
+            - None if an error occurs or the connection failed.
     """
-    logger.debug(f"Executing query: {query} with params: {params}")
-    connection = get_db_connection()
-    if connection is None:
+    connection = get_db()  # Get the connection for *the current* request
+    if not connection:
+        logger.error("Cannot execute query, no database connection available.")
         return None
 
+    logger.debug(f"Executing query: {query} | PARAMS: {params}")
+
+    # Use a 'with' block for the cursor - ensures it's always closed automatically
     try:
-        cursor = connection.cursor(dictionary=True)
-        if params:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
+        with connection.cursor(dictionary=True) as cursor:
+            cursor.execute(query, params if params else ())
 
-        # Handle different query types
-        if query.strip().upper().startswith("SELECT"):
-            if fetch_one:
-                result = cursor.fetchone()  # Fetch single row
-            else:
-                result = cursor.fetchall()  # Fetch all rows
-            logger.debug(f"Query result: {result}")
-        else:
-            connection.commit()  # Commit changes for INSERT/UPDATE/DELETE
-            if query.strip().upper().startswith("INSERT"):
-                result = cursor.lastrowid  # Return last inserted ID
-            else:
-                result = cursor.rowcount  # Return number of affected rows
-            logger.debug(f"Query affected rows/last ID: {result}")
+            # Get the uppercase version of the query, stripped of leading/trailing whitespace,
+            # to reliably check if it's a SELECT, INSERT, etc.
+            query_upper = query.strip().upper()
 
-        return result
+            # Handle SELECT queries
+            if query_upper.startswith("SELECT") or query_upper.startswith("SHOW"):
+                if fetch_one:
+                    result = cursor.fetchone()
+                    logger.debug(f"Query result (one): {result}")
+                else:
+                    result = cursor.fetchall()
+                    logger.debug(f"Query result (all): {len(result)} rows")
+                return result
+
+            # Handle INSERT/UPDATE/DELETE queries (require commit)
+            else:
+                connection.commit()  # Commit changes to the database
+                if query_upper.startswith("INSERT"):
+                    result = cursor.lastrowid
+                    logger.debug(f"INSERT successful. Last row ID: {result}")
+                else:
+                    result = cursor.rowcount
+                    logger.debug(f"UPDATE/DELETE successful. Affected rows: {result}")
+                return result
+
     except Error as e:
         logger.error(f"Error executing query: {e}")
         return None
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            logger.debug("Connection closed")

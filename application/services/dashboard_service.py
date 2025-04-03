@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Any, Dict, List
 
@@ -24,19 +23,19 @@ def process_survey_data(surveys: List[Dict]) -> List[Dict]:
 
     for survey in surveys:
         try:
-            config = json.loads(survey["pair_generation_config"])
-            strategy_name = config.get("strategy")
-
             survey_data.append(
                 {
                     "id": survey["id"],
-                    "name": json.loads(survey["name"]),
+                    "name": survey["title"],
                     "description": (
-                        json.loads(survey["description"])
-                        if survey["description"]
+                        survey["description"] if survey["description"] else None
+                    ),
+                    "strategy_name": (
+                        survey["pair_generation_config"].get("strategy")
+                        if survey["pair_generation_config"]
                         else None
                     ),
-                    "strategy_name": strategy_name,
+                    "story_code": survey["story_code"],
                 }
             )
         except Exception as e:
@@ -50,7 +49,9 @@ def get_dashboard_metrics() -> Dict[str, Any]:
     """Calculate basic metrics for the dashboard."""
     try:
         # Get and process active surveys
+        # Note: get_active_surveys now returns pre-processed data with story information
         active_surveys = get_active_surveys()
+        logger.info(f"Active surveys retrieved: {active_surveys}")
         processed_surveys = process_survey_data(active_surveys)
 
         # Get completed responses

@@ -203,7 +203,12 @@ def get_survey_name(survey_id: int) -> str:
         >>> get_survey_name(999)  # Non-existent survey
         ''
     """
-    query = "SELECT name FROM surveys WHERE id = %s AND active = TRUE"
+    query = """
+        SELECT s.story_code, st.title 
+        FROM surveys s
+        JOIN stories st ON s.story_code = st.code
+        WHERE s.id = %s AND s.active = TRUE
+    """
     logger.debug("Retrieving name for survey_id: %s", survey_id)
 
     try:
@@ -212,15 +217,15 @@ def get_survey_name(survey_id: int) -> str:
             logger.warning("No active survey found with id: %s", survey_id)
             return ""
 
-        name_column = result["name"]
-        if not name_column:
+        title_json = result["title"]
+        if not title_json:
             return ""
 
-        name_dict = json.loads(name_column)
+        title_dict = json.loads(title_json)
         current_lang = get_current_language()
 
         # Try current language, fallback to Hebrew
-        return name_dict.get(current_lang, name_dict.get("he", ""))
+        return title_dict.get(current_lang, title_dict.get("he", ""))
 
     except json.JSONDecodeError as e:
         logger.error("Error decoding JSON for survey %s: %s", survey_id, str(e))
@@ -249,7 +254,12 @@ def get_subjects(survey_id: int) -> List[str]:
         >>> get_subjects(1)  # When language is 'he' or translation missing
         ['משרד החינוך', 'משרד הבריאות', 'משרד הביטחון']
     """
-    query = "SELECT subjects FROM surveys WHERE id = %s AND active = TRUE"
+    query = """
+        SELECT st.subjects
+        FROM surveys s
+        JOIN stories st ON s.story_code = st.code
+        WHERE s.id = %s AND s.active = TRUE
+    """
     logger.debug("Retrieving subjects for survey_id: %s", survey_id)
 
     try:
@@ -258,11 +268,11 @@ def get_subjects(survey_id: int) -> List[str]:
             logger.warning("No active survey found with id: %s", survey_id)
             return []
 
-        subjects_column = result["subjects"]
-        if not subjects_column:
+        subjects_json = result["subjects"]
+        if not subjects_json:
             return []
 
-        subjects_array = json.loads(subjects_column)
+        subjects_array = json.loads(subjects_json)
         current_lang = get_current_language()
 
         return [
@@ -475,24 +485,174 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
 
 def get_active_surveys() -> List[Dict]:
     """
-    Retrieve all active surveys with their configurations.
+    Retrieve all active surveys with their configurations and story details.
 
     Returns:
         List[Dict]: List of active surveys with their details.
-        Each dict contains: id, name, description, pair_generation_config
+        Each dict contains: id, pair_generation_config, story_code, and
+        story details (title, description, subjects).
     """
     query = """
-        SELECT id, name, description, pair_generation_config 
-        FROM surveys 
-        WHERE active = TRUE 
-        ORDER BY id
+        SELECT s.id, s.story_code, s.pair_generation_config, 
+               st.title, st.description, st.subjects
+        FROM surveys s
+        JOIN stories st ON s.story_code = st.code
+        WHERE s.active = TRUE 
+        ORDER BY s.id
     """
     logger.debug("Retrieving active surveys")
 
     try:
         results = execute_query(query)
-        logger.info(f"Retrieved {len(results)} active surveys")
-        return results
+        if not results:
+            logger.warning("No active surveys found")
+            return []
+
+        # Process the results - parse JSON fields
+        processed_results = []
+        for result in results:
+            processed_result = {
+                "id": result["id"],
+                "story_code": result["story_code"],
+                "pair_generation_config": (
+                    json.loads(result["pair_generation_config"])
+                    if result["pair_generation_config"]
+                    else None
+                ),
+                "title": json.loads(result["title"]) if result["title"] else {},
+                "description": (
+                    json.loads(result["description"]) if result["description"] else {}
+                ),
+                "subjects": (
+                    json.loads(result["subjects"]) if result["subjects"] else []
+                ),
+            }
+            processed_results.append(processed_result)
+
+        logger.info(f"Retrieved {len(processed_results)} active surveys")
+        return processed_results
     except Exception as e:
         logger.error(f"Error retrieving active surveys: {str(e)}")
         return []
+
+
+def get_story(code: str) -> Optional[Dict]:
+    """
+    Retrieves a story by its code.
+
+    Args:
+        code (str): The unique code of the story to retrieve.
+
+    Returns:
+        Optional[Dict]: Dictionary containing the story data or None if not found.
+    """
+    query = "SELECT * FROM stories WHERE code = %s"
+    logger.debug(f"Retrieving story with code: {code}")
+
+    try:
+        result = execute_query(query, (code,), fetch_one=True)
+        if not result:
+            logger.warning(f"No story found with code: {code}")
+            return None
+
+        # Parse JSON fields
+        for json_field in ["title", "description", "subjects"]:
+            if result[json_field]:
+                result[json_field] = json.loads(result[json_field])
+
+        return result
+    except Exception as e:
+        logger.error(f"Error retrieving story with code {code}: {str(e)}")
+        return None
+
+
+def get_all_stories() -> List[Dict]:
+    """
+    Retrieves all stories from the database.
+
+    Returns:
+        List[Dict]: List of dictionaries containing story data.
+    """
+    query = "SELECT * FROM stories ORDER BY id"
+    logger.debug("Retrieving all stories")
+
+    try:
+        results = execute_query(query)
+        if not results:
+            logger.warning("No stories found")
+            return []
+
+        # Parse JSON fields for each result
+        for result in results:
+            for json_field in ["title", "description", "subjects"]:
+                if result[json_field]:
+                    result[json_field] = json.loads(result[json_field])
+
+        logger.info(f"Retrieved {len(results)} stories")
+        return results
+    except Exception as e:
+        logger.error(f"Error retrieving stories: {str(e)}")
+        return []
+
+
+def create_story(
+    code: str, title: Dict, description: Dict, subjects: List[Dict]
+) -> int:
+    """
+    Creates a new story in the database.
+
+    Args:
+        code (str): Unique identifier for the story
+        title (Dict): Multilingual title {"en": "English Title", "he": "Hebrew Title"}
+        description (Dict): Multilingual description
+        subjects (List[Dict]): List of multilingual subjects
+
+    Returns:
+        int: ID of the newly created story or None if an error occurs
+    """
+    query = """
+        INSERT INTO stories (code, title, description, subjects)
+        VALUES (%s, %s, %s, %s)
+    """
+    logger.debug(f"Creating new story with code: {code}")
+
+    try:
+        # Convert Python objects to JSON strings for storage
+        title_json = json.dumps(title)
+        description_json = json.dumps(description)
+        subjects_json = json.dumps(subjects)
+
+        return execute_query(query, (code, title_json, description_json, subjects_json))
+    except Exception as e:
+        logger.error(f"Error creating story: {str(e)}")
+        return None
+
+
+def create_survey(
+    story_code: str, pair_generation_config: Dict, active: bool = True
+) -> int:
+    """
+    Creates a new survey in the database.
+
+    Args:
+        story_code (str): Code of the story this survey is based on
+        pair_generation_config (Dict): Configuration for pair generation
+        active (bool): Whether this survey is active
+
+    Returns:
+        int: ID of the newly created survey or None if an error occurs
+    """
+    query = """
+        INSERT INTO surveys (story_code, pair_generation_config, active)
+        VALUES (%s, %s, %s)
+    """
+    logger.debug(f"Creating new survey with story_code: {story_code}")
+
+    try:
+        # Convert Python dict to JSON string for storage
+        config_json = json.dumps(pair_generation_config)
+
+        return execute_query(query, (story_code, config_json, active))
+    except Exception as e:
+        logger.error(f"Error creating survey: {str(e)}")
+        return None
