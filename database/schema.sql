@@ -40,7 +40,7 @@ DROP TABLE IF EXISTS `surveys`;
 CREATE TABLE `surveys` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `story_code` VARCHAR(50) NOT NULL, -- FK to stories.code
-  `active` BOOLEAN DEFAULT TRUE, -- Using BOOLEAN alias
+  `active` BOOLEAN DEFAULT TRUE,
   `pair_generation_config` JSON NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
