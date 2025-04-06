@@ -1,7 +1,7 @@
-import datetime
 import json
 import logging
 import math
+from datetime import datetime
 from typing import Dict, List, Tuple
 
 import pandas as pd
@@ -569,7 +569,16 @@ def generate_detailed_user_choices(
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
-            summary = {"user_id": user_id, "survey_id": survey_id, "stats": stats}
+            # Add the timestamp from the first choice (they should all be the same for a survey response)
+            response_created_at = (
+                choices[0].get("response_created_at") if choices else None
+            )
+            summary = {
+                "user_id": user_id,
+                "survey_id": survey_id,
+                "stats": stats,
+                "response_created_at": response_created_at,
+            }
             # Add strategy labels from the first choice (they're same for all choices in a survey)
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
@@ -660,12 +669,12 @@ def generate_detailed_breakdown_table(
             # Format timestamp for display
             timestamp = ""
             if "response_created_at" in summary:
-                # Format timestamp
                 created_at = summary["response_created_at"]
-                if isinstance(created_at, datetime):
-                    timestamp = created_at.strftime("%Y-%m-%d %H:%M")
-                else:
-                    timestamp = str(created_at)
+                if created_at:
+                    if isinstance(created_at, datetime):
+                        timestamp = created_at.strftime("%d-%m-%Y %H:%M")
+                    else:
+                        timestamp = str(created_at)
 
             row = f"""
             <tr>
