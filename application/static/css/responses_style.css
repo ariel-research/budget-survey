@@ -332,6 +332,38 @@ html {
 }
 
 /* ==========================================================================
+  Sortable Table Headers
+  ========================================================================== */
+  th.sortable {
+   cursor: pointer;
+   position: relative;
+   user-select: none;
+}
+
+th.sortable:hover {
+   background-color: var(--color-primary-light);
+}
+
+th.sortable::after {
+   content: "⇵";
+   opacity: 0.3;
+   margin-left: 5px;
+   font-size: 0.8em;
+}
+
+th.sortable.sorted::after {
+   opacity: 1;
+}
+
+th.sortable[data-order="asc"]::after {
+   content: "↑";
+}
+
+th.sortable[data-order="desc"]::after {
+   content: "↓";
+}
+
+/* ==========================================================================
   Optimization Indicators
   ========================================================================== */
 .user-optimizes {
