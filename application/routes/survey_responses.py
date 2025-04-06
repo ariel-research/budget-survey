@@ -33,9 +33,11 @@ def get_user_responses(
     show_tables_only: bool = False,
     show_detailed_breakdown_table: bool = True,
     show_overall_survey_table: bool = True,
+    sort_by: str = None,
+    sort_order: str = "asc",
 ) -> Dict[str, str]:
     """
-    Get formatted user survey responses.
+    Get formatted user survey responses with optional sorting.
 
     Args:
         survey_id: Optional survey ID to filter responses
@@ -43,6 +45,8 @@ def get_user_responses(
         show_tables_only: If True, only show summary tables
         show_detailed_breakdown_table: If True, show detailed breakdown table
         show_overall_survey_table: If True, show overall survey table
+        sort_by: Optional field to sort by ('user_id', 'created_at')
+        sort_order: Optional order for sorting, 'asc' (default) or 'desc'
 
     Returns:
         Dict[str, str]: A dictionary containing the formatted survey responses.
@@ -62,6 +66,16 @@ def get_user_responses(
                     for choice in user_choices
                     if choice["survey_id"] == survey_id
                 ]
+
+            # Apply sorting if requested
+            if sort_by:
+                reverse = sort_order.lower() == "desc"
+                if sort_by == "user_id":
+                    user_choices.sort(key=lambda x: x["user_id"], reverse=reverse)
+                elif sort_by == "created_at":
+                    user_choices.sort(
+                        key=lambda x: x["response_created_at"], reverse=reverse
+                    )
 
             if survey_id is not None and not user_choices:
                 logger.warning(f"No responses found for survey {survey_id}")
