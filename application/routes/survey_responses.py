@@ -6,7 +6,7 @@ Handles all survey response related endpoints including responses and comments.
 import logging
 from typing import Dict, List, Optional
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 from analysis.report_content_generators import generate_detailed_user_choices
 from application.exceptions import (
@@ -25,6 +25,26 @@ from database.queries import (
 
 logger = logging.getLogger(__name__)
 responses_routes = Blueprint("responses", __name__)
+
+
+def validate_sort_params(sort_by, sort_order):
+    """
+    Validate and sanitize sorting parameters.
+
+    Args:
+        sort_by: The field to sort by
+        sort_order: The sort direction ('asc' or 'desc')
+
+    Returns:
+        tuple: (valid_sort_by, valid_sort_order)
+    """
+    allowed_sort_fields = ["user_id", "created_at"]
+    allowed_sort_orders = ["asc", "desc"]
+
+    valid_sort_by = sort_by if sort_by in allowed_sort_fields else None
+    valid_sort_order = sort_order if sort_order in allowed_sort_orders else "asc"
+
+    return valid_sort_by, valid_sort_order
 
 
 def get_user_responses(
@@ -163,7 +183,7 @@ def format_comments_data(responses: List[Dict]) -> List[Dict]:
 @responses_routes.route("/<int:survey_id>/responses")
 def get_survey_responses(survey_id: int):
     """
-    Get all responses for a specific survey.
+    Get all responses for a specific survey with optional sorting.
 
     Args:
         survey_id: ID of the survey to get responses for
@@ -172,8 +192,18 @@ def get_survey_responses(survey_id: int):
         Rendered template with survey responses
     """
     try:
+        # Get and validate sort parameters
+        sort_by, sort_order = validate_sort_params(
+            request.args.get("sort"), request.args.get("order", "asc")
+        )
+
         # Get user responses filtered by survey_id
-        data = get_user_responses(survey_id=survey_id, show_tables_only=True)
+        data = get_user_responses(
+            survey_id=survey_id,
+            show_tables_only=True,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
         return render_template("responses/detail.html", data=data, survey_id=survey_id)
 
     except SurveyNotFoundError as e:
@@ -200,14 +230,16 @@ def get_survey_responses(survey_id: int):
 
 @responses_routes.route("/responses")
 def list_all_responses():
-    """
-    Get all responses across all surveys.
-
-    Returns:
-        Rendered template with all survey responses
-    """
+    """Get all responses across all surveys with optional sorting."""
     try:
-        data = get_user_responses(show_overall_survey_table=False)
+        # Get and validate sort parameters
+        sort_by, sort_order = validate_sort_params(
+            request.args.get("sort"), request.args.get("order", "asc")
+        )
+
+        data = get_user_responses(
+            show_overall_survey_table=False, sort_by=sort_by, sort_order=sort_order
+        )
         return render_template("responses/list.html", data=data)
     except ResponseProcessingError as e:
         logger.error(str(e))

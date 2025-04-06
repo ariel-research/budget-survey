@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import math
@@ -656,6 +657,16 @@ def generate_detailed_breakdown_table(
             all_responses_link = f"/surveys/users/{user_id}/responses"
             survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
 
+            # Format timestamp for display
+            timestamp = ""
+            if "response_created_at" in summary:
+                # Format timestamp
+                created_at = summary["response_created_at"]
+                if isinstance(created_at, datetime):
+                    timestamp = created_at.strftime("%Y-%m-%d %H:%M")
+                else:
+                    timestamp = str(created_at)
+
             row = f"""
             <tr>
                 <td class="user-id-cell{' truncated' if is_truncated else ''}">
@@ -664,6 +675,7 @@ def generate_detailed_breakdown_table(
                     </a>
                     {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
                 </td>
+                <td>{timestamp}</td>
                 <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
                     {format(opt1_percent, '.1f')}%
                 </td>
@@ -687,7 +699,8 @@ def generate_detailed_breakdown_table(
                 <table>
                     <thead>
                         <tr>
-                            <th>User ID</th>
+                            <th class="sortable" data-sort="user_id">User ID</th>
+                            <th class="sortable" data-sort="created_at">Response Time</th>
                             <th>{labels[0]}</th>
                             <th>{labels[1]}</th>
                             <th>View Response</th>
