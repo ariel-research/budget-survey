@@ -415,6 +415,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
         sr.user_id,
         sr.survey_id,
         sr.optimal_allocation,
+        sr.created_at as response_created_at,
         cp.pair_number,
         cp.option_1,
         cp.option_2,
