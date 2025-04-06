@@ -5,6 +5,7 @@ from flask import Flask, render_template
 
 from application.translations import get_current_language, get_translation
 from config import Config, get_config
+from database import db
 from logging_config import setup_logging
 
 load_dotenv()
@@ -34,6 +35,8 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
         app.config.from_object(config_class)
 
     app.secret_key = app.config["SECRET_KEY"]
+
+    db.init_app(app)  # Initialize database handling (registers close_db)
 
     # Register template utilities
     @app.context_processor

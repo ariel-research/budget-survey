@@ -473,6 +473,9 @@ SURVEY_ID = 1  # Change this to the desired survey ID
 ### Adding or Modifying Surveys
 To add new surveys or modify existing ones, follow these steps:
 
+### Adding or Modifying Surveys
+To add new surveys or modify existing ones, follow these steps:
+
 1. Connect to the database on the remote server using MySQL Workbench via SSH:
    - Create a new connection
    - Choose "Standard TCP/IP over SSH" as the connection method
@@ -486,16 +489,16 @@ To add new surveys or modify existing ones, follow these steps:
 
 2. Once connected, you can run SQL queries to add or modify surveys. Here are some example queries:
 
-   Add a new survey:
+   First, add a new story (if needed):
    ```sql
-   INSERT INTO surveys (
-       name, 
-       description, 
-       subjects, 
-       active,
-       pair_generation_config
+   INSERT INTO stories (
+       code,
+       title,
+       description,
+       subjects
    )
    VALUES (
+       'budget_2024',
        JSON_OBJECT(
            'he', 'סקר תקציב 2024',
            'en', 'Budget Survey 2024'
@@ -508,7 +511,19 @@ To add new surveys or modify existing ones, follow these steps:
            JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
            JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
            JSON_OBJECT('he', 'ביטחון', 'en', 'Defense')
-       ),
+       )
+   );
+   ```
+
+   Then, add a new survey that uses this story:
+   ```sql
+   INSERT INTO surveys (
+       story_code,
+       active,
+       pair_generation_config
+   )
+   VALUES (
+       'budget_2024',
        TRUE,
        JSON_OBJECT(
            'strategy', 'extreme_vectors',
@@ -517,10 +532,10 @@ To add new surveys or modify existing ones, follow these steps:
    );
    ```
 
-   Modify an existing survey:
+   Modify an existing story's content:
    ```sql
-   UPDATE surveys
-   SET name = JSON_OBJECT(
+   UPDATE stories
+   SET title = JSON_OBJECT(
            'he', 'סקר תקציב מעודכן 2024',
            'en', 'Updated Budget Survey 2024'
        ),
@@ -532,19 +547,15 @@ To add new surveys or modify existing ones, follow these steps:
            JSON_OBJECT('he', 'בריאות', 'en', 'Health'),
            JSON_OBJECT('he', 'חינוך', 'en', 'Education'),
            JSON_OBJECT('he', 'ביטחון', 'en', 'Defense')
-       ),
-       pair_generation_config = JSON_OBJECT(
-           'strategy', 'optimization_metrics',
-           'params', JSON_OBJECT('num_pairs', 15)
        )
-   WHERE id = 1;
+   WHERE code = 'budget_2024';
    ```
 
-   Update just the pair generation strategy:
+   Update just the pair generation strategy for a survey:
    ```sql
    UPDATE surveys
    SET pair_generation_config = JSON_OBJECT(
-       'strategy', 'new_strategy_name',
+       'strategy', 'optimization_metrics',
        'params', JSON_OBJECT('num_pairs', 10)
    )
    WHERE id = 1;
@@ -561,6 +572,7 @@ Remember to:
 - Use valid strategy names as defined in the pair generation strategies
 - Include all required parameters for the chosen strategy
 - Update the `SURVEY_ID` in `config.py` after adding or modifying surveys
+- Ensure that story codes are unique across the stories table
 
 ## Algorithm
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.

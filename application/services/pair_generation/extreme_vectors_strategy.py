@@ -34,7 +34,7 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
 
     def _generate_extreme_vectors(self, vector_size: int) -> List[np.ndarray]:
         """
-        Generate extreme vectors where one element is 100 and others are 0.
+        Generate extreme vectors where one element is near 100 and others are near 0.
 
         Args:
             vector_size: Size of the vector
@@ -44,8 +44,8 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
         """
         extremes = []
         for i in range(vector_size):
-            extreme = np.ones(vector_size, dtype=int)*10
-            extreme[i] = 100-10*(vector_size-1)
+            extreme = np.ones(vector_size, dtype=int) * 10
+            extreme[i] = 100 - 10 * (vector_size - 1)
             extremes.append(extreme)
         return extremes
 
