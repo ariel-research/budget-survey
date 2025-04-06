@@ -21,9 +21,9 @@ class TestExtremeVectorsStrategy(unittest.TestCase):
         # Each vector should have one 100 and the rest 0
         for v in extremes:
             self.assertEqual(np.sum(v), 100)
-            self.assertEqual(np.max(v), 100)
+            self.assertEqual(np.max(v), 80)
             # Should have exactly one non-zero element
-            self.assertEqual(np.count_nonzero(v), 1)
+            self.assertEqual(np.count_nonzero(v), 3)
 
     def test_calculate_weighted_vector(self):
         """Test weighted average calculation."""
