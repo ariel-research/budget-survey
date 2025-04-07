@@ -651,8 +651,8 @@ def generate_detailed_breakdown_table(
             survey_labels = survey_summaries[0]["strategy_labels"]
         labels = survey_labels or option_labels
 
-        # Sort summaries by user_id for consistent display
-        sorted_summaries = sorted(survey_summaries, key=lambda x: x["user_id"])
+        # Use the summaries as they are (already sorted at higher level)
+        sorted_summaries = survey_summaries
 
         # Generate table rows
         rows = []

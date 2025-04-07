@@ -197,6 +197,10 @@ def get_survey_responses(survey_id: int):
             request.args.get("sort"), request.args.get("order", "asc")
         )
 
+        logger.info(
+            f"Sorting parameters - sort_by: {sort_by}, sort_order: {sort_order}"
+        )
+
         # Get user responses filtered by survey_id
         data = get_user_responses(
             survey_id=survey_id,
