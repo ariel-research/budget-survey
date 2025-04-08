@@ -13,7 +13,16 @@ The page inherits from base.html and customizes the title and content blocks.
     <!-- Instructions section -->
     <div class="instructions-section">
         <div class="instruction-text">
-            {{ get_translation('budget_instructions', subjects=", ".join(subjects)) }}
+            {% if survey_description %}
+                <p>{{ survey_description|safe }}</p>
+            {% else %}
+                <p>{{ get_translation('budget_instructions', subjects=subjects|join(', ')) }}</p>
+            {% endif %}
+            <ul>
+                {% for subject in subjects %}
+                    <li>{{ subject }}</li>
+                {% endfor %}
+            </ul>
         </div>
         
         <!-- Rules section -->

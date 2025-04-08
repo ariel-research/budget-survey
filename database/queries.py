@@ -180,59 +180,61 @@ def user_exists(user_id: str) -> bool:
         return False
 
 
-def get_survey_name(survey_id: int) -> str:
+def get_survey_field(survey_id: int, field_name: str) -> str:
     """
-    Retrieves the name of an active survey in the current language.
+    Retrieves a JSON field from an active survey in the current language.
 
     Args:
         survey_id (int): The ID of the survey to retrieve.
+        field_name (str): The field to retrieve (e.g., 'title', 'description')
 
     Returns:
-        str: The survey name with the following language fallback logic:
-             - Returns name in current language if available
-             - Falls back to Hebrew if current language is not available
-             - Returns empty string if survey doesn't exist or on error
-
-    Examples:
-        >>> get_survey_name(1)  # Hebrew user
-        'תקציב המדינה'
-        >>> get_survey_name(1)  # English user, with both translations available
-        'State Budget'
-        >>> get_survey_name(1)  # English user, only Hebrew available
-        'תקציב המדינה'
-        >>> get_survey_name(999)  # Non-existent survey
-        ''
+        str: The field value with language fallback logic
     """
-    query = """
-        SELECT s.story_code, st.title 
+    query = f"""
+        SELECT s.story_code, st.{field_name} 
         FROM surveys s
         JOIN stories st ON s.story_code = st.code
         WHERE s.id = %s AND s.active = TRUE
     """
-    logger.debug("Retrieving name for survey_id: %s", survey_id)
+    logger.debug(f"Retrieving {field_name} for survey_id: {survey_id}")
 
     try:
         result = execute_query(query, (survey_id,), fetch_one=True)
         if not result:
-            logger.warning("No active survey found with id: %s", survey_id)
+            logger.warning(f"No active survey found with id: {survey_id}")
             return ""
 
-        title_json = result["title"]
-        if not title_json:
+        field_json = result[field_name]
+        if not field_json:
             return ""
 
-        title_dict = json.loads(title_json)
+        field_dict = json.loads(field_json)
         current_lang = get_current_language()
 
         # Try current language, fallback to Hebrew
-        return title_dict.get(current_lang, title_dict.get("he", ""))
+        return field_dict.get(current_lang, field_dict.get("he", ""))
 
     except json.JSONDecodeError as e:
-        logger.error("Error decoding JSON for survey %s: %s", survey_id, str(e))
+        logger.error(f"Error decoding JSON for survey {survey_id}: {str(e)}")
         return ""
     except Exception as e:
-        logger.error("Error retrieving name for survey %s: %s", survey_id, str(e))
+        logger.error(f"Error retrieving {field_name} for survey {survey_id}: {str(e)}")
         return ""
+
+
+def get_survey_name(survey_id: int) -> str:
+    """
+    Retrieves the name of an active survey in the current language.
+    """
+    return get_survey_field(survey_id, "title")
+
+
+def get_survey_description(survey_id: int) -> str:
+    """
+    Retrieves the description of an active survey in the current language.
+    """
+    return get_survey_field(survey_id, "description")
 
 
 def get_subjects(survey_id: int) -> List[str]:

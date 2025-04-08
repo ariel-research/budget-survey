@@ -12,6 +12,7 @@ from database.queries import (
     create_survey_response,
     create_user,
     get_subjects,
+    get_survey_description,
     get_survey_name,
     get_survey_pair_generation_config,
     mark_survey_as_completed,
@@ -40,12 +41,21 @@ class SurveyService:
             - error_message: Optional[str]: Error message if survey doesn't exist
             - data: Optional[Dict]: Survey data if exists, containing:
                 - name: str: Survey name
+                - description: str: Survey description
                 - subjects: List[str]: Survey subjects
                 - survey_id: int: The survey ID
         """
         survey_name = get_survey_name(survey_id)
         if not survey_name:
             return False, ("survey_not_found", {"survey_id": survey_id}), None
+
+        survey_description = get_survey_description(survey_id)
+        if not survey_description:
+            logger.warning(
+                f"No description found for survey: {survey_id}, using default"
+            )
+            # Using empty string instead of failure, since description is optional
+            survey_description = ""
 
         subjects = get_subjects(survey_id)
         if not subjects:
@@ -54,7 +64,12 @@ class SurveyService:
         return (
             True,
             None,
-            {"name": survey_name, "subjects": subjects, "survey_id": survey_id},
+            {
+                "name": survey_name,
+                "description": survey_description,
+                "subjects": subjects,
+                "survey_id": survey_id,
+            },
         )
 
     @staticmethod

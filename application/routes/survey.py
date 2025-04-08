@@ -44,7 +44,9 @@ def get_required_params() -> Tuple[str, str, int, int]:
         user_id = request.args.get("userID")
         external_survey_id = request.args.get("surveyID")
         custom_internal_id = request.args.get("internalID")
-        external_q_argument = request.args.get("q")   # Optional parameter; default is None
+        external_q_argument = request.args.get(
+            "q"
+        )  # Optional parameter; default is None
 
         if not user_id or not external_survey_id:
             missing_param = "userID" if not user_id else "surveyID"
@@ -74,7 +76,9 @@ def get_required_params() -> Tuple[str, str, int, int]:
 @survey_routes.route("/")
 def index():
     """Landing page route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+        get_required_params()
+    )
 
     # Verify survey exists
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
@@ -113,7 +117,9 @@ def index():
 @check_survey_eligibility
 def create_vector():
     """Budget vector creation route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+        get_required_params()
+    )
     current_lang = get_current_language()
 
     # Verify survey exists and get data
@@ -174,6 +180,7 @@ def create_vector():
     )
     return render_template(
         "create_vector.html",
+        survey_description=survey_data["description"],
         subjects=survey_data["subjects"],
         user_id=user_id,
         external_survey_id=external_survey_id,
@@ -186,7 +193,9 @@ def create_vector():
 @check_survey_eligibility
 def survey():
     """Main survey route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = get_required_params()
+    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+        get_required_params()
+    )
 
     survey_exists, error, survey_data = SurveyService.check_survey_exists(
         internal_survey_id
@@ -200,7 +209,12 @@ def survey():
             user_id, external_survey_id, internal_survey_id, survey_data["subjects"]
         )
     elif request.method == "POST":
-        return handle_survey_post(user_id, external_survey_id, internal_survey_id, external_q_argument=external_q_argument)
+        return handle_survey_post(
+            user_id,
+            external_survey_id,
+            internal_survey_id,
+            external_q_argument=external_q_argument,
+        )
     else:
         abort(405)  # Method Not Allowed
 
@@ -243,7 +257,10 @@ def handle_survey_get(
 
 
 def handle_survey_post(
-    user_id: str, external_survey_id: str, internal_survey_id: int, external_q_argument: int = None
+    user_id: str,
+    external_survey_id: str,
+    internal_survey_id: int,
+    external_q_argument: int = None,
 ) -> str:
     """
     Handle POST request for survey submission.
@@ -285,13 +302,15 @@ def handle_survey_post(
                     submission, attention_check_failed=True
                 )
                 # Redirect to Panel4All with attention filter status
-                panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["ATTENTION_FAILED"]
+                panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                    "ATTENTION_FAILED"
+                ]
                 return redirect(
                     redirect_to_panel4all(
                         user_id,
                         external_survey_id,
                         status=panel4all_status,
-                        q = external_q_argument,
+                        q=external_q_argument,
                     )
                 )
 
@@ -315,7 +334,7 @@ def handle_survey_post(
                 user_id,
                 external_survey_id,
                 status=panel4all_status,
-                q = external_q_argument,
+                q=external_q_argument,
             )
         )
 
@@ -333,7 +352,9 @@ def thank_you():
     return render_template("thank_you.html")
 
 
-def redirect_to_panel4all(user_id: str, survey_id: str, status: str = "finish", q: str = None) -> str:
+def redirect_to_panel4all(
+    user_id: str, survey_id: str, status: str = "finish", q: str = None
+) -> str:
     """Generate Panel4All redirect URL with specified status."""
     params = {"surveyID": survey_id, "userID": user_id, "status": status}
     if q is not None:
