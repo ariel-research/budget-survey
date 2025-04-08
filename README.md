@@ -22,6 +22,8 @@
 - [Modifying the Survey](#modifying-the-survey)
   - [Changing the Active Survey](#changing-the-active-survey)
   - [Adding or Modifying Surveys](#adding-or-modifying-surveys)
+  - [Changing Strategy Names and Colors](#changing-strategy-names-and-colors)
+  - [Modifying Awareness Questions](#modifying-awareness-questions)
 - [Algorithm](#algorithm)
 - [Analysis](#analysis)
   - [Running the Analysis](#running-the-analysis)
@@ -456,7 +458,7 @@ To modify the text displayed on each screen of the application, here's a guide t
 Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
 
 
-## §
+## Database
 The application uses a MySQL database with multilingual support. Here's the schema:
 
 ![Database Schema](docs/db_schema_diagram.png)
@@ -469,9 +471,6 @@ To modify the survey that users will get, you need to manually update the `SURVE
 ```python
 SURVEY_ID = 1  # Change this to the desired survey ID
 ```
-
-### Adding or Modifying Surveys
-To add new surveys or modify existing ones, follow these steps:
 
 ### Adding or Modifying Surveys
 To add new surveys or modify existing ones, follow these steps:
@@ -574,6 +573,105 @@ Remember to:
 - Update the `SURVEY_ID` in `config.py` after adding or modifying surveys
 - Ensure that story codes are unique across the stories table
 
+### Changing Strategy Names and Colors
+
+To change a strategy's name or color, you'll need to update both code and database references.
+
+#### Changing a Strategy Name
+
+1. **Update the Strategy Class**:
+   - Open the strategy file in `application/services/pair_generation/` (e.g., `optimization_metrics_vector.py`)
+   - Modify the `get_strategy_name()` method:
+     ```python
+     def get_strategy_name(self) -> str:
+         """Get the unique identifier for this strategy."""
+         return "new_strategy_name"  # Changed from original name
+     ```
+
+2. **Update the Database**:
+   - Update all surveys using this strategy with this SQL query:
+     ```sql
+     UPDATE surveys 
+     SET pair_generation_config = JSON_REPLACE(
+         pair_generation_config, 
+         '$.strategy', 
+         'new_strategy_name'
+     ) 
+     WHERE id = 1;  # Replace with the survey ID
+     ```
+   - To update multiple surveys:
+     ```sql
+     UPDATE surveys 
+     SET pair_generation_config = JSON_REPLACE(
+         pair_generation_config, 
+         '$.strategy', 
+         'new_strategy_name'
+     ) 
+     WHERE id IN (1, 4, 6);  # List all affected survey IDs
+     ```
+
+#### Changing a Strategy Color
+
+Strategy badge colors are defined in CSS:
+
+1. Open `application/static/css/dashboard_style.css`
+2. Find the Strategy Badge Colors section:
+   ```css
+   .strategy-badge[data-strategy="optimization_metrics"] { 
+       background: var(--color-primary);
+   }
+   ```
+3. Modify the color using predefined variables or custom colors:
+   ```css
+   /* Using predefined colors */
+   .strategy-badge[data-strategy="new_strategy_name"] { 
+       background: var(--color-purple);  /* Choose from available colors */
+   }
+   
+   /* OR using custom HEX color */
+   .strategy-badge[data-strategy="new_strategy_name"] { 
+       background: #4A5568;  /* Custom gray color */
+   }
+   ```
+
+4. Available color variables include:
+   - `--color-primary` (Blue)
+   - `--color-success` (Green)
+   - `--color-purple` (Purple)
+   - `--color-orange` (Orange)
+   - `--color-teal` (Teal)
+   - `--color-indigo` (Indigo)
+   - `--color-rose` (Rose)
+   - `--color-amber` (Amber)
+
+### Modifying Awareness Questions
+
+To modify the awareness check questions in the survey:
+
+1. **Change the Question Text**:
+   - Open `application/translations.py`
+   - Locate and modify the awareness question text in both languages:
+     ```python
+     "awareness_question": {
+         "he": "בחר באפשרות מספר 1. זוהי שאלת בדיקת תשומת לב.",
+         "en": "Please select option 1. This is an attention check question.",
+     },
+     ```
+
+2. **Change the Answer Options or Expected Answers**:
+   - Open `application/services/awareness_check.py`
+   - Modify the `generate_awareness_questions` function to change how options are created
+   - Open `application/schemas/validators.py`
+   - Update the validation logic in the `SurveySubmission.validate()` method:
+     ```python
+     # Change which answers are expected
+     if (
+         len(self.awareness_answers) != 2
+         or self.awareness_answers[0] != 1  # First check must be 1
+         or self.awareness_answers[1] != 2  # Second check must be 2
+     ):
+     ```
+
 ## Algorithm
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.
 
@@ -654,11 +752,6 @@ The analysis scripts generate the following files in the `data` directory:
    - Includes metrics such as unique users, total answers, and percentages of sum/ratio optimized choices.
 
 Remember to regularly run both the analysis script and the report generator to keep these statistics and reports up-to-date as new survey responses are collected.
-
-## Testing
-
-The project includes comprehensive test coverage across multiple testing domains. All tests are located in the `tests/` directory.
-
 
 ## Testing
 
