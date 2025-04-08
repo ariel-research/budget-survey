@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+from datetime import datetime
 from typing import Dict, List, Tuple
 
 import pandas as pd
@@ -568,7 +569,16 @@ def generate_detailed_user_choices(
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
-            summary = {"user_id": user_id, "survey_id": survey_id, "stats": stats}
+            # Add the timestamp from the first choice (they should all be the same for a survey response)
+            response_created_at = (
+                choices[0].get("response_created_at") if choices else None
+            )
+            summary = {
+                "user_id": user_id,
+                "survey_id": survey_id,
+                "stats": stats,
+                "response_created_at": response_created_at,
+            }
             # Add strategy labels from the first choice (they're same for all choices in a survey)
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
@@ -641,8 +651,8 @@ def generate_detailed_breakdown_table(
             survey_labels = survey_summaries[0]["strategy_labels"]
         labels = survey_labels or option_labels
 
-        # Sort summaries by user_id for consistent display
-        sorted_summaries = sorted(survey_summaries, key=lambda x: x["user_id"])
+        # Use the summaries as they are (already sorted at higher level)
+        sorted_summaries = survey_summaries
 
         # Generate table rows
         rows = []
@@ -656,6 +666,16 @@ def generate_detailed_breakdown_table(
             all_responses_link = f"/surveys/users/{user_id}/responses"
             survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
 
+            # Format timestamp for display
+            timestamp = ""
+            if "response_created_at" in summary:
+                created_at = summary["response_created_at"]
+                if created_at:
+                    if isinstance(created_at, datetime):
+                        timestamp = created_at.strftime("%d-%m-%Y %H:%M")
+                    else:
+                        timestamp = str(created_at)
+
             row = f"""
             <tr>
                 <td class="user-id-cell{' truncated' if is_truncated else ''}">
@@ -664,6 +684,7 @@ def generate_detailed_breakdown_table(
                     </a>
                     {'<span class="user-id-tooltip">' + user_id + '</span>' if is_truncated else ''}
                 </td>
+                <td>{timestamp}</td>
                 <td class="{'highlight-row' if opt1_percent > opt2_percent else ''}">
                     {format(opt1_percent, '.1f')}%
                 </td>
@@ -687,7 +708,8 @@ def generate_detailed_breakdown_table(
                 <table>
                     <thead>
                         <tr>
-                            <th>User ID</th>
+                            <th class="sortable" data-sort="user_id">User ID</th>
+                            <th class="sortable" data-sort="created_at">Response Time</th>
                             <th>{labels[0]}</th>
                             <th>{labels[1]}</th>
                             <th>View Response</th>
