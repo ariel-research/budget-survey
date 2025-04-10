@@ -88,9 +88,9 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     from application.routes.utils import util_routes
 
     app.register_blueprint(util_routes)
-    app.register_blueprint(survey_routes, url_prefix="/")
+    app.register_blueprint(dashboard_routes, url_prefix="/")
+    app.register_blueprint(survey_routes, url_prefix="/take-survey")
     app.register_blueprint(report_routes)
-    app.register_blueprint(dashboard_routes, url_prefix="/surveys")
     app.register_blueprint(responses_routes, url_prefix="/surveys")
 
     return app

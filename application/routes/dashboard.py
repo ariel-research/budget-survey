@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
 
 
-@dashboard_routes.route("/dashboard")
+@dashboard_routes.route("/")
 def view_dashboard():
     """Display the dashboard overview."""
     try:

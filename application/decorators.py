@@ -22,6 +22,11 @@ def check_survey_eligibility(f):
             user_id = request.args.get("userID")
             external_survey_id = request.args.get("surveyID")
 
+            if not user_id or not external_survey_id:
+                # If required parameters are missing, pass control to the route function
+                # which will handle proper error reporting
+                return f(*args, **kwargs)
+
             # Get internal_survey_id from query parameter or default config
             internal_survey_id = current_app.config["SURVEY_ID"]
             custom_internal_id = request.args.get("internalID")

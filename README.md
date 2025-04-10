@@ -358,14 +358,17 @@ Note: Make sure your .env file is properly configured with the correct database 
 ## Endpoints
 
 ### Main Routes
-1. Survey Taking
-   - `/?userID=...&surveyID=...` - Take survey (with default survey ID)
-   - `/?userID=...&surveyID=...&internalID=N` - Take survey with specific internal ID
-   - `/create_vector` - Create budget allocation
-   - `/survey` - Compare budget pairs
-   - `/thank_you` - Survey completion page
+1. Dashboard (Main Landing Page)
+   - `/` - Analytics dashboard (Main landing page)
+   
+2. Survey Taking
+   - `/take-survey/?userID=...&surveyID=...` - Take survey (with default survey ID)
+   - `/take-survey/?userID=...&surveyID=...&internalID=N` - Take survey with specific internal ID
+   - `/take-survey/create_vector` - Create budget allocation
+   - `/take-survey/survey` - Compare budget pairs
+   - `/take-survey/thank_you` - Survey completion page
 
-2. Analysis & Reports
+3. Analysis & Reports
    - `/report` - View survey analysis report (PDF)
      * Automatically refreshes based on latest data
      * Updates CSVs and PDF as needed
@@ -375,8 +378,7 @@ Note: Make sure your .env file is properly configured with the correct database 
      * Useful for testing template changes
      * Creates 'survey_analysis_report_dev.pdf'
 
-3. Survey Results
-   - `/surveys/dashboard` - Analytics dashboard
+4. Survey Results
    - `/surveys/responses` - View all responses across all surveys
    - `/surveys/{survey_id}/responses` - View responses for specific survey
    - `/surveys/users/{user_id}/responses` - View all responses from specific user
@@ -396,16 +398,18 @@ Notes:
 
 ## Live Application Endpoints
 
-1. Survey Taking
-   - Default survey: <https://survey.csariel.xyz/?userID=...&surveyID=...>
-   - Custom survey: <https://survey.csariel.xyz/?userID=...&surveyID=...&internalID=N>
+1. Dashboard
+   - Dashboard (Main landing page): https://survey.csariel.xyz/
 
-2. Analysis & Reports
+2. Survey Taking
+   - Default survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...>
+   - Custom survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&internalID=N>
+
+3. Analysis & Reports
    - Survey Report: https://survey.csariel.xyz/report
    - Development Report: https://survey.csariel.xyz/dev/report
 
-3. Survey Results
-   - Dashboard: https://survey.csariel.xyz/surveys/dashboard
+4. Survey Results
    - All Responses: https://survey.csariel.xyz/surveys/responses
    - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
    - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
