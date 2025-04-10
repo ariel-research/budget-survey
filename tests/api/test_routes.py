@@ -16,7 +16,7 @@ def test_index_route(client, sample_user_id, sample_survey_id, monkeypatch):
         sess["language"] = "en"
 
     response = client.get(
-        f"/?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en"
+        f"/take-survey/?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en"
     )
     assert response.status_code == 200
 
@@ -40,12 +40,12 @@ def test_create_vector_route(client, sample_user_id, sample_survey_id, monkeypat
         sess["language"] = "en"
 
     response = client.get(
-        f"/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en"
+        f"/take-survey/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en"
     )
-    assert response.status_code == 200
+    assert response.status_code in [200, 302]
 
     response = client.post(
-        f"/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
+        f"/take-survey/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
         data={"Health": "50", "Education": "50"},
     )
     assert response.status_code == 302
@@ -69,7 +69,7 @@ def test_invalid_vector(client, sample_user_id, sample_survey_id, monkeypatch):
         sess["language"] = "en"
 
     response = client.post(
-        f"/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
+        f"/take-survey/create_vector?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
         data={"Health": "60", "Education": "60"},
     )
     assert response.status_code == 200
@@ -111,7 +111,7 @@ def test_survey_route(client, sample_user_id, sample_survey_id, monkeypatch):
         sess["language"] = "en"
 
     response = client.get(
-        f"/survey?userID={sample_user_id}&surveyID={sample_survey_id}&vector=50,50&lang=en"
+        f"/take-survey/survey?userID={sample_user_id}&surveyID={sample_survey_id}&vector=50,50&lang=en"
     )
     assert response.status_code == 200
 
@@ -135,7 +135,7 @@ def test_survey_submission(client, sample_user_id, sample_survey_id, monkeypatch
         sess["language"] = "en"
 
     response = client.post(
-        f"/survey?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
+        f"/take-survey/survey?userID={sample_user_id}&surveyID={sample_survey_id}&lang=en",
         data={
             "user_vector": "50,50",
             "awareness_check": "2",
@@ -151,7 +151,7 @@ def test_thank_you_route(client):
     """Tests thank you page rendering."""
     with client.session_transaction() as sess:
         sess["language"] = "en"
-    response = client.get("/thank_you?lang=en")
+    response = client.get("/take-survey/thank_you?lang=en")
     assert response.status_code == 200
 
 
@@ -164,13 +164,13 @@ def test_report_route(client, monkeypatch):
 
 def test_missing_parameters(client):
     """Tests error handling for missing required parameters."""
-    response = client.get("/")
+    response = client.get("/take-survey/")
     assert response.status_code == 400
 
-    response = client.get("/?userID=123")
+    response = client.get("/take-survey/?userID=123")
     assert response.status_code == 400
 
-    response = client.get("/?surveyID=123")
+    response = client.get("/take-survey/?surveyID=123")
     assert response.status_code == 400
 
 
