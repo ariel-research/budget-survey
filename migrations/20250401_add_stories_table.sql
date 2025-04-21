@@ -266,3 +266,6 @@ DROP PROCEDURE IF EXISTS drop_description_column;
 
 -- Commit changes if everything is successful
 COMMIT;
+
+-- Show migration success message
+SELECT 'Migration completed successfully - all changes committed atomically' AS result;
