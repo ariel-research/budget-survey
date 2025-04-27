@@ -704,15 +704,24 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
         )
 
     # Generate HTML
-    title = "סיכום העדפות וקטורי קיצון (משתמש יחיד)"
-    note = f"הערה: הטבלה מסכמת את בחירות המשתמש ({processed_pairs} זוגות)."
-    th_empty = ""
-    th_pref_a = "מעדיפים א"
-    th_pref_b = "מעדיפים ב"
-    th_pref_c = "מעדיפים ג"
-    rh_a_vs_b = "א לעומת ב"
-    rh_a_vs_c = "א לעומת ג"
-    rh_b_vs_c = "ב לעומת ג"
+    title = get_translation(
+        "extreme_analysis_title",
+        "answers",
+        default="Extreme Vector Preferences Summary (Single User)",
+    )
+    note = get_translation(
+        "extreme_analysis_note",
+        "answers",
+        processed_pairs=processed_pairs,
+        default="Note: Table summarizes user choices ({processed_pairs} pairs).",
+    )
+    th_empty = get_translation("th_empty", "answers", default="")
+    th_pref_a = get_translation("prefer_a", "answers", default="Prefer A")
+    th_pref_b = get_translation("prefer_b", "answers", default="Prefer B")
+    th_pref_c = get_translation("prefer_c", "answers", default="Prefer C")
+    rh_a_vs_b = get_translation("a_vs_b", "answers", default="A vs B")
+    rh_a_vs_c = get_translation("a_vs_c", "answers", default="A vs C")
+    rh_b_vs_c = get_translation("b_vs_c", "answers", default="B vs C")
 
     table_html = f"""
     <div class="extreme-analysis-container">
