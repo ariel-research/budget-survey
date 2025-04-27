@@ -326,6 +326,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "metric": {"he": "מדד", "en": "Metric"},
         "percentage": {"he": "אחוז", "en": "Percentage"},
         "choice": {"he": "בחירה", "en": "Choice"},
+        "response_time": {"he": "זמן תגובה", "en": "Response Time"},
         # Identifiers and metadata
         "survey_id": {"he": "מזהה סקר", "en": "Survey ID"},
         "user_id": {"he": "מזהה משתמש", "en": "User ID"},

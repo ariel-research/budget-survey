@@ -999,6 +999,90 @@ th.sortable[data-order="desc"]::after {
 }
 
 /* ==========================================================================
+  Extreme Vector Analysis Table Styles
+========================================================================== */
+.extreme-analysis-container {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+.extreme-analysis-title {
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.extreme-analysis-note {
+    color: var(--color-text-light);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-md);
+    font-style: italic;
+}
+
+.extreme-analysis-table table {
+    width: 100%;
+    max-width: 500px; /* Adjust as needed */
+    border-collapse: separate; /* Use separate for borders */
+    border-spacing: 0;
+    margin: 0 auto; /* Center the table */
+}
+
+.extreme-analysis-table th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 10px 12px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.extreme-analysis-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    text-align: center;
+    font-family: var(--font-family-mono);
+}
+
+.extreme-analysis-table .row-header {
+    background-color: var(--color-background-alt);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-align: right; /* Align Hebrew text right */
+    font-family: inherit; /* Use default font */
+}
+
+.extreme-analysis-table tr:last-child td {
+    border-bottom: none;
+}
+
+.extreme-analysis-table .separator-row td {
+    border-bottom: 2px dashed var(--color-border); /* Dashed line */
+    height: 1px; /* Make it thin */
+    padding: 0;
+}
+
+/* RTL support for the table */
+[dir="rtl"] .extreme-analysis-table .row-header {
+    text-align: right;
+}
+
+[dir="rtl"] .extreme-analysis-table th,
+[dir="rtl"] .extreme-analysis-table td {
+    text-align: center; /* Keep main cells centered */
+}
+
+[dir="rtl"] .extreme-analysis-table .row-header {
+    text-align: right; /* Ensure row header stays right */
+}
+
+/* ==========================================================================
  High Contrast Mode
  ========================================================================== */
 @media (prefers-contrast: high) {

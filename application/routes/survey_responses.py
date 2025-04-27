@@ -77,6 +77,7 @@ def get_user_responses(
         ResponseProcessingError: If general processing error.
     """
     try:
+        strategy_name = None
         # Use provided choices or fetch new ones
         if user_choices is None:
             user_choices = retrieve_user_survey_choices()
@@ -101,31 +102,57 @@ def get_user_responses(
                 logger.warning(f"No responses found for survey {survey_id}")
                 raise SurveyNotFoundError(survey_id)
 
-        # Add strategy labels to each choice based on its survey
+        # Add strategy labels and get strategy name if survey_id is known
         survey_labels = {}  # Store labels for each survey
+        if survey_id is not None:
+            strategy_config = get_survey_pair_generation_config(survey_id)
+            if strategy_config:
+                try:
+                    strategy = StrategyRegistry.get_strategy(
+                        strategy_config["strategy"]
+                    )
+                    strategy_name = strategy.get_strategy_name()  # Get strategy name
+                    survey_labels[survey_id] = strategy.get_option_labels()
+                except ValueError as e:
+                    logger.warning(f"Strategy not found for survey {survey_id}: {e}")
+                    survey_labels[survey_id] = ("Option 1", "Option 2")
+
+        # Add labels to each choice (if not already done via survey_id)
         for choice in user_choices:
             current_survey_id = choice["survey_id"]
             if current_survey_id not in survey_labels:
-                strategy_config = get_survey_pair_generation_config(current_survey_id)
-                if strategy_config:
-                    try:
-                        strategy = StrategyRegistry.get_strategy(
-                            strategy_config["strategy"]
-                        )
-                        survey_labels[current_survey_id] = strategy.get_option_labels()
-                    except ValueError as e:
-                        logger.warning(
-                            f"Strategy not found for survey {current_survey_id}: {e}"
-                        )
-                        survey_labels[current_survey_id] = ("Option 1", "Option 2")
+                # Fetch config only if needed (not fetched above)
+                if survey_id is None or current_survey_id != survey_id:
+                    config = get_survey_pair_generation_config(current_survey_id)
+                    if config:
+                        try:
+                            strategy = StrategyRegistry.get_strategy(config["strategy"])
+                            # Get name if this is the first time for this survey
+                            if strategy_name is None and survey_id is None:
+                                strategy_name = strategy.get_strategy_name()
+                            survey_labels[current_survey_id] = (
+                                strategy.get_option_labels()
+                            )
+                        except ValueError as e:
+                            logger.warning(
+                                f"Strat not found for survey {current_survey_id}: {e}"
+                            )
+                            survey_labels[current_survey_id] = (
+                                "Option 1",
+                                "Option 2",
+                            )
 
             # Add labels to choice
             if current_survey_id in survey_labels:
                 choice["strategy_labels"] = survey_labels[current_survey_id]
 
-        # Get the appropriate labels
+        # Get the appropriate labels for the main generation function
         if survey_id is not None and survey_id in survey_labels:
             option_labels = survey_labels[survey_id]
+        elif user_choices and user_choices[0]["survey_id"] in survey_labels:
+            # Fallback for /responses and /users/{id}/responses
+            # where survey_id isn't fixed
+            option_labels = survey_labels[user_choices[0]["survey_id"]]
         else:
             option_labels = ("Option 1", "Option 2")
 
@@ -133,6 +160,7 @@ def get_user_responses(
         response_data["content"] = generate_detailed_user_choices(
             user_choices,
             option_labels=option_labels,
+            strategy_name=strategy_name,
             show_tables_only=show_tables_only,
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
@@ -321,11 +349,14 @@ def get_user_survey_response(survey_id: int, user_id: str):
                 404,
             )
 
+        # Pass the specific user_survey_choices to get_user_responses
+        # It will handle fetching the strategy and labels for the given survey_id
         data = get_user_responses(
-            survey_id=survey_id,
-            user_choices=user_survey_choices,
+            survey_id=survey_id,  # Keep survey_id to fetch strategy
+            user_choices=user_survey_choices,  # Pass pre-filtered choices
             show_tables_only=False,
-            show_detailed_breakdown_table=False,
+            show_detailed_breakdown_table=False,  # Don't show breakdown table
+            show_overall_survey_table=False,  # Don't show overall table
         )
         return render_template(
             "responses/user_detail.html",
