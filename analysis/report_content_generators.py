@@ -610,6 +610,40 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     """
     logger.debug("Generating extreme vector analysis summary table for single user.")
 
+    # Extract preference data from choices
+    counts, processed_pairs, expected_pairs = _extract_extreme_vector_preferences(
+        choices
+    )
+
+    # If no valid pairs were processed, return empty string
+    if processed_pairs == 0:
+        logger.warning("No valid extreme vector pairs found for user response.")
+        return ""  # Don't show empty table
+
+    # Log warning if fewer pairs than expected were processed
+    if processed_pairs != expected_pairs:
+        logger.warning(
+            f"Processed {processed_pairs} pairs, expected {expected_pairs}. "
+            "Table might be incomplete."
+        )
+
+    # Generate HTML table from counts
+    return _generate_extreme_analysis_html(counts, processed_pairs)
+
+
+def _extract_extreme_vector_preferences(choices: List[Dict]) -> tuple:
+    """
+    Extract extreme vector preferences from user choices.
+
+    Args:
+        choices: List of choice dictionaries
+
+    Returns:
+        tuple: (counts_matrix, processed_pairs, expected_pairs)
+            - counts_matrix: 3x3 grid of preference counts
+            - processed_pairs: number of successfully processed pairs
+            - expected_pairs: expected number of pairs
+    """
     # Mapping from strategy's internal index (0, 1, 2) to names (A, B, C)
     index_to_name = {0: "A", 1: "B", 2: "C"}
     name_to_index = {"A": 0, "B": 1, "C": 2}
@@ -628,25 +662,13 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
             opt2_str = choice.get("option2_strategy", "")
             user_choice = choice["user_choice"]  # 1 or 2
 
-            # Extract extreme vector index from strategy string
-            # Handles formats:
-            #   "Extreme Vector 1" (core extremes)
-            #   "75% Weighted Average (Extreme 1)" (weighted averages)
-            # Uses (?:Vector )? to optionally match "Vector" and (\d+) to capture index
-            match1 = re.search(r"Extreme (?:Vector )?(\d+)|Extreme\s+(\d+)", opt1_str)
-            match2 = re.search(r"Extreme (?:Vector )?(\d+)|Extreme\s+(\d+)", opt2_str)
+            # Extract extreme vector indices from strategy strings
+            idx1 = _extract_vector_index(opt1_str)
+            idx2 = _extract_vector_index(opt2_str)
 
-            if not match1 or not match2:
+            if idx1 is None or idx2 is None:
                 logger.debug(f"Skipping non-extreme pair: {opt1_str} vs {opt2_str}")
                 continue
-
-            # Filters out the None values (returns the first non-None value it finds)
-            idx1_str = next(g for g in match1.groups() if g is not None)
-            idx2_str = next(g for g in match2.groups() if g is not None)
-
-            # Convert to 0-based index (A=0, B=1, C=2)
-            idx1 = int(idx1_str) - 1
-            idx2 = int(idx2_str) - 1
 
             if idx1 not in index_to_name or idx2 not in index_to_name:
                 logger.warning(f"Invalid extreme index found: {idx1}, {idx2}")
@@ -656,23 +678,12 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
             name1 = index_to_name[idx1]
             name2 = index_to_name[idx2]
 
-            # Determine comparison type and preferred category
-            comparison_type = None  # 0: AvsB, 1: AvsC, 2: BvsC
-            preferred_name = None
+            # Process the comparison and update counts
+            comparison_type, preferred_name = _determine_comparison_and_preference(
+                name1, name2, user_choice
+            )
 
-            pair_set = {name1, name2}
-            if pair_set == {"A", "B"}:
-                comparison_type = 0
-                preferred_name = name1 if user_choice == 1 else name2
-            elif pair_set == {"A", "C"}:
-                comparison_type = 1
-                preferred_name = name1 if user_choice == 1 else name2
-            elif pair_set == {"B", "C"}:
-                comparison_type = 2
-                preferred_name = name1 if user_choice == 1 else name2
-            else:
-                # Should not happen if indices are valid
-                logger.error(f"Unexpected pair set: {pair_set}")
+            if comparison_type is None or preferred_name is None:
                 continue
 
             if preferred_name not in name_to_index:
@@ -693,27 +704,101 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
             logger.error(f"Error processing extreme choice: {e}", exc_info=True)
             continue
 
-    # Check if processed_pairs matches expected_pairs
-    if processed_pairs == 0:
-        logger.warning("No valid extreme vector pairs found for user response.")
-        return ""  # Don't show empty table
-    elif processed_pairs != expected_pairs:
-        logger.warning(
-            f"Processed {processed_pairs} pairs, expected {expected_pairs}. "
-            "Table might be incomplete."
-        )
+    return counts, processed_pairs, expected_pairs
 
-    # Generate HTML
+
+def _extract_vector_index(strategy_string: str) -> int:
+    """
+    Extract the vector index from a strategy string.
+
+    Args:
+        strategy_string: String describing the vector strategy
+
+    Returns:
+        int: Extracted index (0-based) or None if not found
+    """
+    # Extract extreme vector index from strategy string
+    # Handles formats:
+    #   "Extreme Vector 1" (core extremes)
+    #   "75% Weighted Average (Extreme 1)" (weighted averages)
+    pattern = r"Extreme (?:Vector )?(\d+)|Extreme\s+(\d+)"
+    match = re.search(pattern, strategy_string)
+
+    if not match:
+        return None
+
+    # Get the first non-None captured group
+    idx_str = next((g for g in match.groups() if g is not None), None)
+
+    if idx_str is None:
+        return None
+
+    # Convert to 0-based index (A=0, B=1, C=2)
+    return int(idx_str) - 1
+
+
+def _determine_comparison_and_preference(
+    name1: str, name2: str, user_choice: int
+) -> tuple:
+    """
+    Determine the comparison type and preferred option.
+
+    Args:
+        name1: Name of the first option (A, B, or C)
+        name2: Name of the second option (A, B, or C)
+        user_choice: User's choice (1 or 2)
+
+    Returns:
+        tuple: (comparison_type, preferred_name)
+            - comparison_type: 0 for A vs B, 1 for A vs C, 2 for B vs C
+            - preferred_name: The preferred option name (A, B, or C)
+    """
+    # Determine comparison type and preferred category
+    comparison_type = None  # 0: AvsB, 1: AvsC, 2: BvsC
+    preferred_name = None
+
+    pair_set = {name1, name2}
+    if pair_set == {"A", "B"}:
+        comparison_type = 0
+        preferred_name = name1 if user_choice == 1 else name2
+    elif pair_set == {"A", "C"}:
+        comparison_type = 1
+        preferred_name = name1 if user_choice == 1 else name2
+    elif pair_set == {"B", "C"}:
+        comparison_type = 2
+        preferred_name = name1 if user_choice == 1 else name2
+    else:
+        # Should not happen if indices are valid
+        logger.error(f"Unexpected pair set: {pair_set}")
+
+    return comparison_type, preferred_name
+
+
+def _generate_extreme_analysis_html(
+    counts: List[List[int]], processed_pairs: int
+) -> str:
+    """
+    Generate HTML table for the extreme vector analysis.
+
+    Args:
+        counts: 3x3 grid of preference counts
+        processed_pairs: Number of pairs processed
+
+    Returns:
+        str: HTML table as a string
+    """
+    # Get translations for table elements
     title = get_translation(
         "extreme_analysis_title",
         "answers",
         default="Extreme Vector Preferences Summary (Single User)",
     )
+    note_default = "Note: Table summarizes user choices ({processed_pairs} pairs)."
     note = get_translation(
         "extreme_analysis_note",
         "answers",
         processed_pairs=processed_pairs,
-        default="Note: Table summarizes user choices ({processed_pairs} pairs).",
+        default=note_default,
     )
     th_empty = get_translation("th_empty", "answers", default="")
     th_pref_a = get_translation("prefer_a", "answers", default="Prefer A")
@@ -723,6 +808,7 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     rh_a_vs_c = get_translation("a_vs_c", "answers", default="A vs C")
     rh_b_vs_c = get_translation("b_vs_c", "answers", default="B vs C")
 
+    # Construct the HTML table
     table_html = f"""
     <div class="extreme-analysis-container">
         <h4 class="extreme-analysis-title">{title}</h4>
