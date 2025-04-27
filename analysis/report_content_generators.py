@@ -13,6 +13,9 @@ from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
+# Constants
+EXTREME_VECTOR_EXPECTED_PAIRS = 12  # 3 core + 3*3 weighted = 12
+
 
 def get_summary_value(df: pd.DataFrame, column: str) -> float:
     """
@@ -654,7 +657,7 @@ def _extract_extreme_vector_preferences(choices: List[Dict]) -> tuple:
     counts = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
     processed_pairs = 0
-    expected_pairs = 12  # 3 core + 3*3 weighted = 12
+    expected_pairs = EXTREME_VECTOR_EXPECTED_PAIRS
 
     for choice in choices:
         try:
