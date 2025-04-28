@@ -4,7 +4,7 @@ import logging
 import math
 import re
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 EXTREME_VECTOR_EXPECTED_PAIRS = 12  # 3 core + 3*3 weighted = 12
+WEIGHTED_PAIRS_PER_GROUP = 3  # Number of weighted pairs per comparison group
 
 
 def get_summary_value(df: pd.DataFrame, column: str) -> float:
@@ -606,7 +607,7 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
 
     Args:
         choices: List of choices for a single user's survey response using the
-                 extreme_vectors strategy.
+                extreme_vectors strategy.
 
     Returns:
         str: HTML table string, or an empty string if not applicable or error.
@@ -634,16 +635,50 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     return _generate_extreme_analysis_html(counts, processed_pairs, consistency_info)
 
 
-def _extract_extreme_vector_preferences(choices: List[Dict]):
+def _extract_extreme_vector_preferences(
+    choices: List[Dict],
+) -> Tuple[List[List[int]], int, int, List[Tuple[int, int, Optional[str]]]]:
     """
     Extract extreme vector preferences from user choices, and calculate consistency for weighted pairs.
 
+    Args:
+        choices: List of choice dictionaries
+
     Returns:
-        tuple: (counts_matrix, processed_pairs, expected_pairs, consistency_info)
-            - counts_matrix: 3x3 grid of preference counts
-            - processed_pairs: number of successfully processed pairs
-            - expected_pairs: expected number of pairs
-            - consistency_info: list of (matches, total) for each group (A vs B, ...)
+        Tuple containing:
+        - counts_matrix: 3x3 grid of preference counts
+        - processed_pairs: number of successfully processed pairs
+        - expected_pairs: expected number of pairs
+        - consistency_info: list of (matches, total, core_preference) for each group (A vs B, ...)
+    """
+    # Extract the basic preference data
+    counts, core_preferences, weighted_answers, processed_pairs = (
+        _extract_preference_counts(choices)
+    )
+
+    # Calculate consistency metrics between core preferences and weighted answers
+    consistency_info = _calculate_consistency_metrics(
+        core_preferences, weighted_answers
+    )
+
+    return counts, processed_pairs, EXTREME_VECTOR_EXPECTED_PAIRS, consistency_info
+
+
+def _extract_preference_counts(
+    choices: List[Dict],
+) -> Tuple[List[List[int]], List[Optional[str]], List[List[str]], int]:
+    """
+    Extract core preference counts and organize data for consistency analysis.
+
+    Args:
+        choices: List of choice dictionaries
+
+    Returns:
+        Tuple containing:
+        - counts_matrix: 3x3 grid of preference counts
+        - core_preferences: List of core preferences (A/B/C) for each group
+        - weighted_answers: List of lists containing weighted pair preferences for each group
+        - processed_pairs: Number of successfully processed pairs
     """
     index_to_name = {0: "A", 1: "B", 2: "C"}
     name_to_index = {"A": 0, "B": 1, "C": 2}
@@ -652,7 +687,6 @@ def _extract_extreme_vector_preferences(choices: List[Dict]):
     # Initialize counts for the 3x3 grid
     counts = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
     processed_pairs = 0
-    expected_pairs = EXTREME_VECTOR_EXPECTED_PAIRS
 
     # Store for each group: core_preference, list of weighted answers
     core_preferences = [None, None, None]  # 0: A vs B, 1: A vs C, 2: B vs C
@@ -722,23 +756,41 @@ def _extract_extreme_vector_preferences(choices: List[Dict]):
             logger.error(f"Error processing extreme choice: {e}", exc_info=True)
             continue
 
-    # For each group, count how many weighted answers match the core preference
+    return counts, core_preferences, weighted_answers, processed_pairs
+
+
+def _calculate_consistency_metrics(
+    core_preferences: List[Optional[str]], weighted_answers: List[List[str]]
+) -> List[Tuple[int, int, Optional[str]]]:
+    """
+    Calculate consistency metrics between core preferences and weighted answers.
+
+    Args:
+        core_preferences: List of core preferences (A/B/C) for each group
+        weighted_answers: List of lists containing weighted pair preferences for each group
+
+    Returns:
+        List of tuples (matches, total, core_preference) for each group
+    """
     consistency_info = []
-    for i in range(3):
+
+    for i in range(len(core_preferences)):
         core = core_preferences[i]
         weighted = weighted_answers[i]
+
         if core is not None and weighted:
             matches = sum(1 for w in weighted if w == core)
             total = len(weighted)
         else:
             matches = 0
             total = 0
+
         consistency_info.append((matches, total, core))
 
-    return counts, processed_pairs, expected_pairs, consistency_info
+    return consistency_info
 
 
-def _extract_vector_index(strategy_string: str) -> int:
+def _extract_vector_index(strategy_string: str) -> Optional[int]:
     """
     Extract the vector index from a strategy string.
 
@@ -770,7 +822,7 @@ def _extract_vector_index(strategy_string: str) -> int:
 
 def _determine_comparison_and_preference(
     name1: str, name2: str, user_choice: int
-) -> tuple:
+) -> Tuple[Optional[int], Optional[str]]:
     """
     Determine the comparison type and preferred option.
 
@@ -806,10 +858,20 @@ def _determine_comparison_and_preference(
 
 
 def _generate_extreme_analysis_html(
-    counts: List[List[int]], processed_pairs: int, consistency_info=None
+    counts: List[List[int]],
+    processed_pairs: int,
+    consistency_info: List[Tuple[int, int, Optional[str]]] = None,
 ) -> str:
     """
     Generate HTML table for the extreme vector analysis, including consistency rows.
+
+    Args:
+        counts: 3x3 grid of preference counts
+        processed_pairs: Number of pairs processed
+        consistency_info: List of tuples (matches, total, core_preference) for each group
+
+    Returns:
+        str: HTML table as a string
     """
     title = get_translation(
         "extreme_analysis_title",
@@ -830,8 +892,8 @@ def _generate_extreme_analysis_html(
     rh_b_vs_c = get_translation("b_vs_c", "answers", default="B vs C")
 
     # Column headers
-    th_consistent = get_translation("consistent", "answers", default="consistent")
-    th_inconsistent = get_translation("inconsistent", "answers", default="inconsistent")
+    th_consistent = get_translation("consistent", "answers", default="עקבי")
+    th_inconsistent = get_translation("inconsistent", "answers", default="לא עקבי")
 
     # Get group labels
     group_labels = [rh_a_vs_b, rh_a_vs_c, rh_b_vs_c]
@@ -839,30 +901,7 @@ def _generate_extreme_analysis_html(
     # Generate the consistency row data
     rows = []
     for i, info in enumerate(consistency_info):
-        matches, total, _ = info
-        if total == 0:
-            consistent_text = "0% (0)"
-            inconsistent_text = "0% (0)"
-        else:
-            inconsistent = total - matches
-            consistent_percent = int(round(100 * matches / total)) if total > 0 else 0
-            inconsistent_percent = (
-                int(round(100 * inconsistent / total)) if total > 0 else 0
-            )
-
-            consistent_text = f"{consistent_percent}% ({matches})"
-            inconsistent_text = f"{inconsistent_percent}% ({inconsistent})"
-
-        rows.append(
-            f"""
-            <tr>
-                <td class="row-header">{group_labels[i]}</td>
-                <td>{consistent_text}</td>
-                <td>{inconsistent_text}</td>
-            </tr>
-            <tr class="separator-row"><td colspan="3"></td></tr>
-            """
-        )
+        rows.append(_generate_consistency_table_row(group_labels[i], info[0], info[1]))
 
     # Construct the HTML table
     table_html = f"""
@@ -888,6 +927,41 @@ def _generate_extreme_analysis_html(
 
     logger.debug("Successfully generated extreme vector analysis summary table.")
     return table_html
+
+
+def _generate_consistency_table_row(group_label: str, matches: int, total: int) -> str:
+    """
+    Generate HTML for a single consistency table row.
+
+    Args:
+        group_label: The label for this comparison group (e.g., "A vs B")
+        matches: Number of weighted answers matching the core preference
+        total: Total number of weighted answers for this group
+
+    Returns:
+        str: HTML string for a table row
+    """
+    if total == 0:
+        consistent_text = "0% (0)"
+        inconsistent_text = "0% (0)"
+    else:
+        inconsistent = total - matches
+        consistent_percent = int(round(100 * matches / total)) if total > 0 else 0
+        inconsistent_percent = (
+            int(round(100 * inconsistent / total)) if total > 0 else 0
+        )
+
+        consistent_text = f"{consistent_percent}% ({matches})"
+        inconsistent_text = f"{inconsistent_percent}% ({inconsistent})"
+
+    return f"""
+    <tr>
+        <td class="row-header">{group_label}</td>
+        <td>{consistent_text}</td>
+        <td>{inconsistent_text}</td>
+    </tr>
+    <tr class="separator-row"><td colspan="3"></td></tr>
+    """
 
 
 def generate_detailed_user_choices(
