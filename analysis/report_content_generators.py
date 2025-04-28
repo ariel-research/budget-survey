@@ -876,24 +876,21 @@ def _generate_extreme_analysis_html(
     title = get_translation(
         "extreme_analysis_title",
         "answers",
-        default="Extreme Vector Preferences Summary (Single User)",
     )
-    note_default = "Note: Table summarizes user choices ({processed_pairs} pairs)."
     note = get_translation(
         "extreme_analysis_note",
         "answers",
         processed_pairs=processed_pairs,
-        default=note_default,
     )
 
     # Get translations for table elements
-    rh_a_vs_b = get_translation("a_vs_b", "answers", default="A vs B")
-    rh_a_vs_c = get_translation("a_vs_c", "answers", default="A vs C")
-    rh_b_vs_c = get_translation("b_vs_c", "answers", default="B vs C")
+    rh_a_vs_b = get_translation("a_vs_b", "answers")
+    rh_a_vs_c = get_translation("a_vs_c", "answers")
+    rh_b_vs_c = get_translation("b_vs_c", "answers")
 
     # Column headers
-    th_consistent = get_translation("consistent", "answers", default="עקבי")
-    th_inconsistent = get_translation("inconsistent", "answers", default="לא עקבי")
+    th_consistent = get_translation("consistent", "answers")
+    th_inconsistent = get_translation("inconsistent", "answers")
 
     # Get group labels
     group_labels = [rh_a_vs_b, rh_a_vs_c, rh_b_vs_c]
@@ -1152,13 +1149,9 @@ def generate_detailed_breakdown_table(
 
         # Translations for table header
         breakdown_title = get_translation("survey_response_breakdown", "answers")
-        user_id_th = get_translation("user_id", "answers", default="User ID")
-        resp_time_th = get_translation(
-            "response_time", "answers", default="Response Time"
-        )
-        view_resp_th = get_translation(
-            "view_response", "answers", default="View Response"
-        )
+        user_id_th = get_translation("user_id", "answers")
+        resp_time_th = get_translation("response_time", "answers")
+        view_resp_th = get_translation("view_response", "answers")
 
         # Generate table for this survey
         table = f"""
