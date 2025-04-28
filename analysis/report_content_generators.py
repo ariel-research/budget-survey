@@ -614,8 +614,8 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     logger.debug("Generating extreme vector analysis summary table for single user.")
 
     # Extract preference data from choices
-    counts, processed_pairs, expected_pairs = _extract_extreme_vector_preferences(
-        choices
+    counts, processed_pairs, expected_pairs, consistency_info = (
+        _extract_extreme_vector_preferences(choices)
     )
 
     # If no valid pairs were processed, return empty string
@@ -630,34 +630,33 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
             "Table might be incomplete."
         )
 
-    # Generate HTML table from counts
-    return _generate_extreme_analysis_html(counts, processed_pairs)
+    # Generate HTML table from counts and consistency info
+    return _generate_extreme_analysis_html(counts, processed_pairs, consistency_info)
 
 
-def _extract_extreme_vector_preferences(choices: List[Dict]) -> tuple:
+def _extract_extreme_vector_preferences(choices: List[Dict]):
     """
-    Extract extreme vector preferences from user choices.
-
-    Args:
-        choices: List of choice dictionaries
+    Extract extreme vector preferences from user choices, and calculate consistency for weighted pairs.
 
     Returns:
-        tuple: (counts_matrix, processed_pairs, expected_pairs)
+        tuple: (counts_matrix, processed_pairs, expected_pairs, consistency_info)
             - counts_matrix: 3x3 grid of preference counts
             - processed_pairs: number of successfully processed pairs
             - expected_pairs: expected number of pairs
+            - consistency_info: list of (matches, total) for each group (A vs B, ...)
     """
-    # Mapping from strategy's internal index (0, 1, 2) to names (A, B, C)
     index_to_name = {0: "A", 1: "B", 2: "C"}
     name_to_index = {"A": 0, "B": 1, "C": 2}
+    group_names = [("A", "B"), ("A", "C"), ("B", "C")]
 
     # Initialize counts for the 3x3 grid
-    # rows: 0: A vs B, 1: A vs C, 2: B vs C
-    # cols: 0: Pref A, 1: Pref B, 2: Pref C
     counts = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-
     processed_pairs = 0
     expected_pairs = EXTREME_VECTOR_EXPECTED_PAIRS
+
+    # Store for each group: core_preference, list of weighted answers
+    core_preferences = [None, None, None]  # 0: A vs B, 1: A vs C, 2: B vs C
+    weighted_answers = [[], [], []]  # Each is a list of user choices for weighted pairs
 
     for choice in choices:
         try:
@@ -665,14 +664,20 @@ def _extract_extreme_vector_preferences(choices: List[Dict]) -> tuple:
             opt2_str = choice.get("option2_strategy", "")
             user_choice = choice["user_choice"]  # 1 or 2
 
-            # Extract extreme vector indices from strategy strings
+            # Determine if this is a core extreme pair or a weighted pair
+            is_core = opt1_str.startswith("Extreme Vector") and opt2_str.startswith(
+                "Extreme Vector"
+            )
+            is_weighted = (
+                "Weighted Average" in opt1_str and "Weighted Average" in opt2_str
+            )
+
             idx1 = _extract_vector_index(opt1_str)
             idx2 = _extract_vector_index(opt2_str)
 
             if idx1 is None or idx2 is None:
                 logger.debug(f"Skipping non-extreme pair: {opt1_str} vs {opt2_str}")
                 continue
-
             if idx1 not in index_to_name or idx2 not in index_to_name:
                 logger.warning(f"Invalid extreme index found: {idx1}, {idx2}")
                 continue
@@ -681,33 +686,56 @@ def _extract_extreme_vector_preferences(choices: List[Dict]) -> tuple:
             name1 = index_to_name[idx1]
             name2 = index_to_name[idx2]
 
+            # Which group is this? (A vs B, A vs C, B vs C)
+            group_idx = None
+            for i, (g1, g2) in enumerate(group_names):
+                if set([name1, name2]) == set([g1, g2]):
+                    group_idx = i
+                    break
+            if group_idx is None:
+                continue
+
             # Process the comparison and update counts
             comparison_type, preferred_name = _determine_comparison_and_preference(
                 name1, name2, user_choice
             )
-
             if comparison_type is None or preferred_name is None:
                 continue
-
             if preferred_name not in name_to_index:
                 logger.error(f"Invalid preferred name: {preferred_name}")
                 continue
-
             preferred_index = name_to_index[preferred_name]
 
             # Increment the corresponding cell count
             counts[comparison_type][preferred_index] += 1
             processed_pairs += 1
-            logger.debug(
-                f"Processed: {name1} vs {name2}, Pref={preferred_name} "
-                f"from {opt1_str} vs {opt2_str}"
-            )
+
+            # Store for consistency calculation
+            if is_core:
+                # Core pair: store the user's preference for this group
+                core_preferences[group_idx] = preferred_name
+            elif is_weighted:
+                # Weighted pair: store the user's answer (A/B/C) for this group
+                weighted_answers[group_idx].append(preferred_name)
 
         except Exception as e:
             logger.error(f"Error processing extreme choice: {e}", exc_info=True)
             continue
 
-    return counts, processed_pairs, expected_pairs
+    # For each group, count how many weighted answers match the core preference
+    consistency_info = []
+    for i in range(3):
+        core = core_preferences[i]
+        weighted = weighted_answers[i]
+        if core is not None and weighted:
+            matches = sum(1 for w in weighted if w == core)
+            total = len(weighted)
+        else:
+            matches = 0
+            total = 0
+        consistency_info.append((matches, total, core))
+
+    return counts, processed_pairs, expected_pairs, consistency_info
 
 
 def _extract_vector_index(strategy_string: str) -> int:
@@ -778,19 +806,11 @@ def _determine_comparison_and_preference(
 
 
 def _generate_extreme_analysis_html(
-    counts: List[List[int]], processed_pairs: int
+    counts: List[List[int]], processed_pairs: int, consistency_info=None
 ) -> str:
     """
-    Generate HTML table for the extreme vector analysis.
-
-    Args:
-        counts: 3x3 grid of preference counts
-        processed_pairs: Number of pairs processed
-
-    Returns:
-        str: HTML table as a string
+    Generate HTML table for the extreme vector analysis, including consistency rows.
     """
-    # Get translations for table elements
     title = get_translation(
         "extreme_analysis_title",
         "answers",
@@ -803,13 +823,46 @@ def _generate_extreme_analysis_html(
         processed_pairs=processed_pairs,
         default=note_default,
     )
-    th_empty = get_translation("th_empty", "answers", default="")
-    th_pref_a = get_translation("prefer_a", "answers", default="Prefer A")
-    th_pref_b = get_translation("prefer_b", "answers", default="Prefer B")
-    th_pref_c = get_translation("prefer_c", "answers", default="Prefer C")
+
+    # Get translations for table elements
     rh_a_vs_b = get_translation("a_vs_b", "answers", default="A vs B")
     rh_a_vs_c = get_translation("a_vs_c", "answers", default="A vs C")
     rh_b_vs_c = get_translation("b_vs_c", "answers", default="B vs C")
+
+    # Column headers
+    th_consistent = get_translation("consistent", "answers", default="consistent")
+    th_inconsistent = get_translation("inconsistent", "answers", default="inconsistent")
+
+    # Get group labels
+    group_labels = [rh_a_vs_b, rh_a_vs_c, rh_b_vs_c]
+
+    # Generate the consistency row data
+    rows = []
+    for i, info in enumerate(consistency_info):
+        matches, total, _ = info
+        if total == 0:
+            consistent_text = "0% (0)"
+            inconsistent_text = "0% (0)"
+        else:
+            inconsistent = total - matches
+            consistent_percent = int(round(100 * matches / total)) if total > 0 else 0
+            inconsistent_percent = (
+                int(round(100 * inconsistent / total)) if total > 0 else 0
+            )
+
+            consistent_text = f"{consistent_percent}% ({matches})"
+            inconsistent_text = f"{inconsistent_percent}% ({inconsistent})"
+
+        rows.append(
+            f"""
+            <tr>
+                <td class="row-header">{group_labels[i]}</td>
+                <td>{consistent_text}</td>
+                <td>{inconsistent_text}</td>
+            </tr>
+            <tr class="separator-row"><td colspan="3"></td></tr>
+            """
+        )
 
     # Construct the HTML table
     table_html = f"""
@@ -820,34 +873,13 @@ def _generate_extreme_analysis_html(
             <table>
                 <thead>
                     <tr>
-                        <th>{th_empty}</th>
-                        <th>{th_pref_a}</th>
-                        <th>{th_pref_b}</th>
-                        <th>{th_pref_c}</th>
+                        <th></th>
+                        <th>{th_consistent}</th>
+                        <th>{th_inconsistent}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="row-header">{rh_a_vs_b}</td>
-                        <td>{counts[0][0]}</td>
-                        <td>{counts[0][1]}</td>
-                        <td>{counts[0][2]}</td>
-                    </tr>
-                    <tr class="separator-row"><td colspan="4"></td></tr>
-                    <tr>
-                        <td class="row-header">{rh_a_vs_c}</td>
-                        <td>{counts[1][0]}</td>
-                        <td>{counts[1][1]}</td>
-                        <td>{counts[1][2]}</td>
-                    </tr>
-                    <tr class="separator-row"><td colspan="4"></td></tr>
-                    <tr>
-                        <td class="row-header">{rh_b_vs_c}</td>
-                        <td>{counts[2][0]}</td>
-                        <td>{counts[2][1]}</td>
-                        <td>{counts[2][2]}</td>
-                    </tr>
-                    <tr class="separator-row"><td colspan="4"></td></tr>
+                    {"".join(rows)}
                 </tbody>
             </table>
         </div>

@@ -353,6 +353,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "a_vs_b": {"he": "א לעומת ב", "en": "A vs B"},
         "a_vs_c": {"he": "א לעומת ג", "en": "A vs C"},
         "b_vs_c": {"he": "ב לעומת ג", "en": "B vs C"},
+        "consistent": {"he": "עקבי", "en": "Consistent"},
+        "inconsistent": {"he": "לא עקבי", "en": "Inconsistent"},
     },
 }
 
