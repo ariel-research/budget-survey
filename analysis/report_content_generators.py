@@ -557,8 +557,85 @@ def _generate_survey_summary_html(
     """
 
 
+def _generate_extreme_vector_consistency_summary(choices: List[Dict]) -> str:
+    """
+    Generate a simple consistency summary for extreme vector surveys.
+
+    Args:
+        choices: List of choices for a single user's survey response using the
+                extreme_vectors strategy.
+
+    Returns:
+        str: HTML string showing consistency percentages for each comparison group.
+    """
+    # Extract consistency information
+    _, processed_pairs, _, consistency_info = _extract_extreme_vector_preferences(
+        choices
+    )
+
+    if processed_pairs == 0 or not consistency_info:
+        return ""  # Don't show summary if no valid data
+
+    # Get translations
+    title = get_translation("survey_summary", "answers")
+
+    # Group labels
+    a_vs_b = get_translation("a_vs_b", "answers")
+    a_vs_c = get_translation("a_vs_c", "answers")
+    b_vs_c = get_translation("b_vs_c", "answers")
+    overall = get_translation(
+        "overall_consistency", "answers", fallback="Overall consistency"
+    )
+
+    # Calculate consistency percentages for each group
+    consistency_percentages = []
+    for matches, total, _ in consistency_info:
+        if total > 0:
+            percentage = int(round(100 * matches / total))
+        else:
+            percentage = 0
+        consistency_percentages.append(percentage)
+
+    # Calculate overall consistency
+    total_matches = sum(matches for matches, total, _ in consistency_info)
+    total_pairs = sum(total for _, total, _ in consistency_info)
+    overall_percentage = (
+        int(round(100 * total_matches / total_pairs)) if total_pairs > 0 else 0
+    )
+
+    # Create HTML for the summary table
+    return f"""
+    <div class="survey-stats">
+        <h6 class="stats-title">{title}</h6>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <td>{a_vs_b} {get_translation("consistency", "answers")}:</td>
+                    <td>{consistency_percentages[0]}%</td>
+                </tr>
+                <tr>
+                    <td>{a_vs_c} {get_translation("consistency", "answers")}:</td>
+                    <td>{consistency_percentages[1]}%</td>
+                </tr>
+                <tr>
+                    <td>{b_vs_c} {get_translation("consistency", "answers")}:</td>
+                    <td>{consistency_percentages[2]}%</td>
+                </tr>
+                <tr class="overall-consistency">
+                    <td>{overall}:</td>
+                    <td>{overall_percentage}%</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    """
+
+
 def _generate_survey_choices_html(
-    survey_id: int, choices: List[Dict], option_labels: Tuple[str, str]
+    survey_id: int,
+    choices: List[Dict],
+    option_labels: Tuple[str, str],
+    strategy_name: str = None,
 ) -> str:
     """Generate HTML for all choices in a survey.
 
@@ -566,6 +643,7 @@ def _generate_survey_choices_html(
         survey_id: ID of the survey.
         choices: List of choices for the survey.
         option_labels: Tuple of labels for the two options (fallback).
+        strategy_name: Name of the pair generation strategy used.
 
     Returns:
         str: HTML for the survey choices.
@@ -593,9 +671,15 @@ def _generate_survey_choices_html(
     for choice in choices:
         choices_html.append(_generate_choice_pair_html(choice, survey_labels))
 
-    # Add summary with correct labels
+    # Add appropriate summary
     choices_html.append("</div>")  # Close pairs-list
-    choices_html.append(_generate_survey_summary_html(choices, survey_labels))
+
+    # Use extreme vector consistency summary for extreme vector strategy
+    if strategy_name == "extreme_vectors":
+        choices_html.append(_generate_extreme_vector_consistency_summary(choices))
+    else:
+        choices_html.append(_generate_survey_summary_html(choices, survey_labels))
+
     choices_html.append("</div>")  # Close survey-choices
 
     return "\n".join(choices_html)
@@ -1046,9 +1130,11 @@ def generate_detailed_user_choices(
                         content.append(extreme_table_html)
 
                 # Generate the standard survey choices HTML
-                # (ideal budget, pairs list, summary)
+                # Pass the strategy_name to _generate_survey_choices_html for specialized summary
                 content.append(
-                    _generate_survey_choices_html(survey_id, choices, option_labels)
+                    _generate_survey_choices_html(
+                        survey_id, choices, option_labels, strategy_name
+                    )
                 )
 
             content.append("</section>")

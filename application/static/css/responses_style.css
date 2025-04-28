@@ -1024,12 +1024,23 @@ th.sortable[data-order="desc"]::after {
     font-style: italic;
 }
 
+/* Overall consistency row in extreme vector summary */
+.overall-consistency {
+    font-weight: 600;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--spacing-xs);
+}
+
+.overall-consistency td {
+    padding-top: var(--spacing-sm);
+}
+
 .extreme-analysis-table table {
     width: 100%;
-    max-width: 500px; /* Adjust as needed */
-    border-collapse: separate; /* Use separate for borders */
+    max-width: 500px;
+    border-collapse: separate;
     border-spacing: 0;
-    margin: 0 auto; /* Center the table */
+    margin: 0 auto;
 }
 
 .extreme-analysis-table th {
