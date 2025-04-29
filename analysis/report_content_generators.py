@@ -1097,6 +1097,11 @@ def generate_detailed_user_choices(
             # Add strategy labels from the first choice (same for survey)
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
+
+            # Store choices for extreme_vectors strategy to calculate consistency
+            if strategy_name == "extreme_vectors":
+                summary["choices"] = choices
+
             all_summaries.append(summary)
 
     # Generate content
@@ -1104,11 +1109,19 @@ def generate_detailed_user_choices(
 
     if show_overall_survey_table:
         # 1. Overall statistics table
-        content.append(generate_overall_statistics_table(all_summaries, option_labels))
+        content.append(
+            generate_overall_statistics_table(
+                all_summaries, option_labels, strategy_name
+            )
+        )
 
     if show_detailed_breakdown_table:
         # 2. Detailed breakdown table
-        content.append(generate_detailed_breakdown_table(all_summaries, option_labels))
+        content.append(
+            generate_detailed_breakdown_table(
+                all_summaries, option_labels, strategy_name
+            )
+        )
 
     # Include detailed user choices only if not show_tables_only
     if not show_tables_only:
@@ -1143,7 +1156,7 @@ def generate_detailed_user_choices(
 
 
 def generate_detailed_breakdown_table(
-    summaries: List[Dict], option_labels: Tuple[str, str]
+    summaries: List[Dict], option_labels: Tuple[str, str], strategy_name: str = None
 ) -> str:
     """
     Generate detailed breakdown tables grouped by survey.
@@ -1151,6 +1164,7 @@ def generate_detailed_breakdown_table(
     Args:
         summaries: List of dictionaries containing survey summaries.
         option_labels: Default labels (fallback if survey-specific not found).
+        strategy_name: Name of the strategy used for the survey.
 
     Returns:
         str: HTML tables showing detailed breakdown by survey.
@@ -1174,15 +1188,16 @@ def generate_detailed_breakdown_table(
     for survey_id in sorted_survey_ids:
         survey_summaries = survey_groups[survey_id]
 
-        # Sort summaries within the survey group by user_id or timestamp if needed
-        # Example: sorted_summaries = sorted(survey_summaries, key=lambda x: x['user_id'])
-        sorted_summaries = survey_summaries  # Using pre-sorted for now
+        # Sort summaries within the survey group by response_created_at if available
+        sorted_summaries = sorted(
+            survey_summaries,
+            key=lambda x: x.get("response_created_at", ""),
+            reverse=True,  # Most recent first
+        )
 
         # Generate table rows
         rows = []
         for summary in sorted_summaries:
-            opt1_percent = summary["stats"]["option1_percent"]
-            opt2_percent = summary["stats"]["option2_percent"]
             user_id = summary["user_id"]
             display_id, is_truncated = _format_user_id(user_id)
 
@@ -1205,32 +1220,96 @@ def generate_detailed_breakdown_table(
                     except (ValueError, TypeError):
                         timestamp = str(created_at)[:16]  # Fallback: truncate
 
-            highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
-            highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
             tooltip = (
                 f'<span class="user-id-tooltip">{user_id}</span>'
                 if is_truncated
                 else ""
             )
 
-            row = f"""
-            <tr>
-                <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                    <a href="{all_responses_link}" class="user-link" target="_blank">
-                        {display_id}
-                    </a>
-                    {tooltip}
-                </td>
-                <td>{timestamp}</td>
-                <td class="{highlight1}">{format(opt1_percent, '.1f')}%</td>
-                <td class="{highlight2}">{format(opt2_percent, '.1f')}%</td>
-                <td>
-                    <a href="{survey_response_link}" class="survey-response-link" target="_blank">
-                        {get_translation('view_response', 'answers')}
-                    </a>
-                </td>
-            </tr>
-            """
+            # Different table structure for extreme vectors strategy
+            if strategy_name == "extreme_vectors":
+                # Calculate consistency percentage for this user
+                if "choices" in summary:
+                    choices = summary["choices"]
+                    _, processed_pairs, _, consistency_info = (
+                        _extract_extreme_vector_preferences(choices)
+                    )
+
+                    # Calculate overall consistency
+                    total_matches = sum(
+                        matches for matches, total, _ in consistency_info
+                    )
+                    total_pairs = sum(total for _, total, _ in consistency_info)
+                    overall_consistency = (
+                        int(round(100 * total_matches / total_pairs))
+                        if total_pairs > 0
+                        else 0
+                    )
+
+                    # Highlight row if consistency is high
+                    highlight = "highlight-row" if overall_consistency >= 70 else ""
+
+                    row = f"""
+                    <tr>
+                        <td class="user-id-cell{' truncated' if is_truncated else ''}">
+                            <a href="{all_responses_link}" class="user-link" target="_blank">
+                                {display_id}
+                            </a>
+                            {tooltip}
+                        </td>
+                        <td>{timestamp}</td>
+                        <td class="{highlight}">{overall_consistency}%</td>
+                        <td>
+                            <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                                {get_translation('view_response', 'answers')}
+                            </a>
+                        </td>
+                    </tr>
+                    """
+                else:
+                    # If no choices data available, show N/A for consistency
+                    row = f"""
+                    <tr>
+                        <td class="user-id-cell{' truncated' if is_truncated else ''}">
+                            <a href="{all_responses_link}" class="user-link" target="_blank">
+                                {display_id}
+                            </a>
+                            {tooltip}
+                        </td>
+                        <td>{timestamp}</td>
+                        <td>N/A</td>
+                        <td>
+                            <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                                {get_translation('view_response', 'answers')}
+                            </a>
+                        </td>
+                    </tr>
+                    """
+            else:
+                # Original table structure with option percentages
+                opt1_percent = summary["stats"]["option1_percent"]
+                opt2_percent = summary["stats"]["option2_percent"]
+                highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
+                highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
+
+                row = f"""
+                <tr>
+                    <td class="user-id-cell{' truncated' if is_truncated else ''}">
+                        <a href="{all_responses_link}" class="user-link" target="_blank">
+                            {display_id}
+                        </a>
+                        {tooltip}
+                    </td>
+                    <td>{timestamp}</td>
+                    <td class="{highlight1}">{format(opt1_percent, '.1f')}%</td>
+                    <td class="{highlight2}">{format(opt2_percent, '.1f')}%</td>
+                    <td>
+                        <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                            {get_translation('view_response', 'answers')}
+                        </a>
+                    </td>
+                </tr>
+                """
             rows.append(row)
 
         # Translations for table header
@@ -1239,35 +1318,63 @@ def generate_detailed_breakdown_table(
         resp_time_th = get_translation("response_time", "answers")
         view_resp_th = get_translation("view_response", "answers")
 
-        # Generate table for this survey
-        table = f"""
-        <div class="summary-table-container">
-            <h2>{breakdown_title} - Survey {survey_id}</h2>
-            <div class="table-container detailed-breakdown">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-sort="user_id">{user_id_th}</th>
-                            <th class="sortable" data-sort="created_at">{resp_time_th}</th>
-                            <th>{option_labels[0]}</th>
-                            <th>{option_labels[1]}</th>
-                            <th>{view_resp_th}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {''.join(rows)}
-                    </tbody>
-                </table>
+        # Different table headers based on strategy
+        if strategy_name == "extreme_vectors":
+            overall_consistency_th = get_translation(
+                "overall_consistency", "answers", fallback="Overall consistency"
+            )
+
+            # Generate table for extreme vectors strategy
+            table = f"""
+            <div class="summary-table-container">
+                <h2>{breakdown_title} - Survey {survey_id}</h2>
+                <div class="table-container detailed-breakdown">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="user_id">{user_id_th}</th>
+                                <th class="sortable" data-sort="created_at">{resp_time_th}</th>
+                                <th>{overall_consistency_th}</th>
+                                <th>{view_resp_th}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {''.join(rows)}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-        """
+            """
+        else:
+            # Original table for other strategies
+            table = f"""
+            <div class="summary-table-container">
+                <h2>{breakdown_title} - Survey {survey_id}</h2>
+                <div class="table-container detailed-breakdown">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="user_id">{user_id_th}</th>
+                                <th class="sortable" data-sort="created_at">{resp_time_th}</th>
+                                <th>{option_labels[0]}</th>
+                                <th>{option_labels[1]}</th>
+                                <th>{view_resp_th}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {''.join(rows)}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            """
         tables.append(table)
 
     return "\n".join(tables)
 
 
 def generate_overall_statistics_table(
-    summaries: List[Dict], option_labels: Tuple[str, str]
+    summaries: List[Dict], option_labels: Tuple[str, str], strategy_name: str = None
 ) -> str:
     """
     Generate overall statistics summary table across all survey responses.
@@ -1275,6 +1382,7 @@ def generate_overall_statistics_table(
     Args:
         summaries: List of dictionaries containing survey summaries.
         option_labels: Labels for the two options.
+        strategy_name: Name of the strategy used for the survey.
 
     Returns:
         str: HTML table showing overall statistics.
@@ -1282,53 +1390,113 @@ def generate_overall_statistics_table(
     if not summaries:
         return ""
 
-    # Calculate overall averages
-    total_responses = len(summaries)
-    avg_opt1 = (
-        sum(s["stats"]["option1_percent"] for s in summaries) / total_responses
-        if total_responses > 0
-        else 0
-    )
-    avg_opt2 = (
-        sum(s["stats"]["option2_percent"] for s in summaries) / total_responses
-        if total_responses > 0
-        else 0
-    )
-
     # Translations
     title = get_translation("overall_statistics", "answers")
     th_metric = get_translation("metric", "answers")
     th_avg_perc = get_translation("average_percentage", "answers")
-    note = get_translation("based_on_responses", "answers", x=total_responses)
-    highlight1 = "highlight-row" if avg_opt1 > avg_opt2 else ""
-    highlight2 = "highlight-row" if avg_opt2 > avg_opt1 else ""
+    note = get_translation("based_on_responses", "answers", x=len(summaries))
 
-    overall_table = f"""
-    <div class="summary-table-container">
-        <h2>{title}</h2>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{th_metric}</th>
-                        <th>{th_avg_perc}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="{highlight1}">
-                        <td>{option_labels[0]}</td>
-                        <td>{avg_opt1:.1f}%</td>
-                    </tr>
-                    <tr class="{highlight2}">
-                        <td>{option_labels[1]}</td>
-                        <td>{avg_opt2:.1f}%</td>
-                    </tr>
-                </tbody>
-            </table>
+    # Different table for extreme vectors strategy
+    if strategy_name == "extreme_vectors":
+        # Calculate average consistency across all responses
+        total_consistency = 0
+        valid_summaries = 0
+
+        for summary in summaries:
+            if "choices" in summary:
+                choices = summary["choices"]
+                _, processed_pairs, _, consistency_info = (
+                    _extract_extreme_vector_preferences(choices)
+                )
+
+                if processed_pairs > 0 and consistency_info:
+                    # Calculate overall consistency for this summary
+                    total_matches = sum(
+                        matches for matches, total, _ in consistency_info
+                    )
+                    total_pairs = sum(total for _, total, _ in consistency_info)
+
+                    if total_pairs > 0:
+                        consistency = (total_matches / total_pairs) * 100
+                        total_consistency += consistency
+                        valid_summaries += 1
+
+        # Calculate average consistency
+        avg_consistency = (
+            total_consistency / valid_summaries if valid_summaries > 0 else 0
+        )
+
+        # Get translation for consistency
+        overall_consistency_label = get_translation(
+            "overall_consistency", "answers", fallback="Overall consistency"
+        )
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_metric}</th>
+                            <th>{th_avg_perc}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="highlight-row">
+                            <td>{overall_consistency_label}</td>
+                            <td>{avg_consistency:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
         </div>
-        <p class="summary-note">{note}</p>
-    </div>
-    """
+        """
+    else:
+        # Original table for other strategies
+        # Calculate overall averages
+        total_responses = len(summaries)
+        avg_opt1 = (
+            sum(s["stats"]["option1_percent"] for s in summaries) / total_responses
+            if total_responses > 0
+            else 0
+        )
+        avg_opt2 = (
+            sum(s["stats"]["option2_percent"] for s in summaries) / total_responses
+            if total_responses > 0
+            else 0
+        )
+
+        highlight1 = "highlight-row" if avg_opt1 > avg_opt2 else ""
+        highlight2 = "highlight-row" if avg_opt2 > avg_opt1 else ""
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_metric}</th>
+                            <th>{th_avg_perc}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="{highlight1}">
+                            <td>{option_labels[0]}</td>
+                            <td>{avg_opt1:.1f}%</td>
+                        </tr>
+                        <tr class="{highlight2}">
+                            <td>{option_labels[1]}</td>
+                            <td>{avg_opt2:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
+        </div>
+        """
 
     return overall_table
 
