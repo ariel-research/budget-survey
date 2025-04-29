@@ -17,30 +17,37 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
     This strategy tests if users who prefer one extreme vector over another also prefer
     weighted averages that incorporate their preferred extreme vector.
 
+    The extreme vectors are generated such that each vector has one large value and small
+    equal values for the rest, ensuring the total sums to 100. For a vector size of 3,
+    each extreme vector will have values of [80,10,10], [10,80,10], and [10,10,80].
+
     Example:
         For a survey with 3 departments and user_vector = (70, 20, 10):
 
         Extreme comparisons:
-        - [100, 0, 0] vs [0, 100, 0]
-        - [100, 0, 0] vs [0, 0, 100]
-        - [0, 100, 0] vs [0, 0, 100]
+        - [80, 10, 10] vs [10, 80, 10]
+        - [80, 10, 10] vs [10, 10, 80]
+        - [10, 80, 10] vs [10, 10, 80]
 
         Weighted average comparisons (25%, 50%, 75%):
-        - [85, 10, 5] (50% [100,0,0] + 50% [70,20,10]) vs [35, 60, 5] (50% [0,100,0] + 50% [70,20,10])
+        - [77, 12, 11] (75% [80,10,10] + 25% [70,20,10]) vs [25, 65, 10]
     """
 
     # Class constants
-    EXTREME_WEIGHTS = [0.25, 0.5, 0.75]  # Weights for extreme vectors vs ideal vector
+    EXTREME_WEIGHTS = [0.25, 0.5, 0.75]  # Weights for mixing extreme and user vectors
 
     def _generate_extreme_vectors(self, vector_size: int) -> List[np.ndarray]:
         """
-        Generate extreme vectors where one element is near 100 and others are near 0.
+        Generate extreme vectors that sum to 100, with one large value and equal small values.
+
+        For each vector, one element will be 100 - 10*(n-1) where n is vector_size,
+        and all other elements will be 10. This ensures the sum is always 100.
 
         Args:
             vector_size: Size of the vector
 
         Returns:
-            List of extreme vectors as numpy arrays
+            List of extreme vectors as numpy arrays, each summing to 100
         """
         extremes = []
         for i in range(vector_size):

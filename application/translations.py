@@ -326,6 +326,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "metric": {"he": "מדד", "en": "Metric"},
         "percentage": {"he": "אחוז", "en": "Percentage"},
         "choice": {"he": "בחירה", "en": "Choice"},
+        "response_time": {"he": "זמן תגובה", "en": "Response Time"},
         # Identifiers and metadata
         "survey_id": {"he": "מזהה סקר", "en": "Survey ID"},
         "user_id": {"he": "מזהה משתמש", "en": "User ID"},
@@ -336,6 +337,26 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Based on {x} survey responses",
         },
         "view_response": {"he": "צפה בתשובה", "en": "View Response"},
+        # Extreme vector analysis
+        "extreme_analysis_title": {
+            "he": "סיכום העדפות וקטורי קיצון (משתמש יחיד)",
+            "en": "Extreme Vector Preferences Summary (Single User)",
+        },
+        "extreme_analysis_note": {
+            "he": ("הערה: הטבלה מסכמת את בחירות המשתמש " "({processed_pairs} זוגות)."),
+            "en": "Note: Table summarizes user choices ({processed_pairs} pairs).",
+        },
+        "th_empty": {"he": "", "en": ""},
+        "prefer_a": {"he": "מעדיפים א", "en": "Prefer A"},
+        "prefer_b": {"he": "מעדיפים ב", "en": "Prefer B"},
+        "prefer_c": {"he": "מעדיפים ג", "en": "Prefer C"},
+        "a_vs_b": {"he": "א לעומת ב", "en": "A vs B"},
+        "a_vs_c": {"he": "א לעומת ג", "en": "A vs C"},
+        "b_vs_c": {"he": "ב לעומת ג", "en": "B vs C"},
+        "consistent": {"he": "עקבי", "en": "Consistent"},
+        "inconsistent": {"he": "לא עקבי", "en": "Inconsistent"},
+        "consistency": {"he": "עקביות", "en": "consistency"},
+        "overall_consistency": {"he": "עקביות כוללת", "en": "Overall consistency"},
     },
 }
 
