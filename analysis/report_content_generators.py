@@ -1035,9 +1035,21 @@ def _generate_consistency_table_row(group_label: str, matches: int, total: int) 
         consistent_text = f"{consistent_percent}% ({matches})"
         inconsistent_text = f"{inconsistent_percent}% ({inconsistent})"
 
+    # Add vectors information based on the group label - handle both English and Hebrew
+    vector_info = ""
+    if "A vs B" in group_label or "א לעומת ב" in group_label:
+        vector_info = "[80, 10, 10] vs [10, 80, 10]"
+    elif "A vs C" in group_label or "א לעומת ג" in group_label:
+        vector_info = "[80, 10, 10] vs [10, 10, 80]"
+    elif "B vs C" in group_label or "ב לעומת ג" in group_label:
+        vector_info = "[10, 80, 10] vs [10, 10, 80]"
+
     return f"""
     <tr>
-        <td class="row-header">{group_label}</td>
+        <td class="row-header">
+            <div class="group-label">{group_label}</div>
+            <div class="vector-info">{vector_info}</div>
+        </td>
         <td>{consistent_text}</td>
         <td>{inconsistent_text}</td>
     </tr>
