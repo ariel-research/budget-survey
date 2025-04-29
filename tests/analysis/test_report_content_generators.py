@@ -87,7 +87,7 @@ def test_generate_individual_analysis(sample_optimization_stats):
     assert "User 101" in analysis
     assert "User 102" in analysis
     assert "User 103" in analysis
-    assert "70.0% sum optimized" in analysis  # User 101
+    assert "70.0% sum, 30.0% ratio optimized" in analysis  # User 101
 
 
 def test_generate_key_findings(sample_summary_stats, sample_optimization_stats):
