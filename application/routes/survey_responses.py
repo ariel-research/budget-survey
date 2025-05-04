@@ -18,6 +18,7 @@ from application.services.pair_generation.base import StrategyRegistry
 from application.services.response_formatter import ResponseFormatter
 from application.translations import get_translation
 from database.queries import (
+    get_survey_description,
     get_survey_pair_generation_config,
     retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
@@ -236,7 +237,14 @@ def get_survey_responses(survey_id: int):
             sort_by=sort_by,
             sort_order=sort_order,
         )
-        return render_template("responses/detail.html", data=data, survey_id=survey_id)
+        # Fetch the survey description
+        survey_description = get_survey_description(survey_id)
+        return render_template(
+            "responses/detail.html",
+            data=data,
+            survey_id=survey_id,
+            survey_description=survey_description,
+        )
 
     except SurveyNotFoundError as e:
         logger.warning(str(e))
