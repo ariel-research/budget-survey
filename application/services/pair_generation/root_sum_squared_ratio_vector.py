@@ -1,7 +1,7 @@
 """Implementation of root sum squared vs minimal ratio strategy."""
 
 import logging
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -102,3 +102,19 @@ class RootSumSquaredRatioStrategy(OptimizationMetricsStrategy):
         elif metric_type == "ratio":
             return "Ratio Optimized Vector"
         return "Unknown Vector"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+
+        Returns:
+            Dict with column definitions for Root Sum Squared and Ratio columns.
+        """
+        return {
+            "rss": {
+                "name": "Root Sum Squared",
+                "type": "percentage",
+                "highlight": True,
+            },
+            "ratio": {"name": "Ratio", "type": "percentage", "highlight": True},
+        }

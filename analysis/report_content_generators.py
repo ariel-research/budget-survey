@@ -1110,8 +1110,15 @@ def generate_detailed_user_choices(
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
 
+            # Add strategy name from the first choice (same for survey)
+            if choices and "strategy_name" in choices[0]:
+                summary["strategy_name"] = choices[0]["strategy_name"]
+
             # Store choices for extreme_vectors strategy to calculate consistency
-            if strategy_name == "extreme_vectors":
+            if strategy_name == "extreme_vectors" or (
+                "strategy_name" in summary
+                and summary["strategy_name"] == "extreme_vectors"
+            ):
                 summary["choices"] = choices
 
             all_summaries.append(summary)
@@ -1145,9 +1152,14 @@ def generate_detailed_user_choices(
             )
 
             for survey_id, choices in surveys.items():
+                # Get survey-specific strategy name if available
+                survey_strategy_name = strategy_name
+                if choices and "strategy_name" in choices[0]:
+                    survey_strategy_name = choices[0]["strategy_name"]
+
                 # Check if this is the extreme vectors strategy
                 # Generate the specific summary table for this user/survey
-                if strategy_name == "extreme_vectors":
+                if survey_strategy_name == "extreme_vectors":
                     extreme_table_html = _generate_extreme_vector_analysis_table(
                         choices
                     )
@@ -1158,7 +1170,7 @@ def generate_detailed_user_choices(
                 # Pass the strategy_name to _generate_survey_choices_html for specialized summary
                 content.append(
                     _generate_survey_choices_html(
-                        survey_id, choices, option_labels, strategy_name
+                        survey_id, choices, option_labels, survey_strategy_name
                     )
                 )
 
@@ -1184,6 +1196,9 @@ def generate_detailed_breakdown_table(
     if not summaries:
         return ""
 
+    # Import strategy here to avoid circular imports
+    from application.services.pair_generation.base import StrategyRegistry
+
     # Group summaries by survey_id
     survey_groups = {}
     for summary in summaries:
@@ -1199,6 +1214,26 @@ def generate_detailed_breakdown_table(
     tables = []
     for survey_id in sorted_survey_ids:
         survey_summaries = survey_groups[survey_id]
+
+        # Get strategy for this survey
+        survey_strategy_name = None
+
+        # First try to get strategy name from the first summary (preferred)
+        if survey_summaries and "strategy_name" in survey_summaries[0]:
+            survey_strategy_name = survey_summaries[0]["strategy_name"]
+        # Fallback to provided strategy_name parameter if no specific one found
+        elif strategy_name:
+            survey_strategy_name = strategy_name
+
+        # Get column definitions from strategy
+        strategy_columns = {}
+        if survey_strategy_name:
+            try:
+                strategy = StrategyRegistry.get_strategy(survey_strategy_name)
+                strategy_columns = strategy.get_table_columns()
+            except (ValueError, AttributeError) as e:
+                logger.warning(f"Error getting strategy columns: {e}")
+                # Fall back to default columns based on option labels
 
         # Sort summaries within the survey group by response_created_at if available
         sorted_summaries = sorted(
@@ -1238,10 +1273,13 @@ def generate_detailed_breakdown_table(
                 else ""
             )
 
-            # Different table structure for extreme vectors strategy
-            if strategy_name == "extreme_vectors":
-                # Calculate consistency percentage for this user
-                if "choices" in summary:
+            # Generate data cells based on strategy columns
+            data_cells = []
+
+            # If we have strategy-specific columns
+            if strategy_columns:
+                if "consistency" in strategy_columns and "choices" in summary:
+                    # Handle extreme_vectors strategy with consistency column
                     choices = summary["choices"]
                     _, processed_pairs, _, consistency_info = (
                         _extract_extreme_vector_preferences(choices)
@@ -1261,67 +1299,117 @@ def generate_detailed_breakdown_table(
                     # Highlight row if consistency is high
                     highlight = "highlight-row" if overall_consistency >= 70 else ""
 
-                    row = f"""
-                    <tr>
-                        <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                            <a href="{all_responses_link}" class="user-link" target="_blank">
-                                {display_id}
-                            </a>
-                            {tooltip}
-                        </td>
-                        <td>{timestamp}</td>
-                        <td class="{highlight}">{overall_consistency}%</td>
-                        <td>
-                            <a href="{survey_response_link}" class="survey-response-link" target="_blank">
-                                {get_translation('view_response', 'answers')}
-                            </a>
-                        </td>
-                    </tr>
-                    """
-                else:
-                    # If no choices data available, show N/A for consistency
-                    row = f"""
-                    <tr>
-                        <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                            <a href="{all_responses_link}" class="user-link" target="_blank">
-                                {display_id}
-                            </a>
-                            {tooltip}
-                        </td>
-                        <td>{timestamp}</td>
-                        <td>N/A</td>
-                        <td>
-                            <a href="{survey_response_link}" class="survey-response-link" target="_blank">
-                                {get_translation('view_response', 'answers')}
-                            </a>
-                        </td>
-                    </tr>
-                    """
+                    data_cells.append(
+                        f'<td class="{highlight}">{overall_consistency}%</td>'
+                    )
+                elif "sum" in strategy_columns and "ratio" in strategy_columns:
+                    # Handle optimization_metrics strategy with sum/ratio columns
+                    sum_percent = summary["stats"]["sum_percent"]
+                    ratio_percent = summary["stats"]["ratio_percent"]
+
+                    highlight_sum = (
+                        "highlight-row" if sum_percent > ratio_percent else ""
+                    )
+                    highlight_ratio = (
+                        "highlight-row" if ratio_percent > sum_percent else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_sum}">{format(sum_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
+                    )
+                elif "rss" in strategy_columns and "sum" in strategy_columns:
+                    # Handle root_sum_squared_sum strategy with rss/sum columns
+                    sum_percent = summary["stats"]["sum_percent"]
+                    ratio_percent = summary["stats"]["ratio_percent"]
+
+                    # For this strategy, ratio_percent actually represents rss_percent
+                    rss_percent = 100 - sum_percent
+
+                    highlight_rss = "highlight-row" if rss_percent > sum_percent else ""
+                    highlight_sum = "highlight-row" if sum_percent > rss_percent else ""
+
+                    data_cells.append(
+                        f'<td class="{highlight_rss}">{format(rss_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_sum}">{format(sum_percent, ".1f")}%</td>'
+                    )
+                elif "rss" in strategy_columns and "ratio" in strategy_columns:
+                    # Handle root_sum_squared_ratio strategy with rss/ratio columns
+                    sum_percent = summary["stats"]["sum_percent"]
+                    ratio_percent = summary["stats"]["ratio_percent"]
+
+                    # For this strategy, sum_percent actually represents rss_percent
+                    rss_percent = 100 - ratio_percent
+
+                    highlight_rss = (
+                        "highlight-row" if rss_percent > ratio_percent else ""
+                    )
+                    highlight_ratio = (
+                        "highlight-row" if ratio_percent > rss_percent else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_rss}">{format(rss_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
+                    )
+                elif "option1" in strategy_columns and "option2" in strategy_columns:
+                    # Default case with option1/option2 columns
+                    opt1_percent = summary["stats"]["option1_percent"]
+                    opt2_percent = summary["stats"]["option2_percent"]
+
+                    highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
+                    highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
+
+                    data_cells.append(
+                        f'<td class="{highlight1}">{format(opt1_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight2}">{format(opt2_percent, ".1f")}%</td>'
+                    )
             else:
-                # Original table structure with option percentages
+                # Fallback to old behavior if no strategy columns
                 opt1_percent = summary["stats"]["option1_percent"]
                 opt2_percent = summary["stats"]["option2_percent"]
+
                 highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
                 highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
 
-                row = f"""
-                <tr>
-                    <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                        <a href="{all_responses_link}" class="user-link" target="_blank">
-                            {display_id}
-                        </a>
-                        {tooltip}
-                    </td>
-                    <td>{timestamp}</td>
-                    <td class="{highlight1}">{format(opt1_percent, '.1f')}%</td>
-                    <td class="{highlight2}">{format(opt2_percent, '.1f')}%</td>
-                    <td>
-                        <a href="{survey_response_link}" class="survey-response-link" target="_blank">
-                            {get_translation('view_response', 'answers')}
-                        </a>
-                    </td>
-                </tr>
-                """
+                data_cells.append(
+                    f'<td class="{highlight1}">{format(opt1_percent, ".1f")}%</td>'
+                )
+                data_cells.append(
+                    f'<td class="{highlight2}">{format(opt2_percent, ".1f")}%</td>'
+                )
+
+            # Generate view response cell
+            view_cell = f"""
+                <td>
+                    <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                        {get_translation('view_response', 'answers')}
+                    </a>
+                </td>
+            """
+
+            # Construct the complete row
+            row = f"""
+            <tr>
+                <td class="user-id-cell{' truncated' if is_truncated else ''}">
+                    <a href="{all_responses_link}" class="user-link" target="_blank">
+                        {display_id}
+                    </a>
+                    {tooltip}
+                </td>
+                <td>{timestamp}</td>
+                {"".join(data_cells)}
+                {view_cell}
+            </tr>
+            """
             rows.append(row)
 
         # Translations for table header
@@ -1330,56 +1418,43 @@ def generate_detailed_breakdown_table(
         resp_time_th = get_translation("response_time", "answers")
         view_resp_th = get_translation("view_response", "answers")
 
-        # Different table headers based on strategy
-        if strategy_name == "extreme_vectors":
-            overall_consistency_th = get_translation(
-                "overall_consistency", "answers", fallback="Overall consistency"
-            )
+        # Generate header cells based on strategy columns
+        header_cells = []
 
-            # Generate table for extreme vectors strategy
-            table = f"""
-            <div class="summary-table-container">
-                <h2>{breakdown_title} - Survey {survey_id}</h2>
-                <div class="table-container detailed-breakdown">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-sort="user_id">{user_id_th}</th>
-                                <th class="sortable" data-sort="created_at">{resp_time_th}</th>
-                                <th>{overall_consistency_th}</th>
-                                <th>{view_resp_th}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {''.join(rows)}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            """
+        if strategy_columns:
+            for col_id, col_def in strategy_columns.items():
+                header_cells.append(f'<th>{col_def["name"]}</th>')
         else:
-            # Original table for other strategies
-            table = f"""
-            <div class="summary-table-container">
-                <h2>{breakdown_title} - Survey {survey_id}</h2>
-                <div class="table-container detailed-breakdown">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-sort="user_id">{user_id_th}</th>
-                                <th class="sortable" data-sort="created_at">{resp_time_th}</th>
-                                <th>{option_labels[0]}</th>
-                                <th>{option_labels[1]}</th>
-                                <th>{view_resp_th}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {''.join(rows)}
-                        </tbody>
-                    </table>
-                </div>
+            # Fallback to option labels if no strategy columns
+            survey_specific_labels = None
+            if survey_summaries and "strategy_labels" in survey_summaries[0]:
+                survey_specific_labels = survey_summaries[0]["strategy_labels"]
+
+            labels_to_use = survey_specific_labels or option_labels
+            header_cells.append(f"<th>{labels_to_use[0]}</th>")
+            header_cells.append(f"<th>{labels_to_use[1]}</th>")
+
+        # Generate the complete table
+        table = f"""
+        <div class="summary-table-container">
+            <h2>{breakdown_title} - Survey {survey_id}</h2>
+            <div class="table-container detailed-breakdown">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="user_id">{user_id_th}</th>
+                            <th class="sortable" data-sort="created_at">{resp_time_th}</th>
+                            {"".join(header_cells)}
+                            <th>{view_resp_th}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join(rows)}
+                    </tbody>
+                </table>
             </div>
-            """
+        </div>
+        """
         tables.append(table)
 
     return "\n".join(tables)
@@ -1458,6 +1533,66 @@ def generate_overall_statistics_table(
                         <tr class="highlight-row">
                             <td>{overall_consistency_label}</td>
                             <td>{avg_consistency:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
+        </div>
+        """
+    elif strategy_name in ["root_sum_squared_sum", "root_sum_squared_ratio"]:
+        # Handle root sum squared strategies
+        # Calculate overall averages
+        total_responses = len(summaries)
+        avg_sum = (
+            sum(s["stats"]["sum_percent"] for s in summaries) / total_responses
+            if total_responses > 0
+            else 0
+        )
+        avg_ratio = (
+            sum(s["stats"]["ratio_percent"] for s in summaries) / total_responses
+            if total_responses > 0
+            else 0
+        )
+
+        # For root_sum_squared strategies, the columns differ
+        col1_name = "Root Sum Squared"
+        col2_name = "Sum" if strategy_name == "root_sum_squared_sum" else "Ratio"
+
+        # For these strategies, we need to adjust the percentages
+        # sum_percent is actually the sum% for root_sum_squared_sum and rss% for root_sum_squared_ratio
+        # ratio_percent is actually rss% for root_sum_squared_sum and ratio% for root_sum_squared_ratio
+        if strategy_name == "root_sum_squared_sum":
+            avg_rss = 100 - avg_sum  # RSS is the complement of sum
+            avg_col1 = avg_rss
+            avg_col2 = avg_sum
+        else:  # root_sum_squared_ratio
+            avg_rss = 100 - avg_ratio  # RSS is the complement of ratio
+            avg_col1 = avg_rss
+            avg_col2 = avg_ratio
+
+        highlight1 = "highlight-row" if avg_col1 > avg_col2 else ""
+        highlight2 = "highlight-row" if avg_col2 > avg_col1 else ""
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_metric}</th>
+                            <th>{th_avg_perc}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="{highlight1}">
+                            <td>{col1_name}</td>
+                            <td>{avg_col1:.1f}%</td>
+                        </tr>
+                        <tr class="{highlight2}">
+                            <td>{col2_name}</td>
+                            <td>{avg_col2:.1f}%</td>
                         </tr>
                     </tbody>
                 </table>

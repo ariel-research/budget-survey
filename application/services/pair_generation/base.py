@@ -68,6 +68,33 @@ class PairGenerationStrategy(ABC):
         if any(v < 0 or v > 100 for v in vector):
             raise ValueError("Vector values must be between 0 and 100")
 
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+
+        Returns:
+            Dict: Dictionary with column definitions where:
+                - key: column identifier
+                - value: dict with column properties (name, type, etc.)
+
+        Default implementation returns columns based on option labels.
+        Strategy implementations can override this to provide custom columns.
+        """
+        # Default implementation - uses option labels for column names
+        option_labels = self.get_option_labels()
+        return {
+            "option1": {
+                "name": option_labels[0],
+                "type": "percentage",
+                "highlight": True,
+            },
+            "option2": {
+                "name": option_labels[1],
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
+
     def create_random_vector(self, size: int = 3) -> tuple:
         """
         Generate a random vector of integers that sums to 100.

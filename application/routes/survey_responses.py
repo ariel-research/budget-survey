@@ -79,6 +79,8 @@ def get_user_responses(
     """
     try:
         strategy_name = None
+        survey_strategies = {}  # Maps survey_id to strategy_name
+
         # Use provided choices or fetch new ones
         if user_choices is None:
             user_choices = retrieve_user_survey_choices()
@@ -114,6 +116,7 @@ def get_user_responses(
                     )
                     strategy_name = strategy.get_strategy_name()  # Get strategy name
                     survey_labels[survey_id] = strategy.get_option_labels()
+                    survey_strategies[survey_id] = strategy_name  # Store strategy name
                 except ValueError as e:
                     logger.warning(f"Strategy not found for survey {survey_id}: {e}")
                     survey_labels[survey_id] = ("Option 1", "Option 2")
@@ -129,8 +132,12 @@ def get_user_responses(
                         try:
                             strategy = StrategyRegistry.get_strategy(config["strategy"])
                             # Get name if this is the first time for this survey
+                            strategy_name_for_survey = strategy.get_strategy_name()
+                            survey_strategies[current_survey_id] = (
+                                strategy_name_for_survey
+                            )
                             if strategy_name is None and survey_id is None:
-                                strategy_name = strategy.get_strategy_name()
+                                strategy_name = strategy_name_for_survey
                             survey_labels[current_survey_id] = (
                                 strategy.get_option_labels()
                             )
@@ -146,6 +153,10 @@ def get_user_responses(
             # Add labels to choice
             if current_survey_id in survey_labels:
                 choice["strategy_labels"] = survey_labels[current_survey_id]
+
+            # Add strategy name to choice
+            if current_survey_id in survey_strategies:
+                choice["strategy_name"] = survey_strategies[current_survey_id]
 
         # Get the appropriate labels for the main generation function
         if survey_id is not None and survey_id in survey_labels:
