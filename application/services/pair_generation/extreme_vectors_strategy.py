@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from application.services.pair_generation.base import PairGenerationStrategy
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +130,14 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
                         user_vector_array, extreme_vectors[j], weight
                     )
 
+                    weight_percent = int(weight * 100)
+                    weighted_avg_text = get_translation("weighted_average", "answers")
+                    extreme_1_text = get_translation("extreme_1", "answers")
+                    extreme_2_text = get_translation("extreme_2", "answers")
+
                     pair = {
-                        f"{int(weight*100)}% Weighted Average (Extreme {i+1})": weighted1,
-                        f"{int(weight*100)}% Weighted Average (Extreme {j+1})": weighted2,
+                        f"{weight_percent}% {weighted_avg_text} ({extreme_1_text})": weighted1,
+                        f"{weight_percent}% {weighted_avg_text} ({extreme_2_text})": weighted2,
                     }
                     pairs.append(pair)
 
@@ -146,7 +152,10 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get labels for the two options being compared."""
-        return ("Extreme 1", "Extreme 2")
+        return (
+            get_translation("extreme_1", "answers"),
+            get_translation("extreme_2", "answers"),
+        )
 
     def _get_metric_name(self, metric_type: str) -> str:
         """Get descriptive name for metrics."""
@@ -161,7 +170,7 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
         """
         return {
             "consistency": {
-                "name": "Overall consistency",
+                "name": get_translation("overall_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
             }

@@ -390,6 +390,7 @@ def choice_explanation_string_version2(
     Explain user's choice between two options (formatted table, version 2).
     """
     from application.services.pair_generation import OptimizationMetricsStrategy
+    from application.translations import get_translation
 
     strategy = OptimizationMetricsStrategy()  # Create instance
     sum_diff_1 = strategy.sum_of_differences(optimal_allocation, option_1)
@@ -415,17 +416,27 @@ def choice_explanation_string_version2(
     better_ratio_1 = "better" if min_ratio_1 > min_ratio_2 else ""
     better_ratio_2 = "better" if min_ratio_2 > min_ratio_1 else ""
 
+    # Get translations
+    user_optimizes = get_translation("user_optimizes", "answers")
+    choice_label = get_translation("table_choice", "answers")
+    option_label = get_translation("table_option", "answers")
+    sum_diff_label = get_translation("sum_of_differences", "answers")
+    min_ratio_label = get_translation("minimum_ratio", "answers")
+    opt_type_trans = get_translation(
+        user_choice_type, "answers", fallback=user_choice_type
+    )
+
     return f"""
             <span class="user-optimizes user-optimizes-{user_choice_type}">
-                User optimizes: {user_choice_type}
+                {user_optimizes}: {opt_type_trans}
             </span>
             <div class="table-container">
                 <table>
                     <tr>
-                        <th>Choice</th>
-                        <th>Option</th>
-                        <th>Sum of differences</th>
-                        <th>Minimum ratio</th>
+                        <th>{choice_label}</th>
+                        <th>{option_label}</th>
+                        <th>{sum_diff_label}</th>
+                        <th>{min_ratio_label}</th>
                     </tr>
                     <tr>
                         <td class="selection-column">{check_1}</td>
@@ -1079,7 +1090,8 @@ def generate_detailed_user_choices(
         str: HTML-formatted string with detailed user choices.
     """
     if not user_choices:
-        return '<div class="no-data">No detailed user choice data available.</div>'
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
 
     # Group choices by user and survey
     grouped_choices = {}
@@ -1556,8 +1568,12 @@ def generate_overall_statistics_table(
         )
 
         # For root_sum_squared strategies, the columns differ
-        col1_name = "Root Sum Squared"
-        col2_name = "Sum" if strategy_name == "root_sum_squared_sum" else "Ratio"
+        col1_name = get_translation("root_sum_squared", "answers")
+        col2_name = (
+            get_translation("sum", "answers")
+            if strategy_name == "root_sum_squared_sum"
+            else get_translation("ratio", "answers")
+        )
 
         # For these strategies, we need to adjust the percentages
         # sum_percent is actually the sum% for root_sum_squared_sum and rss% for root_sum_squared_ratio

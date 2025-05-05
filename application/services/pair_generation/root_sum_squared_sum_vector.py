@@ -8,6 +8,7 @@ import numpy as np
 from application.services.pair_generation.optimization_metrics_vector import (
     OptimizationMetricsStrategy,
 )
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +115,13 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
         """
         return {
             "rss": {
-                "name": "Root Sum Squared",
+                "name": get_translation("root_sum_squared", "answers"),
                 "type": "percentage",
                 "highlight": True,
             },
-            "sum": {"name": "Sum", "type": "percentage", "highlight": True},
+            "sum": {
+                "name": get_translation("sum", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
         }

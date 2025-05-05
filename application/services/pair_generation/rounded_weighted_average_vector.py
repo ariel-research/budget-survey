@@ -5,6 +5,7 @@ import numpy as np
 from application.services.pair_generation.weighted_average_vector import (
     WeightedAverageVectorStrategy,
 )
+from application.translations import get_translation
 
 
 class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
@@ -86,7 +87,10 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         return "rounded_weighted_average_vector"
 
     def get_option_labels(self) -> Tuple[str, str]:
-        return ("Random", "Rounded Weighted Average")
+        return (
+            get_translation("random", "answers"),
+            get_translation("weighted_average", "answers"),
+        )
 
     def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "weight":

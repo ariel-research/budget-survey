@@ -7,6 +7,7 @@ from typing import Dict, List, Set, Tuple
 import numpy as np
 
 from application.services.pair_generation.base import PairGenerationStrategy
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +192,10 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         return "weighted_average_vector"
 
     def get_option_labels(self) -> Tuple[str, str]:
-        return ("Random", "Weighted Average")
+        return (
+            get_translation("random", "answers"),
+            get_translation("weighted_average", "answers"),
+        )
 
     def _get_metric_name(self, metric_type: str) -> str:
         if metric_type == "weight":

@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from application.services.pair_generation.base import PairGenerationStrategy
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +258,14 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
             Dict with column definitions for Sum and Ratio columns.
         """
         return {
-            "sum": {"name": "Sum", "type": "percentage", "highlight": True},
-            "ratio": {"name": "Ratio", "type": "percentage", "highlight": True},
+            "sum": {
+                "name": get_translation("sum", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "ratio": {
+                "name": get_translation("ratio", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
         }
