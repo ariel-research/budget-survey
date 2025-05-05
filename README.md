@@ -198,6 +198,24 @@ class NewStrategy(PairGenerationStrategy):
         
     def get_strategy_name(self):
         return "new_strategy_name"
+        
+    def get_option_labels(self):
+        return ("Option Type A", "Option Type B")
+        
+    def get_table_columns(self):
+        """Define custom column definitions for response tables"""
+        return {
+            "column1": {
+                "name": "First Metric", 
+                "type": "percentage",
+                "highlight": True
+            },
+            "column2": {
+                "name": "Second Metric", 
+                "type": "percentage",
+                "highlight": True
+            }
+        }
 ```
 
 2. Register the strategy in `application/services/pair_generation/__init__.py`:
@@ -205,6 +223,8 @@ class NewStrategy(PairGenerationStrategy):
 from .new_strategy import NewStrategy
 StrategyRegistry.register(NewStrategy)
 ```
+
+Each strategy can define its own table columns for displaying survey response statistics by implementing the `get_table_columns()` method. This allows the system to dynamically generate strategy-specific tables based on the strategy used for each survey.
 
 For examples of how to configure surveys to use different strategies, see the [Adding or Modifying Surveys](#adding-or-modifying-surveys) section.
 
@@ -385,6 +405,12 @@ Note: Make sure your .env file is properly configured with the correct database 
    - `/surveys/{survey_id}/users/{user_id}/responses` - View specific user's response for a survey
    - `/surveys/comments` - View all comments
    - `/surveys/{survey_id}/comments` - View comments for specific survey
+   
+   Each survey's response table will display strategy-specific columns based on the survey's strategy:
+   - Optimization Metrics strategy: Sum and Ratio columns
+   - Root Sum Squared strategies: Root Sum Squared and Sum/Ratio columns
+   - Extreme Vectors strategy: Overall consistency column
+   - Other strategies: Their specific metrics as defined in their implementation
 
 ### API Endpoints
 - `/get_messages` - Returns JSON dictionary of error messages
