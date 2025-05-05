@@ -8,6 +8,11 @@
 <div class="answers-container" dir="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
     <div class="answers-header">
         <h1>{{ get_translation('survey_title', 'answers', survey_id=survey_id) }}</h1>
+        {% if survey_description %}
+        <div class="survey-description">
+            {{ survey_description }}
+        </div>
+        {% endif %}
         
         <div class="navigation-tabs">
             <a href="{{ url_for('responses.get_survey_responses', survey_id=survey_id) }}" 

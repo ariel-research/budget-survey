@@ -248,3 +248,15 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
         elif metric_type == "ratio":
             return "Ratio Optimized Vector"
         return "Unknown Vector"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+
+        Returns:
+            Dict with column definitions for Sum and Ratio columns.
+        """
+        return {
+            "sum": {"name": "Sum", "type": "percentage", "highlight": True},
+            "ratio": {"name": "Ratio", "type": "percentage", "highlight": True},
+        }

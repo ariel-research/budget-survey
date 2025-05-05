@@ -1,7 +1,7 @@
 """Implementation of root sum squared vs sum differences strategy."""
 
 import logging
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -104,3 +104,19 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
         elif metric_type == "sum":
             return "Sum Optimized Vector"
         return "Unknown Vector"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+
+        Returns:
+            Dict with column definitions for Root Sum Squared and Sum columns.
+        """
+        return {
+            "rss": {
+                "name": "Root Sum Squared",
+                "type": "percentage",
+                "highlight": True,
+            },
+            "sum": {"name": "Sum", "type": "percentage", "highlight": True},
+        }

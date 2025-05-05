@@ -151,3 +151,18 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
     def _get_metric_name(self, metric_type: str) -> str:
         """Get descriptive name for metrics."""
         return f"{metric_type} Vector"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the extreme vectors response breakdown table.
+
+        Returns:
+            Dict with column definitions for consistency percentage.
+        """
+        return {
+            "consistency": {
+                "name": "Overall consistency",
+                "type": "percentage",
+                "highlight": True,
+            }
+        }
