@@ -16,6 +16,12 @@ and collects the user's preferences through a form submission.
         </div>
       {% endif %}
     {% endwith %}
+    
+    {% if is_demo %}
+    <div class="demo-badge">
+        {{ get_translation('demo_mode', 'messages', default='DEMO MODE') }}
+    </div>
+    {% endif %}
 
     <div class="ideal-budget">
         <h2>{{ get_translation('ideal_budget') }}</h2>
@@ -31,6 +37,13 @@ and collects the user's preferences through a form submission.
 
     <form method="POST" data-form-type="survey">
         <input type="hidden" name="user_vector" value="{{ user_vector|join(',') }}">
+        <input type="hidden" name="demo" value="{{ 'true' if is_demo else '' }}">
+        <input type="hidden" name="userID" value="{{ user_id }}">
+        <input type="hidden" name="surveyID" value="{{ external_survey_id }}">
+        <input type="hidden" name="internalID" value="{{ internal_survey_id }}">
+        {% if external_q_argument %}
+        <input type="hidden" name="q" value="{{ external_q_argument }}">
+        {% endif %}
         
         {% for pair in comparison_pairs %}
         <div class="pair-container">

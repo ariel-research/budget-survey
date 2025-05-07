@@ -86,6 +86,26 @@ h4 { font-size: 1.3em; }
     width: 95%;
 }
 
+/* ==========================================================================
+   3.1 Demo Mode Components
+   Purpose: Styles for demo mode indicators and badges
+   Used by: Demo mode UI elements across the application
+   ========================================================================== */
+.demo-badge {
+    background-color: #FFC107;
+    color: #000;
+    padding: 8px 16px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   3.2 Survey Option Components
+   Purpose: Styles for survey option display
+   Used by: Survey comparison pairs
+   ========================================================================== */
 .options-container {
     display: flex;
     gap: 20px;
@@ -98,6 +118,16 @@ h4 { font-size: 1.3em; }
     box-shadow: var(--shadow-sm);
     flex: 1;
     padding: 15px;
+}
+
+.strategy-label {
+    background-color: var(--color-background-alt);
+    border-radius: 4px;
+    color: var(--color-text-dark);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    padding: 5px 8px;
+    display: inline-block;
 }
 
 /* ==========================================================================

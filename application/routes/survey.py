@@ -30,12 +30,13 @@ def before_request():
         set_language(lang)
 
 
-def get_required_params() -> Tuple[str, str, int, int]:
+def get_required_params() -> Tuple[str, str, int, int, bool]:
     """
     Get and validate required URL parameters.
 
     Returns:
-        Tuple[str, str, int, int]: user_id, external_survey_id, internal_survey_id, external_q_argument
+        Tuple[str, str, int, int, bool]: user_id, external_survey_id,
+        internal_survey_id, external_q_argument, is_demo
 
     Raises:
         abort(400): If required parameters are missing or invalid
@@ -47,6 +48,11 @@ def get_required_params() -> Tuple[str, str, int, int]:
         external_q_argument = request.args.get(
             "q"
         )  # Optional parameter; default is None
+
+        # Check for demo parameter in both form and URL query parameters
+        is_demo_args = request.args.get("demo", "").lower() == "true"
+        is_demo_form = request.form.get("demo", "").lower() == "true"
+        is_demo = is_demo_args or is_demo_form
 
         if not user_id or not external_survey_id:
             missing_param = "userID" if not user_id else "surveyID"
@@ -63,7 +69,13 @@ def get_required_params() -> Tuple[str, str, int, int]:
                 )
                 abort(400, description=get_translation("invalid_parameter", "messages"))
 
-        return user_id, external_survey_id, internal_survey_id, external_q_argument
+        return (
+            user_id,
+            external_survey_id,
+            internal_survey_id,
+            external_q_argument,
+            is_demo,
+        )
 
     except ValueError as e:
         logger.warning(f"Missing required parameter: {str(e)}")
@@ -76,7 +88,7 @@ def get_required_params() -> Tuple[str, str, int, int]:
 @survey_routes.route("/")
 def index():
     """Landing page route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+    user_id, external_survey_id, internal_survey_id, external_q_argument, is_demo = (
         get_required_params()
     )
 
@@ -100,6 +112,7 @@ def index():
                 surveyID=external_survey_id,
                 internalID=internal_survey_id,
                 q=external_q_argument,
+                demo="true" if is_demo else None,
             )
         )
 
@@ -110,6 +123,7 @@ def index():
         internal_survey_id=internal_survey_id,
         external_q_argument=external_q_argument,
         survey_name=survey_data["name"],
+        is_demo=is_demo,
     )
 
 
@@ -117,7 +131,7 @@ def index():
 @check_survey_eligibility
 def create_vector():
     """Budget vector creation route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+    user_id, external_survey_id, internal_survey_id, external_q_argument, is_demo = (
         get_required_params()
     )
     current_lang = get_current_language()
@@ -148,6 +162,7 @@ def create_vector():
                     external_survey_id=external_survey_id,
                     internal_survey_id=internal_survey_id,
                     external_q_argument=external_q_argument,
+                    is_demo=is_demo,
                 )
 
             logger.info(f"Valid vector created by user {user_id}: {user_vector}")
@@ -160,6 +175,7 @@ def create_vector():
                     internalID=internal_survey_id,
                     lang=current_lang,
                     q=external_q_argument,
+                    demo="true" if is_demo else None,
                 )
             )
 
@@ -173,6 +189,7 @@ def create_vector():
                 external_survey_id=external_survey_id,
                 internal_survey_id=internal_survey_id,
                 external_q_argument=external_q_argument,
+                is_demo=is_demo,
             )
 
     logger.debug(
@@ -186,6 +203,7 @@ def create_vector():
         external_survey_id=external_survey_id,
         internal_survey_id=internal_survey_id,
         external_q_argument=external_q_argument,
+        is_demo=is_demo,
     )
 
 
@@ -193,7 +211,7 @@ def create_vector():
 @check_survey_eligibility
 def survey():
     """Main survey route handler."""
-    user_id, external_survey_id, internal_survey_id, external_q_argument = (
+    user_id, external_survey_id, internal_survey_id, external_q_argument, is_demo = (
         get_required_params()
     )
 
@@ -206,7 +224,11 @@ def survey():
 
     if request.method == "GET":
         return handle_survey_get(
-            user_id, external_survey_id, internal_survey_id, survey_data["subjects"]
+            user_id,
+            external_survey_id,
+            internal_survey_id,
+            survey_data["subjects"],
+            is_demo,
         )
     elif request.method == "POST":
         return handle_survey_post(
@@ -214,13 +236,18 @@ def survey():
             external_survey_id,
             internal_survey_id,
             external_q_argument=external_q_argument,
+            is_demo=is_demo,
         )
     else:
         abort(405)  # Method Not Allowed
 
 
 def handle_survey_get(
-    user_id: str, external_survey_id: str, internal_survey_id: int, subjects: list[str]
+    user_id: str,
+    external_survey_id: str,
+    internal_survey_id: int,
+    subjects: list[str],
+    is_demo: bool,
 ) -> str:
     """Handle GET request for survey page."""
     try:
@@ -235,6 +262,7 @@ def handle_survey_get(
                     surveyID=external_survey_id,
                     internalID=internal_survey_id,
                     lang=current_lang,
+                    demo="true" if is_demo else None,
                 )
             )
 
@@ -248,6 +276,7 @@ def handle_survey_get(
 
         template_data = session_data.to_template_data()
         template_data["internal_survey_id"] = internal_survey_id
+        template_data["is_demo"] = is_demo
 
         return render_template("survey.html", **template_data)
 
@@ -261,6 +290,7 @@ def handle_survey_post(
     external_survey_id: str,
     internal_survey_id: int,
     external_q_argument: int = None,
+    is_demo: bool = False,
 ) -> str:
     """
     Handle POST request for survey submission.
@@ -270,6 +300,7 @@ def handle_survey_post(
         external_survey_id: External survey identifier (for PANEL4ALL)
         internal_survey_id: Internal survey identifier
         external_q_argument: the "q" argument that is sent (sometimes) by PANEL4ALL
+        is_demo: Whether this is a demo submission (no DB storage, redirect to thank you page)
 
     Returns:
         str: Redirect response to appropriate destination
@@ -297,22 +328,29 @@ def handle_survey_post(
         if not is_valid:
             if status == "attention_failed":
                 logger.info(f"User {user_id} failed attention checks")
-                # Store failed submission
-                SurveyService.process_survey_submission(
-                    submission, attention_check_failed=True
-                )
-                # Redirect to Panel4All with attention filter status
-                panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
-                    "ATTENTION_FAILED"
-                ]
-                return redirect(
-                    redirect_to_panel4all(
-                        user_id,
-                        external_survey_id,
-                        status=panel4all_status,
-                        q=external_q_argument,
+                # Store failed submission only if not in demo mode
+                if not is_demo:
+                    SurveyService.process_survey_submission(
+                        submission, attention_check_failed=True
                     )
-                )
+                    # Redirect to Panel4All with attention filter status
+                    panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                        "ATTENTION_FAILED"
+                    ]
+                    return redirect(
+                        redirect_to_panel4all(
+                            user_id,
+                            external_survey_id,
+                            status=panel4all_status,
+                            q=external_q_argument,
+                        )
+                    )
+                else:
+                    # For demo users who fail attention checks, just show them the error
+                    flash(
+                        get_translation("attention_check_failed", "messages"), "error"
+                    )
+                    return redirect(url_for("survey.thank_you", is_demo=True))
 
             flash(error_message, "error")
             return redirect(
@@ -323,10 +361,18 @@ def handle_survey_post(
                     surveyID=external_survey_id,
                     internalID=internal_survey_id,
                     lang=get_current_language(),
+                    demo="true" if is_demo else None,
                 )
             )
 
-        # Process valid submission
+        # Demo mode: Skip database storage and Panel4All redirect
+        if is_demo:
+            logger.info(
+                f"Demo submission from user {user_id} - not storing in database"
+            )
+            return redirect(url_for("survey.thank_you", is_demo=True))
+
+        # Process valid submission for real users
         SurveyService.process_survey_submission(submission)
         panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["COMPLETE"]
         return redirect(
@@ -348,8 +394,9 @@ def handle_survey_post(
 @survey_routes.route("/thank_you")
 def thank_you():
     """Thank you page route handler."""
-    logger.info("Thank you page accessed")
-    return render_template("thank_you.html")
+    is_demo = request.args.get("is_demo", "").lower() == "true"
+    logger.info(f"Thank you page accessed {'(demo mode)' if is_demo else ''}")
+    return render_template("thank_you.html", is_demo=is_demo)
 
 
 def redirect_to_panel4all(
