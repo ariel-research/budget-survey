@@ -60,4 +60,5 @@ def mock_translations():
         "percentage": "Percentage",
         "choice": "Choice",
         "based_on_responses": "Based on {x} survey responses",
+        "no_answers": "No detailed user choice data available",
     }

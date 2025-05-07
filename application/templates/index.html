@@ -12,6 +12,12 @@ The page inherits from base.html and customizes the title and content blocks.
 <div class="welcome-container">
     <h1>{{ get_translation('welcome') }} - {{ survey_name }}</h1>
 
+    {% if is_demo %}
+    <div class="demo-badge">
+        {{ get_translation('demo_mode', 'messages', default='DEMO MODE') }}
+    </div>
+    {% endif %}
+
     <div class="intro-box">
         <p>{{ get_translation('intro_text') }}</p>
     </div>
@@ -33,7 +39,7 @@ The page inherits from base.html and customizes the title and content blocks.
     <div class="start-survey">
         <p class="consent-agreement">{{ get_translation('consent_agreement') }}</p>
         
-        <a href="{{ url_for('survey.create_vector', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id, q=external_q_argument, lang=get_current_language()) }}"
+        <a href="{{ url_for('survey.create_vector', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id, q=external_q_argument, lang=get_current_language(), demo='true' if is_demo else None) }}"
            class="btn btn-start">{{ get_translation('start_survey') }}</a>
            
         <p class="consent-disagreement">{{ get_translation('consent_disagreement') }}</p>

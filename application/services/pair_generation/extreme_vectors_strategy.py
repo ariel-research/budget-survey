@@ -113,10 +113,16 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
                 extreme1 = extreme_vectors[i]
                 extreme2 = extreme_vectors[j]
 
+                # Store with English keys internally, display text will be handled in the UI
                 pair = {
                     f"Extreme Vector {i+1}": tuple(extreme1),
                     f"Extreme Vector {j+1}": tuple(extreme2),
                 }
+
+                # Add metadata to help UI with translation
+                pair["option1_strategy"] = f"Extreme Vector {i+1}"
+                pair["option2_strategy"] = f"Extreme Vector {j+1}"
+
                 pairs.append(pair)
 
         # Generate weighted average pairs for each weight
@@ -131,14 +137,20 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
                     )
 
                     weight_percent = int(weight * 100)
-                    weighted_avg_text = get_translation("weighted_average", "answers")
-                    extreme_1_text = get_translation("extreme_1", "answers")
-                    extreme_2_text = get_translation("extreme_2", "answers")
+
+                    # Use English keys for internal storage
+                    key1 = f"{weight_percent}% Weighted Average (Extreme {i+1})"
+                    key2 = f"{weight_percent}% Weighted Average (Extreme {j+1})"
 
                     pair = {
-                        f"{weight_percent}% {weighted_avg_text} ({extreme_1_text})": weighted1,
-                        f"{weight_percent}% {weighted_avg_text} ({extreme_2_text})": weighted2,
+                        key1: weighted1,
+                        key2: weighted2,
                     }
+
+                    # Add metadata to help UI with translation
+                    pair["option1_strategy"] = key1
+                    pair["option2_strategy"] = key2
+
                     pairs.append(pair)
 
         logger.info(f"Generated {len(pairs)} pairs using {self.__class__.__name__}")

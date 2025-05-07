@@ -12,6 +12,12 @@ The template extends base.html and customizes the title and content blocks.
 <div class="thank-you-container">
     <h1>{{ get_translation('thank_you') }}</h1>
     
+    {% if is_demo %}
+    <div class="demo-badge">
+        {{ get_translation('demo_mode', 'messages', default='DEMO MODE') }}
+    </div>
+    {% endif %}
+    
     <div class="message-box">
         {{ get_translation('thank_you_message') }}
     </div>

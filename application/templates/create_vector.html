@@ -10,6 +10,12 @@ The page inherits from base.html and customizes the title and content blocks.
 <div class="create-vector-container {% if get_current_language() == 'he' %}rtl{% endif %}">
     <h1>{{ get_translation('create_vector_title') }}</h1>
     
+    {% if is_demo %}
+    <div class="demo-badge">
+        {{ get_translation('demo_mode', 'messages', default='DEMO MODE') }}
+    </div>
+    {% endif %}
+    
     <!-- Instructions section -->
     <div class="instructions-section">
         <div class="instruction-text">
@@ -38,6 +44,14 @@ The page inherits from base.html and customizes the title and content blocks.
 
     <!-- Main form -->
     <form method="POST" data-form-type="create-vector">
+        <input type="hidden" name="demo" value="{{ 'true' if is_demo else '' }}">
+        <input type="hidden" name="userID" value="{{ user_id }}">
+        <input type="hidden" name="surveyID" value="{{ external_survey_id }}">
+        <input type="hidden" name="internalID" value="{{ internal_survey_id }}">
+        {% if external_q_argument %}
+        <input type="hidden" name="q" value="{{ external_q_argument }}">
+        {% endif %}
+        
         <!-- Budget input fields -->
         <div class="budget-inputs">
             {% for subject in subjects %}
@@ -77,5 +91,4 @@ The page inherits from base.html and customizes the title and content blocks.
         </div>
     </form>
 </div>
-
 {% endblock %}
