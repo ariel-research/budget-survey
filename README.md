@@ -8,6 +8,7 @@
   - [Pair Generation Strategies](#pair-generation-strategies)
   - [Language Support](#language-support)
   - [Attention Check Handling](#attention-check-handling)
+  - [Demo Mode](#demo-mode)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Database Setup](#database-setup)
@@ -282,6 +283,22 @@ The application includes an attention check mechanism to ensure survey quality:
   - Maintains data for analysis while excluding from main results
   - Supports research on survey response quality
 
+### Demo Mode
+The application includes a 'Demo Mode' feature that allows users to explore the survey functionality without affecting the actual data.
+
+- **Purpose**: Provides a sandbox environment for users to familiarize themselves with the survey process.
+- **How it works**:
+  1. Users can enable 'Demo Mode'.
+  2. In 'Demo Mode', all interactions are simulated, and no data is stored permanently.
+  3. Users can navigate through the survey, make allocations, and submit responses as they would in a real survey.
+  4. The system provides feedback and results based on the simulated data.
+
+- **Limitations**:
+  - Data generated in 'Demo Mode' is not saved to the database.
+  - Some features may be restricted to prevent misuse.
+
+This feature is ideal for training sessions and demonstrations, allowing users to experience the full functionality of the application without impacting real survey data.
+
 ## Prerequisites
 - Python 3.8+
 - MySQL 8.0+
@@ -387,6 +404,7 @@ Note: Make sure your .env file is properly configured with the correct database 
    - `/take-survey/create_vector` - Create budget allocation
    - `/take-survey/survey` - Compare budget pairs
    - `/take-survey/thank_you` - Survey completion page
+   - `/take-survey/?userID=...&surveyID=...&demo=true` - Take survey in Demo Mode
 
 3. Analysis & Reports
    - `/report` - View survey analysis report (PDF)
