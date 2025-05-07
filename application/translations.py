@@ -120,6 +120,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "שגיאה בביצוע אסטרטגיית יצירת הזוגות",
             "en": "Error executing pair generation strategy",
         },
+        "demo_mode": {
+            "he": "מצב הדגמה - הנתונים אינם נשמרים",
+            "en": "DEMO MODE - Data not saved",
+        },
+        "attention_check_failed": {
+            "he": "לא עברת את בדיקת תשומת הלב",
+            "en": "Failed attention check",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
