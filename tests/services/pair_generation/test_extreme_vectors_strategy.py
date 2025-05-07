@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -48,17 +49,29 @@ class TestExtremeVectorsStrategy(unittest.TestCase):
 
         # Check structure of each pair
         for pair in pairs:
-            # Should be a dict with 2 items
-            self.assertEqual(len(pair), 2)
+            # Filter out metadata keys (option1_strategy, option2_strategy)
+            vector_pairs = {k: v for k, v in pair.items() if not k.startswith("option")}
+
+            # Should be a dict with 2 vector items
+            self.assertEqual(len(vector_pairs), 2)
 
             # Values should be tuples of length 3
-            for key, value in pair.items():
+            for key, value in vector_pairs.items():
                 self.assertIsInstance(value, tuple)
                 self.assertEqual(len(value), self.vector_size)
                 self.assertEqual(sum(value), 100)
 
-    def test_option_labels(self):
+    @patch(
+        "application.services.pair_generation.extreme_vectors_strategy.get_translation"
+    )
+    def test_option_labels(self, mock_get_translation):
         """Test option labels."""
+        # Set up the mock to return English values
+        mock_get_translation.side_effect = lambda key, *args, **kwargs: {
+            "extreme_1": "Extreme 1",
+            "extreme_2": "Extreme 2",
+        }.get(key, key)
+
         labels = self.strategy.get_option_labels()
         self.assertEqual(len(labels), 2)
         self.assertEqual(labels, ("Extreme 1", "Extreme 2"))

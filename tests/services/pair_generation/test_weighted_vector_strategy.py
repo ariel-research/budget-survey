@@ -1,5 +1,7 @@
 """Test suite for weighted vector strategy with new dictionary format."""
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -54,12 +56,17 @@ def test_generate_pairs(strategy):
 
     assert len(pairs) == 10
     assert all(isinstance(pair, dict) for pair in pairs)
-    assert all(len(pair) == 2 for pair in pairs)
 
     for pair in pairs:
+        # Filter out metadata keys
+        vector_pairs = {k: v for k, v in pair.items() if not k.startswith("option")}
+
+        # Should be a dict with 2 vector items
+        assert len(vector_pairs) == 2
+
         # Check strategy descriptions
-        descriptions = list(pair.keys())
-        vectors = list(pair.values())
+        descriptions = list(vector_pairs.keys())
+        vectors = list(vector_pairs.values())
 
         assert any("Random" in desc for desc in descriptions)
         assert any("Average Weighted" in desc for desc in descriptions)
@@ -81,9 +88,16 @@ def test_weight_progression(strategy):
     user_vector = (30, 40, 30)
     pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
 
+    # Filter out metadata keys first
+    filtered_pairs = []
+    for pair in pairs:
+        filtered_pairs.append(
+            {k: v for k, v in pair.items() if not k.startswith("option")}
+        )
+
     # Extract weights from descriptions
     weights = []
-    for pair in pairs:
+    for pair in filtered_pairs:
         weighted_desc = next(
             desc for desc in pair.keys() if "Average Weighted Vector" in desc
         )
@@ -101,8 +115,15 @@ def test_weight_progression(strategy):
     ), "Weights should match expected values"
 
 
-def test_option_descriptions(strategy):
+@patch("application.services.pair_generation.weighted_average_vector.get_translation")
+def test_option_descriptions(mock_get_translation, strategy):
     """Test if option descriptions are generated correctly."""
+    # Set up the mock to return English values
+    mock_get_translation.side_effect = lambda key, *args, **kwargs: {
+        "random": "Random",
+        "weighted_average": "Weighted Average",
+    }.get(key, key)
+
     description_random = strategy.get_option_description()
     description_weighted = strategy.get_option_description(weight=0.3)
 
