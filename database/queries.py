@@ -659,3 +659,104 @@ def create_survey(
     except Exception as e:
         logger.error(f"Error creating survey: {str(e)}")
         return None
+
+
+def blacklist_user(user_id: str, survey_id: int) -> bool:
+    """
+    Blacklists a user from participating in future surveys.
+
+    Args:
+        user_id (str): The ID of the user to blacklist.
+        survey_id (int): The ID of the survey where the user failed attention checks.
+
+    Returns:
+        bool: True if the user was successfully blacklisted, False otherwise.
+    """
+    query = """
+        UPDATE users
+        SET blacklisted = TRUE, 
+            blacklisted_at = CURRENT_TIMESTAMP,
+            failed_survey_id = %s
+        WHERE id = %s
+    """
+    logger.info(
+        f"Blacklisting user {user_id} due to failed attention check in survey {survey_id}"
+    )
+
+    try:
+        result = execute_query(query, (survey_id, user_id))
+        return result > 0
+    except Exception as e:
+        logger.error(f"Error blacklisting user {user_id}: {str(e)}")
+        return False
+
+
+def is_user_blacklisted(user_id: str) -> bool:
+    """
+    Checks if a user is blacklisted from participating in surveys.
+
+    Args:
+        user_id (str): The ID of the user to check.
+
+    Returns:
+        bool: True if the user is blacklisted, False otherwise.
+    """
+    query = """
+        SELECT blacklisted 
+        FROM users 
+        WHERE id = %s
+    """
+    logger.debug(f"Checking if user {user_id} is blacklisted")
+
+    try:
+        result = execute_query(query, (user_id,), fetch_one=True)
+        return result and result.get("blacklisted", False)
+    except Exception as e:
+        logger.error(f"Error checking if user {user_id} is blacklisted: {str(e)}")
+        return False
+
+
+def get_blacklisted_users() -> List[Dict]:
+    """
+    Retrieves all blacklisted users with their blacklist details.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing blacklisted user data.
+        Each dictionary contains user_id, blacklisted_at, and failed_survey_id.
+    """
+    query = """
+        SELECT u.id, u.blacklisted_at, u.failed_survey_id, 
+               s.story_code, st.title 
+        FROM users u
+        LEFT JOIN surveys s ON u.failed_survey_id = s.id
+        LEFT JOIN stories st ON s.story_code = st.code
+        WHERE u.blacklisted = TRUE
+        ORDER BY u.blacklisted_at DESC
+    """
+    logger.debug("Retrieving all blacklisted users")
+
+    try:
+        results = execute_query(query)
+        processed_results = []
+
+        for result in results:
+            # Process title field if it exists
+            title = None
+            if result.get("title"):
+                title_json = json.loads(result["title"])
+                current_lang = get_current_language()
+                title = title_json.get(current_lang, title_json.get("he", ""))
+
+            processed_result = {
+                "user_id": result["id"],
+                "blacklisted_at": result["blacklisted_at"],
+                "failed_survey_id": result["failed_survey_id"],
+                "story_code": result.get("story_code"),
+                "survey_title": title,
+            }
+            processed_results.append(processed_result)
+
+        return processed_results
+    except Exception as e:
+        logger.error(f"Error retrieving blacklisted users: {str(e)}")
+        return []

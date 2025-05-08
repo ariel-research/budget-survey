@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 def check_survey_eligibility(f):
     """
     Decorator to check if user is eligible to take the survey.
-    Checks if user has already completed the survey and redirects to
-    thank you page if they have.
+    Checks if user has already completed the survey or is blacklisted,
+    and redirects appropriately.
     """
 
     @wraps(f)  # Preserves the original function's metadata
@@ -45,14 +45,20 @@ def check_survey_eligibility(f):
             )
 
             if not is_eligible:
-                return redirect(
-                    url_for(
-                        f"survey.{redirect_url}",
-                        userID=user_id,
-                        surveyID=external_survey_id,
-                        internalID=internal_survey_id,
-                    )
-                )
+                # Add lang parameter to the redirect if present in the original request
+                lang = request.args.get("lang")
+                redirect_kwargs = {
+                    "userID": user_id,
+                    "surveyID": external_survey_id,
+                }
+
+                # Only include these params if they exist and are needed
+                if redirect_url != "blacklisted":
+                    redirect_kwargs["internalID"] = internal_survey_id
+                if lang:
+                    redirect_kwargs["lang"] = lang
+
+                return redirect(url_for(f"survey.{redirect_url}", **redirect_kwargs))
 
             # Call the decorated function with its original arguments
             return f(*args, **kwargs)

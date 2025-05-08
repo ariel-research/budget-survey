@@ -34,6 +34,13 @@
             </div>
         </div>
 
+        <!-- Admin Actions -->
+        <div class="admin-actions text-center mb-4">
+            <a href="{{ url_for('dashboard.view_blacklisted_users') }}" class="btn btn-outline-danger">
+                <i class="fas fa-ban me-2"></i> {{ _('blacklisted_users_title', 'dashboard') }}
+            </a>
+        </div>
+
         <!-- Surveys Grid -->
         <div class="surveys-grid">
             {% for survey in surveys %}

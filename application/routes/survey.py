@@ -17,6 +17,7 @@ from application.decorators import check_survey_eligibility
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
+from database.queries import blacklist_user
 
 logger = logging.getLogger(__name__)
 survey_routes = Blueprint("survey", __name__)
@@ -285,6 +286,14 @@ def handle_survey_get(
         abort(400, description=get_translation("survey_processing_error", "messages"))
 
 
+@survey_routes.route("/blacklisted")
+def blacklisted():
+    """Blacklisted user page route handler."""
+    user_id = request.args.get("userID", "")
+    logger.info(f"Blacklisted page accessed by user: {user_id}")
+    return render_template("blacklisted.html", user_id=user_id)
+
+
 def handle_survey_post(
     user_id: str,
     external_survey_id: str,
@@ -333,6 +342,13 @@ def handle_survey_post(
                     SurveyService.process_survey_submission(
                         submission, attention_check_failed=True
                     )
+
+                    # Blacklist the user for failing attention checks
+                    blacklist_user(user_id, internal_survey_id)
+                    logger.info(
+                        f"User {user_id} has been blacklisted for failing attention checks"
+                    )
+
                     # Redirect to Panel4All with attention filter status
                     panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
                         "ATTENTION_FAILED"

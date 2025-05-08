@@ -5,6 +5,7 @@ from flask import Blueprint, render_template
 
 from application.services.dashboard_service import get_dashboard_metrics
 from application.translations import get_translation
+from database.queries import get_blacklisted_users
 
 logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
@@ -39,6 +40,24 @@ def view_dashboard():
 
     except Exception as e:
         logger.error(f"Error displaying dashboard: {str(e)}")
+        return render_template(
+            "error.html",
+            message=get_translation("dashboard_error", "messages"),
+        )
+
+
+@dashboard_routes.route("/blacklisted-users")
+def view_blacklisted_users():
+    """Display blacklisted users."""
+    try:
+        blacklisted_users = get_blacklisted_users()
+
+        return render_template(
+            "dashboard/blacklisted_users.html",
+            blacklisted_users=blacklisted_users,
+        )
+    except Exception as e:
+        logger.error(f"Error displaying blacklisted users: {str(e)}")
         return render_template(
             "error.html",
             message=get_translation("dashboard_error", "messages"),

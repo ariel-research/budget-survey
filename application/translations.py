@@ -128,6 +128,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "לא עברת את בדיקת תשומת הלב",
             "en": "Failed attention check",
         },
+        "user_blacklisted": {
+            "he": "המשתמש חסום מהשתתפות בסקרים עקב כישלון בבדיקת הערנות",
+            "en": "User is blacklisted from participating in surveys due to failing attention checks",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -256,6 +260,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אופס! משהו השתבש",
             "en": "Oops! Something went wrong",
         },
+        "blacklisted_title": {
+            "he": "חסימת משתמש",
+            "en": "User Blacklisted",
+        },
+        "blacklisted_message": {
+            "he": "חשבונך נחסם מהשתתפות בסקרים עתידיים עקב כישלון בבדיקות הערנות. משתמשים שאינם עוקבים אחר ההנחיות בצורה זהירה נחסמים באופן אוטומטי.",
+            "en": "Your account has been blacklisted from participating in future surveys due to failing attention checks. Users who do not carefully follow instructions are automatically blacklisted.",
+        },
+        "close_window": {
+            "he": "סגור חלון",
+            "en": "Close Window",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
@@ -266,6 +282,26 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "survey_percentages": {
             "he": "התפלגות התשובות לפי סקר",
             "en": "Survey Answer Percentages",
+        },
+        "blacklisted_users_title": {
+            "he": "משתמשים חסומים",
+            "en": "Blacklisted Users",
+        },
+        "blacklisted_users_subtitle": {
+            "he": "רשימת המשתמשים שנחסמו בשל כישלון בבדיקות הערנות",
+            "en": "Users who have been blacklisted for failing attention checks",
+        },
+        "blacklisted_at": {
+            "he": "תאריך החסימה",
+            "en": "Blacklisted At",
+        },
+        "failed_survey_title": {
+            "he": "כותרת הסקר",
+            "en": "Survey Title",
+        },
+        "no_blacklisted_users": {
+            "he": "אין משתמשים חסומים במערכת",
+            "en": "No blacklisted users in the system",
         },
         "majority_choices": {"he": "בחירת רוב המשתמשים", "en": "User Majority Choices"},
         "overall_distribution": {"he": "התפלגות כללית", "en": "Overall Distribution"},
