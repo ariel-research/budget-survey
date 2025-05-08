@@ -8,6 +8,7 @@
   - [Pair Generation Strategies](#pair-generation-strategies)
   - [Language Support](#language-support)
   - [Attention Check Handling](#attention-check-handling)
+  - [User Blacklist](#user-blacklist)
   - [Demo Mode](#demo-mode)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -282,6 +283,24 @@ The application includes an attention check mechanism to ensure survey quality:
   - Failed checks are stored with `attention_check_failed` flag
   - Maintains data for analysis while excluding from main results
   - Supports research on survey response quality
+
+### User Blacklist
+The application includes a user blacklist feature to automatically enforce quality control in survey responses.
+
+- **Purpose**: Enhance data quality by preventing participation from users who fail to meet attention standards
+- **Implementation**:
+  - Users who fail attention checks are automatically blacklisted from taking future surveys
+  - Blacklist status is checked during survey eligibility verification
+  - Blacklisted users are redirected to a dedicated explanation page
+  - System records which survey triggered the blacklist
+
+- **Data Storage**:
+  - Blacklist information is stored in the users table:
+    - `blacklisted` flag indicates blacklist status
+    - `blacklisted_at` records when user was blacklisted
+    - `failed_survey_id` identifies which survey triggered the blacklist
+  - Indexed for efficient lookups during eligibility checks
+
 
 ### Demo Mode
 The application includes a 'Demo Mode' feature that allows users to explore the survey functionality without affecting the actual data.

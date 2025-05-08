@@ -291,7 +291,22 @@ def blacklisted():
     """Blacklisted user page route handler."""
     user_id = request.args.get("userID", "")
     logger.info(f"Blacklisted page accessed by user: {user_id}")
-    return render_template("blacklisted.html", user_id=user_id)
+
+    # Create translations dictionary for the template
+    translations = {
+        "blacklisted_title": get_translation("blacklisted_title", "survey"),
+        "blacklisted_message": get_translation("blacklisted_message", "survey"),
+        "user_id": get_translation("user_id", "survey"),
+        "close_window": get_translation("close_window", "survey"),
+    }
+
+    # Function to make translation available in template
+    def _translate(key, section="survey"):
+        return get_translation(key, section)
+
+    return render_template(
+        "blacklisted.html", user_id=user_id, translations=translations, _=_translate
+    )
 
 
 def handle_survey_post(

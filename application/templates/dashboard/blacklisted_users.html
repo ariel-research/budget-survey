@@ -1,15 +1,19 @@
-{% extends 'dashboard/base.html' %}
+{% extends 'base.html' %}
 
-{% block title %}{{ _('blacklisted_users_title', 'dashboard') }}{% endblock %}
+{% block title %}{{ translations.blacklisted_users_title }}{% endblock %}
 
-{% block dashboard_content %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_style.css') }}">
+{% endblock %}
+
+{% block content %}
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h5 class="m-0 font-weight-bold text-primary">
-            {{ _('blacklisted_users_title', 'dashboard') }}
+            {{ translations.blacklisted_users_title }}
         </h5>
         <div class="text-muted">
-            {{ _('blacklisted_users_subtitle', 'dashboard') }}
+            {{ translations.blacklisted_users_subtitle }}
         </div>
     </div>
     <div class="card-body">
@@ -18,10 +22,10 @@
                 <table class="table table-bordered" id="blacklistedUsersTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>{{ _('user_id', 'dashboard') }}</th>
-                            <th>{{ _('blacklisted_at', 'dashboard') }}</th>
-                            <th>{{ _('survey', 'dashboard') }}</th>
-                            <th>{{ _('failed_survey_title', 'dashboard') }}</th>
+                            <th>{{ translations.user_id }}</th>
+                            <th>{{ translations.blacklisted_at }}</th>
+                            <th>{{ translations.survey }}</th>
+                            <th>{{ translations.failed_survey_title }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,7 +52,7 @@
             </div>
         {% else %}
             <div class="text-center p-4">
-                <p>{{ _('no_blacklisted_users', 'dashboard') }}</p>
+                <p>{{ translations.no_blacklisted_users }}</p>
             </div>
         {% endif %}
     </div>
