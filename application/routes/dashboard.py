@@ -23,6 +23,7 @@ def view_dashboard():
             "subtitle": get_translation("subtitle", "dashboard"),
             "total_surveys": get_translation("total_surveys", "dashboard"),
             "total_participants": get_translation("total_participants", "dashboard"),
+            "unaware_users": get_translation("unaware_users", "dashboard"),
             "last_updated": get_translation("last_updated", "dashboard"),
             "view_responses": get_translation("view_responses", "dashboard"),
             "take_survey": get_translation("take_survey", "dashboard"),
@@ -33,6 +34,7 @@ def view_dashboard():
             surveys=dashboard_data["surveys"],
             total_surveys=dashboard_data["total_surveys"],
             total_participants=dashboard_data["total_participants"],
+            unaware_users_count=dashboard_data["unaware_users_count"],
             translations=translations,
             last_update_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
         )

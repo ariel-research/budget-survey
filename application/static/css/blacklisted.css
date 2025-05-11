@@ -1,0 +1,76 @@
+.blacklisted-container {
+    max-width: 650px;
+    margin: 80px auto;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.blacklisted-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: #fff;
+}
+
+.blacklisted-header {
+    padding: 25px;
+    background-color: #dc3545;
+    color: white;
+    text-align: center;
+}
+
+.blacklisted-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.blacklisted-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.blacklisted-message {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #495057;
+    margin-bottom: 25px;
+}
+
+.user-id-badge {
+    display: inline-block;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 8px 15px;
+    margin: 15px 0;
+    font-family: monospace;
+    font-size: 16px;
+    color: #495057;
+    border: 1px solid #e9ecef;
+}
+
+.close-btn {
+    display: inline-block;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 10px;
+}
+
+.close-btn:hover {
+    background-color: #0b5ed7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* RTL support */
+[dir="rtl"] .blacklisted-message {
+    text-align: right;
+} 

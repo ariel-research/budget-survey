@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ translations.blacklisted_users_title }}{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h5 class="m-0 font-weight-bold text-primary">
+            {{ translations.blacklisted_users_title }}
+        </h5>
+        <div class="text-muted">
+            {{ translations.blacklisted_users_subtitle }}
+        </div>
+    </div>
+    <div class="card-body">
+        {% if blacklisted_users %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="blacklistedUsersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>{{ translations.user_id }}</th>
+                            <th>{{ translations.blacklisted_at }}</th>
+                            <th>{{ translations.survey }}</th>
+                            <th>{{ translations.failed_survey_title }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in blacklisted_users %}
+                        <tr>
+                            <td>
+                                <span class="badge badge-dark">{{ user.user_id }}</span>
+                            </td>
+                            <td>{{ user.blacklisted_at }}</td>
+                            <td>
+                                {% if user.failed_survey_id %}
+                                    <a href="{{ url_for('surveys.survey_responses', survey_id=user.failed_survey_id) }}">
+                                        {{ user.failed_survey_id }}
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ user.survey_title or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center p-4">
+                <p>{{ translations.no_blacklisted_users }}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#blacklistedUsersTable').DataTable({
+            responsive: true,
+            order: [[1, 'desc']], // Sort by blacklisted_at (descending)
+            language: {
+                search: "{{ _('search', 'dashboard') }}:",
+                lengthMenu: "{{ _('show_entries', 'dashboard') }}: _MENU_",
+                info: "{{ _('showing', 'dashboard') }} _START_ {{ _('to', 'dashboard') }} _END_ {{ _('of', 'dashboard') }} _TOTAL_ {{ _('entries', 'dashboard') }}",
+                infoEmpty: "{{ _('showing', 'dashboard') }} 0 {{ _('to', 'dashboard') }} 0 {{ _('of', 'dashboard') }} 0 {{ _('entries', 'dashboard') }}",
+                infoFiltered: "({{ _('filtered_from', 'dashboard') }} _MAX_ {{ _('total_entries', 'dashboard') }})",
+                emptyTable: "{{ _('no_data_available', 'dashboard') }}",
+                zeroRecords: "{{ _('no_matching_records', 'dashboard') }}",
+                paginate: {
+                    first: "{{ _('first', 'dashboard') }}",
+                    last: "{{ _('last', 'dashboard') }}",
+                    next: "{{ _('next', 'dashboard') }}",
+                    previous: "{{ _('previous', 'dashboard') }}"
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

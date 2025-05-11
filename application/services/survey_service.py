@@ -15,6 +15,7 @@ from database.queries import (
     get_survey_description,
     get_survey_name,
     get_survey_pair_generation_config,
+    is_user_blacklisted,
     mark_survey_as_completed,
     user_exists,
 )
@@ -79,12 +80,24 @@ class SurveyService:
         """
         Check if user is eligible to take the survey.
 
+        Checks both if user has already completed the survey and
+        if user is blacklisted due to failing attention checks.
+
         Returns:
             Tuple of (eligible: bool, redirect_url: Optional[str])
         """
+        # First check if user is blacklisted
+        if is_user_blacklisted(user_id):
+            logger.info(
+                f"User {user_id} is blacklisted and cannot take survey {survey_id}"
+            )
+            return False, "blacklisted"
+
+        # Then check if user has already completed this specific survey
         if check_user_participation(user_id, survey_id):
             logger.info(f"User {user_id} has already completed survey {survey_id}")
             return False, "thank_you"
+
         return True, None
 
     @staticmethod

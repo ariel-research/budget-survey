@@ -98,7 +98,7 @@
    ========================================================================== */
 .metrics-summary {
     display: grid;
-    grid-template-columns: repeat(2, minmax(200px, 250px));
+    grid-template-columns: repeat(3, minmax(200px, 250px));
     gap: var(--spacing-xl);
     margin: var(--spacing-xl) auto;
     justify-content: center;
@@ -324,6 +324,11 @@
         gap: var(--spacing-lg);
         padding: 0 var(--spacing-md);
     }
+    
+    .metrics-summary {
+        grid-template-columns: repeat(3, minmax(180px, 220px));
+        gap: var(--spacing-md);
+    }
 }
 
 @media (max-width: 768px) {
@@ -342,6 +347,11 @@
     .surveys-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
+    }
+    
+    .metrics-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
     }
 
     .survey-content {

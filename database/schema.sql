@@ -1,5 +1,6 @@
 -- Database Schema for budget-survey
 -- Reflects state AFTER migration 20250401_add_stories_table.sql
+-- 20250501_add_user_blacklist.sql
 
 -- WARNING! Running this script will DROP existing tables
 -- (users, stories, surveys, survey_responses, comparison_pairs)
@@ -17,7 +18,11 @@ SET foreign_key_checks = 0; -- Disable checks during potential drops/creates
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` VARCHAR(128) NOT NULL PRIMARY KEY,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `blacklisted` BOOLEAN DEFAULT FALSE,
+  `blacklisted_at` TIMESTAMP NULL,
+  `failed_survey_id` INT NULL,
+  INDEX `idx_blacklisted` (`blacklisted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -82,6 +87,13 @@ CREATE TABLE `comparison_pairs` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`survey_response_id`) REFERENCES `survey_responses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Add foreign key constraint for users.failed_survey_id
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_failed_survey` 
+  FOREIGN KEY (`failed_survey_id`) REFERENCES `surveys` (`id`) 
+  ON DELETE SET NULL;
 
 
 SET foreign_key_checks = 1; -- Re-enable checks
