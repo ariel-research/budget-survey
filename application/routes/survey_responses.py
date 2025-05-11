@@ -317,7 +317,7 @@ def get_user_responses_detail(user_id: str):
                 render_template(
                     "error.html",
                     message=get_translation(
-                        "no_user_responses", "messages", user_id=user_id
+                        "no_user_responses", "answers", user_id=user_id
                     ),
                 ),
                 404,
@@ -362,7 +362,7 @@ def get_user_survey_response(survey_id: int, user_id: str):
                 render_template(
                     "error.html",
                     message=get_translation(
-                        "no_user_responses", "messages", user_id=user_id
+                        "no_user_responses", "answers", user_id=user_id
                     ),
                 ),
                 404,

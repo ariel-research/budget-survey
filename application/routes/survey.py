@@ -296,7 +296,7 @@ def blacklisted():
     translations = {
         "blacklisted_title": get_translation("blacklisted_title", "survey"),
         "blacklisted_message": get_translation("blacklisted_message", "survey"),
-        "user_id": get_translation("user_id", "survey"),
+        "user_id": get_translation("user_id", "answers"),
         "close_window": get_translation("close_window", "survey"),
     }
 
