@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 from database.queries import (
     get_active_surveys,
+    get_blacklisted_users,
     retrieve_completed_survey_responses,
 )
 
@@ -58,12 +59,22 @@ def get_dashboard_metrics() -> Dict[str, Any]:
         completed_responses = retrieve_completed_survey_responses()
         unique_participants = len(set(r["user_id"] for r in completed_responses))
 
+        # Get unaware users count (blacklisted users)
+        unaware_users = get_blacklisted_users()
+        unaware_users_count = len(unaware_users)
+
         return {
             "total_surveys": len(processed_surveys),
             "total_participants": unique_participants,
+            "unaware_users_count": unaware_users_count,
             "surveys": processed_surveys,
         }
 
     except Exception as e:
         logger.error(f"Error calculating dashboard metrics: {str(e)}")
-        return {"total_surveys": 0, "total_participants": 0, "surveys": []}
+        return {
+            "total_surveys": 0,
+            "total_participants": 0,
+            "unaware_users_count": 0,
+            "surveys": [],
+        }

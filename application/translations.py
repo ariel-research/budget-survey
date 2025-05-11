@@ -287,6 +287,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "משתמשים חסומים",
             "en": "Blacklisted Users",
         },
+        "unaware_users": {
+            "he": "משתמשים לא ערניים",
+            "en": "Unaware Users",
+        },
         "blacklisted_users_subtitle": {
             "he": "רשימת המשתמשים שנחסמו בשל כישלון בבדיקות הערנות",
             "en": "Users who have been blacklisted for failing attention checks",
