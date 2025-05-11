@@ -42,4 +42,11 @@ Where:
 
 ## Available Migrations
 
-- `20250511_retroactive_unaware_users.sql` - Retroactively blacklists users who failed attention checks but weren't previously marked as blacklisted 
+In chronological order:
+
+- `20250101_add_pair_generation_config.sql` - Adds a JSON column for storing pair generation configuration to the surveys table
+- `20250123_add_strategy_columns.sql` - Adds strategy columns to comparison_pairs table to track which strategy generated each option
+- `20250216_add_attention_check_column.sql` - Adds attention_check_failed column to survey_responses table
+- `20250401_add_stories_table.sql` - Creates stories table and refactors surveys table to use story references
+- `20250501_add_user_blacklist.sql` - Adds blacklisting columns to users table for handling users who fail attention checks
+- `20250511_retroactive_unaware_users.sql` - Retroactively blacklists users who failed attention checks but weren't previously marked as blacklisted
