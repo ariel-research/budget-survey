@@ -333,7 +333,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
               Only includes responses where attention checks were passed.
     """
     query = """
-    SELECT 
+    SELECT
         sr.id AS survey_response_id,
         sr.user_id,
         sr.survey_id,
@@ -345,14 +345,14 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         cp.option_1,
         cp.option_2,
         cp.user_choice
-    FROM 
+    FROM
         survey_responses sr
-    JOIN 
+    JOIN
         comparison_pairs cp ON sr.id = cp.survey_response_id
     WHERE
         sr.completed = TRUE
         AND sr.attention_check_failed = FALSE
-    ORDER BY 
+    ORDER BY
         sr.id, cp.pair_number
     """
     logger.debug("Retrieving all successfully completed survey responses")
