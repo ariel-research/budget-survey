@@ -1,7 +1,8 @@
 -- Migration: 20250511_retroactive_unaware_users.sql
 -- Purpose: Retroactively blacklist users who failed attention checks but weren't blacklisted
 
-SET @current_timestamp = NOW();
+-- Start transaction for safety
+START TRANSACTION;
 
 -- Create a temporary table to hold users who should be blacklisted
 DROP TEMPORARY TABLE IF EXISTS tmp_users_to_blacklist;
@@ -27,26 +28,33 @@ WHERE
 ORDER BY 
     sr.created_at ASC;
 
--- Log the number of users found
-SELECT CONCAT('Found ', COUNT(*), ' users to blacklist') AS log_message
+-- Log both failures and unique users
+SELECT 
+    CONCAT('Found ', COUNT(*), ' failed attention checks across ', 
+           COUNT(DISTINCT user_id), ' unique users') AS log_message
 FROM tmp_users_to_blacklist;
 
--- Create a table with the earliest failure for each user
-DROP TEMPORARY TABLE IF EXISTS tmp_earliest_failures;
-CREATE TEMPORARY TABLE tmp_earliest_failures (
-    user_id VARCHAR(128),
-    failed_survey_id INT,
-    first_failure TIMESTAMP
-);
+-- Show stats on users with multiple failures
+SELECT 
+    CONCAT('Users with multiple failures: ', 
+           SUM(CASE WHEN failure_count > 1 THEN 1 ELSE 0 END),
+           ' (', SUM(failure_count - 1), ' additional failures beyond first)') 
+    AS multi_failure_stats
+FROM (
+    SELECT user_id, COUNT(*) AS failure_count
+    FROM tmp_users_to_blacklist
+    GROUP BY user_id
+    HAVING COUNT(*) > 1
+) multi_fails;
 
--- First find earliest failure date for each user
+-- Find earliest failure date for each user
 DROP TEMPORARY TABLE IF EXISTS tmp_earliest_failures;
 CREATE TEMPORARY TABLE tmp_earliest_failures AS
 SELECT user_id, MIN(created_at) AS first_failure
 FROM tmp_users_to_blacklist
 GROUP BY user_id;
 
--- Then join back to get the survey_id that corresponds to that earliest date
+-- Join back to get the survey_id that corresponds to that earliest date
 UPDATE users u
 JOIN (
     SELECT t1.user_id, t1.survey_id AS failed_survey_id, t1.created_at
@@ -61,8 +69,12 @@ SET
 
 -- Report results
 SELECT 
-    CONCAT('Blacklisted ', ROW_COUNT(), ' users retroactively') AS execution_result;
+    CONCAT('Blacklisted ', ROW_COUNT(), ' users based on their earliest failed attention check') 
+    AS execution_result;
 
 -- Clean up
 DROP TEMPORARY TABLE IF EXISTS tmp_users_to_blacklist;
-DROP TEMPORARY TABLE IF EXISTS tmp_earliest_failures; 
+DROP TEMPORARY TABLE IF EXISTS tmp_earliest_failures;
+
+-- Commit the transaction
+COMMIT;
