@@ -467,6 +467,7 @@ Notes:
 2. Survey Taking
    - Default survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...>
    - Custom survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&internalID=N>
+   - Demo mode: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&demo=true>
 
 3. Analysis & Reports
    - Survey Report: https://survey.csariel.xyz/report
