@@ -248,13 +248,26 @@ def get_survey_responses(survey_id: int):
             sort_by=sort_by,
             sort_order=sort_order,
         )
+
         # Fetch the survey description
         survey_description = get_survey_description(survey_id)
+
+        # Get strategy information
+        strategy_name = None
+        strategy_config = get_survey_pair_generation_config(survey_id)
+        if strategy_config:
+            try:
+                strategy = StrategyRegistry.get_strategy(strategy_config["strategy"])
+                strategy_name = strategy.get_strategy_name()
+            except ValueError as e:
+                logger.warning(f"Strategy not found for survey {survey_id}: {e}")
+
         return render_template(
             "responses/detail.html",
             data=data,
             survey_id=survey_id,
             survey_description=survey_description,
+            strategy_name=strategy_name,
         )
 
     except SurveyNotFoundError as e:

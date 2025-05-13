@@ -71,7 +71,7 @@
                         <span class="btn-text">{{ translations.view_responses }}</span>
                     </a>
                     
-                    <a href="{{ url_for('survey.index', userID='...', surveyID='...', internalID=survey.id, lang=get_current_language()) }}" 
+                    <a href="{{ url_for('survey.index', userID='...', surveyID='...', internalID=survey.id, lang=get_current_language(), demo='true') }}" 
                         class="btn btn-participate"
                         target="_blank">
                         <span class="btn-icon">✏️</span>
