@@ -22,6 +22,14 @@
    --color-better: #f1c40f;
    --color-highlight: #e8e1b6;
    
+   /* Strategy Colors */
+   --color-optimization-metrics: #3B82F6;    /* Blue */
+   --color-weighted-average-vector: #10B981; /* Green */
+   --color-rounded-weighted-average-vector: #8B5CF6; /* Purple */
+   --color-root-sum-squared-sum: #14B8A6;    /* Teal */
+   --color-root-sum-squared-ratio: #F43F5E;  /* Rose */
+   --color-extreme-vectors: #6366F1;         /* Indigo */
+   
    /* Spacing */
    --spacing-xs: 0.25rem;
    --spacing-sm: 0.5rem;
@@ -56,6 +64,40 @@
     margin-bottom: 1.5rem;
     color: #555;
     font-size: 1.1em;
+}
+
+/* ==========================================================================
+  Strategy Badge Styles
+  ========================================================================== */
+.strategy-badge {
+   font-size: var(--font-size-xs);
+   padding: var(--spacing-xs) var(--spacing-sm);
+   border-radius: 9999px;
+   color: white;
+   font-weight: 600;
+   letter-spacing: 0.5px;
+   display: inline-block;
+   margin-bottom: var(--spacing-md);
+   background: var(--color-secondary);
+}
+
+.strategy-badge[data-strategy="optimization_metrics"] { 
+   background: var(--color-optimization-metrics);
+}
+.strategy-badge[data-strategy="weighted_average_vector"] { 
+   background: var(--color-weighted-average-vector);
+}
+.strategy-badge[data-strategy="rounded_weighted_average_vector"] { 
+   background: var(--color-rounded-weighted-average-vector);
+}
+.strategy-badge[data-strategy="root_sum_squared_sum"] { 
+   background: var(--color-root-sum-squared-sum);
+}
+.strategy-badge[data-strategy="root_sum_squared_ratio"] { 
+   background: var(--color-root-sum-squared-ratio);
+}
+.strategy-badge[data-strategy="extreme_vectors"] { 
+   background: var(--color-extreme-vectors);
 }
 
 /* ==========================================================================
