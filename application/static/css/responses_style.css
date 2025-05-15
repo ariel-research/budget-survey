@@ -67,10 +67,6 @@
    margin-bottom: 1.5rem;
    font-weight: 500;
    line-height: 1.7;
-   background: var(--color-background-alt);
-   border-radius: 8px;
-   padding: 1.1rem 1.5rem;
-   box-shadow: 0 1px 4px rgba(44,62,80,0.03);
 }
 
 /* ==========================================================================
@@ -84,7 +80,6 @@
    font-weight: 600;
    letter-spacing: 0.5px;
    display: inline-block;
-   margin-bottom: var(--spacing-md);
    background: var(--color-secondary);
 }
 
@@ -1124,13 +1119,6 @@ th.sortable[data-order="desc"]::after {
 [dir="rtl"] .survey-description {
    text-align: right;
    width: 100%;
-}
-
-[dir="rtl"] .survey-description {
-   margin-right: 2rem;
-   margin-left: 2rem;
-   padding-right: 1.5rem;
-   max-width: 90%;
 }
 
 /* Tables */
