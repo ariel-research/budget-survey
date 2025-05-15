@@ -139,6 +139,11 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "נעים מאוד, אנו פרופ' אראל סגל-הלוי ופרופ' נועם חזון עורכים מחקר בנושא העדפות אזרחים לגבי חלוקת תקציב. המחקר נערך במסגרת המחלקה למדעי המחשב באוניברסיטת אריאל. אנו מזמינים אותך להשתתף במחקר שלנו על ידי מתן מענה על שאלון מקוון שאורכו כ-5 דקות.",
             "en": "Hello, we are Prof. Erel Segal-Halevi and Prof. Noam Hazon conducting research on citizens' preferences regarding budget allocation. The research is conducted at the Computer Science Department of Ariel University. We invite you to participate in our research by answering an online questionnaire that takes about 5 minutes.",
         },
+        "survey_responses_title": {"he": "תוצאות הסקר", "en": "Survey Responses"},
+        "survey_responses_for": {
+            "he": "תוצאות עבור הסקר",
+            "en": "Responses for Survey",
+        },
         "what_to_expect": {
             "he": "מה מצפה לך בסקר?",
             "en": "What to expect in the survey?",
@@ -330,15 +335,68 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},
         "survey_title": {
-            "he": "תשובות לסקר מספר {survey_id}",
-            "en": "Survey #{survey_id} Answers",
+            "he": "תוצאות סקר #{survey_id}",
+            "en": "Survey #{survey_id} Results",
         },
-        "no_answers": {"he": "אין תשובות זמינות.", "en": "No answers available."},
+        "no_answers": {
+            "he": "לא נמצאו תשובות לסקר זה",
+            "en": "No answers found for this survey",
+        },
+        "no_user_responses": {
+            "he": "לא נמצאו תשובות עבור משתמש {user_id}",
+            "en": "No responses found for user {user_id}",
+        },
+        "user_survey_responses": {
+            "he": "תשובות המשתמש {user_id} לסקר #{survey_id}",
+            "en": "User {user_id} Responses for Survey #{survey_id}",
+        },
+        "user_responses": {
+            "he": "תשובות המשתמש {user_id}",
+            "en": "User {user_id} Responses",
+        },
+        "back_to_responses": {
+            "he": "חזרה לכל התשובות",
+            "en": "Back to all responses",
+        },
+        "survey_answers_tab": {
+            "he": "תשובות",
+            "en": "Answers",
+        },
+        "survey_comments_tab": {
+            "he": "הערות",
+            "en": "Comments",
+        },
+        "user_filter": {
+            "he": "סנן משתמשים:",
+            "en": "Filter Users:",
+        },
+        "all_users": {
+            "he": "כל המשתמשים",
+            "en": "All Users",
+        },
+        "weighted_vector_users": {
+            "he": "משתמשים המעדיפים וקטורים משוקללים",
+            "en": "Users Preferring Weighted Vectors",
+        },
+        "rounded_weighted_vector_users": {
+            "he": "משתמשים המעדיפים וקטורים משוקללים מעוגלים",
+            "en": "Users Preferring Rounded Weighted Vectors",
+        },
+        "any_weighted_vector_users": {
+            "he": "משתמשים המעדיפים וקטורים משוקללים כלשהם",
+            "en": "Users Preferring Any Weighted Vectors",
+        },
+        "filtered_view": {
+            "he": "תצוגה מסוננת",
+            "en": "Filtered View",
+        },
+        "clear_filter": {
+            "he": "נקה סינון",
+            "en": "Clear",
+        },
         "comments_title": {"he": "הערות המשתמשים", "en": "User Comments"},
-        "no_comments": {"he": "אין הערות זמינות.", "en": "No comments available."},
-        "survey_answers_tab": {"he": "תשובות הסקר", "en": "Survey Answers"},
-        "survey_comments_tab": {"he": "הערות המשתתפים", "en": "Participant Comments"},
         "view_all_comments": {"he": "צפה בכל ההערות", "en": "View All Comments"},
+        "no_comments": {"he": "אין הערות זמינות.", "en": "No comments available."},
         "original_choice": {"he": "בחירה מקורית", "en": "Original choice"},
         "not_available": {"he": "לא זמין", "en": "Not available"},
         "pair_number": {"he": "זוג מספר", "en": "Pair"},
@@ -353,10 +411,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "user_responses_title_short": {
             "he": "תשובות משתמש {user_id}",
             "en": "User {user_id} Responses",
-        },
-        "no_user_responses": {
-            "he": "לא נמצאו תשובות למשתמש {user_id}",
-            "en": "No responses found for user: {user_id}",
         },
         "back_to_list": {"he": "חזרה לרשימת התשובות", "en": "Back to Responses List"},
         # Main titles and sections
@@ -418,6 +472,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "none": {"he": "אין", "en": "none"},
         "extreme_1": {"he": "קיצוני 1", "en": "Extreme 1"},
         "extreme_2": {"he": "קיצוני 2", "en": "Extreme 2"},
+        "no_matching_users": {
+            "he": "אין משתמשים התואמים את קריטריון הסינון שנבחר.",
+            "en": "No users match the selected filter criteria.",
+        },
+        "user_optimization_title": {
+            "he": "אופטימיזציה של המשתמש",
+            "en": "User Optimization",
+        },
+        "survey_response_title": {
+            "he": "תשובות לסקר מספר {survey_id}",
+            "en": "Responses for Survey #{survey_id}",
+        },
     },
 }
 
