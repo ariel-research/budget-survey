@@ -436,18 +436,14 @@ Note: Make sure your .env file is properly configured with the correct database 
      * Creates 'survey_analysis_report_dev.pdf'
 
 4. Survey Results
-   - `/surveys/responses` - View all responses across all surveys
-   - `/surveys/{survey_id}/responses` - View responses for specific survey
-   - `/surveys/users/{user_id}/responses` - View all responses from specific user
-   - `/surveys/{survey_id}/users/{user_id}/responses` - View specific user's response for a survey
-   - `/surveys/comments` - View all comments
-   - `/surveys/{survey_id}/comments` - View comments for specific survey
-   
-   Each survey's response table will display strategy-specific columns based on the survey's strategy:
-   - Optimization Metrics strategy: Sum and Ratio columns
-   - Root Sum Squared strategies: Root Sum Squared and Sum/Ratio columns
-   - Extreme Vectors strategy: Overall consistency column
-   - Other strategies: Their specific metrics as defined in their implementation
+   - All Responses: https://survey.csariel.xyz/surveys/responses
+   - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
+     * With filtering: https://survey.csariel.xyz/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors
+     * Other filters: v_users_preferring_rounded_weighted_vectors, v_users_preferring_any_weighted_vectors
+   - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
+   - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
+   - All Comments: https://survey.csariel.xyz/surveys/comments
+   - Survey Comments: https://survey.csariel.xyz/surveys/{survey_id}/comments
 
 ### API Endpoints
 - `/get_messages` - Returns JSON dictionary of error messages
@@ -476,6 +472,8 @@ Notes:
 4. Survey Results
    - All Responses: https://survey.csariel.xyz/surveys/responses
    - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
+     * With filtering: https://survey.csariel.xyz/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors
+     * Other filters: v_users_preferring_rounded_weighted_vectors, v_users_preferring_any_weighted_vectors
    - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
    - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
    - All Comments: https://survey.csariel.xyz/surveys/comments

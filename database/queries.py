@@ -760,3 +760,116 @@ def get_blacklisted_users() -> List[Dict]:
     except Exception as e:
         logger.error(f"Error retrieving blacklisted users: {str(e)}")
         return []
+
+
+def get_users_from_view(view_name: str, survey_id: Optional[int] = None) -> List[str]:
+    """
+    Retrieves user IDs from a specified SQL view, optionally filtered by survey ID.
+
+    Args:
+        view_name (str): Name of the view to query (must be a valid view name)
+        survey_id (Optional[int]): If provided, will filter users by this survey ID
+
+    Returns:
+        List[str]: List of user IDs found in the view
+    """
+    # Validate view name against allowed patterns to prevent SQL injection
+    allowed_views = [
+        "v_users_preferring_weighted_vectors",
+        "v_users_preferring_rounded_weighted_vectors",
+        "v_users_preferring_any_weighted_vectors",
+    ]
+
+    if view_name not in allowed_views:
+        logger.warning(f"Invalid view name requested: {view_name}")
+        return []
+
+    query = f"""
+        SELECT DISTINCT user_id
+        FROM {view_name}
+        WHERE 1=1
+    """
+
+    params = []
+
+    # Add survey_id condition if specified
+    if survey_id is not None:
+        query += " AND survey_id = %s"
+        params.append(survey_id)
+
+    log_msg = f"Retrieving users from view {view_name}"
+    if survey_id:
+        log_msg += f" for survey {survey_id}"
+    logger.debug(log_msg)
+
+    try:
+        results = execute_query(query, tuple(params) if params else None)
+        if results:
+            user_ids = [result["user_id"] for result in results]
+            logger.debug(f"Retrieved {len(user_ids)} users from view {view_name}")
+
+            # Additional log to help diagnose filter issues
+            if survey_id is not None:
+                if user_ids:
+                    user_list = ", ".join(user_ids[:5])
+                    if len(user_ids) > 5:
+                        user_list += f"... (+{len(user_ids)-5} more)"
+                    logger.debug(
+                        f"Users for survey {survey_id} in view {view_name}: {user_list}"
+                    )
+                else:
+                    # Check if there are ANY users in this view from any survey
+                    check_query = (
+                        f"SELECT COUNT(DISTINCT user_id) as count FROM {view_name}"
+                    )
+                    check_result = execute_query(check_query, fetch_one=True)
+                    total_count = check_result.get("count", 0) if check_result else 0
+
+                    if total_count > 0:
+                        logger.info(
+                            f"View {view_name} has {total_count} total users across all surveys, "
+                            f"but none for survey {survey_id}"
+                        )
+                    else:
+                        logger.info(
+                            f"View {view_name} is empty (no users in any survey)"
+                        )
+
+            return user_ids
+
+        if survey_id is not None:
+            logger.warning(f"No users found in view {view_name} for survey {survey_id}")
+        else:
+            logger.warning(f"No users found in view {view_name}")
+        return []
+    except Exception as e:
+        logger.error(f"Error retrieving users from view {view_name}: {str(e)}")
+        return []
+
+
+def get_survey_response_counts(survey_id: int) -> Optional[Dict[str, int]]:
+    """
+    Checks the number of responses and unique users for a given survey.
+
+    Args:
+        survey_id (int): The ID of the survey.
+
+    Returns:
+        Optional[Dict[str, int]]: A dictionary with 'count' and 'unique_users'
+                                   or None if an error occurs or no responses.
+    """
+    query = """
+        SELECT COUNT(*) as count, COUNT(DISTINCT user_id) as unique_users
+        FROM survey_responses sr
+        WHERE sr.survey_id = %s AND sr.completed = TRUE AND sr.attention_check_failed = FALSE
+    """
+    try:
+        results = execute_query(query, (survey_id,), fetch_one=True)
+        if results and results.get("count", 0) > 0:
+            return {"count": results["count"], "unique_users": results["unique_users"]}
+        return None
+    except Exception as e:
+        logger.error(
+            f"Error checking survey response counts for survey {survey_id}: {str(e)}"
+        )
+        return None

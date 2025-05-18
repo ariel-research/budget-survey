@@ -4,7 +4,7 @@ Handles all survey response related endpoints including responses and comments.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, render_template, request
 
@@ -20,6 +20,8 @@ from application.translations import get_translation
 from database.queries import (
     get_survey_description,
     get_survey_pair_generation_config,
+    get_survey_response_counts,
+    get_users_from_view,
     retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
 )
@@ -56,9 +58,10 @@ def get_user_responses(
     show_overall_survey_table: bool = True,
     sort_by: str = None,
     sort_order: str = "asc",
-) -> Dict[str, str]:
+    view_filter: Optional[str] = None,
+) -> Dict[str, Any]:
     """
-    Get formatted user survey responses with optional sorting.
+    Get formatted user survey responses with optional sorting and filtering.
 
     Args:
         survey_id: Optional survey ID to filter responses
@@ -68,9 +71,10 @@ def get_user_responses(
         show_overall_survey_table: If True, show overall survey table
         sort_by: Optional field to sort by ('user_id', 'created_at')
         sort_order: Optional order for sorting, 'asc' (default) or 'desc'
+        view_filter: Optional view name to filter users
 
     Returns:
-        Dict[str, str]: A dictionary containing the formatted survey responses.
+        Dict[str, Any]: A dictionary containing the formatted survey responses.
 
     Raises:
         SurveyNotFoundError: If no responses found.
@@ -81,17 +85,73 @@ def get_user_responses(
         strategy_name = None
         survey_strategies = {}  # Maps survey_id to strategy_name
 
-        # Use provided choices or fetch new ones
+        # This variable will hold user_ids if a view_filter is active and valid
+        characteristic_user_ids_from_view = None
+
+        if view_filter:
+            # Get all users matching the view's general criteria.
+            temp_user_ids = get_users_from_view(view_filter)
+
+            if not temp_user_ids:
+                log_msg = (
+                    f"No users found matching general criteria of view '{view_filter}'. "
+                    f"No responses will be shown for survey {survey_id} with this filter."
+                )
+                logger.info(log_msg)
+
+                survey_counts = get_survey_response_counts(survey_id)
+                if survey_counts:
+                    logger.info(
+                        f"Context: Survey {survey_id} has {survey_counts['count']} "
+                        f"responses from {survey_counts['unique_users']} unique users."
+                    )
+                else:
+                    logger.warning(
+                        f"Context: Survey {survey_id} has no responses in database."
+                    )
+
+                empty_data = ResponseFormatter.format_response_data([])
+                empty_data["view_filter"] = view_filter
+                empty_data["empty_filter"] = True
+                empty_data["content"] = ""
+                return empty_data
+            else:
+                characteristic_user_ids_from_view = temp_user_ids
+                logger.debug(
+                    f"View filter '{view_filter}' identified "
+                    f"{len(characteristic_user_ids_from_view)} characteristic users."
+                )
+
         if user_choices is None:
             user_choices = retrieve_user_survey_choices()
+
+            # Apply view filter (characteristic users) if identified
+            if characteristic_user_ids_from_view is not None:
+                original_choice_count = len(user_choices)
+                user_choices = [
+                    choice
+                    for choice in user_choices
+                    if choice["user_id"] in characteristic_user_ids_from_view
+                ]
+                logger.debug(
+                    f"Applied view filter '{view_filter}': "
+                    f"{original_choice_count} initial choices -> {len(user_choices)} choices."
+                )
+
+            # Filter by the specific survey ID of the request
             if survey_id is not None:
+                original_count = len(user_choices)
                 user_choices = [
                     choice
                     for choice in user_choices
                     if choice["survey_id"] == survey_id
                 ]
+                logger.debug(
+                    f"Applied survey_id filter {survey_id}: "
+                    f"{original_count} initial choices -> {len(user_choices)} choices."
+                )
 
-            # Apply sorting if requested
+            # Apply sorting
             if sort_by:
                 reverse = sort_order.lower() == "desc"
                 if sort_by == "user_id":
@@ -101,8 +161,24 @@ def get_user_responses(
                         key=lambda x: x["response_created_at"], reverse=reverse
                     )
 
-            if survey_id is not None and not user_choices:
-                logger.warning(f"No responses found for survey {survey_id}")
+            # Handle the case where we have a view filter but no matching choices for the survey
+            if survey_id is not None and not user_choices and view_filter:
+                logger.warning(
+                    f"No responses found for survey {survey_id} with filter '{view_filter}'. "
+                    f"Returning empty filter response."
+                )
+                empty_data = ResponseFormatter.format_response_data([])
+                empty_data["view_filter"] = view_filter
+                empty_data["empty_filter"] = True
+                empty_data["content"] = ""
+                return empty_data
+
+            # Only raise error if no matches found and not using a view filter
+            if survey_id is not None and not user_choices and not view_filter:
+                logger.warning(
+                    f"No responses found for survey {survey_id} after all filters "
+                    f"(view_filter: '{view_filter or 'None'}')."
+                )
                 raise SurveyNotFoundError(survey_id)
 
         # Add strategy labels and get strategy name if survey_id is known
@@ -114,7 +190,7 @@ def get_user_responses(
                     strategy = StrategyRegistry.get_strategy(
                         strategy_config["strategy"]
                     )
-                    strategy_name = strategy.get_strategy_name()  # Get strategy name
+                    strategy_name = strategy.get_strategy_name()
                     survey_labels[survey_id] = strategy.get_option_labels()
                     survey_strategies[survey_id] = strategy_name  # Store strategy name
                 except ValueError as e:
@@ -130,16 +206,15 @@ def get_user_responses(
                     config = get_survey_pair_generation_config(current_survey_id)
                     if config:
                         try:
-                            strategy = StrategyRegistry.get_strategy(config["strategy"])
-                            # Get name if this is the first time for this survey
-                            strategy_name_for_survey = strategy.get_strategy_name()
-                            survey_strategies[current_survey_id] = (
-                                strategy_name_for_survey
+                            strat_instance = StrategyRegistry.get_strategy(
+                                config["strategy"]
                             )
+                            s_name_for_survey = strat_instance.get_strategy_name()
+                            survey_strategies[current_survey_id] = s_name_for_survey
                             if strategy_name is None and survey_id is None:
-                                strategy_name = strategy_name_for_survey
+                                strategy_name = s_name_for_survey
                             survey_labels[current_survey_id] = (
-                                strategy.get_option_labels()
+                                strat_instance.get_option_labels()
                             )
                         except ValueError as e:
                             logger.warning(
@@ -162,8 +237,6 @@ def get_user_responses(
         if survey_id is not None and survey_id in survey_labels:
             option_labels = survey_labels[survey_id]
         elif user_choices and user_choices[0]["survey_id"] in survey_labels:
-            # Fallback for /responses and /users/{id}/responses
-            # where survey_id isn't fixed
             option_labels = survey_labels[user_choices[0]["survey_id"]]
         else:
             option_labels = ("Option 1", "Option 2")
@@ -177,6 +250,11 @@ def get_user_responses(
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
         )
+
+        # Add view filter information to response data
+        if view_filter:
+            response_data["view_filter"] = view_filter
+
         return response_data
 
     except (SurveyNotFoundError, StrategyConfigError) as e:
@@ -223,7 +301,7 @@ def format_comments_data(responses: List[Dict]) -> List[Dict]:
 @responses_routes.route("/<int:survey_id>/responses")
 def get_survey_responses(survey_id: int):
     """
-    Get all responses for a specific survey with optional sorting.
+    Get all responses for a specific survey with optional sorting and filtering.
 
     Args:
         survey_id: ID of the survey to get responses for
@@ -237,16 +315,21 @@ def get_survey_responses(survey_id: int):
             request.args.get("sort"), request.args.get("order", "asc")
         )
 
+        # Get view filter parameter
+        view_filter = request.args.get("view_filter")
+
         logger.info(
-            f"Sorting parameters - sort_by: {sort_by}, sort_order: {sort_order}"
+            f"Request to /surveys/{survey_id}/responses. Sort: {sort_by} {sort_order}. "
+            f"View filter: '{view_filter or 'None'}'"
         )
 
-        # Get user responses filtered by survey_id
+        # Get user responses filtered by survey_id and view_filter
         data = get_user_responses(
             survey_id=survey_id,
             show_tables_only=True,
             sort_by=sort_by,
             sort_order=sort_order,
+            view_filter=view_filter,
         )
 
         # Fetch the survey description
@@ -268,6 +351,7 @@ def get_survey_responses(survey_id: int):
             survey_id=survey_id,
             survey_description=survey_description,
             strategy_name=strategy_name,
+            view_filter=view_filter,
         )
 
     except SurveyNotFoundError as e:
@@ -300,11 +384,17 @@ def list_all_responses():
         sort_by, sort_order = validate_sort_params(
             request.args.get("sort"), request.args.get("order", "asc")
         )
+        view_filter = request.args.get("view_filter")
 
         data = get_user_responses(
-            show_overall_survey_table=False, sort_by=sort_by, sort_order=sort_order
+            show_overall_survey_table=False,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            view_filter=view_filter,
         )
-        return render_template("responses/list.html", data=data)
+        return render_template(
+            "responses/list.html", data=data, view_filter=view_filter
+        )
     except ResponseProcessingError as e:
         logger.error(str(e))
         return (
@@ -483,7 +573,7 @@ def list_all_comments():
 
         return render_template(
             "responses/comments.html",
-            data={"content": grouped_comments} if grouped_comments else {},
+            data={"content": grouped_comments if grouped_comments else {}},
             show_comments=True,
         )
     except Exception as e:

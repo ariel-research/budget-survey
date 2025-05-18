@@ -50,3 +50,4 @@ In chronological order:
 - `20250401_add_stories_table.sql` - Creates stories table and refactors surveys table to use story references
 - `20250501_add_user_blacklist.sql` - Adds blacklisting columns to users table for handling users who fail attention checks
 - `20250511_retroactive_unaware_users.sql` - Retroactively blacklists users who failed attention checks but weren't previously marked as blacklisted
+- `20250514_add_weighted_vector_views.sql` - Creates SQL views for analyzing user preferences for weighted vector strategies
