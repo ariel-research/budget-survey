@@ -1161,11 +1161,6 @@ th.sortable[data-order="desc"]::after {
    order: 1;
 }
 
-/* Active Filter Badge */
-[dir="rtl"] .active-filter-badge {
-   flex-direction: row-reverse;
-}
-
 [dir="rtl"] .clear-filter {
    margin-left: 0;
    margin-right: 10px;
