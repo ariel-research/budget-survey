@@ -424,7 +424,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "survey_summary": {"he": "סיכום הסקר", "en": "Survey Summary"},
         # Table headers and labels
-        "average_percentage": {"he": "אחוז ממוצע", "en": "Average Percentage"},
+        "average_percentage": {
+            "he": "אחוז עקביות ממוצע",
+            "en": "Average Rate of Consistency",
+        },
         "metric": {"he": "מדד", "en": "Metric"},
         "percentage": {"he": "אחוז", "en": "Percentage"},
         "choice": {"he": "בחירה", "en": "Choice"},
@@ -484,6 +487,17 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "תשובות לסקר מספר {survey_id}",
             "en": "Responses for Survey #{survey_id}",
         },
+        "extreme_vector_analysis_title": {
+            "en": "Extreme Vector Analysis",
+            "he": "ניתוח אקסטרים ווקטור",
+        },
+        "percentile_breakdown_title": {
+            "en": "Percentile Consistency Breakdown",
+            "he": ("פירוט עקביות " "לפי אחוזונים"),
+        },
+        "percentile": {"en": "Percentile", "he": "אחוזון"},
+        "all_percentiles": {"en": "All Percentiles", "he": "כל האחוזונים"},
+        "average_consistency": {"en": "Average Consistency", "he": "עקביות ממוצעת"},
     },
 }
 
