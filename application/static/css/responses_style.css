@@ -1016,6 +1016,72 @@ th.sortable[data-order="desc"]::after {
 }
 
 /* ==========================================================================
+  Percentile Breakdown Table Styles
+========================================================================== */
+.percentile-breakdown-container {
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.percentile-breakdown-container h4 {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.percentile-breakdown-container table {
+    width: 100%;
+    max-width: 800px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.percentile-breakdown-container th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 12px 16px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.percentile-breakdown-container td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    text-align: center;
+    font-family: var(--font-family-mono);
+}
+
+.percentile-breakdown-container td:first-child {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-background-alt);
+}
+
+.all-percentiles-row {
+    font-weight: bold;
+    background-color: var(--color-background-alt);
+    border-top: 2px solid var(--color-border);
+}
+
+.all-percentiles-row td {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+}
+
+
+/* ==========================================================================
   Empty Filter Message
   ========================================================================== */
 .empty-filter-message {
@@ -1222,6 +1288,16 @@ th.sortable[data-order="desc"]::after {
    display: block;
 }
 
+/* Percentile Breakdown Table */
+[dir="rtl"] .percentile-breakdown-container th,
+[dir="rtl"] .percentile-breakdown-container td {
+    text-align: center;
+}
+
+[dir="rtl"] .percentile-breakdown-container td:first-child {
+    text-align: center;
+}
+
 /* ==========================================================================
   Responsive Adjustments
   ========================================================================== */
@@ -1281,6 +1357,22 @@ th.sortable[data-order="desc"]::after {
    .choice-pair {
       padding: var(--spacing-sm);
    }
+
+   /* Percentile Breakdown Table */
+   .percentile-breakdown-container {
+      padding: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+  }
+
+  .percentile-breakdown-container table {
+      font-size: var(--font-size-sm);
+  }
+
+  .percentile-breakdown-container td,
+  .percentile-breakdown-container th {
+      padding: 8px;
+  }
+
 }
 
 @media (max-width: 480px) {
