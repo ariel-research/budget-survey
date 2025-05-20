@@ -580,7 +580,7 @@ def _generate_extreme_vector_consistency_summary(choices: List[Dict]) -> str:
         str: HTML string showing consistency percentages for each comparison group.
     """
     # Extract consistency information
-    _, processed_pairs, _, consistency_info = _extract_extreme_vector_preferences(
+    _, processed_pairs, _, consistency_info, _ = _extract_extreme_vector_preferences(
         choices
     )
 
@@ -710,9 +710,15 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     logger.debug("Generating extreme vector analysis summary table for single user.")
 
     # Extract preference data from choices
-    counts, processed_pairs, expected_pairs, consistency_info = (
+    counts, processed_pairs, expected_pairs, consistency_info, percentile_data = (
         _extract_extreme_vector_preferences(choices)
     )
+
+    logger.debug(f"counts: {counts}")
+    logger.debug(f"processed_pairs: {processed_pairs}")
+    logger.debug(f"expected_pairs: {expected_pairs}")
+    logger.debug(f"consistency_info: {consistency_info}")
+    logger.debug(f"percentile_data: {percentile_data}")
 
     # If no valid pairs were processed, return empty string
     if processed_pairs == 0:
@@ -726,13 +732,25 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
             "Table might be incomplete."
         )
 
-    # Generate HTML table from counts and consistency info
-    return _generate_extreme_analysis_html(counts, processed_pairs, consistency_info)
+    # Generate both tables
+    main_table_html = _generate_extreme_analysis_html(
+        counts, processed_pairs, consistency_info
+    )
+    percentile_table_html = _generate_percentile_breakdown_table(percentile_data)
+
+    # Return both tables
+    return main_table_html + percentile_table_html
 
 
 def _extract_extreme_vector_preferences(
     choices: List[Dict],
-) -> Tuple[List[List[int]], int, int, List[Tuple[int, int, Optional[str]]]]:
+) -> Tuple[
+    List[List[int]],
+    int,
+    int,
+    List[Tuple[int, int, Optional[str]]],
+    Dict[int, Dict[str, List[int]]],
+]:
     """
     Extract extreme vector preferences from user choices, and calculate consistency for weighted pairs.
 
@@ -745,9 +763,10 @@ def _extract_extreme_vector_preferences(
         - processed_pairs: number of successfully processed pairs
         - expected_pairs: expected number of pairs
         - consistency_info: list of (matches, total, core_preference) for each group (A vs B, ...)
+        - percentile_data: Dict mapping percentiles to group consistency data
     """
     # Extract the basic preference data
-    counts, core_preferences, weighted_answers, processed_pairs = (
+    counts, core_preferences, weighted_answers, processed_pairs, percentile_data = (
         _extract_preference_counts(choices)
     )
 
@@ -756,12 +775,24 @@ def _extract_extreme_vector_preferences(
         core_preferences, weighted_answers
     )
 
-    return counts, processed_pairs, EXTREME_VECTOR_EXPECTED_PAIRS, consistency_info
+    return (
+        counts,
+        processed_pairs,
+        EXTREME_VECTOR_EXPECTED_PAIRS,
+        consistency_info,
+        percentile_data,
+    )
 
 
 def _extract_preference_counts(
     choices: List[Dict],
-) -> Tuple[List[List[int]], List[Optional[str]], List[List[str]], int]:
+) -> Tuple[
+    List[List[int]],
+    List[Optional[str]],
+    List[List[str]],
+    int,
+    Dict[int, Dict[str, List[int]]],
+]:
     """
     Extract core preference counts and organize data for consistency analysis.
 
@@ -774,6 +805,7 @@ def _extract_preference_counts(
         - core_preferences: List of core preferences (A/B/C) for each group
         - weighted_answers: List of lists containing weighted pair preferences for each group
         - processed_pairs: Number of successfully processed pairs
+        - percentile_data: Dict mapping percentiles to group consistency data
     """
     index_to_name = {0: "A", 1: "B", 2: "C"}
     name_to_index = {"A": 0, "B": 1, "C": 2}
@@ -786,6 +818,13 @@ def _extract_preference_counts(
     # Store for each group: core_preference, list of weighted answers
     core_preferences = [None, None, None]  # 0: A vs B, 1: A vs C, 2: B vs C
     weighted_answers = [[], [], []]  # Each is a list of user choices for weighted pairs
+
+    # Initialize percentile tracking
+    percentile_data = {
+        25: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+        50: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+        75: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+    }
 
     for choice in choices:
         try:
@@ -847,11 +886,30 @@ def _extract_preference_counts(
                 # Weighted pair: store the user's answer (A/B/C) for this group
                 weighted_answers[group_idx].append(preferred_name)
 
+                # Extract percentile from strategy string
+                percentile = None
+                if "25%" in opt1_str or "25%" in opt2_str:
+                    percentile = 25
+                elif "50%" in opt1_str or "50%" in opt2_str:
+                    percentile = 50
+                elif "75%" in opt1_str or "75%" in opt2_str:
+                    percentile = 75
+
+                if percentile is not None:
+                    group_key = (
+                        f"{group_names[group_idx][0]}_vs_{group_names[group_idx][1]}"
+                    )
+                    # matches[0] is total, matches[1] is matches with core preference
+                    if core_preferences[group_idx] is not None:
+                        percentile_data[percentile][group_key][0] += 1
+                        if preferred_name == core_preferences[group_idx]:
+                            percentile_data[percentile][group_key][1] += 1
+
         except Exception as e:
             logger.error(f"Error processing extreme choice: {e}", exc_info=True)
             continue
 
-    return counts, core_preferences, weighted_answers, processed_pairs
+    return counts, core_preferences, weighted_answers, processed_pairs, percentile_data
 
 
 def _calculate_consistency_metrics(
@@ -1066,6 +1124,116 @@ def _generate_consistency_table_row(group_label: str, matches: int, total: int) 
     </tr>
     <tr class="separator-row"><td colspan="3"></td></tr>
     """
+
+
+def _generate_percentile_breakdown_table(
+    percentile_data: Dict[int, Dict[str, List[int]]]
+) -> str:
+    """
+    Generate HTML table showing consistency metrics for different percentiles.
+
+    Args:
+        percentile_data: Dict mapping percentiles to group consistency data
+
+    Returns:
+        str: HTML table showing percentile breakdown
+    """
+    # Get translations
+    title = get_translation("percentile_breakdown_title", "answers")
+    th_percentile = get_translation("percentile", "answers")
+    th_a_vs_b = get_translation("a_vs_b", "answers")
+    th_a_vs_c = get_translation("a_vs_c", "answers")
+    th_b_vs_c = get_translation("b_vs_c", "answers")
+    th_average = get_translation("average_percentage", "answers")
+    all_percentiles = get_translation("all_percentiles", "answers")
+
+    # Generate rows for each percentile
+    rows = []
+    total_matches = {"A_vs_B": 0, "A_vs_C": 0, "B_vs_C": 0}
+    total_pairs = {"A_vs_B": 0, "A_vs_C": 0, "B_vs_C": 0}
+
+    for percentile in sorted(percentile_data.keys()):
+        matches = []
+        totals = []
+        for group in ["A_vs_B", "A_vs_C", "B_vs_C"]:
+            total, match = percentile_data[percentile][group]
+            matches.append(match)
+            totals.append(total)
+            total_matches[group] += match
+            total_pairs[group] += total
+
+        # Calculate row average
+        row_total = sum(totals)
+        row_matches = sum(matches)
+        row_avg = (row_matches / row_total * 100) if row_total > 0 else 0
+
+        # Generate binary consistency values for individual percentiles
+        row_cells = []
+        for i in range(3):
+            if totals[i] > 0:
+                value = "1" if matches[i] == totals[i] else "0"
+            else:
+                value = "-"
+            row_cells.append(f"<td>{value}</td>")
+
+        row = f"""
+        <tr>
+            <td>{percentile}%</td>
+            {"".join(row_cells)}
+            <td>{row_avg:.0f}% ({row_matches}/{row_total})</td>
+        </tr>
+        """
+        rows.append(row)
+
+    # Generate "All Percentiles" summary row
+    all_cells = []
+    all_total_matches = 0
+    all_total_pairs = 0
+    for group in ["A_vs_B", "A_vs_C", "B_vs_C"]:
+        matches = total_matches[group]
+        total = total_pairs[group]
+        all_total_matches += matches
+        all_total_pairs += total
+        percentage = (matches / total * 100) if total > 0 else 0
+        all_cells.append(f"<td>{percentage:.0f}% ({matches}/{total})</td>")
+
+    # Calculate overall average
+    overall_percentage = (
+        (all_total_matches / all_total_pairs * 100) if all_total_pairs > 0 else 0
+    )
+    all_row = f"""
+    <tr class="all-percentiles-row">
+        <td>{all_percentiles}</td>
+        {"".join(all_cells)}
+        <td>{overall_percentage:.0f}% ({all_total_matches}/{all_total_pairs})</td>
+    </tr>
+    """
+    rows.append(all_row)
+
+    # Construct the complete table
+    table_html = f"""
+    <div class="percentile-breakdown-container">
+        <h4>{title}</h4>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{th_percentile}</th>
+                        <th>{th_a_vs_b}</th>
+                        <th>{th_a_vs_c}</th>
+                        <th>{th_b_vs_c}</th>
+                        <th>{th_average}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {"".join(rows)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+
+    return table_html
 
 
 def generate_detailed_user_choices(
@@ -1293,7 +1461,7 @@ def generate_detailed_breakdown_table(
                 if "consistency" in strategy_columns and "choices" in summary:
                     # Handle extreme_vectors strategy with consistency column
                     choices = summary["choices"]
-                    _, processed_pairs, _, consistency_info = (
+                    _, processed_pairs, _, consistency_info, _ = (
                         _extract_extreme_vector_preferences(choices)
                     )
 
@@ -1504,7 +1672,7 @@ def generate_overall_statistics_table(
         for summary in summaries:
             if "choices" in summary:
                 choices = summary["choices"]
-                _, processed_pairs, _, consistency_info = (
+                _, processed_pairs, _, consistency_info, _ = (
                     _extract_extreme_vector_preferences(choices)
                 )
 
