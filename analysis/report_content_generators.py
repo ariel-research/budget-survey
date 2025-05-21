@@ -1127,13 +1127,14 @@ def _generate_consistency_table_row(group_label: str, matches: int, total: int) 
 
 
 def _generate_percentile_breakdown_table(
-    percentile_data: Dict[int, Dict[str, List[int]]]
+    percentile_data: Dict[int, Dict[str, List[int]]], include_title: bool = True
 ) -> str:
     """
     Generate HTML table showing consistency metrics for different percentiles.
 
     Args:
         percentile_data: Dict mapping percentiles to group consistency data
+        include_title: Whether to include the h4 title (default: True)
 
     Returns:
         str: HTML table showing percentile breakdown
@@ -1153,25 +1154,28 @@ def _generate_percentile_breakdown_table(
     total_pairs = {"A_vs_B": 0, "A_vs_C": 0, "B_vs_C": 0}
 
     for percentile in sorted(percentile_data.keys()):
-        matches = []
+        group_matches = []
         totals = []
         for group in ["A_vs_B", "A_vs_C", "B_vs_C"]:
             total, match = percentile_data[percentile][group]
-            matches.append(match)
+            group_matches.append(match)
             totals.append(total)
             total_matches[group] += match
             total_pairs[group] += total
 
         # Calculate row average
         row_total = sum(totals)
-        row_matches = sum(matches)
+        row_matches = sum(group_matches)
         row_avg = (row_matches / row_total * 100) if row_total > 0 else 0
 
-        # Generate binary consistency values for individual percentiles
+        # Generate consistency percentage and count for individual percentiles
         row_cells = []
         for i in range(3):
-            if totals[i] > 0:
-                value = "1" if matches[i] == totals[i] else "0"
+            current_total = totals[i]
+            current_matches = group_matches[i]
+            if current_total > 0:
+                percentage = int(round(current_matches / current_total * 100))
+                value = f"{percentage}% ({current_matches}/{current_total})"
             else:
                 value = "-"
             row_cells.append(f"<td>{value}</td>")
@@ -1213,7 +1217,7 @@ def _generate_percentile_breakdown_table(
     # Construct the complete table
     table_html = f"""
     <div class="percentile-breakdown-container">
-        <h4>{title}</h4>
+        {f'<h4>{title}</h4>' if include_title else ''}
         <div class="table-container">
             <table>
                 <thead>
@@ -1236,6 +1240,106 @@ def _generate_percentile_breakdown_table(
     return table_html
 
 
+def generate_aggregated_percentile_breakdown(
+    user_choices: List[Dict], strategy_name: str = None
+) -> str:
+    """
+    Generate an aggregated percentile breakdown table for all responses to an extreme vector survey.
+
+    Args:
+        user_choices: List of dictionaries containing user choices data
+        strategy_name: Name of the pair generation strategy used
+
+    Returns:
+        str: HTML for the aggregated percentile breakdown table, or empty string if not applicable
+    """
+    # Only generate for extreme vector strategy
+    if strategy_name != "extreme_vectors":
+        logger.info(
+            f"Skipping percentile breakdown - strategy is {strategy_name} not extreme_vectors"
+        )
+        return ""
+
+    logger.info(
+        f"Generating aggregated percentile breakdown table for extreme vector survey with {len(user_choices)} choices"
+    )
+
+    # Group choices by user
+    choices_by_user = {}
+    for choice in user_choices:
+        user_id = choice["user_id"]
+        if user_id not in choices_by_user:
+            choices_by_user[user_id] = []
+        choices_by_user[user_id].append(choice)
+
+    logger.info(f"Grouped choices for {len(choices_by_user)} unique users")
+
+    # Initialize aggregated data structure
+    aggregated_data = {
+        25: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+        50: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+        75: {"A_vs_B": [0, 0], "A_vs_C": [0, 0], "B_vs_C": [0, 0]},
+    }
+
+    user_count = 0
+    # Process each user's choices to extract and aggregate percentile data
+    for user_id, choices in choices_by_user.items():
+        # Skip if no choices
+        if not choices:
+            continue
+
+        user_count += 1
+        logger.debug(f"Processing percentile data for user {user_id}")
+
+        # Extract percentile data for this user
+        _, _, _, _, percentile_data = _extract_extreme_vector_preferences(choices)
+
+        # Add to aggregated totals
+        for percentile in [25, 50, 75]:
+            for group in ["A_vs_B", "A_vs_C", "B_vs_C"]:
+                # percentile_data from _extract_extreme_vector_preferences is [total, match]
+                # _generate_percentile_breakdown_table also expects [total, match]
+                user_total_for_pg, user_matches_for_pg = percentile_data[percentile][
+                    group
+                ]
+
+                # Aggregate: aggregated_data stores [total, match]
+                aggregated_data[percentile][group][
+                    0
+                ] += user_total_for_pg  # Index 0 is total
+                aggregated_data[percentile][group][
+                    1
+                ] += user_matches_for_pg  # Index 1 is match
+
+    logger.debug(
+        f"Aggregated percentile data from {user_count} users: {aggregated_data}"
+    )
+
+    if user_count == 0:
+        logger.info("No users with valid percentile data found")
+        return ""
+
+    main_title = get_translation("percentile_breakdown_title", "answers")
+    table_html = _generate_percentile_breakdown_table(
+        aggregated_data, include_title=False
+    )
+
+    if not table_html:
+        logger.warning("No table HTML generated from percentile data for aggregation")
+        return ""
+
+    final_html = f"""
+    <div class="summary-table-container survey-percentile-breakdown-container">
+        <h2>{main_title}</h2>
+        {table_html}
+    </div>
+    """
+    logger.info(
+        f"Generated aggregated percentile breakdown HTML, length: {len(final_html)}"
+    )
+    return final_html
+
+
 def generate_detailed_user_choices(
     user_choices: List[Dict],
     option_labels: Tuple[str, str],
@@ -1243,7 +1347,7 @@ def generate_detailed_user_choices(
     show_tables_only: bool = False,
     show_detailed_breakdown_table: bool = True,
     show_overall_survey_table=True,
-) -> str:
+) -> Dict[str, str]:
     """Generate detailed analysis of each user's choices for each survey.
 
     Args:
@@ -1255,11 +1359,21 @@ def generate_detailed_user_choices(
         show_overall_survey_table: If True, include overall survey table.
 
     Returns:
-        str: HTML-formatted string with detailed user choices.
+        Dict[str, str]: Dictionary containing HTML components:
+            - overall_stats_html: HTML for overall statistics table
+            - breakdown_html: HTML for detailed breakdown table
+            - user_details_html: HTML for user-specific details
+            - combined_html: All components combined (for backwards compatibility)
     """
     if not user_choices:
         no_data_msg = get_translation("no_answers", "answers")
-        return f'<div class="no-data">{no_data_msg}</div>'
+        empty_html = f'<div class="no-data">{no_data_msg}</div>'
+        return {
+            "overall_stats_html": empty_html,
+            "breakdown_html": "",
+            "user_details_html": "",
+            "combined_html": empty_html,
+        }
 
     # Group choices by user and survey
     grouped_choices = {}
@@ -1303,31 +1417,32 @@ def generate_detailed_user_choices(
 
             all_summaries.append(summary)
 
-    # Generate content
-    content = []
+    # Initialize component HTML strings
+    overall_stats_html = ""
+    breakdown_html = ""
+    user_details_html = ""
+    all_components = []
 
+    # 1. Overall statistics table (if requested)
     if show_overall_survey_table:
-        # 1. Overall statistics table
-        content.append(
-            generate_overall_statistics_table(
-                all_summaries, option_labels, strategy_name
-            )
+        overall_stats_html = generate_overall_statistics_table(
+            all_summaries, option_labels, strategy_name
         )
+        all_components.append(overall_stats_html)
 
+    # 2. Detailed breakdown table (if requested)
     if show_detailed_breakdown_table:
-        # 2. Detailed breakdown table
-        content.append(
-            generate_detailed_breakdown_table(
-                all_summaries, option_labels, strategy_name
-            )
+        breakdown_html = generate_detailed_breakdown_table(
+            all_summaries, option_labels, strategy_name
         )
+        all_components.append(breakdown_html)
 
-    # Include detailed user choices only if not show_tables_only
+    # 3. User-specific details (only if not in tables-only mode)
     if not show_tables_only:
-        # 3. Detailed user choices with IDs for linking
+        user_details = []
         for user_id, surveys in grouped_choices.items():
-            content.append(f'<section id="user-{user_id}" class="user-choices">')
-            content.append(
+            user_details.append(f'<section id="user-{user_id}" class="user-choices">')
+            user_details.append(
                 f"<h3>{get_translation('user_id', 'answers')}: {user_id}</h3>"
             )
 
@@ -1344,19 +1459,28 @@ def generate_detailed_user_choices(
                         choices
                     )
                     if extreme_table_html:
-                        content.append(extreme_table_html)
+                        user_details.append(extreme_table_html)
 
                 # Generate the standard survey choices HTML
                 # Pass the strategy_name to _generate_survey_choices_html for specialized summary
-                content.append(
+                user_details.append(
                     _generate_survey_choices_html(
                         survey_id, choices, option_labels, survey_strategy_name
                     )
                 )
 
-            content.append("</section>")
+            user_details.append("</section>")
 
-    return "\n".join(content)
+        user_details_html = "\n".join(user_details)
+        all_components.append(user_details_html)
+
+    # Return structured content components for flexible positioning
+    return {
+        "overall_stats_html": overall_stats_html,
+        "breakdown_html": breakdown_html,
+        "user_details_html": user_details_html,
+        "combined_html": "\n".join(all_components),
+    }
 
 
 def generate_detailed_breakdown_table(
