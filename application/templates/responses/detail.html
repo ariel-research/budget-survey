@@ -79,13 +79,23 @@
             <div class="empty-filter-message">
                 {{ get_translation('no_matching_users', 'answers', default='No users match the selected filter criteria.') }}
             </div>
-        {% elif data.content %}
-            {% if show_tables_only %}
-                {# Show only until the first user section #}
-                {% set tables = data.content.split('<section')[0] %}
-                {{ tables|safe }}
-            {% else %}
-                {{ data.content|safe }}
+        {% elif data.overall_stats_html or data.combined_html %}
+            {# First, render Overall Survey Statistics #}
+            {{ data.overall_stats_html|safe if data.overall_stats_html else data.combined_html|safe }}
+            
+            {# Next, render Aggregated Percentile Consistency Breakdown if available #}
+            {% if percentile_breakdown %}
+                {{ percentile_breakdown|safe }}
+            {% endif %}
+            
+            {# Finally, render Survey Response Breakdown if available #}
+            {% if data.breakdown_html %}
+                {{ data.breakdown_html|safe }}
+            {% endif %}
+            
+            {# User details, if any #}
+            {% if data.user_details_html %}
+                {{ data.user_details_html|safe }}
             {% endif %}
         {% else %}
             <p class="no-data">{{ get_translation('no_answers', 'answers') }}</p>

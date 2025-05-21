@@ -8,7 +8,10 @@ from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, render_template, request
 
-from analysis.report_content_generators import generate_detailed_user_choices
+from analysis.report_content_generators import (
+    generate_aggregated_percentile_breakdown,
+    generate_detailed_user_choices,
+)
 from application.exceptions import (
     ResponseProcessingError,
     StrategyConfigError,
@@ -242,7 +245,9 @@ def get_user_responses(
             option_labels = ("Option 1", "Option 2")
 
         response_data = ResponseFormatter.format_response_data(user_choices)
-        response_data["content"] = generate_detailed_user_choices(
+
+        # Generate detailed user choices content
+        content_components = generate_detailed_user_choices(
             user_choices,
             option_labels=option_labels,
             strategy_name=strategy_name,
@@ -250,6 +255,15 @@ def get_user_responses(
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
         )
+
+        # For backward compatibility
+        if isinstance(content_components, str):
+            response_data["content"] = content_components
+        else:
+            # Add all components to the response data
+            response_data.update(content_components)
+            # Keep the original content field for backward compatibility
+            response_data["content"] = content_components.get("combined_html", "")
 
         # Add view filter information to response data
         if view_filter:
@@ -345,6 +359,37 @@ def get_survey_responses(survey_id: int):
             except ValueError as e:
                 logger.warning(f"Strategy not found for survey {survey_id}: {e}")
 
+        # Generate aggregated percentile breakdown table for extreme vector surveys
+        percentile_breakdown = ""
+        if strategy_name == "extreme_vectors":
+            # Get all choices for this survey for aggregated analysis
+            choices = retrieve_user_survey_choices()
+            survey_choices = [c for c in choices if c["survey_id"] == survey_id]
+            logger.info(f"Found {len(survey_choices)} choices for survey {survey_id}")
+
+            # Apply view filter if present
+            if view_filter and data.get("view_filter"):
+                filtered_user_ids = set()
+                for choice in data.get("responses", []):
+                    filtered_user_ids.add(choice.get("user_id"))
+
+                logger.info(f"Applying view filter with {len(filtered_user_ids)} users")
+                if filtered_user_ids:
+                    original_count = len(survey_choices)
+                    survey_choices = [
+                        c for c in survey_choices if c["user_id"] in filtered_user_ids
+                    ]
+                    logger.info(
+                        f"Filtered from {original_count} to {len(survey_choices)} choices"
+                    )
+
+            percentile_breakdown = generate_aggregated_percentile_breakdown(
+                survey_choices, strategy_name
+            )
+            logger.info(
+                f"Generated percentile breakdown HTML length: {len(percentile_breakdown)}"
+            )
+
         return render_template(
             "responses/detail.html",
             data=data,
@@ -352,6 +397,7 @@ def get_survey_responses(survey_id: int):
             survey_description=survey_description,
             strategy_name=strategy_name,
             view_filter=view_filter,
+            percentile_breakdown=percentile_breakdown,
         )
 
     except SurveyNotFoundError as e:
