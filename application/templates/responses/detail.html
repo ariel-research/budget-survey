@@ -30,17 +30,17 @@
 
     <form action="{{ url_for('responses.get_survey_responses', survey_id=survey_id) }}" method="GET" class="filter-form">
         <div class="filter-controls">
-            <label for="view_filter">{{ get_translation('user_filter', 'answers', default='Filter Users:') }}</label>
+            <label for="view_filter">{{ get_translation('user_filter', 'answers') }}</label>
             <select name="view_filter" id="view_filter" onchange="this.form.submit()">
-                <option value="">{{ get_translation('all_users', 'answers', default='All Users') }}</option>
+                <option value="">{{ get_translation('all_users', 'answers') }}</option>
                 <option value="v_users_preferring_weighted_vectors" {% if view_filter == 'v_users_preferring_weighted_vectors' %}selected{% endif %}>
-                    {{ get_translation('weighted_vector_users', 'answers', default='Users Preferring Weighted Vectors') }}
+                    {{ get_translation('weighted_vector_users', 'answers') }}
                 </option>
                 <option value="v_users_preferring_rounded_weighted_vectors" {% if view_filter == 'v_users_preferring_rounded_weighted_vectors' %}selected{% endif %}>
-                    {{ get_translation('rounded_weighted_vector_users', 'answers', default='Users Preferring Rounded Weighted Vectors') }}
+                    {{ get_translation('rounded_weighted_vector_users', 'answers') }}
                 </option>
                 <option value="v_users_preferring_any_weighted_vectors" {% if view_filter == 'v_users_preferring_any_weighted_vectors' %}selected{% endif %}>
-                    {{ get_translation('any_weighted_vector_users', 'answers', default='Users Preferring Any Weighted Vectors') }}
+                    {{ get_translation('any_weighted_vector_users', 'answers') }}
                 </option>
             </select>
             
@@ -79,13 +79,23 @@
             <div class="empty-filter-message">
                 {{ get_translation('no_matching_users', 'answers', default='No users match the selected filter criteria.') }}
             </div>
-        {% elif data.content %}
-            {% if show_tables_only %}
-                {# Show only until the first user section #}
-                {% set tables = data.content.split('<section')[0] %}
-                {{ tables|safe }}
-            {% else %}
-                {{ data.content|safe }}
+        {% elif data.overall_stats_html or data.combined_html %}
+            {# First, render Overall Survey Statistics #}
+            {{ data.overall_stats_html|safe if data.overall_stats_html else data.combined_html|safe }}
+            
+            {# Next, render Aggregated Percentile Consistency Breakdown if available #}
+            {% if percentile_breakdown %}
+                {{ percentile_breakdown|safe }}
+            {% endif %}
+            
+            {# Finally, render Survey Response Breakdown if available #}
+            {% if data.breakdown_html %}
+                {{ data.breakdown_html|safe }}
+            {% endif %}
+            
+            {# User details, if any #}
+            {% if data.user_details_html %}
+                {{ data.user_details_html|safe }}
             {% endif %}
         {% else %}
             <p class="no-data">{{ get_translation('no_answers', 'answers') }}</p>

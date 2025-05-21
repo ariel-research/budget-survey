@@ -185,6 +185,14 @@ The application uses the Strategy pattern to support multiple pair generation al
      ```
    - Purpose: Tests the hypothesis that if a user prefers extreme vector A over extreme vector B, they will also prefer weighted averages that incorporate extreme vector A over those with extreme vector B
 
+   - **Analysis Features**:
+     - Core Preference Analysis: Shows the user's fundamental preferences between extreme vectors (A vs B, A vs C, B vs C)
+     - Percentile Breakdown Table: Displays consistency metrics for different weight percentiles (25%, 50%, 75%)
+       - Shows how well user choices align with their core preferences at different weight levels
+       - Helps identify if consistency varies with the "extremeness" of the choices
+       - Provides separate consistency scores for each comparison group (A vs B, A vs C, B vs C)
+       - Includes an "All Percentiles" summary row with overall consistency metrics
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

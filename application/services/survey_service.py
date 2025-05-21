@@ -52,9 +52,7 @@ class SurveyService:
 
         survey_description = get_survey_description(survey_id)
         if not survey_description:
-            logger.warning(
-                f"No description found for survey: {survey_id}, using default"
-            )
+            logger.info(f"No description found for survey: {survey_id}, using default")
             # Using empty string instead of failure, since description is optional
             survey_description = ""
 
@@ -147,7 +145,7 @@ class SurveyService:
         # Get strategy configuration
         config = get_survey_pair_generation_config(survey_id)
         if not config:
-            logger.error(f"No configuration found for survey {survey_id}")
+            logger.warning(f"No configuration found for survey {survey_id}")
             raise ValueError(get_translation("survey_not_found", "messages"))
 
         try:
