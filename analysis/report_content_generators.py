@@ -722,7 +722,7 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
 
     # If no valid pairs were processed, return empty string
     if processed_pairs == 0:
-        logger.warning("No valid extreme vector pairs found for user response.")
+        logger.info("No valid extreme vector pairs found for user response.")
         return ""  # Don't show empty table
 
     # Log warning if fewer pairs than expected were processed
@@ -1325,7 +1325,7 @@ def generate_aggregated_percentile_breakdown(
     )
 
     if not table_html:
-        logger.warning("No table HTML generated from percentile data for aggregation")
+        logger.info("No table HTML generated from percentile data for aggregation")
         return ""
 
     final_html = f"""

@@ -109,8 +109,8 @@ def get_user_responses(
                         f"responses from {survey_counts['unique_users']} unique users."
                     )
                 else:
-                    logger.warning(
-                        f"Context: Survey {survey_id} has no responses in database."
+                    logger.info(
+                        f"Context: Survey {survey_id} has no responses " f"in database."
                     )
 
                 empty_data = ResponseFormatter.format_response_data([])
@@ -166,9 +166,9 @@ def get_user_responses(
 
             # Handle the case where we have a view filter but no matching choices for the survey
             if survey_id is not None and not user_choices and view_filter:
-                logger.warning(
-                    f"No responses found for survey {survey_id} with filter '{view_filter}'. "
-                    f"Returning empty filter response."
+                logger.info(
+                    f"No responses found for survey {survey_id} with "
+                    f"filter '{view_filter}'. Returning empty filter response."
                 )
                 empty_data = ResponseFormatter.format_response_data([])
                 empty_data["view_filter"] = view_filter
@@ -221,7 +221,8 @@ def get_user_responses(
                             )
                         except ValueError as e:
                             logger.warning(
-                                f"Strat not found for survey {current_survey_id}: {e}"
+                                f"Strat not found for survey {current_survey_id}: "
+                                f"{e}"
                             )
                             survey_labels[current_survey_id] = (
                                 "Option 1",
@@ -386,7 +387,7 @@ def get_survey_responses(survey_id: int):
             percentile_breakdown = generate_aggregated_percentile_breakdown(
                 survey_choices, strategy_name
             )
-            logger.info(
+            logger.debug(
                 f"Generated percentile breakdown HTML length: {len(percentile_breakdown)}"
             )
 
@@ -507,6 +508,9 @@ def get_user_survey_response(survey_id: int, user_id: str):
         ]
 
         if not user_survey_choices:
+            logger.warning(
+                f"No responses found for user {user_id} on survey " f"{survey_id}"
+            )
             return (
                 render_template(
                     "error.html",

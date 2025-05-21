@@ -202,12 +202,12 @@ def get_survey_field(survey_id: int, field_name: str) -> str:
     try:
         result = execute_query(query, (survey_id,), fetch_one=True)
         if not result:
-            logger.warning(f"No active survey found with id: {survey_id}")
-            return ""
+            logger.info(f"No active survey found with id: {survey_id}")
+            return None
 
         field_json = result[field_name]
         if not field_json:
-            return ""
+            return None
 
         field_dict = json.loads(field_json)
         current_lang = get_current_language()
@@ -217,10 +217,10 @@ def get_survey_field(survey_id: int, field_name: str) -> str:
 
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON for survey {survey_id}: {str(e)}")
-        return ""
+        return None
     except Exception as e:
         logger.error(f"Error retrieving {field_name} for survey {survey_id}: {str(e)}")
-        return ""
+        return None
 
 
 def get_survey_name(survey_id: int) -> str:
@@ -267,7 +267,7 @@ def get_subjects(survey_id: int) -> List[str]:
     try:
         result = execute_query(query, (survey_id,), fetch_one=True)
         if not result:
-            logger.warning("No active survey found with id: %s", survey_id)
+            logger.info("No active survey found with id: %s", survey_id)
             return []
 
         subjects_json = result["subjects"]
@@ -368,7 +368,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
             logger.debug(f"Retrieved {len(results)} rows of completed survey data")
             return results
         else:
-            logger.warning("No completed survey responses found")
+            logger.info("No completed survey responses found")
             return []
     except Exception as e:
         logger.error(f"Error retrieving completed survey responses: {str(e)}")
@@ -395,7 +395,7 @@ def get_latest_survey_timestamp() -> float:
         if result and result[0]["latest"]:
             return result[0]["latest"].timestamp()
         else:
-            logger.warning("No completed survey responses found")
+            logger.info("No completed survey responses found")
             return 0
     except Exception as e:
         logger.error(f"Error retrieving latest survey timestamp: {str(e)}")
@@ -443,7 +443,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
         if results:
             logger.debug(f"Retrieved choices data for {len(results)} comparison pairs")
             return results
-        logger.warning("No survey choices data found")
+        logger.info("No survey choices data found")
         return []
     except Exception as e:
         logger.error(f"Error retrieving survey choices: {str(e)}")
@@ -466,7 +466,7 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
     try:
         result = execute_query(query, (survey_id,), fetch_one=True)
         if not result:
-            logger.warning(f"No configuration found for survey: {survey_id}")
+            logger.info(f"No configuration found for survey: {survey_id}")
             return None
 
         config_str = result.get("pair_generation_config")
@@ -508,7 +508,7 @@ def get_active_surveys() -> List[Dict]:
     try:
         results = execute_query(query)
         if not results:
-            logger.warning("No active surveys found")
+            logger.info("No active surveys found")
             return []
 
         # Process the results - parse JSON fields
@@ -555,7 +555,7 @@ def get_story(code: str) -> Optional[Dict]:
     try:
         result = execute_query(query, (code,), fetch_one=True)
         if not result:
-            logger.warning(f"No story found with code: {code}")
+            logger.info(f"No story found with code: {code}")
             return None
 
         # Parse JSON fields
@@ -582,7 +582,7 @@ def get_all_stories() -> List[Dict]:
     try:
         results = execute_query(query)
         if not results:
-            logger.warning("No stories found")
+            logger.info("No stories found")
             return []
 
         # Parse JSON fields for each result
@@ -838,10 +838,11 @@ def get_users_from_view(view_name: str, survey_id: Optional[int] = None) -> List
             return user_ids
 
         if survey_id is not None:
-            logger.warning(f"No users found in view {view_name} for survey {survey_id}")
+            logger.info(f"No users found in view {view_name} for survey {survey_id}")
+            return []
         else:
-            logger.warning(f"No users found in view {view_name}")
-        return []
+            logger.info(f"No users found in view {view_name}")
+            return []
     except Exception as e:
         logger.error(f"Error retrieving users from view {view_name}: {str(e)}")
         return []
