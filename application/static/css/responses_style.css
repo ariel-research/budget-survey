@@ -1080,7 +1080,6 @@ th.sortable[data-order="desc"]::after {
     padding-bottom: var(--spacing-md);
 }
 
-
 /* ==========================================================================
   Empty Filter Message
   ========================================================================== */
@@ -1479,4 +1478,20 @@ th.sortable[data-order="desc"]::after {
   .survey-response-link {
      transition: none;
   }
+}
+
+/* Survey-level percentile breakdown table */
+.survey-percentile-breakdown-container {
+    margin-top: 24px;
+    margin-bottom: 30px;
+}
+
+.survey-percentile-breakdown-container h2 {
+    margin-bottom: 16px;
+    font-size: 1.5em;
+    color: var(--color-primary);
+}
+
+.survey-percentile-breakdown-container .percentile-breakdown-container {
+    margin-top: 0;
 }
