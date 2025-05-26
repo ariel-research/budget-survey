@@ -45,3 +45,15 @@ class StrategyConfigError(SurveyError):
         self.strategy = strategy
         message = f"Invalid strategy configuration '{strategy}' for survey {survey_id}"
         super().__init__(message)
+
+
+class UnsuitableForStrategyError(SurveyError):
+    """
+    Raised when user's ideal vector is unsuitable for a strategy.
+
+    Example:
+        raise UnsuitableForStrategyError("User vector contains zero values")
+    """
+
+    def __init__(self, message: str = "User vector is unsuitable for this strategy"):
+        super().__init__(message)
