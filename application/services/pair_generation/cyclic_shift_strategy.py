@@ -224,6 +224,10 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 vec1 = tuple(int(v) for v in vec1)
                 vec2 = tuple(int(v) for v in vec2)
 
+                # Check if rounding made the vectors identical
+                if vec1 == vec2:
+                    break  # Skip this pair and try again
+
                 # Check for duplicates by creating a canonical representation
                 vectors = tuple(sorted([vec1, vec2]))
                 if vectors in used_pairs or vectors in temp_used:
