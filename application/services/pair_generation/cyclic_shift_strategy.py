@@ -42,7 +42,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         self, user_vector: tuple, vector_size: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Generate two random difference vectors that sum to zero.
+        Generate two random difference vectors that sum to zero and produce
+        meaningfully different results.
 
         Args:
             user_vector: User's ideal budget allocation
@@ -62,6 +63,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             Step 1: Generate first difference vector
             - Since we apply cyclic shifts, use global constraints
             - For [20, 30, 50]: min=20, max=50, so range is [-20, +50] for all
+            - Ensure at least one element has meaningful difference (>=5)
             - Generate random diffs: [+10, -15, ?]
             - Adjust last element so sum = 0: [+10, -15, +5]
 
@@ -69,10 +71,14 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             - Start with negation: [-10, +15, -5]
             - Shuffle for variety: [-5, -10, +15]
 
+            Step 3: Validate meaningful differences
+            - Check that at least one element has |diff| >= 5
+            - Ensures resulting vectors are meaningfully different
+
             Result:
             - diff1 = [+10, -15, +5] → vector1 = [30, 15, 55]
             - diff2 = [-5, -10, +15] → vector2 = [15, 20, 65]
-            Both vectors sum to 100
+            Both vectors sum to 100 and are meaningfully different
         """
         user_array = np.array(user_vector)
 
@@ -81,26 +87,27 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         max_val = max(user_vector)
 
         for _ in range(1000):  # Try up to 1000 times
-            # Generate first difference vector
+            # Step 1: Generate first difference vector
             diff1 = []
             for _ in range(vector_size - 1):  # All except last element
-                # Global range considering cyclic shifts: [-min_val, 100-max_val]
                 min_diff = -min_val
                 max_diff = 100 - max_val
                 diff = np.random.randint(min_diff, max_diff + 1)
                 diff1.append(diff)
 
-            # Adjust last element to ensure sum is 0
+            # Last element ensures sum = 0
             diff1.append(-sum(diff1))
             diff1 = np.array(diff1)
 
-            # Generate second difference vector
-            # Start with negation for diversity
+            # Step 2: Generate second difference vector (negated + shuffled)
             diff2 = -diff1.copy()
-            # Shuffle to create different pattern
             np.random.shuffle(diff2)
 
-            # Check if both resulting vectors are valid
+            # Step 3: Simple check - ensure at least one meaningful difference
+            if not any(abs(d) >= 5 for d in diff1):
+                continue  # Try again if all differences are too small
+
+            # Step 4: Validate both resulting vectors
             vec1 = user_array + diff1
             vec2 = user_array + diff2
 
@@ -111,6 +118,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 and np.all(vec2 <= 100)
                 and np.sum(vec1) == 100
                 and np.sum(vec2) == 100
+                and not np.array_equal(vec1, vec2)  # Ensure vectors are different
             ):
                 return diff1, diff2
 
