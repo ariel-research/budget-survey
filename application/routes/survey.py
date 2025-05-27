@@ -14,6 +14,7 @@ from flask import (
 )
 
 from application.decorators import check_survey_eligibility
+from application.exceptions import UnsuitableForStrategyError
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
@@ -281,6 +282,17 @@ def handle_survey_get(
 
         return render_template("survey.html", **template_data)
 
+    except UnsuitableForStrategyError as e:
+        logger.info(f"User {user_id} unsuitable for strategy: {str(e)}")
+        return redirect(
+            url_for(
+                "survey.unsuitable",
+                userID=user_id,
+                surveyID=external_survey_id,
+                internalID=internal_survey_id,
+                demo="true" if is_demo else None,
+            )
+        )
     except Exception as e:
         logger.error(f"Error in survey GET: {str(e)}", exc_info=True)
         abort(400, description=get_translation("survey_processing_error", "messages"))
@@ -306,6 +318,29 @@ def blacklisted():
 
     return render_template(
         "blacklisted.html", user_id=user_id, translations=translations, _=_translate
+    )
+
+
+@survey_routes.route("/unsuitable")
+def unsuitable():
+    """Unsuitable user page route handler."""
+    user_id = request.args.get("userID", "")
+    logger.info(f"Unsuitable page accessed by user: {user_id}")
+
+    # Create translations dictionary for the template
+    translations = {
+        "unsuitable_title": get_translation("unsuitable_title", "survey"),
+        "unsuitable_message": get_translation("unsuitable_message", "survey"),
+        "user_id": get_translation("user_id", "answers"),
+        "close_window": get_translation("close_window", "survey"),
+    }
+
+    # Function to make translation available in template
+    def _translate(key, section="survey"):
+        return get_translation(key, section)
+
+    return render_template(
+        "unsuitable.html", user_id=user_id, translations=translations, _=_translate
     )
 
 
