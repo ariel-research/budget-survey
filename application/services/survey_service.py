@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
+from application.exceptions import UnsuitableForStrategyError
 from application.schemas.validators import SurveySubmission
 from application.services.pair_generation import StrategyRegistry
 from application.translations import get_translation
@@ -174,6 +175,9 @@ class SurveyService:
             )
             return comparison_pairs, awareness_questions
 
+        except UnsuitableForStrategyError:
+            # Re-raise unsuitable strategy errors to be handled by the route
+            raise
         except Exception as e:
             logger.error(f"Error generating pairs: {str(e)}")
             raise ValueError(get_translation("pair_generation_error", "messages"))
