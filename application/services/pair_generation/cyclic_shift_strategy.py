@@ -6,7 +6,6 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from application.exceptions import UnsuitableForStrategyError
-from application.services.awareness_check import generate_awareness_questions
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -297,19 +296,6 @@ class CyclicShiftStrategy(PairGenerationStrategy):
 
         # Take exactly 12 pairs
         final_pairs = all_pairs[:12]
-
-        # Add awareness check questions
-        awareness_questions = generate_awareness_questions(
-            list(user_vector), vector_size
-        )
-
-        # Convert awareness questions to the same format as comparison pairs
-        for i, aq in enumerate(awareness_questions):
-            awareness_pair = {
-                f"Awareness Check {i+1} Option A": tuple(aq["option1"]),
-                f"Awareness Check {i+1} Option B": tuple(aq["option2"]),
-            }
-            final_pairs.append(awareness_pair)
 
         logger.info(
             f"Generated {len(final_pairs)} total pairs using "
