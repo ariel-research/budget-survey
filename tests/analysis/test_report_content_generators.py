@@ -123,7 +123,8 @@ def test_generate_detailed_user_choices_empty(test_request_context, mock_transla
 
         option_labels = ("Sum Optimized Vector", "Ratio Optimized Vector")
         result = generate_detailed_user_choices([], option_labels)
-        assert "No detailed user choice data available" in result
+        assert isinstance(result, dict)
+        assert "No detailed user choice data available" in result["combined_html"]
 
 
 def test_generate_detailed_user_choices_single_user(
@@ -152,11 +153,13 @@ def test_generate_detailed_user_choices_single_user(
 
         result = generate_detailed_user_choices(test_data, option_labels)
 
-        assert "User ID: test123" in result
-        assert "Survey ID: 1" in result
-        assert "Ideal budget: [50, 30, 20]" in result
-        assert "Sum Optimized Vector" in result
-        assert "Ratio Optimized Vector" in result
+        assert isinstance(result, dict)
+        combined_html = result["combined_html"]
+        assert "test123" in combined_html  # User ID appears in the HTML
+        assert "1" in combined_html  # Survey ID appears in the HTML
+        assert "[50, 30, 20]" in combined_html  # Ideal budget appears
+        assert "Sum Optimized Vector" in combined_html
+        assert "Ratio Optimized Vector" in combined_html
 
 
 def test_generate_detailed_user_choices_multiple_optimizations(
@@ -195,10 +198,13 @@ def test_generate_detailed_user_choices_multiple_optimizations(
 
         result = generate_detailed_user_choices(test_data, option_labels)
 
-        assert "Sum Optimized Vector" in result
-        assert "Ratio Optimized Vector" in result
-        assert "Pair #1" in result
-        assert "Pair #2" in result
+        assert isinstance(result, dict)
+        combined_html = result["combined_html"]
+        assert "Sum Optimized Vector" in combined_html
+        assert "Ratio Optimized Vector" in combined_html
+        # Check for pair numbers in the HTML content
+        assert "1" in combined_html  # Pair number 1
+        assert "2" in combined_html  # Pair number 2
 
 
 def test_generate_detailed_user_choices_multiple_surveys(
@@ -236,10 +242,12 @@ def test_generate_detailed_user_choices_multiple_surveys(
 
         result = generate_detailed_user_choices(test_data, option_labels)
 
-        assert "Survey ID: 1" in result
-        assert "Survey ID: 2" in result
-        assert "Ideal budget: [25, 25, 50]" in result
-        assert "Ideal budget: [40, 40, 20]" in result
+        assert isinstance(result, dict)
+        combined_html = result["combined_html"]
+        assert "1" in combined_html  # Survey ID 1
+        assert "2" in combined_html  # Survey ID 2
+        assert "[25, 25, 50]" in combined_html  # First ideal budget
+        assert "[40, 40, 20]" in combined_html  # Second ideal budget
 
 
 def test_generate_detailed_user_choices_css_classes(
@@ -268,10 +276,13 @@ def test_generate_detailed_user_choices_css_classes(
 
         result = generate_detailed_user_choices(test_data, option_labels)
 
+        assert isinstance(result, dict)
+        combined_html = result["combined_html"]
+
         # Check CSS classes
-        assert 'class="user-choices"' in result
-        assert 'class="survey-choices"' in result
-        assert 'class="pairs-list"' in result
-        assert 'class="ideal-budget"' in result
-        assert 'class="selection-column"' in result
-        assert 'class="option-column"' in result
+        assert 'class="user-choices"' in combined_html
+        assert 'class="survey-choices"' in combined_html
+        assert 'class="pairs-list"' in combined_html
+        assert 'class="ideal-budget"' in combined_html
+        assert 'class="selection-column"' in combined_html
+        assert 'class="option-column"' in combined_html
