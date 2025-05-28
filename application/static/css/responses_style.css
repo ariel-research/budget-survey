@@ -29,6 +29,7 @@
    --color-root-sum-squared-sum: #14B8A6;    /* Teal */
    --color-root-sum-squared-ratio: #F43F5E;  /* Rose */
    --color-extreme-vectors: #6366F1;         /* Indigo */
+   --color-cyclic-shift: #F59E0B;            /* Amber */
    
    /* Spacing */
    --spacing-xs: 0.25rem;
@@ -100,6 +101,9 @@
 }
 .strategy-badge[data-strategy="extreme_vectors"] { 
    background: var(--color-extreme-vectors);
+}
+.strategy-badge[data-strategy="cyclic_shift"] { 
+   background: var(--color-cyclic-shift);
 }
 
 /* ==========================================================================
