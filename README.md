@@ -193,6 +193,50 @@ The application uses the Strategy pattern to support multiple pair generation al
        - Provides separate consistency scores for each comparison group (A vs B, A vs C, B vs C)
        - Includes an "All Percentiles" summary row with overall consistency metrics
 
+7. **Cyclic Shift Strategy**
+   - Strategy name: `cyclic_shift`
+   - Generates 12 comparison pairs organized into 4 groups using cyclic shifts of difference vectors
+   - **Algorithm Overview**:
+     - Creates 4 groups of 3 pairs each (total 12 pairs)
+     - Each group starts with two random difference vectors that sum to zero
+     - Applies cyclic shifts (0, 1, 2 positions) to these difference vectors
+     - Adds the shifted differences to the user's ideal vector to create comparison options
+   - **Cyclic Shift Logic**:
+     - Generates two complementary difference vectors that sum to zero
+     - Applies right shifts of 0, 1, and 2 positions to create 3 pairs per group
+     - Each shift moves difference elements to the right by the specified positions
+     - Elements that exceed array bounds wrap around to the beginning
+   - **Special Handling**:
+     - Automatically detects when user's ideal allocation contains zero values
+     - Throws `UnsuitableForStrategyError` if zeros are present, as cyclic shifts could create invalid budget allocations
+     - Ensures all generated allocations maintain valid budget constraints
+     - Applies multiples-of-5 rounding when appropriate
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 12, always generates exactly 12)
+   - Example:
+     ```python
+     # For user_vector = [20, 30, 50]:
+     
+     # Group 1 - Generate difference vectors:
+     # diff1 = [-10, +5, +5], diff2 = [+15, -10, -5]
+     
+     # Pair 1 (shift 0): Apply differences directly
+     # Option A: [20, 30, 50] + [-10, +5, +5] = [10, 35, 55]
+     # Option B: [20, 30, 50] + [+15, -10, -5] = [35, 20, 45]
+     
+     # Pair 2 (shift 1): Shift differences right by 1 position
+     # diff1_shifted = [+5, -10, +5], diff2_shifted = [-5, +15, -10]
+     # Option A: [20, 30, 50] + [+5, -10, +5] = [25, 20, 55]
+     # Option B: [20, 30, 50] + [-5, +15, -10] = [15, 45, 40]
+     
+     # Pair 3 (shift 2): Shift differences right by 2 positions
+     # diff1_shifted = [+5, +5, -10], diff2_shifted = [-10, -5, +15]
+     # Option A: [20, 30, 50] + [+5, +5, -10] = [25, 35, 40]
+     # Option B: [20, 30, 50] + [-10, -5, +15] = [10, 25, 65]
+     
+     # Groups 2-4 repeat this process with different random difference vectors
+     ```
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

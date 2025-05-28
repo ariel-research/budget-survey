@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/blacklisted.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container blacklisted-container">
+    <div class="blacklisted-card">
+        <div class="blacklisted-header">
+            <div class="blacklisted-icon">⚠️</div>
+            <h2>{{ translations.unsuitable_title }}</h2>
+        </div>
+        <div class="blacklisted-body">
+            <p class="blacklisted-message">{{ translations.unsuitable_message }}</p>
+            
+            <div class="user-id-badge">{{ translations.user_id }}: {{ user_id }}</div>
+            
+            <div>
+                <button class="close-btn">
+                    {{ translations.close_window }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/blacklisted.js') }}"></script>
+{% endblock %} 

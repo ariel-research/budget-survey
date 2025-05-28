@@ -277,6 +277,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "סגור חלון",
             "en": "Close Window",
         },
+        "unsuitable_title": {
+            "he": "לא מתאים לסקר",
+            "en": "Unsuitable for Survey",
+        },
+        "unsuitable_message": {
+            "he": "התקציב האידיאלי שלך אינו מתאים לסוג הסקר הזה.",
+            "en": "Your ideal budget is not suitable for this type of survey.",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
@@ -475,6 +483,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "none": {"he": "אין", "en": "none"},
         "extreme_1": {"he": "קיצוני 1", "en": "Extreme 1"},
         "extreme_2": {"he": "קיצוני 2", "en": "Extreme 2"},
+        "cyclic_pattern_a": {"he": "דפוס מחזורי א", "en": "Cyclic Pattern A"},
+        "cyclic_pattern_b": {"he": "דפוס מחזורי ב", "en": "Cyclic Pattern B"},
         "no_matching_users": {
             "he": "אין משתמשים התואמים את קריטריון הסינון שנבחר.",
             "en": "No users match the selected filter criteria.",

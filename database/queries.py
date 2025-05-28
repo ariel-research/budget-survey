@@ -227,7 +227,8 @@ def get_survey_name(survey_id: int) -> str:
     """
     Retrieves the name of an active survey in the current language.
     """
-    return get_survey_field(survey_id, "title")
+    result = get_survey_field(survey_id, "title")
+    return result if result is not None else ""
 
 
 def get_survey_description(survey_id: int) -> str:
