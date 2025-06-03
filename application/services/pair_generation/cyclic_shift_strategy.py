@@ -68,7 +68,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
 
             Step 2: Generate second difference vector independently
             - Generate new random values within constraints
-            - Ensure it's canonically different from first (sorted vectors differ)
+            - Ensure it's canonically different from first (sorted vectors
+              differ)
             - Example: [+20, -25, +5] (sorted: [-25, +5, +20])
             - Must be different from diff1 sorted: [-15, +5, +10]
 
