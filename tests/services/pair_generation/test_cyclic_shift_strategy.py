@@ -286,3 +286,108 @@ def test_zero_value_logging(strategy, caplog):
 
     # Should log the zero value detection
     assert any("zero values" in record.message for record in caplog.records)
+
+
+def test_generate_random_differences_independence(strategy):
+    """Test that the two difference vectors are generated independently."""
+    user_vector = (20, 30, 50)
+    vector_size = 3
+
+    # Generate multiple pairs to check independence
+    pairs_generated = []
+    for _ in range(5):
+        diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
+
+        # Check that differences sum to zero
+        assert np.sum(diff1) == 0
+        assert np.sum(diff2) == 0
+
+        # Check that they're canonically different
+        sorted_diff1 = np.sort(diff1)
+        sorted_diff2 = np.sort(diff2)
+        assert not np.array_equal(
+            sorted_diff1, sorted_diff2
+        ), f"Difference vectors have same pattern: {diff1} and {diff2}"
+
+        # Store for uniqueness check
+        pairs_generated.append((tuple(diff1), tuple(diff2)))
+
+    # Check that we're getting different pairs (not always the same)
+    unique_pairs = set(pairs_generated)
+    assert len(unique_pairs) > 1, "Always generating the same difference pairs"
+
+
+def test_generate_random_differences_canonical_difference(strategy):
+    """Test that generated difference vectors are canonically different."""
+    user_vector = (30, 40, 30)
+    vector_size = 3
+
+    # Run multiple times to ensure consistency
+    for _ in range(10):
+        diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
+
+        # Sort both arrays to get canonical form
+        sorted_diff1 = np.sort(diff1)
+        sorted_diff2 = np.sort(diff2)
+
+        # They should not be equal when sorted
+        assert not np.array_equal(
+            sorted_diff1, sorted_diff2
+        ), f"Vectors {diff1} and {diff2} have the same canonical form"
+
+        # But they should both sum to 0
+        assert np.sum(diff1) == 0
+        assert np.sum(diff2) == 0
+
+        # And produce valid vectors
+        user_array = np.array(user_vector)
+        vec1 = user_array + diff1
+        vec2 = user_array + diff2
+
+        assert np.all(vec1 >= 0) and np.all(vec1 <= 100)
+        assert np.all(vec2 >= 0) and np.all(vec2 <= 100)
+        assert np.sum(vec1) == 100
+        assert np.sum(vec2) == 100
+
+
+def test_generate_random_differences_meaningful(strategy):
+    """Test that generated differences are meaningful (not too small)."""
+    user_vector = (20, 30, 50)
+    vector_size = 3
+
+    for _ in range(5):
+        diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
+
+        # At least one difference should be meaningful (|diff| >= 5)
+        assert any(
+            abs(d) >= 5 for d in diff1
+        ), f"All differences in {diff1} are too small"
+        assert any(
+            abs(d) >= 5 for d in diff2
+        ), f"All differences in {diff2} are too small"
+
+
+def test_edge_case_small_range(strategy):
+    """Test with vectors that have limited valid difference ranges."""
+    # This vector limits the possible differences significantly
+    user_vector = (5, 90, 5)
+    vector_size = 3
+
+    # Should still be able to generate valid differences
+    diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
+
+    # Verify constraints
+    user_array = np.array(user_vector)
+    vec1 = user_array + diff1
+    vec2 = user_array + diff2
+
+    # Check all values are in valid range [0, 100]
+    assert np.all(vec1 >= 0) and np.all(vec1 <= 100)
+    assert np.all(vec2 >= 0) and np.all(vec2 <= 100)
+
+    # Check sums
+    assert np.sum(vec1) == 100
+    assert np.sum(vec2) == 100
+
+    # Check canonical difference
+    assert not np.array_equal(np.sort(diff1), np.sort(diff2))

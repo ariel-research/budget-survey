@@ -61,24 +61,26 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             Min value in vector = 20, Max value = 50
 
             Step 1: Generate first difference vector
-            - Since we apply cyclic shifts, use global constraints
             - For [20, 30, 50]: min=20, max=50, so range is [-20, +50] for all
             - Ensure at least one element has meaningful difference (>=5)
             - Generate random diffs: [+10, -15, ?]
             - Adjust last element so sum = 0: [+10, -15, +5]
 
-            Step 2: Generate second difference vector
-            - Start with negation: [-10, +15, -5]
-            - Shuffle for variety: [-5, -10, +15]
+            Step 2: Generate second difference vector independently
+            - Generate new random values within constraints
+            - Ensure it's canonically different from first (sorted vectors
+              differ)
+            - Example: [+20, -25, +5] (sorted: [-25, +5, +20])
+            - Must be different from diff1 sorted: [-15, +5, +10]
 
-            Step 3: Validate meaningful differences
-            - Check that at least one element has |diff| >= 5
-            - Ensures resulting vectors are meaningfully different
+            Step 3: Validate both vectors
+            - Check meaningful differences (at least one |diff| >= 5)
+            - Ensure resulting vectors are valid
 
             Result:
             - diff1 = [+10, -15, +5] → vector1 = [30, 15, 55]
-            - diff2 = [-5, -10, +15] → vector2 = [15, 20, 65]
-            Both vectors sum to 100 and are meaningfully different
+            - diff2 = [+20, -25, +5] → vector2 = [40, 5, 55]
+            Both vectors sum to 100 and have different patterns
         """
         user_array = np.array(user_vector)
 
@@ -99,28 +101,46 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             diff1.append(-sum(diff1))
             diff1 = np.array(diff1)
 
-            # Step 2: Generate second difference vector (negated + shuffled)
-            diff2 = -diff1.copy()
-            np.random.shuffle(diff2)
-
-            # Step 3: Simple check - ensure at least one meaningful difference
+            # Check meaningful differences for diff1
             if not any(abs(d) >= 5 for d in diff1):
                 continue  # Try again if all differences are too small
 
-            # Step 4: Validate both resulting vectors
+            # Validate first vector
             vec1 = user_array + diff1
-            vec2 = user_array + diff2
+            if not (np.all(vec1 >= 0) and np.all(vec1 <= 100) and np.sum(vec1) == 100):
+                continue
 
-            if (
-                np.all(vec1 >= 0)
-                and np.all(vec1 <= 100)
-                and np.all(vec2 >= 0)
-                and np.all(vec2 <= 100)
-                and np.sum(vec1) == 100
-                and np.sum(vec2) == 100
-                and not np.array_equal(vec1, vec2)  # Ensure vectors are different
-            ):
-                return diff1, diff2
+            # Step 2: Generate second difference vector independently
+            # Try to generate a canonically different diff2
+            for _ in range(100):  # Inner loop for diff2 generation
+                diff2 = []
+                for _ in range(vector_size - 1):
+                    min_diff = -min_val
+                    max_diff = 100 - max_val
+                    diff = np.random.randint(min_diff, max_diff + 1)
+                    diff2.append(diff)
+
+                # Last element ensures sum = 0
+                diff2.append(-sum(diff2))
+                diff2 = np.array(diff2)
+
+                # Check meaningful differences for diff2
+                if not any(abs(d) >= 5 for d in diff2):
+                    continue
+
+                # Check if canonically different (sorted vectors must differ)
+                if np.array_equal(np.sort(diff1), np.sort(diff2)):
+                    continue  # Try again, they're the same pattern
+
+                # Validate second vector
+                vec2 = user_array + diff2
+                if (
+                    np.all(vec2 >= 0)
+                    and np.all(vec2 <= 100)
+                    and np.sum(vec2) == 100
+                    and not np.array_equal(vec1, vec2)  # Ensure vectors differ
+                ):
+                    return diff1, diff2
 
         raise ValueError("Unable to generate valid difference vectors")
 
@@ -180,7 +200,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             user_vector: User's ideal budget allocation
             vector_size: Size of each vector
             group_num: Group number for labeling (1-4)
-            used_pairs: Set of already used pair combinations to avoid duplicates
+            used_pairs: Set of already used pair combinations to avoid
+                duplicates
 
         Returns:
             List of 3 unique pairs for this group
@@ -211,7 +232,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 vec1 = user_array + shifted_diff1
                 vec2 = user_array + shifted_diff2
 
-                # Ensure multiples of 5 constraint unless user vector contains 5
+                # Ensure multiples of 5 constraint unless user vector
+                # contains 5
                 if 5 not in user_vector:
                     vec1 = np.round(vec1 / 5) * 5
                     vec2 = np.round(vec2 / 5) * 5
