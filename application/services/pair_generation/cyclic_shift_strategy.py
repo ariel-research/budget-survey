@@ -359,16 +359,13 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         Get column definitions for the cyclic shift response breakdown table.
 
         Returns:
-            Dict with column definitions for pattern preferences.
+            Dict with column definitions for group consistency.
         """
         return {
-            "pattern_a_preference": {
-                "name": get_translation("cyclic_pattern_a", "answers"),
-                "type": "percentage",
-                "highlight": True,
-            },
-            "pattern_b_preference": {
-                "name": get_translation("cyclic_pattern_b", "answers"),
+            "group_consistency": {
+                "name": get_translation(
+                    "group_consistency", "answers", fallback="Group Consistency"
+                ),
                 "type": "percentage",
                 "highlight": True,
             },

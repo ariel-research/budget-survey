@@ -508,6 +508,31 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "percentile": {"en": "Percentile", "he": "אחוזון"},
         "all_percentiles": {"en": "All Percentiles", "he": "כל האחוזונים"},
         "average_consistency": {"en": "Average Consistency", "he": "עקביות ממוצעת"},
+        # Group consistency translations for cyclic shift
+        "group_consistency": {
+            "he": "עקביות קבוצתית",
+            "en": "Group Consistency",
+        },
+        "group": {
+            "he": "קבוצה",
+            "en": "Group",
+        },
+        "consistency_percent": {
+            "he": "אחוז עקביות",
+            "en": "Consistency %",
+        },
+        "overall": {
+            "he": "כללי",
+            "en": "Overall",
+        },
+        "pairs_list": {
+            "he": "רשימת זוגות",
+            "en": "Pairs List",
+        },
+        "consistency_explanation": {
+            "he": "אחוזים גבוהים יותר מעידים על בחירות עקביות יותר בקרב כל קבוצה",
+            "en": "Higher percentages indicate more consistent choices within each group",
+        },
     },
 }
 
