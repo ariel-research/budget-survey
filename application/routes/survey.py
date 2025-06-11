@@ -284,15 +284,30 @@ def handle_survey_get(
 
     except UnsuitableForStrategyError as e:
         logger.info(f"User {user_id} unsuitable for strategy: {str(e)}")
-        return redirect(
-            url_for(
-                "survey.unsuitable",
-                userID=user_id,
-                surveyID=external_survey_id,
-                internalID=internal_survey_id,
-                demo="true" if is_demo else None,
+
+        if is_demo:
+            # In demo mode, show the unsuitable page
+            return redirect(
+                url_for(
+                    "survey.unsuitable",
+                    userID=user_id,
+                    surveyID=external_survey_id,
+                    internalID=internal_survey_id,
+                    demo="true",
+                )
             )
-        )
+        else:
+            # In regular mode, redirect to Panel4All with filterout status
+            external_q_argument = request.args.get("q")
+            panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"]
+            return redirect(
+                redirect_to_panel4all(
+                    user_id,
+                    external_survey_id,
+                    status=panel4all_status,
+                    q=external_q_argument,
+                )
+            )
     except Exception as e:
         logger.error(f"Error in survey GET: {str(e)}", exc_info=True)
         abort(400, description=get_translation("survey_processing_error", "messages"))
