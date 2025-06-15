@@ -485,6 +485,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "extreme_2": {"he": "קיצוני 2", "en": "Extreme 2"},
         "cyclic_pattern_a": {"he": "דפוס מחזורי א", "en": "Cyclic Pattern A"},
         "cyclic_pattern_b": {"he": "דפוס מחזורי ב", "en": "Cyclic Pattern B"},
+        "differences": {"he": "הבדלים", "en": "Differences"},
+        "changes": {"he": "שינויים", "en": "Changes"},
         "no_matching_users": {
             "he": "אין משתמשים התואמים את קריטריון הסינון שנבחר.",
             "en": "No users match the selected filter criteria.",

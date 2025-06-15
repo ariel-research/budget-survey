@@ -471,6 +471,33 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
         strategy_1 = survey_labels[0]
         strategy_2 = survey_labels[1]
 
+    # Check for difference vectors (for cyclic shift strategy)
+    diff_1 = choice.get("option1_differences")
+    diff_2 = choice.get("option2_differences")
+
+    # If differences are available, enhance the strategy display
+    if diff_1 is not None and diff_2 is not None:
+        changes_label = get_translation("changes", "answers")
+
+        def format_differences(diffs):
+            """Format difference vector for display."""
+            formatted = []
+            for d in diffs:
+                if d > 0:
+                    formatted.append(f"+{d}")
+                else:
+                    formatted.append(str(d))
+            return "[" + ", ".join(formatted) + "]"
+
+        diff_1_formatted = format_differences(diff_1)
+        diff_2_formatted = format_differences(diff_2)
+        strategy_1 = (
+            f"{strategy_1}<br><small>{changes_label}: {diff_1_formatted}</small>"
+        )
+        strategy_2 = (
+            f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
+        )
+
     # Generate raw choice info HTML
     trans_orig = get_translation("original_choice", "answers")
     trans_opt = get_translation("option_number", "answers", number=raw_choice)

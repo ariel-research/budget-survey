@@ -259,6 +259,9 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 pair = {
                     f"Cyclic Pattern A (shift {shift})": vec1,
                     f"Cyclic Pattern B (shift {shift})": vec2,
+                    # Store differences as list for JSON serialization
+                    "option1_differences": shifted_diff1.tolist(),
+                    "option2_differences": shifted_diff2.tolist(),
                 }
                 group_pairs.append(pair)
 
