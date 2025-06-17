@@ -471,13 +471,16 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
         strategy_1 = survey_labels[0]
         strategy_2 = survey_labels[1]
 
-    # Check for difference vectors (for cyclic shift strategy)
-    diff_1 = choice.get("option1_differences")
-    diff_2 = choice.get("option2_differences")
+    # For cyclic shift strategy, calculate actual differences between ideal and final vectors
+    if "Cyclic Pattern" in str(strategy_1) or "Cyclic Pattern" in str(strategy_2):
+        # Get the user's optimal allocation for this choice
+        optimal_allocation = json.loads(choice["optimal_allocation"])
 
-    # If differences are available, enhance the strategy display
-    if diff_1 is not None and diff_2 is not None:
         changes_label = get_translation("changes", "answers")
+
+        def calculate_actual_differences(ideal_vector, final_vector):
+            """Calculate actual differences between ideal and final vectors."""
+            return [final - ideal for final, ideal in zip(final_vector, ideal_vector)]
 
         def format_differences(diffs):
             """Format difference vector for display."""
@@ -485,12 +488,19 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
             for d in diffs:
                 if d > 0:
                     formatted.append(f"+{d}")
+                elif d == 0:
+                    formatted.append("0")
                 else:
                     formatted.append(str(d))
             return "[" + ", ".join(formatted) + "]"
 
-        diff_1_formatted = format_differences(diff_1)
-        diff_2_formatted = format_differences(diff_2)
+        # Calculate actual differences for both options
+        actual_diff_1 = calculate_actual_differences(optimal_allocation, option_1)
+        actual_diff_2 = calculate_actual_differences(optimal_allocation, option_2)
+
+        diff_1_formatted = format_differences(actual_diff_1)
+        diff_2_formatted = format_differences(actual_diff_2)
+
         strategy_1 = (
             f"{strategy_1}<br><small>{changes_label}: {diff_1_formatted}</small>"
         )

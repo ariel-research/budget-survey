@@ -20,6 +20,8 @@ class ComparisonPair:
     raw_user_choice: int = None
     option1_strategy: str = None
     option2_strategy: str = None
+    option1_differences: List[int] = None
+    option2_differences: List[int] = None
 
     def is_valid(self) -> bool:
         """
@@ -204,11 +206,29 @@ class SurveySubmission:
                 option1_strategy = form_data.get(f"option1_strategy_{i}")
                 option2_strategy = form_data.get(f"option2_strategy_{i}")
 
+                # Extract differences if available
+                option1_diffs_str = form_data.get(f"option1_differences_{i}", "")
+                option2_diffs_str = form_data.get(f"option2_differences_{i}", "")
+                option1_differences = (
+                    list(map(int, option1_diffs_str.split(",")))
+                    if option1_diffs_str
+                    else None
+                )
+                option2_differences = (
+                    list(map(int, option2_diffs_str.split(",")))
+                    if option2_diffs_str
+                    else None
+                )
+
                 if was_swapped:
                     option_1, option_2 = option_2, option_1
                     option1_strategy, option2_strategy = (
                         option2_strategy,
                         option1_strategy,
+                    )
+                    option1_differences, option2_differences = (
+                        option2_differences,
+                        option1_differences,
                     )
                     user_choice = 3 - raw_user_choice
 
@@ -220,6 +240,8 @@ class SurveySubmission:
                         raw_user_choice=raw_user_choice,
                         option1_strategy=option1_strategy,
                         option2_strategy=option2_strategy,
+                        option1_differences=option1_differences,
+                        option2_differences=option2_differences,
                     )
                 )
 

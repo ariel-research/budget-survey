@@ -383,16 +383,35 @@ def test_cyclic_shift_group_consistency():
     expected_overall = (66.7 + 100.0 + 66.7 + 50.0) / 4
     assert abs(consistencies["overall"] - expected_overall) < 0.1
 
-    # Test HTML table generation
-    table_html = _generate_cyclic_shift_consistency_table(choices)
+    # Test HTML table generation with mocked translations
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_translation:
+        # Mock translation to return English text for testing
+        def mock_get_translation(key, section=None, **kwargs):
+            translations = {
+                "group_consistency": "Group Consistency",
+                "group": "Group",
+                "consistency_percent": "Consistency Percentage",
+                "overall": "Overall",
+                "consistency_explanation": (
+                    "Higher percentages indicate more consistent choices "
+                    "within each group"
+                ),
+            }
+            return translations.get(key, f"[{key}]")
 
-    # Verify table contains expected elements
-    assert "Group Consistency" in table_html or "group_consistency" in table_html
-    assert "66.7%" in table_html
-    assert "100%" in table_html
-    assert "50%" in table_html
-    assert "Group 1" in table_html
-    assert "Group 2" in table_html
-    assert "Group 3" in table_html
-    assert "Group 4" in table_html
-    assert "Overall" in table_html
+        mock_translation.side_effect = mock_get_translation
+
+        table_html = _generate_cyclic_shift_consistency_table(choices)
+
+        # Verify table contains expected elements
+        assert "Group Consistency" in table_html
+        assert "66.7%" in table_html
+        assert "100.0%" in table_html
+        assert "50.0%" in table_html
+        assert "Group 1" in table_html
+        assert "Group 2" in table_html
+        assert "Group 3" in table_html
+        assert "Group 4" in table_html
+        assert "Overall" in table_html

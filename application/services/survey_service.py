@@ -227,6 +227,8 @@ class SurveyService:
                     raw_user_choice=pair.raw_user_choice,
                     option1_strategy=pair.option1_strategy,
                     option2_strategy=pair.option2_strategy,
+                    option1_differences=pair.option1_differences,
+                    option2_differences=pair.option2_differences,
                 )
                 logger.debug(
                     f"Created comparison pair {idx}/{len(submission.comparison_pairs)}: "
@@ -270,7 +272,7 @@ class SurveySessionData:
 
     def _randomize_pair_options(
         self, pair: Dict[str, tuple]
-    ) -> Tuple[tuple, tuple, bool, str, str]:
+    ) -> Tuple[tuple, tuple, bool, str, str, list, list]:
         """
         Randomly reorder options within a pair.
 
@@ -284,10 +286,16 @@ class SurveySessionData:
             - was_swapped: Whether the options were swapped
             - option1_strategy: Strategy description for first option
             - option2_strategy: Strategy description for second option
+            - option1_differences: Differences for option 1 (if available)
+            - option2_differences: Differences for option 2 (if available)
         """
         # Extract the strategy descriptions and vectors
         strategy_descriptions = list(pair.keys())
         vectors = list(pair.values())
+
+        # Extract differences if they exist
+        option1_diffs = pair.get("option1_differences")
+        option2_diffs = pair.get("option2_differences")
 
         if random.random() < 0.5:  # 50% chance to swap
             return (
@@ -296,6 +304,8 @@ class SurveySessionData:
                 True,  # was_swapped
                 strategy_descriptions[1],  # option1_strategy
                 strategy_descriptions[0],  # option2_strategy
+                option2_diffs,  # option1_differences (swapped)
+                option1_diffs,  # option2_differences (swapped)
             )
         return (
             vectors[0],  # option1
@@ -303,6 +313,8 @@ class SurveySessionData:
             False,  # was_swapped
             strategy_descriptions[0],  # option1_strategy
             strategy_descriptions[1],  # option2_strategy
+            option1_diffs,  # option1_differences
+            option2_diffs,  # option2_differences
         )
 
     def to_template_data(self) -> Dict:
@@ -330,19 +342,29 @@ class SurveySessionData:
         # Add first half of comparison pairs
         midpoint = len(original_pairs) // 2
         for i, pair in enumerate(original_pairs[:midpoint]):
-            option1, option2, was_swapped, option1_strategy, option2_strategy = (
-                self._randomize_pair_options(pair)
-            )
-            presentation_pairs.append(
-                {
-                    "display": (option1, option2),
-                    "was_swapped": was_swapped,
-                    "option1_strategy": option1_strategy,
-                    "option2_strategy": option2_strategy,
-                    "is_awareness": False,
-                    "question_number": i + 2,
-                }
-            )
+            (
+                option1,
+                option2,
+                was_swapped,
+                option1_strategy,
+                option2_strategy,
+                option1_differences,
+                option2_differences,
+            ) = self._randomize_pair_options(pair)
+            pair_data = {
+                "display": (option1, option2),
+                "was_swapped": was_swapped,
+                "option1_strategy": option1_strategy,
+                "option2_strategy": option2_strategy,
+                "is_awareness": False,
+                "question_number": i + 2,
+            }
+            # Add differences if they exist
+            if option1_differences is not None:
+                pair_data["option1_differences"] = option1_differences
+            if option2_differences is not None:
+                pair_data["option2_differences"] = option2_differences
+            presentation_pairs.append(pair_data)
 
         # Add second awareness question
         presentation_pairs.append(
@@ -359,19 +381,29 @@ class SurveySessionData:
 
         # Add remaining comparison pairs
         for i, pair in enumerate(original_pairs[midpoint:]):
-            option1, option2, was_swapped, option1_strategy, option2_strategy = (
-                self._randomize_pair_options(pair)
-            )
-            presentation_pairs.append(
-                {
-                    "display": (option1, option2),
-                    "was_swapped": was_swapped,
-                    "option1_strategy": option1_strategy,
-                    "option2_strategy": option2_strategy,
-                    "is_awareness": False,
-                    "question_number": i + midpoint + 3,
-                }
-            )
+            (
+                option1,
+                option2,
+                was_swapped,
+                option1_strategy,
+                option2_strategy,
+                option1_differences,
+                option2_differences,
+            ) = self._randomize_pair_options(pair)
+            pair_data = {
+                "display": (option1, option2),
+                "was_swapped": was_swapped,
+                "option1_strategy": option1_strategy,
+                "option2_strategy": option2_strategy,
+                "is_awareness": False,
+                "question_number": i + midpoint + 3,
+            }
+            # Add differences if they exist
+            if option1_differences is not None:
+                pair_data["option1_differences"] = option1_differences
+            if option2_differences is not None:
+                pair_data["option2_differences"] = option2_differences
+            presentation_pairs.append(pair_data)
 
         return {
             "user_vector": self.user_vector,
