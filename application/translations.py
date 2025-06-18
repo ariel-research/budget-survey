@@ -485,6 +485,9 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "extreme_2": {"he": "קיצוני 2", "en": "Extreme 2"},
         "cyclic_pattern_a": {"he": "דפוס מחזורי א", "en": "Cyclic Pattern A"},
         "cyclic_pattern_b": {"he": "דפוס מחזורי ב", "en": "Cyclic Pattern B"},
+        "linear_positive": {"he": "דפוס ליניארי חיובי", "en": "Linear Positive"},
+        "linear_negative": {"he": "דפוס ליניארי שלילי", "en": "Linear Negative"},
+        "linear_consistency": {"he": "עקביות ליניארית", "en": "Linear Consistency"},
         "differences": {"he": "הבדלים", "en": "Differences"},
         "changes": {"he": "שינויים", "en": "Changes"},
         "no_matching_users": {
