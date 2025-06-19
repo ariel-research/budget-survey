@@ -1611,7 +1611,6 @@ th.sortable[data-order="desc"]::after {
 
 .cyclic-shift-consistency-container .overall-consistency {
     font-weight: bold;
-    background-color: var(--color-background-alt);
     border-top: 3px solid var(--color-primary);
     position: relative;
 }
@@ -1626,6 +1625,10 @@ th.sortable[data-order="desc"]::after {
     background-color: var(--color-primary);
     color: white;
     text-align: center;
+}
+
+.cyclic-shift-consistency-container .overall-consistency td:last-child {
+    position: relative;
 }
 
 .consistency-bar {

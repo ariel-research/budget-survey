@@ -1516,6 +1516,13 @@ def generate_detailed_user_choices(
             ):
                 summary["choices"] = choices
 
+            # Store choices for linear_symmetry strategy to calculate consistency
+            elif strategy_name == "linear_symmetry" or (
+                "strategy_name" in summary
+                and summary["strategy_name"] == "linear_symmetry"
+            ):
+                summary["choices"] = choices
+
             all_summaries.append(summary)
 
     # Initialize component HTML strings
