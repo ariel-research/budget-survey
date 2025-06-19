@@ -3,6 +3,7 @@
 from .base import PairGenerationStrategy, StrategyRegistry
 from .cyclic_shift_strategy import CyclicShiftStrategy
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
+from .linear_symmetry_strategy import LinearSymmetryStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .root_sum_squared_ratio_vector import RootSumSquaredRatioStrategy
 from .root_sum_squared_sum_vector import RootSumSquaredSumStrategy
@@ -19,6 +20,7 @@ StrategyRegistry.register(RootSumSquaredSumStrategy)
 StrategyRegistry.register(RootSumSquaredRatioStrategy)
 StrategyRegistry.register(ExtremeVectorsStrategy)
 StrategyRegistry.register(CyclicShiftStrategy)
+StrategyRegistry.register(LinearSymmetryStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -30,4 +32,5 @@ __all__ = [
     "RootSumSquaredRatioStrategy",
     "ExtremeVectorsStrategy",
     "CyclicShiftStrategy",
+    "LinearSymmetryStrategy",
 ]

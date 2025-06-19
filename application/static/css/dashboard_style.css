@@ -11,7 +11,8 @@
     --color-indigo: #6366F1;     /* Indigo */
     --color-rose: #F43F5E;       /* Rose */
     --color-amber: #F59E0B;      /* Amber */
-
+    --color-linear-symmetry: #EF4444;         /* Red */
+    
     /* Text Colors */
     --color-text-dark: #1f2937;
     --color-text-light: #6b7280;
@@ -225,6 +226,9 @@
 }
 .strategy-badge[data-strategy="cyclic_shift"] { 
     background: var(--color-amber);
+}
+.strategy-badge[data-strategy="linear_symmetry"] { 
+    background: var(--color-linear-symmetry);
 }
 .strategy-badge {
     background: var(--color-indigo);

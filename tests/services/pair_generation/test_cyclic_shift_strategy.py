@@ -97,21 +97,27 @@ def test_generate_group(strategy):
     # Should generate 3 pairs
     assert len(group_pairs) == 3
 
-    # Each pair should be a dictionary with 2 entries
+    # Each pair should be a dictionary with 4 entries
+    # (2 vectors + 2 differences)
     for pair in group_pairs:
         assert isinstance(pair, dict)
-        assert len(pair) == 2
+        assert len(pair) == 4
+
+        # Check that difference vectors are present
+        assert "option1_differences" in pair
+        assert "option2_differences" in pair
 
         # Check that keys contain shift information
         keys = list(pair.keys())
         assert any("shift" in key for key in keys)
 
-        # Check that values are valid tuples
-        for vector in pair.values():
-            assert isinstance(vector, tuple)
-            assert len(vector) == vector_size
-            assert sum(vector) == 100
-            assert all(0 <= v <= 100 for v in vector)
+        # Check that values are valid tuples (skip differences)
+        for key, vector in pair.items():
+            if not key.endswith("_differences"):
+                assert isinstance(vector, tuple)
+                assert len(vector) == vector_size
+                assert sum(vector) == 100
+                assert all(0 <= v <= 100 for v in vector)
 
 
 def test_generate_pairs_success(strategy):
@@ -122,17 +128,29 @@ def test_generate_pairs_success(strategy):
     # Should generate exactly 12 pairs
     assert len(pairs) == 12
 
-    # Each pair should be a dictionary
+    # Each pair should be a dictionary with 4 entries
+    # (2 vectors + 2 difference vectors)
     for pair in pairs:
         assert isinstance(pair, dict)
-        assert len(pair) == 2
+        assert len(pair) == 4
 
-        # Check that all vectors are valid
-        for vector in pair.values():
-            assert isinstance(vector, tuple)
-            assert len(vector) == 3
-            assert sum(vector) == 100
-            assert all(0 <= v <= 100 for v in vector)
+        # Check that difference vectors are present
+        assert "option1_differences" in pair
+        assert "option2_differences" in pair
+        assert isinstance(pair["option1_differences"], list)
+        assert isinstance(pair["option2_differences"], list)
+        assert len(pair["option1_differences"]) == 3
+        assert len(pair["option2_differences"]) == 3
+        assert sum(pair["option1_differences"]) == 0  # Should sum to zero
+        assert sum(pair["option2_differences"]) == 0  # Should sum to zero
+
+        # Check that all vectors are valid (skip the difference keys)
+        for key, vector in pair.items():
+            if not key.endswith("_differences"):
+                assert isinstance(vector, tuple)
+                assert len(vector) == 3
+                assert sum(vector) == 100
+                assert all(0 <= v <= 100 for v in vector)
 
 
 def test_generate_pairs_with_zero_values(strategy):
@@ -166,7 +184,10 @@ def test_pair_uniqueness(strategy):
     # Convert pairs to a set of sorted tuples for uniqueness check
     pair_sets = set()
     for pair in pairs:
-        vectors = tuple(sorted(pair.values()))
+        # Only consider the actual vector values, not the difference metadata
+        vectors = tuple(
+            sorted([v for k, v in pair.items() if not k.endswith("_differences")])
+        )
         pair_sets.add(vectors)
 
     # All pairs should be unique
@@ -214,8 +235,7 @@ def test_table_columns(strategy):
     columns = strategy.get_table_columns()
 
     assert isinstance(columns, dict)
-    assert "pattern_a_preference" in columns
-    assert "pattern_b_preference" in columns
+    assert "group_consistency" in columns
 
     # Check column properties
     for column_key, column_def in columns.items():
@@ -232,10 +252,11 @@ def test_multiples_of_five_constraint(strategy):
     pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
 
     for pair in pairs:
-        for vector in pair.values():
-            assert all(
-                v % 5 == 0 for v in vector
-            ), f"Vector {vector} contains non-multiples of 5"
+        for key, vector in pair.items():
+            if not key.endswith("_differences"):  # Skip difference metadata
+                assert all(
+                    v % 5 == 0 for v in vector
+                ), f"Vector {vector} contains non-multiples of 5"
 
     # User vector with 5 should allow non-multiples
     user_vector_with_five = (25, 30, 45)
@@ -246,9 +267,10 @@ def test_multiples_of_five_constraint(strategy):
     # Should still generate valid pairs (may or may not be multiples of 5)
     assert len(pairs_with_five) == 12
     for pair in pairs_with_five:
-        for vector in pair.values():
-            assert sum(vector) == 100
-            assert all(0 <= v <= 100 for v in vector)
+        for key, vector in pair.items():
+            if not key.endswith("_differences"):  # Skip difference metadata
+                assert sum(vector) == 100
+                assert all(0 <= v <= 100 for v in vector)
 
 
 def test_edge_case_vectors(strategy):

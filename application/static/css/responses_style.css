@@ -30,6 +30,7 @@
    --color-root-sum-squared-ratio: #F43F5E;  /* Rose */
    --color-extreme-vectors: #6366F1;         /* Indigo */
    --color-cyclic-shift: #F59E0B;            /* Amber */
+   --color-linear-symmetry: #EF4444;         /* Red */
    
    /* Spacing */
    --spacing-xs: 0.25rem;
@@ -104,6 +105,9 @@
 }
 .strategy-badge[data-strategy="cyclic_shift"] { 
    background: var(--color-cyclic-shift);
+}
+.strategy-badge[data-strategy="linear_symmetry"] { 
+   background: var(--color-linear-symmetry);
 }
 
 /* ==========================================================================
@@ -1301,6 +1305,22 @@ th.sortable[data-order="desc"]::after {
     text-align: center;
 }
 
+/* RTL Support for Cyclic Shift Consistency Table */
+[dir="rtl"] .cyclic-shift-consistency-container th,
+[dir="rtl"] .cyclic-shift-consistency-container td {
+    text-align: center;
+}
+
+[dir="rtl"] .cyclic-shift-consistency-container td:first-child {
+    text-align: right;
+    padding-right: 24px;
+    padding-left: var(--spacing-md);
+}
+
+[dir="rtl"] .cyclic-shift-consistency-container .overall-consistency td:first-child {
+    text-align: center;
+}
+
 /* ==========================================================================
   Responsive Adjustments
   ========================================================================== */
@@ -1498,4 +1518,193 @@ th.sortable[data-order="desc"]::after {
 
 .survey-percentile-breakdown-container .percentile-breakdown-container {
     margin-top: 0;
+}
+
+/* ==========================================================================
+  Cyclic Shift Consistency Table Styles
+========================================================================== */
+.cyclic-shift-consistency-container {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.consistency-table-title {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.cyclic-shift-consistency-container table {
+    width: 100%;
+    max-width: 500px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.cyclic-shift-consistency-container th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 16px 20px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--color-border);
+    font-size: var(--font-size-base);
+}
+
+.cyclic-shift-consistency-container td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    text-align: center;
+    font-family: var(--font-family-mono);
+    transition: background-color 0.2s ease;
+}
+
+.cyclic-shift-consistency-container tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.cyclic-shift-consistency-container td:first-child {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-background-alt);
+    text-align: left;
+    padding-left: 24px;
+}
+
+.cyclic-shift-consistency-container td:last-child {
+    position: relative;
+    font-weight: 600;
+    font-size: var(--font-size-lg);
+}
+
+.consistency-high {
+    color: var(--color-ratio);
+    background: linear-gradient(90deg, 
+        var(--color-ratio-light) 0%, 
+        transparent 100%);
+}
+
+.consistency-medium {
+    color: var(--color-better);
+    background: linear-gradient(90deg, 
+        var(--color-highlight) 0%, 
+        transparent 60%);
+}
+
+.consistency-low {
+    color: var(--color-none);
+    background: linear-gradient(90deg, 
+        var(--color-none-light) 0%, 
+        transparent 40%);
+}
+
+.cyclic-shift-consistency-container .overall-consistency {
+    font-weight: bold;
+    border-top: 3px solid var(--color-primary);
+    position: relative;
+}
+
+.cyclic-shift-consistency-container .overall-consistency td {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    font-size: var(--font-size-lg);
+}
+
+.cyclic-shift-consistency-container .overall-consistency td:first-child {
+    background-color: var(--color-primary);
+    color: white;
+    text-align: center;
+}
+
+.cyclic-shift-consistency-container .overall-consistency td:last-child {
+    position: relative;
+}
+
+.consistency-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(52, 152, 219, 0.1), 
+        rgba(52, 152, 219, 0.05));
+    border-radius: 0 4px 4px 0;
+    z-index: -1;
+    transition: width 0.3s ease;
+}
+
+/* Enhanced consistency table wrapper */
+.consistency-table-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Consistency explanation text */
+.consistency-legend {
+    margin-top: var(--spacing-md);
+    text-align: center;
+}
+
+.consistency-note {
+    color: var(--color-text-light);
+    font-style: italic;
+    display: block;
+    line-height: 1.4;
+}
+
+/* Interactive hover effects for data rows */
+.cyclic-shift-consistency-container tbody tr:not(.overall-consistency):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+/* Accessibility improvements */
+.cyclic-shift-consistency-container table {
+    border: 1px solid var(--color-border);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cyclic-shift-consistency-container {
+        padding: var(--spacing-md);
+    }
+    
+    .cyclic-shift-consistency-container table {
+        max-width: 100%;
+        font-size: var(--font-size-sm);
+    }
+    
+    .cyclic-shift-consistency-container th,
+    .cyclic-shift-consistency-container td {
+        padding: 12px 16px;
+    }
+    
+    .consistency-table-title {
+        font-size: var(--font-size-base);
+    }
+}
+
+@media (max-width: 480px) {
+    .cyclic-shift-consistency-container th:first-child,
+    .cyclic-shift-consistency-container td:first-child {
+        padding-left: var(--spacing-md);
+    }
+    
+    .consistency-note {
+        font-size: var(--font-size-xs);
+    }
 }

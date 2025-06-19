@@ -2,6 +2,8 @@ import json
 from unittest.mock import patch
 
 from analysis.report_content_generators import (
+    _calculate_cyclic_shift_group_consistency,
+    _generate_cyclic_shift_consistency_table,
     calculate_user_consistency,
     generate_detailed_user_choices,
     generate_executive_summary,
@@ -286,3 +288,130 @@ def test_generate_detailed_user_choices_css_classes(
         assert 'class="ideal-budget"' in combined_html
         assert 'class="selection-column"' in combined_html
         assert 'class="option-column"' in combined_html
+
+
+def test_cyclic_shift_group_consistency():
+    """Test cyclic shift group consistency calculation."""
+    # Mock choices for cyclic shift strategy
+    # Group 1: 2 A choices, 1 B choice = 67% consistency
+    # Group 2: 3 A choices = 100% consistency
+    # Group 3: 1 A choice, 2 B choices = 67% consistency
+    # Group 4: 1 A choice, 1 B choice (only 2 choices) = 50% consistency
+    choices = [
+        # Group 1 (pairs 1-3)
+        {
+            "pair_number": 1,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 3,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 2,
+        },
+        # Group 2 (pairs 4-6)
+        {
+            "pair_number": 4,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 5,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 6,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 1,
+        },
+        # Group 3 (pairs 7-9)
+        {
+            "pair_number": 7,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 2,
+        },
+        {
+            "pair_number": 8,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 2,
+        },
+        {
+            "pair_number": 9,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 1,
+        },
+        # Group 4 (pairs 10-11, missing pair 12)
+        {
+            "pair_number": 10,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 11,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 2,
+        },
+    ]
+
+    # Test consistency calculation
+    consistencies = _calculate_cyclic_shift_group_consistency(choices)
+
+    # Verify group consistencies
+    assert consistencies["group_1"] == 66.7  # 2/3 = 66.7%
+    assert consistencies["group_2"] == 100.0  # 3/3 = 100%
+    assert consistencies["group_3"] == 66.7  # 2/3 = 66.7%
+    assert consistencies["group_4"] == 50.0  # 1/2 = 50%
+
+    # Verify overall consistency (average of group consistencies)
+    expected_overall = (66.7 + 100.0 + 66.7 + 50.0) / 4
+    assert abs(consistencies["overall"] - expected_overall) < 0.1
+
+    # Test HTML table generation with mocked translations
+    with patch(
+        "analysis.report_content_generators.get_translation"
+    ) as mock_translation:
+        # Mock translation to return English text for testing
+        def mock_get_translation(key, section=None, **kwargs):
+            translations = {
+                "group_consistency": "Group Consistency",
+                "group": "Group",
+                "consistency_percent": "Consistency Percentage",
+                "overall": "Overall",
+                "consistency_explanation": (
+                    "Higher percentages indicate more consistent choices "
+                    "within each group"
+                ),
+            }
+            return translations.get(key, f"[{key}]")
+
+        mock_translation.side_effect = mock_get_translation
+
+        table_html = _generate_cyclic_shift_consistency_table(choices)
+
+        # Verify table contains expected elements
+        assert "Group Consistency" in table_html
+        assert "66.7%" in table_html
+        assert "100.0%" in table_html
+        assert "50.0%" in table_html
+        assert "Group 1" in table_html
+        assert "Group 2" in table_html
+        assert "Group 3" in table_html
+        assert "Group 4" in table_html
+        assert "Overall" in table_html

@@ -83,6 +83,8 @@ CREATE TABLE `comparison_pairs` (
   `user_choice` INT NOT NULL,
   `option1_strategy` VARCHAR(100) DEFAULT NULL,
   `option2_strategy` VARCHAR(100) DEFAULT NULL,
+  `option1_differences` JSON DEFAULT NULL,
+  `option2_differences` JSON DEFAULT NULL,
   `raw_user_choice` INT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`survey_response_id`) REFERENCES `survey_responses` (`id`) ON DELETE CASCADE

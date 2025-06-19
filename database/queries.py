@@ -87,6 +87,8 @@ def create_comparison_pair(
     raw_user_choice: int,
     option1_strategy: str,
     option2_strategy: str,
+    option1_differences: list = None,
+    option2_differences: list = None,
 ) -> int:
     """
     Inserts a new comparison pair into the comparison_pairs table.
@@ -100,6 +102,10 @@ def create_comparison_pair(
         raw_user_choice: The original user choice before swap adjustment
         option1_strategy: Strategy description for option 1
         option2_strategy: Strategy description for option 2
+        option1_differences: Optional differences vector for option 1
+                           (for cyclic shift)
+        option2_differences: Optional differences vector for option 2
+                           (for cyclic shift)
 
     Returns:
         int: The ID of the newly created comparison pair, or None if an error occurs
@@ -107,13 +113,20 @@ def create_comparison_pair(
     query = """
         INSERT INTO comparison_pairs (
             survey_response_id, pair_number, option_1, option_2, 
-            user_choice, raw_user_choice, option1_strategy, option2_strategy
+            user_choice, raw_user_choice, option1_strategy, option2_strategy,
+            option1_differences, option2_differences
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
         option_1_json = json.dumps(option_1)
         option_2_json = json.dumps(option_2)
+        option1_differences_json = (
+            json.dumps(option1_differences) if option1_differences is not None else None
+        )
+        option2_differences_json = (
+            json.dumps(option2_differences) if option2_differences is not None else None
+        )
 
         return execute_query(
             query,
@@ -126,6 +139,8 @@ def create_comparison_pair(
                 raw_user_choice,
                 option1_strategy,
                 option2_strategy,
+                option1_differences_json,
+                option2_differences_json,
             ),
         )
     except Exception as e:
@@ -345,7 +360,9 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         cp.pair_number,
         cp.option_1,
         cp.option_2,
-        cp.user_choice
+        cp.user_choice,
+        cp.option1_differences,
+        cp.option2_differences
     FROM
         survey_responses sr
     JOIN
@@ -365,6 +382,24 @@ def retrieve_completed_survey_responses() -> List[Dict]:
             for row in results:
                 # Ensure user_comment is always a string
                 row["user_comment"] = str(row["user_comment"] or "").strip()
+
+                # Parse option1_differences if it exists and is not None
+                if row.get("option1_differences"):
+                    try:
+                        row["option1_differences"] = json.loads(
+                            row["option1_differences"]
+                        )
+                    except (json.JSONDecodeError, TypeError):
+                        row["option1_differences"] = None
+
+                # Parse option2_differences if it exists and is not None
+                if row.get("option2_differences"):
+                    try:
+                        row["option2_differences"] = json.loads(
+                            row["option2_differences"]
+                        )
+                    except (json.JSONDecodeError, TypeError):
+                        row["option2_differences"] = None
 
             logger.debug(f"Retrieved {len(results)} rows of completed survey data")
             return results
@@ -425,7 +460,9 @@ def retrieve_user_survey_choices() -> List[Dict]:
         cp.user_choice,
         cp.raw_user_choice,
         cp.option1_strategy,
-        cp.option2_strategy
+        cp.option2_strategy,
+        cp.option1_differences,
+        cp.option2_differences
     FROM 
         survey_responses sr
     JOIN 
@@ -442,6 +479,26 @@ def retrieve_user_survey_choices() -> List[Dict]:
     try:
         results = execute_query(query)
         if results:
+            # Parse JSON fields for differences
+            for result in results:
+                # Parse option1_differences if it exists and is not None
+                if result.get("option1_differences"):
+                    try:
+                        result["option1_differences"] = json.loads(
+                            result["option1_differences"]
+                        )
+                    except (json.JSONDecodeError, TypeError):
+                        result["option1_differences"] = None
+
+                # Parse option2_differences if it exists and is not None
+                if result.get("option2_differences"):
+                    try:
+                        result["option2_differences"] = json.loads(
+                            result["option2_differences"]
+                        )
+                    except (json.JSONDecodeError, TypeError):
+                        result["option2_differences"] = None
+
             logger.debug(f"Retrieved choices data for {len(results)} comparison pairs")
             return results
         logger.info("No survey choices data found")
