@@ -1,5 +1,5 @@
 -- Migration: Add option differences columns for cyclic shift strategy
--- Date: 2025-01-16
+-- Date: 2025-06-16
 -- Description: Add option1_differences and option2_differences columns to comparison_pairs table
 --              to support displaying vector differences in cyclic shift strategy
 

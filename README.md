@@ -242,6 +242,49 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Groups 2-4 repeat this process with different random difference vectors
      ```
 
+8. **Linear Symmetry Strategy**
+   - Strategy name: `linear_symmetry`
+   - Generates 12 comparison pairs organized into 6 groups to test linear symmetry hypothesis
+   - **Core Hypothesis**: Tests whether users treat positive and negative distances from their ideal allocation as equivalent
+   - **Algorithm Overview**:
+     - Creates 6 groups of 2 pairs each (total 12 pairs)
+     - Each group generates two distance vectors v1 and v2 that sum to zero
+     - Creates pair A: (ideal + v1) vs (ideal + v2)
+     - Creates pair B: (ideal - v1) vs (ideal - v2)
+   - **Distance Vector Generation**:
+     - Generates two independent distance vectors that sum to zero
+     - Neither vector can be all zeros
+     - Vectors must be different from each other
+     - Each vector must have at least one meaningful difference (|diff| >= 5)
+     - Validates that both addition and subtraction produce valid budget allocations within [0, 100]
+   - **Linear Symmetry Logic**:
+     - Tests if users view distance D and distance -D as equivalent
+     - If symmetry hypothesis holds, users should show similar preference patterns for both pairs in each group
+     - Positive distances (ideal + v) represent movement in one direction from ideal
+     - Negative distances (ideal - v) represent movement in opposite direction
+   - **Special Handling**:
+     - Automatically detects when user's ideal allocation contains zero values
+     - Throws `UnsuitableForStrategyError` if zeros are present, as distance calculations could create invalid budget allocations
+     - Ensures all generated allocations maintain valid budget constraints
+     - Applies multiples-of-5 rounding when appropriate
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 12, always generates exactly 12)
+   - Example:
+     ```python
+     # For user_vector = [40, 30, 30]:
+     # v1 = [15, -10, -5], v2 = [-10, 5, 5]
+     
+     # Group 1:
+     # Pair A (positive distances): [55, 20, 25] vs [30, 35, 35]  (ideal + v1 vs ideal + v2)
+     # Pair B (negative distances): [25, 40, 35] vs [50, 25, 25]  (ideal - v1 vs ideal - v2)
+     
+     # Groups 2-6 repeat this process with different distance vectors
+     ```
+   - **Analysis Features**:
+     - Linear Consistency Analysis: Measures how consistently users treat positive and negative distances
+     - Group-level consistency metrics showing symmetry adherence
+     - Helps identify if users have directional biases in budget allocation preferences
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:
