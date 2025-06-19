@@ -199,19 +199,36 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                 if pair_a in used_pairs or pair_b in used_pairs:
                     continue
 
+                # Calculate actual differences between ideal and final options
+                def calculate_actual_differences(ideal, final):
+                    return [
+                        final_val - ideal_val
+                        for final_val, ideal_val in zip(final, ideal)
+                    ]
+
                 # Create the pairs
                 group_pairs = [
                     {
                         f"Linear Pattern + (v{group_num})": vec_a1,
                         f"Linear Pattern + (w{group_num})": vec_a2,
-                        "distance_v1": v1.tolist(),
-                        "distance_v2": v2.tolist(),
+                        # Store actual differences between ideal and final options
+                        "option1_differences": calculate_actual_differences(
+                            user_vector, vec_a1
+                        ),
+                        "option2_differences": calculate_actual_differences(
+                            user_vector, vec_a2
+                        ),
                     },
                     {
                         f"Linear Pattern - (v{group_num})": vec_b1,
                         f"Linear Pattern - (w{group_num})": vec_b2,
-                        "distance_v1": (-v1).tolist(),
-                        "distance_v2": (-v2).tolist(),
+                        # Store actual differences between ideal and final options
+                        "option1_differences": calculate_actual_differences(
+                            user_vector, vec_b1
+                        ),
+                        "option2_differences": calculate_actual_differences(
+                            user_vector, vec_b2
+                        ),
                     },
                 ]
 

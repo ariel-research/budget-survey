@@ -508,6 +508,38 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
             f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
         )
 
+    # For linear symmetry strategy, use stored differences
+    elif "Linear Pattern" in str(strategy_1) or "Linear Pattern" in str(strategy_2):
+        changes_label = get_translation("changes", "answers")
+
+        def format_differences(diffs):
+            """Format difference vector for display."""
+            formatted = []
+            for d in diffs:
+                if d > 0:
+                    formatted.append(f"+{d}")
+                elif d == 0:
+                    formatted.append("0")
+                else:
+                    formatted.append(str(d))
+            return "[" + ", ".join(formatted) + "]"
+
+        # Get stored differences for both options
+        diff_1 = choice.get("option1_differences", [])
+        diff_2 = choice.get("option2_differences", [])
+
+        if diff_1:
+            diff_1_formatted = format_differences(diff_1)
+            strategy_1 = (
+                f"{strategy_1}<br><small>{changes_label}: {diff_1_formatted}</small>"
+            )
+
+        if diff_2:
+            diff_2_formatted = format_differences(diff_2)
+            strategy_2 = (
+                f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
+            )
+
     # Generate raw choice info HTML
     trans_orig = get_translation("original_choice", "answers")
     trans_opt = get_translation("option_number", "answers", number=raw_choice)
