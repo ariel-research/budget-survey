@@ -13,10 +13,27 @@ To run a migration script:
 python migrations/run_migration.py migrations/migration_filename.sql
 ```
 
+**Important**: By default, migrations are applied to **both** the main database (`survey`) and test database (`test_survey`) to keep them in sync.
+
 For example, to run the unaware users migration:
 
 ```bash
 python migrations/run_migration.py migrations/20250511_retroactive_unaware_users.sql
+```
+
+### Migration Options
+
+You can control which databases the migration runs on:
+
+```bash
+# Run on both databases (default behavior)
+python migrations/run_migration.py migrations/migration_filename.sql
+
+# Run only on main database
+python migrations/run_migration.py --main-only migrations/migration_filename.sql
+
+# Run only on test database
+python migrations/run_migration.py --test-only migrations/migration_filename.sql
 ```
 
 ### Docker Database Connections
@@ -51,4 +68,4 @@ In chronological order:
 - `20250501_add_user_blacklist.sql` - Adds blacklisting columns to users table for handling users who fail attention checks
 - `20250511_retroactive_unaware_users.sql` - Retroactively blacklists users who failed attention checks but weren't previously marked as blacklisted
 - `20250514_add_weighted_vector_views.sql` - Creates SQL views for analyzing user preferences for weighted vector strategies
-- `20250116_add_option_differences.sql` - Adds option1_differences and option2_differences columns to comparison_pairs table for storing vector differences (used by cyclic shift strategy)
+- `20250616_add_option_differences.sql` - Adds option1_differences and option2_differences columns to comparison_pairs table for storing vector differences (used by cyclic shift strategy)
