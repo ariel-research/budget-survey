@@ -140,7 +140,8 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
             user_vector: User's ideal budget allocation
             vector_size: Size of each vector
             group_num: Group number for labeling (1-6)
-            used_pairs: Set of already used pair combinations to avoid duplicates
+            used_pairs: Set of already used pair combinations to avoid
+                duplicates
 
         Returns:
             List of 2 unique pairs for this group
@@ -211,7 +212,7 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                     {
                         f"Linear Pattern + (v{group_num})": vec_a1,
                         f"Linear Pattern + (w{group_num})": vec_a2,
-                        # Store actual differences between ideal and final options
+                        # Store differences between ideal and final options
                         "option1_differences": calculate_actual_differences(
                             user_vector, vec_a1
                         ),
@@ -222,7 +223,7 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                     {
                         f"Linear Pattern - (v{group_num})": vec_b1,
                         f"Linear Pattern - (w{group_num})": vec_b2,
-                        # Store actual differences between ideal and final options
+                        # Store differences between ideal and final options
                         "option1_differences": calculate_actual_differences(
                             user_vector, vec_b1
                         ),
@@ -333,11 +334,13 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
         Get column definitions for the linear symmetry response breakdown table.
 
         Returns:
-            Dict with column definitions for linear consistency.
+            Dict with column definitions for group consistency.
         """
         return {
-            "linear_consistency": {
-                "name": get_translation("linear_consistency", "answers"),
+            "group_consistency": {
+                "name": get_translation(
+                    "group_consistency", "answers", fallback="Group Consistency"
+                ),
                 "type": "percentage",
                 "highlight": True,
             },

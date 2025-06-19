@@ -758,6 +758,12 @@ def _generate_survey_choices_html(
         if consistency_table:
             html_parts.append(consistency_table)
 
+    # Special handling for linear_symmetry strategy
+    elif strategy_name == "linear_symmetry":
+        consistency_table = _generate_linear_symmetry_consistency_table(choices)
+        if consistency_table:
+            html_parts.append(consistency_table)
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -1704,7 +1710,17 @@ def generate_detailed_breakdown_table(
                 elif "group_consistency" in strategy_columns and "choices" in summary:
                     # Handle cyclic_shift strategy with group consistency
                     choices = summary["choices"]
-                    consistencies = _calculate_cyclic_shift_group_consistency(choices)
+                    if summary.get("strategy_name") == "cyclic_shift":
+                        consistencies = _calculate_cyclic_shift_group_consistency(
+                            choices
+                        )
+                    elif summary.get("strategy_name") == "linear_symmetry":
+                        consistencies = _calculate_linear_symmetry_group_consistency(
+                            choices
+                        )
+                    else:
+                        consistencies = {"overall": 0.0}
+
                     overall_consistency = consistencies.get("overall", 0.0)
 
                     # Highlight row if consistency is high
@@ -2380,6 +2396,120 @@ def _calculate_cyclic_shift_group_consistency(choices: List[Dict]) -> Dict[str, 
     return group_consistencies
 
 
+def _calculate_linear_symmetry_group_consistency(
+    choices: List[Dict],
+) -> Dict[str, float]:
+    """
+    Calculate group-level consistency for linear symmetry strategy.
+
+    Args:
+        choices: List of choices for a single user's survey response using the
+                linear_symmetry strategy.
+
+    Returns:
+        Dict containing consistency percentages for each group (1-6) and
+        overall average.
+        Format: {"group_1": 100.0, "group_2": 50.0, ..., "overall": 75.0}
+    """
+    # Initialize group data - each group should have 2 pairs
+    groups = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+
+    # Analyze each choice and assign to appropriate group
+    for choice in choices:
+        option1_strategy = choice.get("option1_strategy", "")
+        option2_strategy = choice.get("option2_strategy", "")
+        user_choice = choice["user_choice"]
+
+        # Extract group and sign information from strategy names
+        # Expected format: "Linear Pattern + (v1)" or "Linear Pattern - (w2)"
+        group_number = None
+        chosen_sign = None
+
+        # Check option 1 for linear pattern
+        if "Linear Pattern" in option1_strategy:
+            try:
+                # Extract group number and sign
+                if "+ (v" in option1_strategy:
+                    group_part = option1_strategy.split("+ (v")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "+" if user_choice == 1 else "-"
+                elif "- (v" in option1_strategy:
+                    group_part = option1_strategy.split("- (v")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "-" if user_choice == 1 else "+"
+                elif "+ (w" in option1_strategy:
+                    group_part = option1_strategy.split("+ (w")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "+" if user_choice == 1 else "-"
+                elif "- (w" in option1_strategy:
+                    group_part = option1_strategy.split("- (w")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "-" if user_choice == 1 else "+"
+            except (IndexError, ValueError):
+                # Try option 2 if option 1 failed
+                pass
+
+        # Check option 2 for linear pattern if not found in option 1
+        if group_number is None and "Linear Pattern" in option2_strategy:
+            try:
+                if "+ (v" in option2_strategy:
+                    group_part = option2_strategy.split("+ (v")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "+" if user_choice == 2 else "-"
+                elif "- (v" in option2_strategy:
+                    group_part = option2_strategy.split("- (v")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "-" if user_choice == 2 else "+"
+                elif "+ (w" in option2_strategy:
+                    group_part = option2_strategy.split("+ (w")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "+" if user_choice == 2 else "-"
+                elif "- (w" in option2_strategy:
+                    group_part = option2_strategy.split("- (w")[1].split(")")[0]
+                    group_number = int(group_part)
+                    chosen_sign = "-" if user_choice == 2 else "+"
+            except (IndexError, ValueError):
+                continue
+
+        if group_number is not None and chosen_sign and 1 <= group_number <= 6:
+            groups[group_number].append(chosen_sign)
+
+    # Calculate consistency for each group
+    group_consistencies = {}
+    for group_num, signs in groups.items():
+        if not signs:
+            group_consistencies[f"group_{group_num}"] = 0.0
+            continue
+
+        # Count sign preferences
+        plus_count = signs.count("+")
+        minus_count = signs.count("-")
+        total_choices = len(signs)
+
+        # Calculate consistency as percentage of dominant sign
+        if total_choices > 0:
+            dominant_count = max(plus_count, minus_count)
+            consistency_percentage = (dominant_count / total_choices) * 100
+            group_consistencies[f"group_{group_num}"] = round(consistency_percentage, 1)
+        else:
+            group_consistencies[f"group_{group_num}"] = 0.0
+
+    # Calculate overall consistency as average of group consistencies
+    valid_group_consistencies = [
+        consistency for consistency in group_consistencies.values() if consistency > 0
+    ]
+
+    if valid_group_consistencies:
+        overall_consistency = sum(valid_group_consistencies) / len(
+            valid_group_consistencies
+        )
+        group_consistencies["overall"] = round(overall_consistency, 1)
+    else:
+        group_consistencies["overall"] = 0.0
+
+    return group_consistencies
+
+
 def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
     """
     Generate HTML table showing group-level consistency for cyclic shift strategy.
@@ -2470,6 +2600,99 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
 
     except Exception as e:
         logger.error(f"Error generating cyclic shift consistency table: {str(e)}")
+        return ""
+
+
+def _generate_linear_symmetry_consistency_table(choices: List[Dict]) -> str:
+    """
+    Generate HTML table showing group-level consistency for linear symmetry strategy.
+
+    Args:
+        choices: List of choices for a single user's survey response using the
+                linear_symmetry strategy.
+
+    Returns:
+        str: HTML table string showing group consistency percentages.
+    """
+    try:
+        consistency_data = _calculate_linear_symmetry_group_consistency(choices)
+
+        if not consistency_data:
+            return ""
+
+        # Get translations
+        group_label = get_translation("group", "answers", fallback="Group")
+        consistency_label = get_translation("consistency_percent", "answers")
+        overall_label = get_translation("overall", "answers")
+        table_title = get_translation("group_consistency", "answers")
+
+        # Helper function to determine consistency level for styling
+        def get_consistency_class(percentage):
+            if percentage >= 80:
+                return "consistency-high"
+            elif percentage >= 60:
+                return "consistency-medium"
+            else:
+                return "consistency-low"
+
+        # Build table rows for 6 groups (linear symmetry has 6 groups)
+        rows = []
+        for i in range(1, 7):
+            group_key = f"group_{i}"
+            if group_key in consistency_data:
+                percentage = consistency_data[group_key]
+                consistency_class = get_consistency_class(percentage)
+                rows.append(
+                    f"""
+                    <tr data-group="{i}">
+                        <td>{group_label} {i}</td>
+                        <td class="{consistency_class}" data-percentage="{percentage}">
+                            {percentage:.1f}%
+                            <div class="consistency-bar" style="width: {percentage}%"></div>
+                        </td>
+                    </tr>
+                """
+                )
+
+        # Overall summary row
+        overall_percentage = consistency_data.get("overall", 0)
+        overall_class = get_consistency_class(overall_percentage)
+
+        table_html = f"""
+        <div class="cyclic-shift-consistency-container">
+            <h4 class="consistency-table-title">{table_title}</h4>
+            <div class="consistency-table-wrapper">
+                <table class="consistency-table">
+                    <thead>
+                        <tr>
+                            <th>{group_label}</th>
+                            <th>{consistency_label}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {''.join(rows)}
+                        <tr class="overall-consistency" data-group="overall">
+                            <td>{overall_label}</td>
+                            <td class="{overall_class}" data-percentage="{overall_percentage}">
+                                {overall_percentage:.1f}%
+                                <div class="consistency-bar" style="width: {overall_percentage}%"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="consistency-legend">
+                <small class="consistency-note">
+                    {get_translation("consistency_explanation", "answers")}
+                </small>
+            </div>
+        </div>
+        """
+
+        return table_html
+
+    except Exception as e:
+        logger.error(f"Error generating linear symmetry consistency table: {str(e)}")
         return ""
 
 
