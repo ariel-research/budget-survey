@@ -69,23 +69,23 @@ def test_generate_group(strategy):
     # Should generate 2 pairs
     assert len(group_pairs) == 2
 
-    # Each pair should be a dictionary with 4 entries (2 vectors + 2 distances)
+    # Each pair should be a dictionary with 4 entries (2 vectors + 2 differences)
     for pair in group_pairs:
         assert isinstance(pair, dict)
         assert len(pair) == 4
 
-        # Check that distance vectors are present
-        assert "distance_v1" in pair
-        assert "distance_v2" in pair
+        # Check that difference vectors for display are present
+        assert "option1_differences" in pair
+        assert "option2_differences" in pair
 
         # Check that keys contain linear pattern information
         keys = list(pair.keys())
         linear_keys = [key for key in keys if "Linear Pattern" in key]
         assert len(linear_keys) == 2
 
-        # Check that values are valid tuples (skip distances)
+        # Check that values are valid tuples (skip differences)
         for key, vector in pair.items():
-            if not key.startswith("distance_"):
+            if not key.endswith("_differences"):
                 assert isinstance(vector, tuple)
                 assert len(vector) == vector_size
                 assert sum(vector) == 100
@@ -105,17 +105,17 @@ def test_generate_pairs_success(strategy):
         assert isinstance(pair, dict)
         assert len(pair) == 4
 
-        # Check that distance vectors are present
-        assert "distance_v1" in pair
-        assert "distance_v2" in pair
-        assert isinstance(pair["distance_v1"], list)
-        assert isinstance(pair["distance_v2"], list)
-        assert len(pair["distance_v1"]) == 3
-        assert len(pair["distance_v2"]) == 3
+        # Check that difference vectors are present
+        assert "option1_differences" in pair
+        assert "option2_differences" in pair
+        assert isinstance(pair["option1_differences"], list)
+        assert isinstance(pair["option2_differences"], list)
+        assert len(pair["option1_differences"]) == 3
+        assert len(pair["option2_differences"]) == 3
 
-        # Check that all vectors are valid (skip the distance keys)
+        # Check that all vectors are valid (skip the difference keys)
         for key, vector in pair.items():
-            if not key.startswith("distance_"):
+            if not key.endswith("_differences"):
                 assert isinstance(vector, tuple)
                 assert len(vector) == 3
                 assert sum(vector) == 100
@@ -153,9 +153,15 @@ def test_pair_uniqueness(strategy):
     # Convert pairs to a set of sorted tuples for uniqueness check
     pair_sets = set()
     for pair in pairs:
-        # Only consider the actual vector values, not the distance metadata
+        # Only consider the actual vector values, not the metadata
         vectors = tuple(
-            sorted([v for k, v in pair.items() if not k.startswith("distance_")])
+            sorted(
+                [
+                    v
+                    for k, v in pair.items()
+                    if not k.endswith("_differences") and isinstance(v, tuple)
+                ]
+            )
         )
         pair_sets.add(vectors)
 
@@ -221,7 +227,8 @@ def test_multiples_of_five_constraint(strategy):
 
     for pair in pairs:
         for key, vector in pair.items():
-            if not key.startswith("distance_"):  # Skip distance metadata
+            # Skip difference metadata, only check actual vectors
+            if not key.endswith("_differences") and isinstance(vector, tuple):
                 assert all(
                     v % 5 == 0 for v in vector
                 ), f"Vector {vector} contains non-multiples of 5"
@@ -236,7 +243,7 @@ def test_multiples_of_five_constraint(strategy):
     assert len(pairs_with_five) == 12
     for pair in pairs_with_five:
         for key, vector in pair.items():
-            if not key.startswith("distance_"):  # Skip distance metadata
+            if not key.endswith("_differences"):  # Skip difference metadata
                 assert sum(vector) == 100
                 assert all(0 <= v <= 100 for v in vector)
 
@@ -339,3 +346,47 @@ def test_group_generation_reliability(strategy):
 
     # Should succeed in generating most groups
     assert successful_groups >= 8  # Allow some failures but expect mostly success
+
+
+def test_option_differences_calculation(strategy):
+    """Test that option differences are calculated correctly as actual differences."""
+    user_vector = (20, 30, 50)
+    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+
+    for pair in pairs:
+        # Get the strategy keys (the actual vector keys)
+        strategy_keys = [k for k in pair.keys() if k.startswith("Linear Pattern")]
+        assert len(strategy_keys) == 2
+
+        option1_key = strategy_keys[0]
+        option2_key = strategy_keys[1]
+
+        option1_vector = pair[option1_key]
+        option2_vector = pair[option2_key]
+        option1_diff = pair["option1_differences"]
+        option2_diff = pair["option2_differences"]
+
+        # Calculate expected differences manually
+        expected_diff1 = [option1_vector[i] - user_vector[i] for i in range(3)]
+        expected_diff2 = [option2_vector[i] - user_vector[i] for i in range(3)]
+
+        # Verify that stored differences match actual differences
+        assert option1_diff == expected_diff1, (
+            f"Option 1 differences mismatch: stored={option1_diff}, "
+            f"expected={expected_diff1}, vector={option1_vector}, user={user_vector}"
+        )
+        assert option2_diff == expected_diff2, (
+            f"Option 2 differences mismatch: stored={option2_diff}, "
+            f"expected={expected_diff2}, vector={option2_vector}, user={user_vector}"
+        )
+
+        # Verify that applying differences to user vector gives back the vectors
+        reconstructed1 = [user_vector[i] + option1_diff[i] for i in range(3)]
+        reconstructed2 = [user_vector[i] + option2_diff[i] for i in range(3)]
+
+        assert (
+            tuple(reconstructed1) == option1_vector
+        ), f"Cannot reconstruct option 1: {reconstructed1} != {option1_vector}"
+        assert (
+            tuple(reconstructed2) == option2_vector
+        ), f"Cannot reconstruct option 2: {reconstructed2} != {option2_vector}"

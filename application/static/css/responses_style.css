@@ -659,6 +659,13 @@ th.sortable[data-order="desc"]::after {
 .detailed-breakdown table th:nth-child(4) { width: 20%; }
 .detailed-breakdown table th:nth-child(5) { width: 20%; }
 
+/* Single column strategy tables (linear_symmetry) */
+.detailed-breakdown table th:nth-child(3):last-child,
+.detailed-breakdown table td:nth-child(3):last-child {
+    width: 15%;
+    min-width: 120px;
+}
+
 .survey-response-link {
    display: inline-flex;
    align-items: center;
