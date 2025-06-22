@@ -1736,6 +1736,20 @@ def generate_detailed_breakdown_table(
                     data_cells.append(
                         f'<td class="{highlight}">{overall_consistency}%</td>'
                     )
+                elif "linear_consistency" in strategy_columns and "choices" in summary:
+                    # Handle linear_symmetry strategy with linear consistency
+                    choices = summary["choices"]
+                    consistencies = _calculate_linear_symmetry_group_consistency(
+                        choices
+                    )
+                    overall_consistency = consistencies.get("overall", 0.0)
+
+                    # Highlight row if consistency is high
+                    highlight = "highlight-row" if overall_consistency >= 80 else ""
+
+                    data_cells.append(
+                        f'<td class="{highlight}">{overall_consistency}%</td>'
+                    )
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
                     # Handle optimization_metrics strategy with sum/ratio columns
                     sum_percent = summary["stats"]["sum_percent"]

@@ -337,9 +337,7 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
         """
         return {
             "linear_consistency": {
-                "name": get_translation(
-                    "linear_consistency", "answers", fallback="Linear Consistency"
-                ),
+                "name": get_translation("linear_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
             },

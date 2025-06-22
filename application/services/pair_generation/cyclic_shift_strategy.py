@@ -366,9 +366,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         """
         return {
             "group_consistency": {
-                "name": get_translation(
-                    "group_consistency", "answers", fallback="Group Consistency"
-                ),
+                "name": get_translation("group_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
             },
