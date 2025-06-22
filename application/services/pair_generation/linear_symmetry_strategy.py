@@ -200,21 +200,35 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                 if pair_a in used_pairs or pair_b in used_pairs:
                     continue
 
+                # Calculate ACTUAL differences between user vector and final vectors
+                actual_diff_a1 = [
+                    int(vec_a1[i] - user_vector[i]) for i in range(len(user_vector))
+                ]
+                actual_diff_a2 = [
+                    int(vec_a2[i] - user_vector[i]) for i in range(len(user_vector))
+                ]
+                actual_diff_b1 = [
+                    int(vec_b1[i] - user_vector[i]) for i in range(len(user_vector))
+                ]
+                actual_diff_b2 = [
+                    int(vec_b2[i] - user_vector[i]) for i in range(len(user_vector))
+                ]
+
                 # Create the pairs
                 group_pairs = [
                     {
                         f"Linear Pattern + (v{group_num})": vec_a1,
                         f"Linear Pattern + (w{group_num})": vec_a2,
-                        # Store distance vectors as expected by tests
-                        "distance_v1": v1.tolist(),
-                        "distance_v2": v2.tolist(),
+                        # Store actual differences for each option for display
+                        "option1_differences": actual_diff_a1,
+                        "option2_differences": actual_diff_a2,
                     },
                     {
                         f"Linear Pattern - (v{group_num})": vec_b1,
                         f"Linear Pattern - (w{group_num})": vec_b2,
-                        # Store distance vectors as expected by tests
-                        "distance_v1": (-v1).tolist(),
-                        "distance_v2": (-v2).tolist(),
+                        # Store actual differences for each option for display
+                        "option1_differences": actual_diff_b1,
+                        "option2_differences": actual_diff_b2,
                     },
                 ]
 
