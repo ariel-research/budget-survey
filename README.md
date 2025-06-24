@@ -207,6 +207,10 @@ The application uses the Strategy pattern to support multiple pair generation al
      - Ensures vectors are canonically different (sorted patterns differ)
      - Each vector must have at least one meaningful difference (|diff| >= 5)
      - Validates that resulting budget allocations remain within [0, 100] range
+   - **Validation Improvements**:
+     - Uses absolute canonical form validation to prevent degenerate pairs
+     - Ensures difference vectors are not absolute canonical identical
+     - Maintains research validity by avoiding equivalent patterns
    - **Cyclic Shift Logic**:
      - Applies right shifts of 0, 1, and 2 positions to create 3 pairs per group
      - Each shift moves difference elements to the right by the specified positions
@@ -257,6 +261,10 @@ The application uses the Strategy pattern to support multiple pair generation al
      - Vectors must be different from each other
      - Each vector must have at least one meaningful difference (|diff| >= 5)
      - Validates that both addition and subtraction produce valid budget allocations within [0, 100]
+   - **Validation Improvements**:
+     - Uses absolute canonical form validation to prevent degenerate pairs
+     - Ensures distance vectors are not absolute canonical identical
+     - Maintains research validity by avoiding equivalent patterns
    - **Linear Symmetry Logic**:
      - Tests if users view distance D and distance -D as equivalent
      - If symmetry hypothesis holds, users should show similar preference patterns for both pairs in each group
@@ -941,6 +949,10 @@ tests/
 ├── performance/                 # Load and performance tests
 │   └── load_test.py
 ├── services/                    # Service layer tests
+│   ├── pair_generation/             # Pair generation strategy tests
+│   │   ├── test_cyclic_shift_strategy.py
+│   │   ├── test_linear_symmetry_strategy.py
+│   │   └── test_*.py            # Other strategy tests
 │   └── test_survey_vector_generator.py
 ├── UI/                         # Frontend/UI tests
 │   └── test_client_side.py
