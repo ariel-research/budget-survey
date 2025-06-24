@@ -5,7 +5,7 @@ Implements Strategy pattern for flexible pair generation algorithms.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Set, Tuple, Type
+from typing import Dict, List, Set, Tuple, Type, Union
 
 import numpy as np
 
@@ -162,6 +162,36 @@ class PairGenerationStrategy(ABC):
     def get_option_labels(self) -> Tuple[str, str]:
         """Return labels for the two options being compared."""
         pass
+
+    def _are_absolute_canonical_identical(
+        self, v1: Union[np.ndarray, list, tuple], v2: Union[np.ndarray, list, tuple]
+    ) -> bool:
+        """
+        Check if vectors have identical absolute value canonical forms.
+
+        This detects patterns that are equivalent in terms of absolute
+        distances, preventing degenerate pairs that could compromise
+        research validity.
+
+        Args:
+            v1: First vector to compare
+            v2: Second vector to compare
+
+        Returns:
+            bool: True if vectors have same absolute canonical form
+
+        Examples:
+            Additive inverses are identical:
+            >>> _are_absolute_canonical_identical([10, -5, -5], [-10, 5, 5])
+            True  # Both become [5, 5, 10] when sorted by absolute value
+
+            Different patterns are distinct:
+            >>> _are_absolute_canonical_identical([20, -10, -10], [15, -10, -5])
+            False  # [10, 10, 20] != [5, 10, 15]
+        """
+        v1_abs_canonical = tuple(sorted(abs(x) for x in v1))
+        v2_abs_canonical = tuple(sorted(abs(x) for x in v2))
+        return v1_abs_canonical == v2_abs_canonical
 
     def get_option_description(self, **kwargs) -> str:
         """
