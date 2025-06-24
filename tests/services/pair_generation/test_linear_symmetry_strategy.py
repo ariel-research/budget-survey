@@ -348,6 +348,248 @@ def test_group_generation_reliability(strategy):
     assert successful_groups >= 8  # Allow some failures but expect mostly success
 
 
+def test_absolute_canonical_validation(strategy):
+    """Test that absolute canonical identical patterns are correctly identified."""
+    # Test the validation method directly with examples
+    # Identical absolute canonical forms
+    assert strategy._are_absolute_canonical_identical([10, 0, -10], [-10, 0, 10])
+    assert strategy._are_absolute_canonical_identical([10, -5, -5], [-10, 5, 5])
+    assert strategy._are_absolute_canonical_identical([0, -10, 10], [10, 0, -10])
+
+    # Different absolute canonical forms
+    assert not strategy._are_absolute_canonical_identical([20, -10, -10], [15, -10, -5])
+    assert not strategy._are_absolute_canonical_identical(
+        [25, -15, -10], [20, -10, -10]
+    )
+
+    # Test in generated pairs
+    user_vector = (30, 40, 30)
+    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+
+    for i, pair in enumerate(pairs):
+        diff1 = pair["option1_differences"]
+        diff2 = pair["option2_differences"]
+
+        abs_can1 = tuple(sorted(abs(x) for x in diff1))
+        abs_can2 = tuple(sorted(abs(x) for x in diff2))
+
+        assert abs_can1 != abs_can2, (
+            f"Pair {i}: Found absolute canonical identical: {diff1} and {diff2} "
+            f"both have form {abs_can1}"
+        )
+
+
+def test_linear_symmetry_validation(strategy):
+    """Test that linear symmetry patterns are validated correctly."""
+    # Manually test some problematic patterns that should be rejected
+    v1 = np.array([10, -5, -5])
+    v2 = np.array([-10, 5, 5])  # Additive inverse - absolute canonical identical
+
+    assert strategy._are_absolute_canonical_identical(
+        v1, v2
+    ), "Additive inverse vectors should be absolute canonical identical"
+
+
+def test_generation_feasibility_all_valid_vectors(strategy):
+    """
+    Mathematical verification that ALL valid user vectors generate exactly 12 pairs.
+
+    This test systematically enumerates the complete constraint space of valid
+    3-dimensional budget vectors and verifies algorithmic completeness.
+    """
+    import time
+
+    # MATHEMATICAL CONSTRAINT SPACE DEFINITION:
+    # Valid vector (a,b,c) must satisfy:
+    # 1. a + b + c = 100 (budget constraint)
+    # 2. a,b,c ∈ {5,10,15,...,95} (multiples of 5)
+    # 3. a,b,c > 0 (no zeros for linear symmetry strategy)
+    # 4. 5 ≤ a,b,c ≤ 95 (valid range)
+
+    print("\n=== MATHEMATICAL ENUMERATION OF CONSTRAINT SPACE ===")
+
+    # Systematically enumerate ALL valid vectors
+    valid_vectors = []
+    enumeration_stats = {
+        "total_combinations": 0,
+        "sum_violations": 0,
+        "range_violations": 0,
+        "zero_violations": 0,
+        "valid_count": 0,
+    }
+
+    # For 3D budget vectors with multiples of 5
+    for a in range(5, 96, 5):  # a ∈ {5,10,15,...,95}
+        for b in range(5, 96, 5):  # b ∈ {5,10,15,...,95}
+            enumeration_stats["total_combinations"] += 1
+
+            # Calculate c from constraint: a + b + c = 100
+            c = 100 - a - b
+
+            # Validate c against all constraints
+            if c <= 0:
+                enumeration_stats["zero_violations"] += 1
+                continue
+            if c < 5 or c > 95:
+                enumeration_stats["range_violations"] += 1
+                continue
+            if c % 5 != 0:
+                enumeration_stats["sum_violations"] += 1
+                continue
+
+            # Vector satisfies all constraints
+            valid_vectors.append((a, b, c))
+            enumeration_stats["valid_count"] += 1
+
+    # Mathematical verification of enumeration completeness
+    print("Enumeration Statistics:")
+    print(f"  Total combinations tested: {enumeration_stats['total_combinations']}")
+    print("  Constraint violations:")
+    print(f"    Zero values: {enumeration_stats['zero_violations']}")
+    print(f"    Range violations: {enumeration_stats['range_violations']}")
+    print(f"    Sum constraint violations: {enumeration_stats['sum_violations']}")
+    print(f"  Valid vectors found: {enumeration_stats['valid_count']}")
+
+    # Theoretical count: For a+b+c=100, multiples of 5, 5≤a,b,c≤95
+    # This gives us exactly 171 valid vectors
+    expected_count = 171
+    assert len(valid_vectors) == expected_count, (
+        f"Mathematical enumeration error: Expected exactly {expected_count} "
+        f"valid vectors, got {len(valid_vectors)}"
+    )
+
+    print(f"✓ Enumeration complete: {len(valid_vectors)} vectors")
+
+    # ALGORITHMIC COMPLETENESS VERIFICATION
+    print("\n=== ALGORITHMIC COMPLETENESS VERIFICATION ===")
+
+    successful_vectors = []
+    failed_vectors = []
+    timing_results = []
+    pair_validation_failures = []
+
+    for i, user_vector in enumerate(valid_vectors, 1):
+        print(f"Testing vector {i:2d}/{len(valid_vectors)}: {user_vector}", end=" ... ")
+
+        try:
+            start_time = time.time()
+            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+            elapsed = time.time() - start_time
+
+            # STRICT VALIDATION: Must generate exactly 12 pairs
+            if len(pairs) != 12:
+                pair_validation_failures.append(
+                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
+                )
+                print(f"FAIL (wrong count: {len(pairs)})")
+                continue
+
+            # Performance validation
+            if elapsed >= 10.0:
+                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
+                print(f"FAIL (timeout: {elapsed:.2f}s)")
+                continue
+
+            # Additional pair validity checks
+            for j, pair in enumerate(pairs):
+                # Each pair must have exactly 4 keys
+                if len(pair) != 4:
+                    pair_validation_failures.append(
+                        (user_vector, f"Pair {j} has {len(pair)} keys, expected 4")
+                    )
+                    print("FAIL (pair structure)")
+                    break
+
+                # Must have difference keys
+                if (
+                    "option1_differences" not in pair
+                    or "option2_differences" not in pair
+                ):
+                    pair_validation_failures.append(
+                        (user_vector, f"Pair {j} missing difference keys")
+                    )
+                    print("FAIL (missing diffs)")
+                    break
+
+                # Validate vector properties
+                for key, vector in pair.items():
+                    if not key.endswith("_differences"):
+                        if (
+                            not isinstance(vector, tuple)
+                            or len(vector) != 3
+                            or sum(vector) != 100
+                            or not all(0 <= v <= 100 for v in vector)
+                        ):
+                            pair_validation_failures.append(
+                                (user_vector, f"Invalid vector in pair {j}: {vector}")
+                            )
+                            print("FAIL (invalid vector)")
+                            break
+                else:
+                    continue
+                break
+            else:
+                # All validations passed
+                successful_vectors.append(user_vector)
+                timing_results.append((user_vector, elapsed))
+                print(f"✓ ({elapsed:.3f}s)")
+                continue
+
+        except Exception as e:
+            failed_vectors.append((user_vector, str(e)))
+            print(f"FAIL (exception: {type(e).__name__})")
+
+    # MATHEMATICAL COMPLETENESS RESULTS
+    print("\n=== COMPLETENESS VERIFICATION RESULTS ===")
+
+    total_tested = len(valid_vectors)
+    total_successful = len(successful_vectors)
+    success_rate = (total_successful / total_tested) * 100
+
+    print(f"Vectors tested: {total_tested}")
+    print(f"Successful: {total_successful}")
+    print(f"Success rate: {success_rate:.1f}%")
+
+    if timing_results:
+        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
+        max_time = max(t[1] for t in timing_results)
+        min_time = min(t[1] for t in timing_results)
+        print(f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, max={max_time:.3f}s")
+
+    # Report failures in detail
+    if failed_vectors:
+        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
+        for vec, error in failed_vectors:
+            print(f"  {vec}: {error}")
+
+    if pair_validation_failures:
+        print(f"\n❌ PAIR VALIDATION FAILURES ({len(pair_validation_failures)}):")
+        for vec, error in pair_validation_failures:
+            print(f"  {vec}: {error}")
+
+    # MATHEMATICAL REQUIREMENT: 100% SUCCESS RATE
+    # The algorithm must be able to generate exactly 12 valid pairs
+    # for every single valid user vector in the constraint space
+    assert total_successful == total_tested, (
+        f"ALGORITHMIC INCOMPLETENESS DETECTED: "
+        f"Only {total_successful}/{total_tested} vectors succeeded. "
+        f"Algorithm must work for 100% of valid constraint space."
+    )
+
+    assert (
+        success_rate == 100.0
+    ), f"Success rate {success_rate:.1f}% is below mathematical requirement of 100%"
+
+    if timing_results:
+        assert (
+            avg_time < 3.0
+        ), f"Average time {avg_time:.2f}s exceeds performance requirement of 3.0s"
+
+    print(
+        "✅ MATHEMATICAL VERIFICATION COMPLETE: Algorithm is complete over constraint space"
+    )
+
+
 def test_option_differences_calculation(strategy):
     """Test that option differences are calculated correctly as actual differences."""
     user_vector = (20, 30, 50)
