@@ -538,6 +538,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אחוזים גבוהים יותר מעידים על בחירות עקביות יותר בקרב כל קבוצה",
             "en": "Higher percentages indicate more consistent choices within each group",
         },
+        "groups": {
+            "he": "קבוצות",
+            "en": "groups",
+        },
     },
 }
 
