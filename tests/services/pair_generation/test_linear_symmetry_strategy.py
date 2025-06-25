@@ -390,6 +390,37 @@ def test_linear_symmetry_validation(strategy):
     ), "Additive inverse vectors should be absolute canonical identical"
 
 
+def test_linear_symmetry_within_group_consistency(strategy):
+    """Test that linear symmetry pairs maintain proper distance relationships."""
+    user_vector = (40, 30, 30)
+
+    # Generate a single group
+    group_pairs = strategy._generate_group(user_vector, 3, 1)
+
+    if len(group_pairs) == 2:  # Only test if we got a full group
+        # Extract the pairs: (+v1,+v2) and (-v1,-v2)
+        positive_pair = group_pairs[0]  # ideal + v1, ideal + v2
+        negative_pair = group_pairs[1]  # ideal - v1, ideal - v2
+
+        # Get the actual difference vectors
+        pos_diff1 = positive_pair["option1_differences"]
+        pos_diff2 = positive_pair["option2_differences"]
+        neg_diff1 = negative_pair["option1_differences"]
+        neg_diff2 = negative_pair["option2_differences"]
+
+        # The negative pair differences should be exactly opposite of positive
+        np.testing.assert_array_equal(
+            np.array(pos_diff1),
+            -np.array(neg_diff1),
+            err_msg="Negative pair diff1 should be opposite of positive pair diff1",
+        )
+        np.testing.assert_array_equal(
+            np.array(pos_diff2),
+            -np.array(neg_diff2),
+            err_msg="Negative pair diff2 should be opposite of positive pair diff2",
+        )
+
+
 def test_generation_feasibility_all_valid_vectors(strategy):
     """
     Mathematical verification that ALL valid user vectors generate exactly 12 pairs.

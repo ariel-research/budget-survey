@@ -148,23 +148,31 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
         user_vector: tuple,
         vector_size: int,
         group_num: int,
-        used_pairs: set = None,
+        used_distances: set = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate one group of 2 pairs testing linear symmetry.
+
+        Creates pairs that test whether users treat positive and negative
+        distances equivalently. Tracks uniqueness by distance vectors rather
+        than final budget vectors to maintain symmetric relationships.
 
         Args:
             user_vector: User's ideal budget allocation
             vector_size: Size of each vector
             group_num: Group number for labeling (1-6)
-            used_pairs: Set of already used pair combinations to avoid
-                duplicates
+            used_distances: Set of already used distance combinations
 
         Returns:
-            List of 2 unique pairs for this group
+            List of 2 pairs testing symmetry: (ideal±v1) vs (ideal±v2)
+
+        Example:
+            For distance vectors v1=[15,-10,-5], v2=[-10,5,5]:
+            - Pair A: (ideal+v1) vs (ideal+v2)
+            - Pair B: (ideal-v1) vs (ideal-v2)
         """
-        if used_pairs is None:
-            used_pairs = set()
+        if used_distances is None:
+            used_distances = set()
 
         user_array = np.array(user_vector)
         max_attempts = 1000
@@ -192,6 +200,14 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                     vec_b1[-1] = 100 - np.sum(vec_b1[:-1])
                     vec_b2[-1] = 100 - np.sum(vec_b2[:-1])
 
+                    # Calculate actual distance vectors after rounding
+                    actual_v1 = vec_a1 - user_array
+                    actual_v2 = vec_a2 - user_array
+                else:
+                    # No rounding needed, use original distances
+                    actual_v1 = v1
+                    actual_v2 = v2
+
                 # Convert to integers and tuples
                 vec_a1 = tuple(int(v) for v in vec_a1)
                 vec_a2 = tuple(int(v) for v in vec_a2)
@@ -210,14 +226,20 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                 if vec_a1 == vec_a2 or vec_b1 == vec_b2:
                     continue
 
-                # Check for duplicates by creating canonical representations
-                pair_a = tuple(sorted([vec_a1, vec_a2]))
-                pair_b = tuple(sorted([vec_b1, vec_b2]))
+                # Check uniqueness by distance vectors (not final vectors)
+                def to_tuple(dist):
+                    return tuple(
+                        dist.tolist() if isinstance(dist, np.ndarray) else dist
+                    )
 
-                if pair_a in used_pairs or pair_b in used_pairs:
+                distance_pair = tuple(
+                    sorted([to_tuple(actual_v1), to_tuple(actual_v2)])
+                )
+
+                if distance_pair in used_distances:
                     continue
 
-                # Calculate ACTUAL differences between user vector and final vectors
+                # Calculate ACTUAL differences for display
                 actual_diff_a1 = [
                     int(vec_a1[i] - user_vector[i]) for i in range(len(user_vector))
                 ]
@@ -236,22 +258,19 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                     {
                         f"Linear Pattern + (v{group_num})": vec_a1,
                         f"Linear Pattern + (w{group_num})": vec_a2,
-                        # Store actual differences for each option for display
                         "option1_differences": actual_diff_a1,
                         "option2_differences": actual_diff_a2,
                     },
                     {
                         f"Linear Pattern - (v{group_num})": vec_b1,
                         f"Linear Pattern - (w{group_num})": vec_b2,
-                        # Store actual differences for each option for display
                         "option1_differences": actual_diff_b1,
                         "option2_differences": actual_diff_b2,
                     },
                 ]
 
-                # Mark these pairs as used
-                used_pairs.add(pair_a)
-                used_pairs.add(pair_b)
+                # Mark this distance combination as used
+                used_distances.add(distance_pair)
 
                 return group_pairs
 
@@ -292,12 +311,12 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
         self._validate_vector(user_vector, vector_size)
 
         all_pairs = []
-        used_pairs = set()
+        used_distances = set()
 
         # Generate 6 groups of 2 pairs each
         for group_num in range(1, 7):
             group_pairs = self._generate_group(
-                user_vector, vector_size, group_num, used_pairs
+                user_vector, vector_size, group_num, used_distances
             )
             all_pairs.extend(group_pairs)
 
@@ -309,7 +328,10 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
             max_total_attempts = 600  # 6 groups × 100 attempts each
             while len(all_pairs) < 12 and total_attempts < max_total_attempts:
                 additional_pairs = self._generate_group(
-                    user_vector, vector_size, (total_attempts // 100) + 1, used_pairs
+                    user_vector,
+                    vector_size,
+                    (total_attempts // 100) + 1,
+                    used_distances,
                 )
                 all_pairs.extend(additional_pairs)
                 total_attempts += 1

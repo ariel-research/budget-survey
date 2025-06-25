@@ -386,6 +386,44 @@ def test_cyclic_shift_preserves_validation(strategy):
         ), f"Shift {shift} should preserve absolute canonical identity"
 
 
+def test_cyclic_shift_within_group_consistency(strategy):
+    """Test that cyclic shifts within a group maintain proper relationships."""
+    user_vector = (30, 40, 30)
+
+    # Generate a single group
+    group_pairs = strategy._generate_group(user_vector, 3, 1)
+
+    if len(group_pairs) == 3:  # Only test if we got a full group
+        # Extract differences from each pair
+        group_diffs = []
+        for pair in group_pairs:
+            diff1 = pair["option1_differences"]
+            diff2 = pair["option2_differences"]
+            group_diffs.append((diff1, diff2))
+
+        # The differences should follow cyclic shift pattern
+        base_diff1 = np.array(group_diffs[0][0])
+        base_diff2 = np.array(group_diffs[0][1])
+
+        for shift in range(1, 3):
+            expected_diff1 = strategy._apply_cyclic_shift(base_diff1, shift)
+            expected_diff2 = strategy._apply_cyclic_shift(base_diff2, shift)
+
+            actual_diff1 = np.array(group_diffs[shift][0])
+            actual_diff2 = np.array(group_diffs[shift][1])
+
+            np.testing.assert_array_equal(
+                actual_diff1,
+                expected_diff1,
+                err_msg=f"Shift {shift} diff1 not properly cyclic",
+            )
+            np.testing.assert_array_equal(
+                actual_diff2,
+                expected_diff2,
+                err_msg=f"Shift {shift} diff2 not properly cyclic",
+            )
+
+
 def test_generation_feasibility_all_valid_vectors(strategy):
     """
     Mathematical verification that ALL valid user vectors generate exactly 12 pairs.
