@@ -545,6 +545,138 @@ def test_difference_generation_properties(strategy):
         ), f"All differences in {diff2} are too small"
 
 
+def test_binary_consistency_calculation():
+    """Test that binary consistency is calculated correctly."""
+    from analysis.report_content_generators import (
+        _calculate_cyclic_shift_group_consistency,
+    )
+
+    # Mock choices for testing
+    # Group 1: All A (consistent)
+    # Group 2: Mixed AAB (inconsistent)
+    # Group 3: All B (consistent)
+    # Group 4: Mixed ABA (inconsistent)
+    mock_choices = [
+        # Group 1 (pairs 1-3): All A
+        {
+            "pair_number": 1,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 3,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 1,
+        },
+        # Group 2 (pairs 4-6): AAB
+        {
+            "pair_number": 4,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 5,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 6,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 2,
+        },
+        # Group 3 (pairs 7-9): All B
+        {
+            "pair_number": 7,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 2,
+        },
+        {
+            "pair_number": 8,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 2,
+        },
+        {
+            "pair_number": 9,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 2,
+        },
+        # Group 4 (pairs 10-12): ABA
+        {
+            "pair_number": 10,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 11,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 2,
+        },
+        {
+            "pair_number": 12,
+            "option1_strategy": "Cyclic Pattern A (shift 2)",
+            "option2_strategy": "Cyclic Pattern B (shift 2)",
+            "user_choice": 1,
+        },
+    ]
+
+    result = _calculate_cyclic_shift_group_consistency(mock_choices)
+
+    # Verify binary consistency
+    assert result["group_1"] == 100.0, "Group 1 should be 100% (all A)"
+    assert result["group_2"] == 0.0, "Group 2 should be 0% (mixed AAB)"
+    assert result["group_3"] == 100.0, "Group 3 should be 100% (all B)"
+    assert result["group_4"] == 0.0, "Group 4 should be 0% (mixed ABA)"
+
+    # Overall should be 50% (2 out of 4 groups consistent)
+    assert result["overall"] == 50.0, "Overall should be 50% (2/4 groups consistent)"
+
+
+def test_incomplete_groups_binary_consistency():
+    """Test binary consistency with incomplete groups."""
+    from analysis.report_content_generators import (
+        _calculate_cyclic_shift_group_consistency,
+    )
+
+    # Only 2 choices in group 1 (incomplete)
+    mock_choices = [
+        {
+            "pair_number": 1,
+            "option1_strategy": "Cyclic Pattern A (shift 0)",
+            "option2_strategy": "Cyclic Pattern B (shift 0)",
+            "user_choice": 1,
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Cyclic Pattern A (shift 1)",
+            "option2_strategy": "Cyclic Pattern B (shift 1)",
+            "user_choice": 1,
+        },
+        # Missing pair 3
+    ]
+
+    result = _calculate_cyclic_shift_group_consistency(mock_choices)
+
+    # Incomplete group should be 0%
+    assert result["group_1"] == 0.0, "Incomplete group should be 0% consistent"
+    assert result["overall"] == 0.0, "Overall should be 0% with no complete groups"
+
+
 def test_absolute_canonical_validation(strategy):
     """Test absolute canonical identical patterns are correctly identified."""
     # Identical absolute canonical forms

@@ -291,12 +291,12 @@ def test_generate_detailed_user_choices_css_classes(
 
 
 def test_cyclic_shift_group_consistency():
-    """Test cyclic shift group consistency calculation."""
-    # Mock choices for cyclic shift strategy
-    # Group 1: 2 A choices, 1 B choice = 67% consistency
-    # Group 2: 3 A choices = 100% consistency
-    # Group 3: 1 A choice, 2 B choices = 67% consistency
-    # Group 4: 1 A choice, 1 B choice (only 2 choices) = 50% consistency
+    """Test cyclic shift group consistency calculation with binary metric."""
+    # Mock choices for cyclic shift strategy with binary consistency
+    # Group 1: AAB = 0% (not all same)
+    # Group 2: AAA = 100% (all same)
+    # Group 3: ABB = 0% (not all same)
+    # Group 4: AB (incomplete) = 0% (incomplete group)
     choices = [
         # Group 1 (pairs 1-3)
         {
@@ -373,15 +373,15 @@ def test_cyclic_shift_group_consistency():
     # Test consistency calculation
     consistencies = _calculate_cyclic_shift_group_consistency(choices)
 
-    # Verify group consistencies
-    assert consistencies["group_1"] == 66.7  # 2/3 = 66.7%
-    assert consistencies["group_2"] == 100.0  # 3/3 = 100%
-    assert consistencies["group_3"] == 66.7  # 2/3 = 66.7%
-    assert consistencies["group_4"] == 50.0  # 1/2 = 50%
+    # Verify binary group consistencies
+    assert consistencies["group_1"] == 0.0  # AAB = 0% (not all same)
+    assert consistencies["group_2"] == 100.0  # AAA = 100% (all same)
+    assert consistencies["group_3"] == 0.0  # ABB = 0% (not all same)
+    assert consistencies["group_4"] == 0.0  # AB (incomplete) = 0%
 
-    # Verify overall consistency (average of group consistencies)
-    expected_overall = (66.7 + 100.0 + 66.7 + 50.0) / 4
-    assert abs(consistencies["overall"] - expected_overall) < 0.1
+    # Verify overall consistency (percentage of groups that are 100% consistent)
+    # Only 1 out of 4 groups is 100% consistent
+    assert consistencies["overall"] == 25.0  # 1/4 = 25%
 
     # Test HTML table generation with mocked translations
     with patch(
@@ -405,13 +405,16 @@ def test_cyclic_shift_group_consistency():
 
         table_html = _generate_cyclic_shift_consistency_table(choices)
 
-        # Verify table contains expected elements
+        # Verify table contains expected binary consistency elements
         assert "Group Consistency" in table_html
-        assert "66.7%" in table_html
-        assert "100.0%" in table_html
-        assert "50.0%" in table_html
+        assert "0%" in table_html  # Groups 1, 3, 4 are 0%
+        assert "100%" in table_html  # Group 2 is 100%
+        assert "25%" in table_html  # Overall is 25%
         assert "Group 1" in table_html
         assert "Group 2" in table_html
         assert "Group 3" in table_html
         assert "Group 4" in table_html
         assert "Overall" in table_html
+        # Verify binary consistency icons
+        assert "✓" in table_html  # Checkmark for consistent group
+        assert "✗" in table_html  # X mark for inconsistent groups

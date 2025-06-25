@@ -2330,17 +2330,21 @@ def generate_methodology_description() -> str:
 
 def _calculate_cyclic_shift_group_consistency(choices: List[Dict]) -> Dict[str, float]:
     """
-    Calculate group-level consistency for cyclic shift strategy.
+    Calculate group-level consistency for cyclic shift strategy using binary
+    metric.
+
+    Binary consistency: A group is 100% consistent only if all 3 choices match,
+    otherwise 0% consistent.
 
     Args:
         choices: List of choices for a single user's survey response using the
                 cyclic_shift strategy.
 
     Returns:
-        Dict containing consistency percentages for each group (1-4) and
-        overall average.
-        Format: {"group_1": 67.0, "group_2": 100.0, "group_3": 67.0,
-                 "group_4": 50.0, "overall": 71.0}
+        Dict containing binary consistency (0% or 100%) for each group (1-4)
+        and overall percentage of consistent groups.
+        Format: {"group_1": 100.0, "group_2": 0.0, "group_3": 100.0,
+                 "group_4": 0.0, "overall": 50.0}
     """
     # Initialize group data - each group should have 3 pairs
     groups = {1: [], 2: [], 3: [], 4: []}
@@ -2381,35 +2385,31 @@ def _calculate_cyclic_shift_group_consistency(choices: List[Dict]) -> Dict[str, 
                 if 1 <= group_number <= 4:
                     groups[group_number].append(chosen_pattern)
 
-    # Calculate consistency for each group
+    # Calculate binary consistency for each group
     group_consistencies = {}
+    consistent_groups = 0
+    total_groups_with_data = 0
+
     for group_num, patterns in groups.items():
-        if not patterns:
+        if len(patterns) != 3:
+            # Incomplete group - mark as 0% consistent
             group_consistencies[f"group_{group_num}"] = 0.0
+            if len(patterns) > 0:
+                total_groups_with_data += 1
             continue
 
-        # Count pattern preferences
-        pattern_a_count = patterns.count("A")
-        pattern_b_count = patterns.count("B")
-        total_choices = len(patterns)
+        total_groups_with_data += 1
 
-        # Calculate consistency as percentage of dominant pattern
-        if total_choices > 0:
-            dominant_count = max(pattern_a_count, pattern_b_count)
-            consistency_percentage = (dominant_count / total_choices) * 100
-            group_consistencies[f"group_{group_num}"] = round(consistency_percentage, 1)
+        # Binary consistency: all 3 must match
+        if len(set(patterns)) == 1:  # All patterns are identical
+            group_consistencies[f"group_{group_num}"] = 100.0
+            consistent_groups += 1
         else:
             group_consistencies[f"group_{group_num}"] = 0.0
 
-    # Calculate overall consistency as average of group consistencies
-    valid_group_consistencies = [
-        consistency for consistency in group_consistencies.values() if consistency > 0
-    ]
-
-    if valid_group_consistencies:
-        overall_consistency = sum(valid_group_consistencies) / len(
-            valid_group_consistencies
-        )
+    # Calculate overall consistency as percentage of consistent groups
+    if total_groups_with_data > 0:
+        overall_consistency = (consistent_groups / total_groups_with_data) * 100
         group_consistencies["overall"] = round(overall_consistency, 1)
     else:
         group_consistencies["overall"] = 0.0
@@ -2561,14 +2561,17 @@ def _parse_linear_pattern_strategy(
 
 def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
     """
-    Generate HTML table showing group-level consistency for cyclic shift strategy.
+    Generate HTML table showing binary group-level consistency for cyclic
+    shift strategy.
+
+    Updated to clearly indicate binary nature of consistency (100% or 0%).
 
     Args:
         choices: List of choices for a single user's survey response using the
                 cyclic_shift strategy.
 
     Returns:
-        str: HTML table string showing group consistency percentages.
+        str: HTML table string showing binary group consistency.
     """
     try:
         consistency_data = _calculate_cyclic_shift_group_consistency(choices)
@@ -2578,18 +2581,13 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
 
         # Get translations
         group_label = get_translation("group", "answers", fallback="Group")
-        consistency_label = get_translation("consistency_percent", "answers")
+        consistency_label = get_translation("consistency", "answers")
         overall_label = get_translation("overall", "answers")
         table_title = get_translation("group_consistency", "answers")
 
-        # Helper function to determine consistency level for styling
+        # Helper function for binary consistency styling
         def get_consistency_class(percentage):
-            if percentage >= 80:
-                return "consistency-high"
-            elif percentage >= 60:
-                return "consistency-medium"
-            else:
-                return "consistency-low"
+            return "consistency-high" if percentage == 100 else "consistency-low"
 
         # Build table rows
         rows = []
@@ -2598,13 +2596,15 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
             if group_key in consistency_data:
                 percentage = consistency_data[group_key]
                 consistency_class = get_consistency_class(percentage)
+                # Show checkmark for consistent, X for inconsistent
+                icon = "✓" if percentage == 100 else "✗"
                 rows.append(
                     f"""
                     <tr data-group="{i}">
                         <td>{group_label} {i}</td>
                         <td class="{consistency_class}" data-percentage="{percentage}">
-                            {percentage:.1f}%
-                            <div class="consistency-bar" style="width: {percentage}%"></div>
+                            <span class="consistency-icon">{icon}</span>
+                            {percentage:.0f}%
                         </td>
                     </tr>
                 """
@@ -2612,7 +2612,13 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
 
         # Overall summary row
         overall_percentage = consistency_data.get("overall", 0)
-        overall_class = get_consistency_class(overall_percentage)
+        # For overall, show as fraction of consistent groups
+        consistent_count = sum(
+            1 for i in range(1, 5) if consistency_data.get(f"group_{i}", 0) == 100
+        )
+
+        # Get translation for "groups"
+        groups_label = get_translation("groups", "answers", fallback="groups")
 
         table_html = f"""
         <div class="cyclic-shift-consistency-container">
@@ -2629,9 +2635,8 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
                         {''.join(rows)}
                         <tr class="overall-consistency" data-group="overall">
                             <td>{overall_label}</td>
-                            <td class="{overall_class}" data-percentage="{overall_percentage}">
-                                {overall_percentage:.1f}%
-                                <div class="consistency-bar" style="width: {overall_percentage}%"></div>
+                            <td data-percentage="{overall_percentage}">
+                                {consistent_count}/4 {groups_label} ({overall_percentage:.0f}%)
                             </td>
                         </tr>
                     </tbody>
@@ -2639,7 +2644,8 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
             </div>
             <div class="consistency-legend">
                 <small class="consistency-note">
-                    {get_translation("consistency_explanation", "answers")}
+                    Binary consistency: A group is consistent (100%) only if all 3 
+                    choices match the same pattern, otherwise inconsistent (0%).
                 </small>
             </div>
         </div>
