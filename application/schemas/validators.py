@@ -209,15 +209,16 @@ class SurveySubmission:
                 # Extract differences if available
                 option1_diffs_str = form_data.get(f"option1_differences_{i}", "")
                 option2_diffs_str = form_data.get(f"option2_differences_{i}", "")
+
+                # Parse differences, handling both int and float strings
+                def parse_diffs(diffs_str):
+                    return list(map(lambda x: int(float(x)), diffs_str.split(",")))
+
                 option1_differences = (
-                    list(map(int, option1_diffs_str.split(",")))
-                    if option1_diffs_str
-                    else None
+                    parse_diffs(option1_diffs_str) if option1_diffs_str else None
                 )
                 option2_differences = (
-                    list(map(int, option2_diffs_str.split(",")))
-                    if option2_diffs_str
-                    else None
+                    parse_diffs(option2_diffs_str) if option2_diffs_str else None
                 )
 
                 if was_swapped:
