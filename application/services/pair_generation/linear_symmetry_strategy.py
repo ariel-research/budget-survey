@@ -143,6 +143,31 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
 
         raise ValueError("Unable to generate valid distance vectors")
 
+    def _validate_symmetry_relationships(self, group_pairs: List[Dict]) -> bool:
+        """
+        Validate perfect symmetry relationships within a group.
+
+        Args:
+            group_pairs: List of pairs in a group
+
+        Returns:
+            True if perfect symmetry relationships are maintained,
+            False otherwise
+        """
+        if len(group_pairs) != 2:
+            return False
+
+        # Extract differences
+        pos_diff1 = np.array(group_pairs[0]["option1_differences"])
+        pos_diff2 = np.array(group_pairs[0]["option2_differences"])
+        neg_diff1 = np.array(group_pairs[1]["option1_differences"])
+        neg_diff2 = np.array(group_pairs[1]["option2_differences"])
+
+        # Verify perfect symmetry (negative should be exact opposites)
+        return np.array_equal(pos_diff1, -neg_diff1) and np.array_equal(
+            pos_diff2, -neg_diff2
+        )
+
     def _generate_group(
         self,
         user_vector: tuple,
@@ -181,32 +206,17 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
             try:
                 v1, v2 = self._generate_distance_vectors(user_vector, vector_size)
 
-                # Calculate the four vectors
+                # Calculate the four vectors directly (no rounding)
                 vec_a1 = user_array + v1  # ideal + v1
                 vec_a2 = user_array + v2  # ideal + v2
+                # Calculate perfect symmetry vectors
                 vec_b1 = user_array - v1  # ideal - v1
                 vec_b2 = user_array - v2  # ideal - v2
 
-                # Apply multiples of 5 constraint if needed
-                if 5 not in user_vector:
-                    vec_a1 = np.round(vec_a1 / 5) * 5
-                    vec_a2 = np.round(vec_a2 / 5) * 5
-                    vec_b1 = np.round(vec_b1 / 5) * 5
-                    vec_b2 = np.round(vec_b2 / 5) * 5
-
-                    # Adjust to ensure sum is exactly 100
-                    vec_a1[-1] = 100 - np.sum(vec_a1[:-1])
-                    vec_a2[-1] = 100 - np.sum(vec_a2[:-1])
-                    vec_b1[-1] = 100 - np.sum(vec_b1[:-1])
-                    vec_b2[-1] = 100 - np.sum(vec_b2[:-1])
-
-                    # Calculate actual distance vectors after rounding
-                    actual_v1 = vec_a1 - user_array
-                    actual_v2 = vec_a2 - user_array
-                else:
-                    # No rounding needed, use original distances
-                    actual_v1 = v1
-                    actual_v2 = v2
+                # Store the actual distance vectors (perfect symmetry
+                # relationships)
+                actual_v1 = v1
+                actual_v2 = v2
 
                 # Convert to integers and tuples
                 vec_a1 = tuple(int(v) for v in vec_a1)

@@ -195,27 +195,41 @@ def test_pair_uniqueness(strategy):
 
 
 def test_cyclic_pattern_consistency(strategy):
-    """Test that cyclic patterns are consistent within groups."""
-    user_vector = (30, 30, 40)
+    """Test that cyclic shifts within a group maintain PERFECT mathematical relationships."""
+    user_vector = (30, 40, 30)
 
-    # Generate a single group to test pattern consistency
     group_pairs = strategy._generate_group(user_vector, 3, 1)
 
-    if len(group_pairs) == 3:  # Only test if we got a full group
-        # Extract shift amounts from descriptions
-        shifts = []
+    if len(group_pairs) == 3:
+        # Extract differences from each pair
+        group_diffs = []
         for pair in group_pairs:
-            for key in pair.keys():
-                if "shift" in key:
-                    # Extract shift number from key
-                    after_shift = key.split("shift ")[1]
-                    parts = after_shift.split(")")[0]
-                    shift_num = int(parts)
-                    shifts.append(shift_num)
-                    break
+            diff1 = pair["option1_differences"]
+            diff2 = pair["option2_differences"]
+            group_diffs.append((diff1, diff2))
 
-        # Should have shifts 0, 1, 2
-        assert sorted(set(shifts)) == [0, 1, 2]
+        # Verify PERFECT cyclic shift relationships
+        base_diff1 = np.array(group_diffs[0][0])
+        base_diff2 = np.array(group_diffs[0][1])
+
+        for shift in range(1, 3):
+            expected_diff1 = strategy._apply_cyclic_shift(base_diff1, shift)
+            expected_diff2 = strategy._apply_cyclic_shift(base_diff2, shift)
+
+            actual_diff1 = np.array(group_diffs[shift][0])
+            actual_diff2 = np.array(group_diffs[shift][1])
+
+            # PERFECT equality - no tolerance needed
+            np.testing.assert_array_equal(
+                actual_diff1,
+                expected_diff1,
+                err_msg=f"Shift {shift} diff1 not perfectly cyclic",
+            )
+            np.testing.assert_array_equal(
+                actual_diff2,
+                expected_diff2,
+                err_msg=f"Shift {shift} diff2 not perfectly cyclic",
+            )
 
 
 @patch("application.services.pair_generation.cyclic_shift_strategy.get_translation")
@@ -245,34 +259,6 @@ def test_table_columns(strategy):
         assert column_def.get("highlight") is True
 
 
-def test_multiples_of_five_constraint(strategy):
-    """Test that vectors respect multiples of 5 constraint when appropriate."""
-    # User vector without 5 should produce multiples of 5
-    user_vector = (20, 30, 50)
-    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-
-    for pair in pairs:
-        for key, vector in pair.items():
-            if not key.endswith("_differences"):  # Skip difference metadata
-                assert all(
-                    v % 5 == 0 for v in vector
-                ), f"Vector {vector} contains non-multiples of 5"
-
-    # User vector with 5 should allow non-multiples
-    user_vector_with_five = (25, 30, 45)
-    pairs_with_five = strategy.generate_pairs(
-        user_vector_with_five, n=12, vector_size=3
-    )
-
-    # Should still generate valid pairs (may or may not be multiples of 5)
-    assert len(pairs_with_five) == 12
-    for pair in pairs_with_five:
-        for key, vector in pair.items():
-            if not key.endswith("_differences"):  # Skip difference metadata
-                assert sum(vector) == 100
-                assert all(0 <= v <= 100 for v in vector)
-
-
 def test_edge_case_vectors(strategy):
     """Test strategy with edge case user vectors."""
     # Test with extreme distributions
@@ -284,6 +270,29 @@ def test_edge_case_vectors(strategy):
     equal_vector = (33, 33, 34)  # Closest to equal that sums to 100
     pairs = strategy.generate_pairs(equal_vector, n=12, vector_size=3)
     assert len(pairs) == 12
+
+
+def test_perfect_mathematical_guarantee_all_vectors(strategy):
+    """Test that perfect cyclic relationships are guaranteed for ALL valid vectors."""
+    # Test with various user vectors that would have had rounding issues
+    test_vectors = [
+        (30, 40, 30),
+        (35, 35, 30),
+        (25, 35, 40),
+        (5, 5, 90),
+    ]
+
+    for user_vector in test_vectors:
+        pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+        assert len(pairs) == 12, f"Failed to generate 12 pairs for {user_vector}"
+
+        # Verify perfect relationships in each group
+        for group_start in range(0, 12, 3):
+            group_pairs = pairs[group_start : group_start + 3]
+            if len(group_pairs) == 3:
+                assert strategy._validate_cyclic_relationships(
+                    group_pairs
+                ), f"Imperfect cyclic relationships for {user_vector}, group {group_start//3 + 1}"
 
 
 def test_logging_behavior(strategy, caplog):

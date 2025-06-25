@@ -172,6 +172,40 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             and np.sum(vec2) == 100
         )
 
+    def _validate_cyclic_relationships(self, group_pairs: List[Dict]) -> bool:
+        """
+        Validate perfect cyclic relationships within a group.
+
+        Args:
+            group_pairs: List of pairs in a group
+
+        Returns:
+            True if perfect cyclic relationships are maintained,
+            False otherwise
+        """
+        if len(group_pairs) != 3:
+            return False
+
+        # Extract base differences from first pair
+        base_diff1 = np.array(group_pairs[0]["option1_differences"])
+        base_diff2 = np.array(group_pairs[0]["option2_differences"])
+
+        # Verify perfect cyclic shifts for remaining pairs
+        for shift in range(1, 3):
+            expected_diff1 = self._apply_cyclic_shift(base_diff1, shift)
+            expected_diff2 = self._apply_cyclic_shift(base_diff2, shift)
+
+            actual_diff1 = np.array(group_pairs[shift]["option1_differences"])
+            actual_diff2 = np.array(group_pairs[shift]["option2_differences"])
+
+            if not (
+                np.array_equal(actual_diff1, expected_diff1)
+                and np.array_equal(actual_diff2, expected_diff2)
+            ):
+                return False
+
+        return True
+
     def _generate_group(
         self,
         user_vector: tuple,
@@ -234,33 +268,9 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 vec1 = user_array + shifted_diff1
                 vec2 = user_array + shifted_diff2
 
-                # Apply rounding if needed
-                if 5 not in user_vector:
-                    vec1 = np.round(vec1 / 5) * 5
-                    vec2 = np.round(vec2 / 5) * 5
-
-                    # Adjust to ensure sum is exactly 100
-                    vec1[-1] = 100 - np.sum(vec1[:-1])
-                    vec2[-1] = 100 - np.sum(vec2[:-1])
-
-                    # Recalculate actual differences after rounding
-                    actual_diff1 = vec1 - user_array
-                    actual_diff2 = vec2 - user_array
-
-                    # Check if rounding created absolute canonical identical patterns
-                    if self._are_absolute_canonical_identical(
-                        actual_diff1, actual_diff2
-                    ):
-                        all_shifts_valid = False
-                        break
-
-                    # Use actual differences after rounding
-                    final_diff1 = actual_diff1
-                    final_diff2 = actual_diff2
-                else:
-                    # No rounding needed
-                    final_diff1 = shifted_diff1
-                    final_diff2 = shifted_diff2
+                # Store the actual shifted differences (perfect cyclic relationships)
+                final_diff1 = shifted_diff1
+                final_diff2 = shifted_diff2
 
                 # Convert to tuples
                 vec1 = tuple(int(v) for v in vec1)

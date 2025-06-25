@@ -219,35 +219,6 @@ def test_table_columns(strategy):
     assert column_def.get("highlight") is True
 
 
-def test_multiples_of_five_constraint(strategy):
-    """Test that vectors respect multiples of 5 constraint when appropriate."""
-    # User vector without 5 should produce multiples of 5
-    user_vector = (20, 30, 50)
-    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-
-    for pair in pairs:
-        for key, vector in pair.items():
-            # Skip difference metadata, only check actual vectors
-            if not key.endswith("_differences") and isinstance(vector, tuple):
-                assert all(
-                    v % 5 == 0 for v in vector
-                ), f"Vector {vector} contains non-multiples of 5"
-
-    # User vector with 5 should allow non-multiples
-    user_vector_with_five = (25, 30, 45)
-    pairs_with_five = strategy.generate_pairs(
-        user_vector_with_five, n=12, vector_size=3
-    )
-
-    # Should still generate valid pairs (may or may not be multiples of 5)
-    assert len(pairs_with_five) == 12
-    for pair in pairs_with_five:
-        for key, vector in pair.items():
-            if not key.endswith("_differences"):  # Skip difference metadata
-                assert sum(vector) == 100
-                assert all(0 <= v <= 100 for v in vector)
-
-
 def test_edge_case_vectors(strategy):
     """Test strategy with edge case user vectors."""
     # Test with extreme distributions
@@ -259,6 +230,29 @@ def test_edge_case_vectors(strategy):
     equal_vector = (33, 33, 34)  # Closest to equal that sums to 100
     pairs = strategy.generate_pairs(equal_vector, n=12, vector_size=3)
     assert len(pairs) == 12
+
+
+def test_perfect_mathematical_guarantee_all_vectors(strategy):
+    """Test that perfect symmetry relationships are guaranteed for ALL valid vectors."""
+    # Test with various user vectors that would have had rounding issues
+    test_vectors = [
+        (40, 30, 30),
+        (35, 35, 30),
+        (25, 35, 40),
+        (5, 5, 90),
+    ]
+
+    for user_vector in test_vectors:
+        pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+        assert len(pairs) == 12, f"Failed to generate 12 pairs for {user_vector}"
+
+        # Verify perfect relationships in each group
+        for group_start in range(0, 12, 2):
+            group_pairs = pairs[group_start : group_start + 2]
+            if len(group_pairs) == 2:
+                assert strategy._validate_symmetry_relationships(
+                    group_pairs
+                ), f"Imperfect symmetry relationships for {user_vector}, group {group_start//2 + 1}"
 
 
 def test_logging_behavior(strategy, caplog):
@@ -391,7 +385,7 @@ def test_linear_symmetry_validation(strategy):
 
 
 def test_linear_symmetry_within_group_consistency(strategy):
-    """Test that linear symmetry pairs maintain proper distance relationships."""
+    """Test that linear symmetry pairs maintain PERFECT distance relationships."""
     user_vector = (40, 30, 30)
 
     # Generate a single group
@@ -408,16 +402,16 @@ def test_linear_symmetry_within_group_consistency(strategy):
         neg_diff1 = negative_pair["option1_differences"]
         neg_diff2 = negative_pair["option2_differences"]
 
-        # The negative pair differences should be exactly opposite of positive
+        # PERFECT symmetry: negative differences should be exact opposites
         np.testing.assert_array_equal(
             np.array(pos_diff1),
             -np.array(neg_diff1),
-            err_msg="Negative pair diff1 should be opposite of positive pair diff1",
+            err_msg="Negative pair diff1 should be exact opposite of positive pair diff1",
         )
         np.testing.assert_array_equal(
             np.array(pos_diff2),
             -np.array(neg_diff2),
-            err_msg="Negative pair diff2 should be opposite of positive pair diff2",
+            err_msg="Negative pair diff2 should be exact opposite of positive pair diff2",
         )
 
 
