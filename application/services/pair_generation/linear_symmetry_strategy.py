@@ -39,25 +39,38 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
         self, user_vector: tuple, vector_size: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Generate two different distance vectors that sum to zero.
+        Generate two distance vectors for linear symmetry.
+
+        Creates vectors that test whether users treat positive and negative
+        distances from their ideal allocation as equivalent.
 
         Args:
-            user_vector: User's ideal budget allocation
-            vector_size: Size of each vector
+            user_vector: User's ideal budget allocation (must sum to 100)
+            vector_size: Size of each vector (typically 3)
 
         Returns:
-            Tuple of two distance vectors that sum to zero
+            Tuple[np.ndarray, np.ndarray]: Two distance vectors that:
+                - Sum to zero
+                - Are not absolute canonical identical
+                - Work for both addition and subtraction from user vector
 
         Raises:
-            ValueError: If unable to generate valid distance vectors after
-                many attempts
+            ValueError: If unable to generate valid vectors after 1000 attempts
+
+        Example:
+            For user_vector = (40, 30, 30):
+            >>> v1, v2 = _generate_distance_vectors((40, 30, 30), 3)
+            >>> sum(v1), sum(v2)  # Both sum to zero
+            (0, 0)
+            >>> # Creates test pairs: (ideal±v1) vs (ideal±v2)
+            >>> # Tests if user treats +15/-15 distances equivalently
         """
         user_array = np.array(user_vector)
         min_val = min(user_vector)
         max_val = max(user_vector)
 
-        for _ in range(1000):  # Try up to 1000 times
-            # Step 1: Generate first distance vector
+        for _ in range(1000):
+            # Generate v1
             v1 = []
             for _ in range(vector_size - 1):  # All except last element
                 min_diff = -min_val
@@ -88,8 +101,8 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
             ):
                 continue
 
-            # Step 2: Generate second distance vector
-            for _ in range(100):  # Inner loop for v2 generation
+            # Try to find valid v2
+            for _ in range(100):
                 v2 = []
                 for _ in range(vector_size - 1):
                     min_diff = -min_val
@@ -101,16 +114,20 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
                 v2.append(-sum(v2))
                 v2 = np.array(v2)
 
-                # Check if v2 is all zeros (invalid)
+                # Check if v2 is all zeros
                 if np.all(v2 == 0):
                     continue
 
-                # Check meaningful differences for v2
+                # Check meaningful differences
                 if not any(abs(d) >= 5 for d in v2):
                     continue
 
-                # Check if vectors are different
+                # Check if vectors are identical
                 if np.array_equal(v1, v2):
+                    continue
+
+                # Check absolute canonical form
+                if self._are_absolute_canonical_identical(v1, v2):
                     continue
 
                 # Validate that both addition and subtraction produce valid vectors
