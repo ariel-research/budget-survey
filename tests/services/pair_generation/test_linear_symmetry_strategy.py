@@ -645,3 +645,217 @@ def test_option_differences_calculation(strategy):
         assert tuple(reconstructed2) == option2_vector, (
             f"Cannot reconstruct option 2: {reconstructed2} != " f"{option2_vector}"
         )
+
+
+def test_linear_symmetry_consistency_calculation_mathematical_correctness():
+    """
+    Test that the linear symmetry consistency calculation is mathematically correct.
+    """
+    # Test Case 1: Perfect Linear Symmetry (both groups consistent)
+    choices_perfect_symmetry = [
+        # Group 1: User chooses v in both + and - directions
+        {
+            "pair_number": 1,
+            "option1_strategy": "Linear Pattern + (v1)",
+            "option2_strategy": "Linear Pattern + (w1)",
+            "user_choice": 1,  # Chose v
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Linear Pattern - (v1)",
+            "option2_strategy": "Linear Pattern - (w1)",
+            "user_choice": 1,  # Chose v (CONSISTENT!)
+        },
+        # Group 2: User chooses w in both + and - directions
+        {
+            "pair_number": 3,
+            "option1_strategy": "Linear Pattern + (v2)",
+            "option2_strategy": "Linear Pattern + (w2)",
+            "user_choice": 2,  # Chose w
+        },
+        {
+            "pair_number": 4,
+            "option1_strategy": "Linear Pattern - (v2)",
+            "option2_strategy": "Linear Pattern - (w2)",
+            "user_choice": 2,  # Chose w (CONSISTENT!)
+        },
+    ]
+
+    from analysis.report_content_generators import (
+        _calculate_linear_symmetry_group_consistency,
+    )
+
+    result = _calculate_linear_symmetry_group_consistency(choices_perfect_symmetry)
+
+    # Validate perfect symmetry results
+    assert (
+        result["group_1"] == 100.0
+    ), f"Group 1 should be 100% consistent, got {result['group_1']}"
+    assert (
+        result["group_2"] == 100.0
+    ), f"Group 2 should be 100% consistent, got {result['group_2']}"
+    assert (
+        result["overall"] == 100.0
+    ), f"Overall should be 100%, got {result['overall']}"
+
+    # Test Case 2: No Linear Symmetry (both groups inconsistent)
+    choices_no_symmetry = [
+        # Group 1: User chooses v in + direction, w in - direction
+        {
+            "pair_number": 1,
+            "option1_strategy": "Linear Pattern + (v1)",
+            "option2_strategy": "Linear Pattern + (w1)",
+            "user_choice": 1,  # Chose v
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Linear Pattern - (v1)",
+            "option2_strategy": "Linear Pattern - (w1)",
+            "user_choice": 2,  # Chose w (INCONSISTENT!)
+        },
+        # Group 2: User chooses w in + direction, v in - direction
+        {
+            "pair_number": 3,
+            "option1_strategy": "Linear Pattern + (v2)",
+            "option2_strategy": "Linear Pattern + (w2)",
+            "user_choice": 2,  # Chose w
+        },
+        {
+            "pair_number": 4,
+            "option1_strategy": "Linear Pattern - (v2)",
+            "option2_strategy": "Linear Pattern - (w2)",
+            "user_choice": 1,  # Chose v (INCONSISTENT!)
+        },
+    ]
+
+    result = _calculate_linear_symmetry_group_consistency(choices_no_symmetry)
+
+    # Validate no symmetry results
+    assert (
+        result["group_1"] == 0.0
+    ), f"Group 1 should be 0% consistent, got {result['group_1']}"
+    assert (
+        result["group_2"] == 0.0
+    ), f"Group 2 should be 0% consistent, got {result['group_2']}"
+    assert result["overall"] == 0.0, f"Overall should be 0%, got {result['overall']}"
+
+    # Test Case 3: Mixed Symmetry (one consistent, one inconsistent)
+    choices_mixed_symmetry = [
+        # Group 1: CONSISTENT - User chooses v in both directions
+        {
+            "pair_number": 1,
+            "option1_strategy": "Linear Pattern + (v1)",
+            "option2_strategy": "Linear Pattern + (w1)",
+            "user_choice": 1,  # Chose v
+        },
+        {
+            "pair_number": 2,
+            "option1_strategy": "Linear Pattern - (v1)",
+            "option2_strategy": "Linear Pattern - (w1)",
+            "user_choice": 1,  # Chose v (CONSISTENT!)
+        },
+        # Group 2: INCONSISTENT - User chooses different vectors
+        {
+            "pair_number": 3,
+            "option1_strategy": "Linear Pattern + (v2)",
+            "option2_strategy": "Linear Pattern + (w2)",
+            "user_choice": 1,  # Chose v
+        },
+        {
+            "pair_number": 4,
+            "option1_strategy": "Linear Pattern - (v2)",
+            "option2_strategy": "Linear Pattern - (w2)",
+            "user_choice": 2,  # Chose w (INCONSISTENT!)
+        },
+    ]
+
+    result = _calculate_linear_symmetry_group_consistency(choices_mixed_symmetry)
+
+    # Validate mixed symmetry results
+    assert (
+        result["group_1"] == 100.0
+    ), f"Group 1 should be 100% consistent, got {result['group_1']}"
+    assert (
+        result["group_2"] == 0.0
+    ), f"Group 2 should be 0% consistent, got {result['group_2']}"
+    assert result["overall"] == 50.0, f"Overall should be 50%, got {result['overall']}"
+
+
+def test_parse_linear_pattern_strategy():
+    """
+    Test the helper function that parses linear pattern strategy strings.
+    """
+    from analysis.report_content_generators import _parse_linear_pattern_strategy
+
+    # Test Case 1: Valid positive pattern
+    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+        "Linear Pattern + (v1)", "Linear Pattern + (w1)", 1  # User chose option 1 (v)
+    )
+    assert group_num == 1
+    assert sign == "+"
+    assert vector_choice == 1  # v=1
+
+    # Test Case 2: Valid negative pattern with w choice
+    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+        "Linear Pattern - (v3)", "Linear Pattern - (w3)", 2  # User chose option 2 (w)
+    )
+    assert group_num == 3
+    assert sign == "-"
+    assert vector_choice == 2  # w=2
+
+    # Test Case 3: Invalid pattern (mismatched groups)
+    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+        "Linear Pattern + (v1)", "Linear Pattern + (w2)", 1  # Different group!
+    )
+    assert group_num is None
+    assert sign is None
+    assert vector_choice is None
+
+    # Test Case 4: Invalid pattern (malformed string)
+    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+        "Invalid Pattern", "Another Invalid Pattern", 1
+    )
+    assert group_num is None
+    assert sign is None
+    assert vector_choice is None
+
+
+def test_linear_symmetry_edge_cases():
+    """
+    Test edge cases for linear symmetry consistency calculation.
+    """
+    from analysis.report_content_generators import (
+        _calculate_linear_symmetry_group_consistency,
+    )
+
+    # Test Case 1: Empty choices
+    result = _calculate_linear_symmetry_group_consistency([])
+    assert result["overall"] == 0.0
+
+    # Test Case 2: Incomplete group (only positive direction)
+    incomplete_choices = [
+        {
+            "pair_number": 1,
+            "option1_strategy": "Linear Pattern + (v1)",
+            "option2_strategy": "Linear Pattern + (w1)",
+            "user_choice": 1,
+        },
+        # Missing negative direction pair for group 1
+    ]
+
+    result = _calculate_linear_symmetry_group_consistency(incomplete_choices)
+    assert result["group_1"] == 0.0  # Incomplete group should be 0%
+    assert result["overall"] == 0.0
+
+    # Test Case 3: Malformed strategy strings
+    malformed_choices = [
+        {
+            "pair_number": 1,
+            "option1_strategy": "Invalid Pattern",
+            "option2_strategy": "Another Invalid",
+            "user_choice": 1,
+        },
+    ]
+
+    result = _calculate_linear_symmetry_group_consistency(malformed_choices)
+    assert result["overall"] == 0.0

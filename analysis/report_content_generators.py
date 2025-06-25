@@ -2423,6 +2423,16 @@ def _calculate_linear_symmetry_group_consistency(
     """
     Calculate group-level consistency for linear symmetry strategy.
 
+    Linear symmetry means making the same relative choice between vectors v1
+    and v2 regardless of whether they're applied as positive or negative
+    distances.
+
+    For each group:
+    - Pair A (positive): (ideal + v1) vs (ideal + v2)
+    - Pair B (negative): (ideal - v1) vs (ideal - v2)
+    - Consistency = 100% if user chooses same vector in both pairs, 0%
+      otherwise
+
     Args:
         choices: List of choices for a single user's survey response using the
                 linear_symmetry strategy.
@@ -2430,105 +2440,123 @@ def _calculate_linear_symmetry_group_consistency(
     Returns:
         Dict containing consistency percentages for each group (1-6) and
         overall average.
-        Format: {"group_1": 100.0, "group_2": 50.0, ..., "overall": 75.0}
+        Example: {"group_1": 100.0, "group_2": 0.0, ..., "overall": 66.7}
     """
-    # Initialize group data - each group should have 2 pairs
-    groups = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+    # Initialize group data - each group should have 2 pairs (+ and -)
+    groups = {1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}}
 
-    # Analyze each choice and assign to appropriate group
+    # Parse each choice and extract group, sign, and vector choice
     for choice in choices:
         option1_strategy = choice.get("option1_strategy", "")
         option2_strategy = choice.get("option2_strategy", "")
-        user_choice = choice["user_choice"]
+        user_choice = choice["user_choice"]  # 1 or 2
 
-        # Extract group and sign information from strategy names
-        # Expected format: "Linear Pattern + (v1)" or "Linear Pattern - (w2)"
-        group_number = None
-        chosen_sign = None
+        # Extract group number, sign (+/-), and which vector user chose
+        group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+            option1_strategy, option2_strategy, user_choice
+        )
 
-        # Check option 1 for linear pattern
-        if "Linear Pattern" in option1_strategy:
-            try:
-                # Extract group number and sign
-                if "+ (v" in option1_strategy:
-                    group_part = option1_strategy.split("+ (v")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "+" if user_choice == 1 else "-"
-                elif "- (v" in option1_strategy:
-                    group_part = option1_strategy.split("- (v")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "-" if user_choice == 1 else "+"
-                elif "+ (w" in option1_strategy:
-                    group_part = option1_strategy.split("+ (w")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "+" if user_choice == 1 else "-"
-                elif "- (w" in option1_strategy:
-                    group_part = option1_strategy.split("- (w")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "-" if user_choice == 1 else "+"
-            except (IndexError, ValueError):
-                # Try option 2 if option 1 failed
-                pass
-
-        # Check option 2 for linear pattern if not found in option 1
-        if group_number is None and "Linear Pattern" in option2_strategy:
-            try:
-                if "+ (v" in option2_strategy:
-                    group_part = option2_strategy.split("+ (v")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "+" if user_choice == 2 else "-"
-                elif "- (v" in option2_strategy:
-                    group_part = option2_strategy.split("- (v")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "-" if user_choice == 2 else "+"
-                elif "+ (w" in option2_strategy:
-                    group_part = option2_strategy.split("+ (w")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "+" if user_choice == 2 else "-"
-                elif "- (w" in option2_strategy:
-                    group_part = option2_strategy.split("- (w")[1].split(")")[0]
-                    group_number = int(group_part)
-                    chosen_sign = "-" if user_choice == 2 else "+"
-            except (IndexError, ValueError):
-                continue
-
-        if group_number is not None and chosen_sign and 1 <= group_number <= 6:
-            groups[group_number].append(chosen_sign)
+        if group_num is not None and sign is not None and vector_choice is not None:
+            if 1 <= group_num <= 6:
+                # Store which vector (1 for v, 2 for w) user chose for
+                # this sign
+                groups[group_num][sign] = vector_choice
 
     # Calculate consistency for each group
     group_consistencies = {}
-    for group_num, signs in groups.items():
-        if not signs:
-            group_consistencies[f"group_{group_num}"] = 0.0
-            continue
+    for group_num in range(1, 7):
+        group_data = groups[group_num]
 
-        # Count sign preferences
-        plus_count = signs.count("+")
-        minus_count = signs.count("-")
-        total_choices = len(signs)
+        if len(group_data) == 2 and "+" in group_data and "-" in group_data:
+            # We have both positive and negative pairs for this group
+            positive_choice = group_data["+"]  # 1 (v) or 2 (w)
+            negative_choice = group_data["-"]  # 1 (v) or 2 (w)
 
-        # Calculate consistency as percentage of dominant sign
-        if total_choices > 0:
-            dominant_count = max(plus_count, minus_count)
-            consistency_percentage = (dominant_count / total_choices) * 100
-            group_consistencies[f"group_{group_num}"] = round(consistency_percentage, 1)
+            # Linear symmetry: same relative choice regardless of sign
+            is_consistent = positive_choice == negative_choice
+            consistency_percentage = 100.0 if is_consistent else 0.0
+
+            group_consistencies[f"group_{group_num}"] = consistency_percentage
         else:
+            # Incomplete data for this group (missing + or - pair)
             group_consistencies[f"group_{group_num}"] = 0.0
 
-    # Calculate overall consistency as average of group consistencies
-    valid_group_consistencies = [
-        consistency for consistency in group_consistencies.values() if consistency > 0
+    # Calculate overall consistency as average of valid group consistencies
+    # Only consider groups that have complete data (both + and - pairs)
+    valid_consistencies = [
+        group_consistencies[f"group_{i}"] for i in range(1, 7) if len(groups[i]) == 2
     ]
 
-    if valid_group_consistencies:
-        overall_consistency = sum(valid_group_consistencies) / len(
-            valid_group_consistencies
-        )
+    if valid_consistencies:
+        overall_consistency = sum(valid_consistencies) / len(valid_consistencies)
         group_consistencies["overall"] = round(overall_consistency, 1)
     else:
         group_consistencies["overall"] = 0.0
 
     return group_consistencies
+
+
+def _parse_linear_pattern_strategy(
+    option1_strategy: str, option2_strategy: str, user_choice: int
+) -> Tuple[Optional[int], Optional[str], Optional[int]]:
+    """
+    Parse linear pattern strategy strings to extract group, sign, and vector choice.
+
+    Expected format: "Linear Pattern + (v1)" or "Linear Pattern - (w2)"
+
+    Args:
+        option1_strategy: Strategy description for option 1
+        option2_strategy: Strategy description for option 2
+        user_choice: User's choice (1 or 2)
+
+    Returns:
+        Tuple of (group_number, sign, vector_choice) where:
+        - group_number: 1-6 (extracted from strategy)
+        - sign: '+' or '-' (extracted from strategy)
+        - vector_choice: 1 if user chose v vector, 2 if user chose w vector
+    """
+    import re
+
+    # Regex pattern to match: "Linear Pattern [+/-] ([v/w][group_number])"
+    pattern = r"Linear Pattern ([+-]) \(([vw])(\d+)\)"
+
+    match1 = re.search(pattern, option1_strategy)
+    match2 = re.search(pattern, option2_strategy)
+
+    if not match1 or not match2:
+        logger.debug(
+            f"Failed to parse linear pattern: '{option1_strategy}' vs "
+            f"'{option2_strategy}'"
+        )
+        return None, None, None
+
+    sign1, vector1, group1 = match1.groups()
+    sign2, vector2, group2 = match2.groups()
+
+    # Validate that both options are from the same group and sign
+    if group1 != group2 or sign1 != sign2:
+        logger.debug(
+            f"Mismatched group/sign: group1={group1}, group2={group2}, "
+            f"sign1={sign1}, sign2={sign2}"
+        )
+        return None, None, None
+
+    group_num = int(group1)
+    sign = sign1
+
+    # Determine which vector the user chose
+    if user_choice == 1:
+        chosen_vector = vector1  # 'v' or 'w'
+    elif user_choice == 2:
+        chosen_vector = vector2  # 'v' or 'w'
+    else:
+        logger.debug(f"Invalid user_choice: {user_choice}")
+        return None, None, None
+
+    # Convert to numeric: v=1, w=2
+    vector_choice = 1 if chosen_vector == "v" else 2
+
+    return group_num, sign, vector_choice
 
 
 def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
