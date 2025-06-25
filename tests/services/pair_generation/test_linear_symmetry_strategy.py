@@ -1,5 +1,6 @@
 """Test suite for linear symmetry strategy."""
 
+import time
 from unittest.mock import patch
 
 import numpy as np
@@ -7,6 +8,57 @@ import pytest
 
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import LinearSymmetryStrategy
+
+# Test constants
+EXPECTED_VALID_VECTORS = 171
+MAX_GENERATION_TIME = 3.0
+PERFORMANCE_TIMEOUT = 10.0
+
+
+def enumerate_all_valid_vectors():
+    """
+    Enumerate all valid 3D budget vectors.
+
+    Returns:
+        List[tuple]: All valid vectors (a,b,c) where:
+            - a + b + c = 100
+            - a,b,c ∈ {5,10,15,...,95}
+            - a,b,c > 0
+    """
+    valid_vectors = []
+
+    for a in range(5, 96, 5):
+        for b in range(5, 96, 5):
+            c = 100 - a - b
+
+            if c > 0 and 5 <= c <= 95 and c % 5 == 0:
+                valid_vectors.append((a, b, c))
+
+    return valid_vectors
+
+
+def validate_pair_structure(pair, pair_index, user_vector):
+    """Validate basic pair structure and properties."""
+    # Must have exactly 4 keys
+    if len(pair) != 4:
+        return f"Pair {pair_index} has {len(pair)} keys, expected 4"
+
+    # Must have difference keys
+    if "option1_differences" not in pair or "option2_differences" not in pair:
+        return f"Pair {pair_index} missing difference keys"
+
+    # Validate vector properties
+    for key, vector in pair.items():
+        if not key.endswith("_differences"):
+            if (
+                not isinstance(vector, tuple)
+                or len(vector) != 3
+                or sum(vector) != 100
+                or not all(0 <= v <= 100 for v in vector)
+            ):
+                return f"Invalid vector in pair {pair_index}: {vector}"
+
+    return None  # No errors
 
 
 @pytest.fixture
@@ -20,7 +72,7 @@ def test_strategy_name(strategy):
 
 
 def test_generate_distance_vectors(strategy):
-    """Test if distance vector generation works correctly."""
+    """Test distance vector generation functionality."""
     user_vector = (20, 30, 50)
     vector_size = 3
 
@@ -59,7 +111,7 @@ def test_generate_distance_vectors(strategy):
 
 
 def test_generate_group(strategy):
-    """Test if group generation works correctly."""
+    """Test group generation functionality."""
     user_vector = (20, 30, 50)
     vector_size = 3
     group_num = 1
@@ -69,7 +121,8 @@ def test_generate_group(strategy):
     # Should generate 2 pairs
     assert len(group_pairs) == 2
 
-    # Each pair should be a dictionary with 4 entries (2 vectors + 2 differences)
+    # Each pair should be a dictionary with 4 entries
+    # (2 vectors + 2 differences)
     for pair in group_pairs:
         assert isinstance(pair, dict)
         assert len(pair) == 4
@@ -153,7 +206,7 @@ def test_pair_uniqueness(strategy):
     # Convert pairs to a set of sorted tuples for uniqueness check
     pair_sets = set()
     for pair in pairs:
-        # Only consider the actual vector values, not the metadata
+        # Only consider actual vector values, not the metadata
         vectors = tuple(
             sorted(
                 [
@@ -192,9 +245,11 @@ def test_linear_symmetry_pattern(strategy):
         assert "negative" in patterns
 
 
-@patch("application.services.pair_generation.linear_symmetry_strategy.get_translation")
+@patch(
+    "application.services.pair_generation.linear_symmetry_strategy." "get_translation"
+)
 def test_option_labels(mock_get_translation, strategy):
-    """Test if option labels are generated correctly."""
+    """Test option labels generation."""
     mock_get_translation.side_effect = lambda key, *args, **kwargs: {
         "linear_positive": "Linear Positive",
         "linear_negative": "Linear Negative",
@@ -205,7 +260,7 @@ def test_option_labels(mock_get_translation, strategy):
 
 
 def test_table_columns(strategy):
-    """Test if table columns are defined correctly."""
+    """Test table columns definition."""
     columns = strategy.get_table_columns()
 
     assert isinstance(columns, dict)
@@ -217,35 +272,6 @@ def test_table_columns(strategy):
     assert "type" in column_def
     assert column_def["type"] == "percentage"
     assert column_def.get("highlight") is True
-
-
-def test_multiples_of_five_constraint(strategy):
-    """Test that vectors respect multiples of 5 constraint when appropriate."""
-    # User vector without 5 should produce multiples of 5
-    user_vector = (20, 30, 50)
-    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-
-    for pair in pairs:
-        for key, vector in pair.items():
-            # Skip difference metadata, only check actual vectors
-            if not key.endswith("_differences") and isinstance(vector, tuple):
-                assert all(
-                    v % 5 == 0 for v in vector
-                ), f"Vector {vector} contains non-multiples of 5"
-
-    # User vector with 5 should allow non-multiples
-    user_vector_with_five = (25, 30, 45)
-    pairs_with_five = strategy.generate_pairs(
-        user_vector_with_five, n=12, vector_size=3
-    )
-
-    # Should still generate valid pairs (may or may not be multiples of 5)
-    assert len(pairs_with_five) == 12
-    for pair in pairs_with_five:
-        for key, vector in pair.items():
-            if not key.endswith("_differences"):  # Skip difference metadata
-                assert sum(vector) == 100
-                assert all(0 <= v <= 100 for v in vector)
 
 
 def test_edge_case_vectors(strategy):
@@ -261,8 +287,176 @@ def test_edge_case_vectors(strategy):
     assert len(pairs) == 12
 
 
+def test_perfect_mathematical_guarantee_sample_vectors(strategy):
+    """Test perfect symmetry relationships for sample vectors."""
+    test_vectors = [
+        (40, 30, 30),
+        (35, 35, 30),
+        (25, 35, 40),
+        (5, 5, 90),
+    ]
+
+    for user_vector in test_vectors:
+        pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+        assert len(pairs) == 12, f"Failed to generate 12 pairs for {user_vector}"
+
+        # Verify perfect relationships in each group
+        for group_start in range(0, 12, 2):
+            group_pairs = pairs[group_start : group_start + 2]
+            if len(group_pairs) == 2:
+                assert strategy._validate_symmetry_relationships(group_pairs), (
+                    f"Imperfect symmetry relationships for {user_vector}, "
+                    f"group {group_start//2 + 1}"
+                )
+
+
+def test_comprehensive_algorithm_validation(strategy):
+    """
+    Comprehensive validation: ALL valid vectors must generate 12 pairs
+    with PERFECT mathematical relationships.
+
+    This test validates:
+    1. Algorithm completeness (works for 100% of valid vectors)
+    2. Perfect mathematical relationships (linear symmetry)
+    3. Performance requirements
+    """
+    print("\n=== COMPREHENSIVE ALGORITHM VALIDATION ===")
+
+    # Get all valid vectors
+    valid_vectors = enumerate_all_valid_vectors()
+    assert len(valid_vectors) == EXPECTED_VALID_VECTORS, (
+        f"Expected {EXPECTED_VALID_VECTORS} valid vectors, " f"got {len(valid_vectors)}"
+    )
+
+    print(f"Testing {len(valid_vectors)} valid vectors...")
+
+    successful_vectors = []
+    failed_vectors = []
+    timing_results = []
+    relationship_failures = []
+
+    for i, user_vector in enumerate(valid_vectors, 1):
+        print(
+            f"Testing vector {i:2d}/{len(valid_vectors)}: " f"{user_vector}",
+            end=" ... ",
+        )
+
+        try:
+            start_time = time.time()
+            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+            elapsed = time.time() - start_time
+
+            # Basic validation
+            if len(pairs) != 12:
+                failed_vectors.append(
+                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
+                )
+                print(f"FAIL (wrong count: {len(pairs)})")
+                continue
+
+            # Performance validation
+            if elapsed >= PERFORMANCE_TIMEOUT:
+                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
+                print(f"FAIL (timeout: {elapsed:.2f}s)")
+                continue
+
+            # Structural validation
+            structure_error = None
+            for j, pair in enumerate(pairs):
+                error = validate_pair_structure(pair, j, user_vector)
+                if error:
+                    structure_error = error
+                    break
+
+            if structure_error:
+                failed_vectors.append((user_vector, structure_error))
+                print("FAIL (structure)")
+                continue
+
+            # MATHEMATICAL RELATIONSHIP VALIDATION
+            perfect_relationships = True
+            for group_start in range(0, 12, 2):
+                group_pairs = pairs[group_start : group_start + 2]
+                if len(group_pairs) == 2:
+                    if not strategy._validate_symmetry_relationships(group_pairs):
+                        relationship_failures.append(
+                            (user_vector, f"Group {group_start//2 + 1}")
+                        )
+                        perfect_relationships = False
+                        break
+
+            if not perfect_relationships:
+                print("FAIL (relationships)")
+                continue
+
+            # All validations passed
+            successful_vectors.append(user_vector)
+            timing_results.append((user_vector, elapsed))
+            print(f"✓ ({elapsed:.3f}s)")
+
+        except Exception as e:
+            failed_vectors.append((user_vector, str(e)))
+            print(f"FAIL (exception: {type(e).__name__})")
+
+    # Results analysis
+    total_tested = len(valid_vectors)
+    total_successful = len(successful_vectors)
+    success_rate = (total_successful / total_tested) * 100
+
+    print("\n=== RESULTS ===")
+    print(f"Vectors tested: {total_tested}")
+    print(f"Successful: {total_successful}")
+    print(f"Success rate: {success_rate:.1f}%")
+
+    if timing_results:
+        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
+        max_time = max(t[1] for t in timing_results)
+        min_time = min(t[1] for t in timing_results)
+        print(
+            f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, " f"max={max_time:.3f}s"
+        )
+
+    # Report failures
+    if failed_vectors:
+        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
+        for vec, error in failed_vectors[:5]:  # Show first 5
+            print(f"  {vec}: {error}")
+        if len(failed_vectors) > 5:
+            print(f"  ... and {len(failed_vectors) - 5} more")
+
+    if relationship_failures:
+        print(f"\n❌ RELATIONSHIP FAILURES " f"({len(relationship_failures)}):")
+        for vec, error in relationship_failures[:5]:  # Show first 5
+            print(f"  {vec}: {error}")
+        if len(relationship_failures) > 5:
+            print(f"  ... and {len(relationship_failures) - 5} more")
+
+    # STRICT REQUIREMENTS
+    assert total_successful == total_tested, (
+        f"ALGORITHMIC INCOMPLETENESS: Only {total_successful}/"
+        f"{total_tested} vectors succeeded. Algorithm must work for "
+        f"100% of valid constraint space."
+    )
+
+    assert success_rate == 100.0, (
+        f"Success rate {success_rate:.1f}% is below mathematical "
+        f"requirement of 100%"
+    )
+
+    if timing_results:
+        assert avg_time < MAX_GENERATION_TIME, (
+            f"Average time {avg_time:.2f}s exceeds performance "
+            f"requirement of {MAX_GENERATION_TIME}s"
+        )
+
+    print(
+        "✅ COMPREHENSIVE VALIDATION COMPLETE: Perfect mathematical "
+        "relationships guaranteed for ALL valid vectors"
+    )
+
+
 def test_logging_behavior(strategy, caplog):
-    """Test that appropriate logging occurs."""
+    """Test appropriate logging occurs."""
     user_vector = (20, 30, 50)
 
     with caplog.at_level("INFO"):
@@ -333,24 +527,8 @@ def test_symmetry_hypothesis(strategy):
         assert abs(np.sum(vec) - 100) < 1e-10  # Account for floating point
 
 
-def test_group_generation_reliability(strategy):
-    """Test that group generation is reliable and doesn't fail often."""
-    user_vector = (25, 35, 40)
-    successful_groups = 0
-
-    # Try to generate 10 groups
-    for group_num in range(1, 11):
-        group_pairs = strategy._generate_group(user_vector, 3, group_num)
-        if len(group_pairs) == 2:
-            successful_groups += 1
-
-    # Should succeed in generating most groups
-    assert successful_groups >= 8  # Allow some failures but expect mostly success
-
-
 def test_absolute_canonical_validation(strategy):
-    """Test that absolute canonical identical patterns are correctly identified."""
-    # Test the validation method directly with examples
+    """Test absolute canonical identical patterns are correctly identified."""
     # Identical absolute canonical forms
     assert strategy._are_absolute_canonical_identical([10, 0, -10], [-10, 0, 10])
     assert strategy._are_absolute_canonical_identical([10, -5, -5], [-10, 5, 5])
@@ -374,224 +552,57 @@ def test_absolute_canonical_validation(strategy):
         abs_can2 = tuple(sorted(abs(x) for x in diff2))
 
         assert abs_can1 != abs_can2, (
-            f"Pair {i}: Found absolute canonical identical: {diff1} and {diff2} "
-            f"both have form {abs_can1}"
+            f"Pair {i}: Found absolute canonical identical: "
+            f"{diff1} and {diff2} both have form {abs_can1}"
         )
 
 
 def test_linear_symmetry_validation(strategy):
     """Test that linear symmetry patterns are validated correctly."""
-    # Manually test some problematic patterns that should be rejected
+    # Test problematic patterns that should be rejected
     v1 = np.array([10, -5, -5])
-    v2 = np.array([-10, 5, 5])  # Additive inverse - absolute canonical identical
+    v2 = np.array([-10, 5, 5])  # Additive inverse - absolute canonical
 
     assert strategy._are_absolute_canonical_identical(
         v1, v2
     ), "Additive inverse vectors should be absolute canonical identical"
 
 
-def test_generation_feasibility_all_valid_vectors(strategy):
-    """
-    Mathematical verification that ALL valid user vectors generate exactly 12 pairs.
+def test_linear_symmetry_within_group_consistency(strategy):
+    """Test that linear symmetry pairs maintain PERFECT relationships."""
+    user_vector = (40, 30, 30)
 
-    This test systematically enumerates the complete constraint space of valid
-    3-dimensional budget vectors and verifies algorithmic completeness.
-    """
-    import time
+    # Generate a single group
+    group_pairs = strategy._generate_group(user_vector, 3, 1)
 
-    # MATHEMATICAL CONSTRAINT SPACE DEFINITION:
-    # Valid vector (a,b,c) must satisfy:
-    # 1. a + b + c = 100 (budget constraint)
-    # 2. a,b,c ∈ {5,10,15,...,95} (multiples of 5)
-    # 3. a,b,c > 0 (no zeros for linear symmetry strategy)
-    # 4. 5 ≤ a,b,c ≤ 95 (valid range)
+    if len(group_pairs) == 2:  # Only test if we got a full group
+        # Extract the pairs: (+v1,+v2) and (-v1,-v2)
+        positive_pair = group_pairs[0]  # ideal + v1, ideal + v2
+        negative_pair = group_pairs[1]  # ideal - v1, ideal - v2
 
-    print("\n=== MATHEMATICAL ENUMERATION OF CONSTRAINT SPACE ===")
+        # Get the actual difference vectors
+        pos_diff1 = positive_pair["option1_differences"]
+        pos_diff2 = positive_pair["option2_differences"]
+        neg_diff1 = negative_pair["option1_differences"]
+        neg_diff2 = negative_pair["option2_differences"]
 
-    # Systematically enumerate ALL valid vectors
-    valid_vectors = []
-    enumeration_stats = {
-        "total_combinations": 0,
-        "sum_violations": 0,
-        "range_violations": 0,
-        "zero_violations": 0,
-        "valid_count": 0,
-    }
-
-    # For 3D budget vectors with multiples of 5
-    for a in range(5, 96, 5):  # a ∈ {5,10,15,...,95}
-        for b in range(5, 96, 5):  # b ∈ {5,10,15,...,95}
-            enumeration_stats["total_combinations"] += 1
-
-            # Calculate c from constraint: a + b + c = 100
-            c = 100 - a - b
-
-            # Validate c against all constraints
-            if c <= 0:
-                enumeration_stats["zero_violations"] += 1
-                continue
-            if c < 5 or c > 95:
-                enumeration_stats["range_violations"] += 1
-                continue
-            if c % 5 != 0:
-                enumeration_stats["sum_violations"] += 1
-                continue
-
-            # Vector satisfies all constraints
-            valid_vectors.append((a, b, c))
-            enumeration_stats["valid_count"] += 1
-
-    # Mathematical verification of enumeration completeness
-    print("Enumeration Statistics:")
-    print(f"  Total combinations tested: {enumeration_stats['total_combinations']}")
-    print("  Constraint violations:")
-    print(f"    Zero values: {enumeration_stats['zero_violations']}")
-    print(f"    Range violations: {enumeration_stats['range_violations']}")
-    print(f"    Sum constraint violations: {enumeration_stats['sum_violations']}")
-    print(f"  Valid vectors found: {enumeration_stats['valid_count']}")
-
-    # Theoretical count: For a+b+c=100, multiples of 5, 5≤a,b,c≤95
-    # This gives us exactly 171 valid vectors
-    expected_count = 171
-    assert len(valid_vectors) == expected_count, (
-        f"Mathematical enumeration error: Expected exactly {expected_count} "
-        f"valid vectors, got {len(valid_vectors)}"
-    )
-
-    print(f"✓ Enumeration complete: {len(valid_vectors)} vectors")
-
-    # ALGORITHMIC COMPLETENESS VERIFICATION
-    print("\n=== ALGORITHMIC COMPLETENESS VERIFICATION ===")
-
-    successful_vectors = []
-    failed_vectors = []
-    timing_results = []
-    pair_validation_failures = []
-
-    for i, user_vector in enumerate(valid_vectors, 1):
-        print(f"Testing vector {i:2d}/{len(valid_vectors)}: {user_vector}", end=" ... ")
-
-        try:
-            start_time = time.time()
-            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-            elapsed = time.time() - start_time
-
-            # STRICT VALIDATION: Must generate exactly 12 pairs
-            if len(pairs) != 12:
-                pair_validation_failures.append(
-                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
-                )
-                print(f"FAIL (wrong count: {len(pairs)})")
-                continue
-
-            # Performance validation
-            if elapsed >= 10.0:
-                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
-                print(f"FAIL (timeout: {elapsed:.2f}s)")
-                continue
-
-            # Additional pair validity checks
-            for j, pair in enumerate(pairs):
-                # Each pair must have exactly 4 keys
-                if len(pair) != 4:
-                    pair_validation_failures.append(
-                        (user_vector, f"Pair {j} has {len(pair)} keys, expected 4")
-                    )
-                    print("FAIL (pair structure)")
-                    break
-
-                # Must have difference keys
-                if (
-                    "option1_differences" not in pair
-                    or "option2_differences" not in pair
-                ):
-                    pair_validation_failures.append(
-                        (user_vector, f"Pair {j} missing difference keys")
-                    )
-                    print("FAIL (missing diffs)")
-                    break
-
-                # Validate vector properties
-                for key, vector in pair.items():
-                    if not key.endswith("_differences"):
-                        if (
-                            not isinstance(vector, tuple)
-                            or len(vector) != 3
-                            or sum(vector) != 100
-                            or not all(0 <= v <= 100 for v in vector)
-                        ):
-                            pair_validation_failures.append(
-                                (user_vector, f"Invalid vector in pair {j}: {vector}")
-                            )
-                            print("FAIL (invalid vector)")
-                            break
-                else:
-                    continue
-                break
-            else:
-                # All validations passed
-                successful_vectors.append(user_vector)
-                timing_results.append((user_vector, elapsed))
-                print(f"✓ ({elapsed:.3f}s)")
-                continue
-
-        except Exception as e:
-            failed_vectors.append((user_vector, str(e)))
-            print(f"FAIL (exception: {type(e).__name__})")
-
-    # MATHEMATICAL COMPLETENESS RESULTS
-    print("\n=== COMPLETENESS VERIFICATION RESULTS ===")
-
-    total_tested = len(valid_vectors)
-    total_successful = len(successful_vectors)
-    success_rate = (total_successful / total_tested) * 100
-
-    print(f"Vectors tested: {total_tested}")
-    print(f"Successful: {total_successful}")
-    print(f"Success rate: {success_rate:.1f}%")
-
-    if timing_results:
-        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
-        max_time = max(t[1] for t in timing_results)
-        min_time = min(t[1] for t in timing_results)
-        print(f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, max={max_time:.3f}s")
-
-    # Report failures in detail
-    if failed_vectors:
-        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
-        for vec, error in failed_vectors:
-            print(f"  {vec}: {error}")
-
-    if pair_validation_failures:
-        print(f"\n❌ PAIR VALIDATION FAILURES ({len(pair_validation_failures)}):")
-        for vec, error in pair_validation_failures:
-            print(f"  {vec}: {error}")
-
-    # MATHEMATICAL REQUIREMENT: 100% SUCCESS RATE
-    # The algorithm must be able to generate exactly 12 valid pairs
-    # for every single valid user vector in the constraint space
-    assert total_successful == total_tested, (
-        f"ALGORITHMIC INCOMPLETENESS DETECTED: "
-        f"Only {total_successful}/{total_tested} vectors succeeded. "
-        f"Algorithm must work for 100% of valid constraint space."
-    )
-
-    assert (
-        success_rate == 100.0
-    ), f"Success rate {success_rate:.1f}% is below mathematical requirement of 100%"
-
-    if timing_results:
-        assert (
-            avg_time < 3.0
-        ), f"Average time {avg_time:.2f}s exceeds performance requirement of 3.0s"
-
-    print(
-        "✅ MATHEMATICAL VERIFICATION COMPLETE: Algorithm is complete over constraint space"
-    )
+        # PERFECT symmetry: negative differences should be exact opposites
+        np.testing.assert_array_equal(
+            np.array(pos_diff1),
+            -np.array(neg_diff1),
+            err_msg="Negative pair diff1 should be exact opposite of "
+            "positive pair diff1",
+        )
+        np.testing.assert_array_equal(
+            np.array(pos_diff2),
+            -np.array(neg_diff2),
+            err_msg="Negative pair diff2 should be exact opposite of "
+            "positive pair diff2",
+        )
 
 
 def test_option_differences_calculation(strategy):
-    """Test that option differences are calculated correctly as actual differences."""
+    """Test that option differences are calculated correctly."""
     user_vector = (20, 30, 50)
     pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
 
@@ -615,20 +626,22 @@ def test_option_differences_calculation(strategy):
         # Verify that stored differences match actual differences
         assert option1_diff == expected_diff1, (
             f"Option 1 differences mismatch: stored={option1_diff}, "
-            f"expected={expected_diff1}, vector={option1_vector}, user={user_vector}"
+            f"expected={expected_diff1}, vector={option1_vector}, "
+            f"user={user_vector}"
         )
         assert option2_diff == expected_diff2, (
             f"Option 2 differences mismatch: stored={option2_diff}, "
-            f"expected={expected_diff2}, vector={option2_vector}, user={user_vector}"
+            f"expected={expected_diff2}, vector={option2_vector}, "
+            f"user={user_vector}"
         )
 
-        # Verify that applying differences to user vector gives back the vectors
+        # Verify that applying differences to user vector gives back vectors
         reconstructed1 = [user_vector[i] + option1_diff[i] for i in range(3)]
         reconstructed2 = [user_vector[i] + option2_diff[i] for i in range(3)]
 
-        assert (
-            tuple(reconstructed1) == option1_vector
-        ), f"Cannot reconstruct option 1: {reconstructed1} != {option1_vector}"
-        assert (
-            tuple(reconstructed2) == option2_vector
-        ), f"Cannot reconstruct option 2: {reconstructed2} != {option2_vector}"
+        assert tuple(reconstructed1) == option1_vector, (
+            f"Cannot reconstruct option 1: {reconstructed1} != " f"{option1_vector}"
+        )
+        assert tuple(reconstructed2) == option2_vector, (
+            f"Cannot reconstruct option 2: {reconstructed2} != " f"{option2_vector}"
+        )

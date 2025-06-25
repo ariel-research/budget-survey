@@ -172,41 +172,72 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             and np.sum(vec2) == 100
         )
 
+    def _validate_cyclic_relationships(self, group_pairs: List[Dict]) -> bool:
+        """
+        Validate perfect cyclic relationships within a group.
+
+        Args:
+            group_pairs: List of pairs in a group
+
+        Returns:
+            True if perfect cyclic relationships are maintained,
+            False otherwise
+        """
+        if len(group_pairs) != 3:
+            return False
+
+        # Extract base differences from first pair
+        base_diff1 = np.array(group_pairs[0]["option1_differences"])
+        base_diff2 = np.array(group_pairs[0]["option2_differences"])
+
+        # Verify perfect cyclic shifts for remaining pairs
+        for shift in range(1, 3):
+            expected_diff1 = self._apply_cyclic_shift(base_diff1, shift)
+            expected_diff2 = self._apply_cyclic_shift(base_diff2, shift)
+
+            actual_diff1 = np.array(group_pairs[shift]["option1_differences"])
+            actual_diff2 = np.array(group_pairs[shift]["option2_differences"])
+
+            if not (
+                np.array_equal(actual_diff1, expected_diff1)
+                and np.array_equal(actual_diff2, expected_diff2)
+            ):
+                return False
+
+        return True
+
     def _generate_group(
         self,
         user_vector: tuple,
         vector_size: int,
         group_num: int,
-        used_pairs: set = None,
+        used_differences: set = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate one group of 3 pairs using cyclic shift pattern.
 
         Creates 3 pairs by applying cyclic shifts (0, 1, 2 positions) to
-        the base difference vectors, ensuring all pairs are valid and unique.
+        the same base difference vectors. Tracks uniqueness by difference
+        vectors rather than final budget vectors to maintain cyclic
+        relationships within groups.
 
         Args:
             user_vector: User's ideal budget allocation
             vector_size: Size of each vector
             group_num: Group number for labeling
-            used_pairs: Set of already used pair combinations
+            used_differences: Set of already used difference combinations
 
         Returns:
-            List[Dict[str, tuple]]: List of 3 pairs, each containing:
-                - Two budget allocation vectors
-                - Corresponding difference vectors for analysis
+            List[Dict[str, tuple]]: List of 3 pairs with proper cyclic shifts
 
         Example:
-            Each pair in the group has the pattern:
-            {
-                "Cyclic Pattern A (shift 0)": (30, 45, 25),
-                "Cyclic Pattern B (shift 0)": (40, 35, 25),
-                "option1_differences": [10, 5, -15],
-                "option2_differences": [0, -5, 5]
-            }
+            For base differences [-20, +15, +5] and [-30, -10, +40]:
+            - Shift 0: [-20, +15, +5] and [-30, -10, +40]
+            - Shift 1: [+5, -20, +15] and [+40, -30, -10]
+            - Shift 2: [+15, +5, -20] and [-10, +40, -30]
         """
-        if used_pairs is None:
-            used_pairs = set()
+        if used_differences is None:
+            used_differences = set()
 
         user_array = np.array(user_vector)
         max_attempts = 1000
@@ -215,7 +246,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             diff1, diff2 = self._generate_random_differences(user_vector, vector_size)
 
             group_pairs = []
-            temp_used = set()
+            temp_used_diffs = set()
             all_shifts_valid = True
 
             for shift in range(3):
@@ -237,33 +268,9 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 vec1 = user_array + shifted_diff1
                 vec2 = user_array + shifted_diff2
 
-                # Store differences before potential rounding
-                stored_diff1 = shifted_diff1
-                stored_diff2 = shifted_diff2
-
-                # Apply rounding if needed
-                if 5 not in user_vector:
-                    vec1 = np.round(vec1 / 5) * 5
-                    vec2 = np.round(vec2 / 5) * 5
-
-                    # Adjust to ensure sum is exactly 100
-                    vec1[-1] = 100 - np.sum(vec1[:-1])
-                    vec2[-1] = 100 - np.sum(vec2[:-1])
-
-                    # Recalculate actual differences after rounding
-                    actual_diff1 = vec1 - user_array
-                    actual_diff2 = vec2 - user_array
-
-                    # Check if rounding created absolute canonical identical patterns
-                    if self._are_absolute_canonical_identical(
-                        actual_diff1, actual_diff2
-                    ):
-                        all_shifts_valid = False
-                        break
-
-                    # Use actual differences for storage
-                    stored_diff1 = actual_diff1
-                    stored_diff2 = actual_diff2
+                # Store the actual shifted differences (perfect cyclic relationships)
+                final_diff1 = shifted_diff1
+                final_diff2 = shifted_diff2
 
                 # Convert to tuples
                 vec1 = tuple(int(v) for v in vec1)
@@ -274,31 +281,39 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                     all_shifts_valid = False
                     break
 
-                # Check uniqueness
-                vectors = tuple(sorted([vec1, vec2]))
-                if vectors in used_pairs or vectors in temp_used:
+                # Check uniqueness by difference vectors (not final vectors)
+                def to_tuple(diff):
+                    return tuple(
+                        diff.tolist() if isinstance(diff, np.ndarray) else diff
+                    )
+
+                diff_pair = tuple(
+                    sorted([to_tuple(final_diff1), to_tuple(final_diff2)])
+                )
+
+                if diff_pair in used_differences or diff_pair in temp_used_diffs:
                     all_shifts_valid = False
                     break
 
-                temp_used.add(vectors)
+                temp_used_diffs.add(diff_pair)
                 pair = {
                     f"Cyclic Pattern A (shift {shift})": vec1,
                     f"Cyclic Pattern B (shift {shift})": vec2,
                     "option1_differences": (
-                        stored_diff1.tolist()
-                        if isinstance(stored_diff1, np.ndarray)
-                        else list(stored_diff1)
+                        final_diff1.tolist()
+                        if isinstance(final_diff1, np.ndarray)
+                        else list(final_diff1)
                     ),
                     "option2_differences": (
-                        stored_diff2.tolist()
-                        if isinstance(stored_diff2, np.ndarray)
-                        else list(stored_diff2)
+                        final_diff2.tolist()
+                        if isinstance(final_diff2, np.ndarray)
+                        else list(final_diff2)
                     ),
                 }
                 group_pairs.append(pair)
 
             if all_shifts_valid and len(group_pairs) == 3:
-                used_pairs.update(temp_used)
+                used_differences.update(temp_used_diffs)
                 return group_pairs
 
         logger.warning(
@@ -338,12 +353,12 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         self._validate_vector(user_vector, vector_size)
 
         all_pairs = []
-        used_pairs = set()
+        used_differences = set()
 
         # Generate 4 groups of 3 pairs each
         for group_num in range(1, 5):
             group_pairs = self._generate_group(
-                user_vector, vector_size, group_num, used_pairs
+                user_vector, vector_size, group_num, used_differences
             )
             all_pairs.extend(group_pairs)
 
@@ -355,7 +370,10 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             max_total_attempts = 400  # 4 groups × 100 attempts each
             while len(all_pairs) < 12 and total_attempts < max_total_attempts:
                 additional_pairs = self._generate_group(
-                    user_vector, vector_size, total_attempts // 100 + 1, used_pairs
+                    user_vector,
+                    vector_size,
+                    total_attempts // 100 + 1,
+                    used_differences,
                 )
                 all_pairs.extend(additional_pairs)
                 total_attempts += 1

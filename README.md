@@ -211,6 +211,7 @@ The application uses the Strategy pattern to support multiple pair generation al
      - Uses absolute canonical form validation to prevent degenerate pairs
      - Ensures difference vectors are not absolute canonical identical
      - Maintains research validity by avoiding equivalent patterns
+     - Guarantees perfect mathematical relationships without rounding approximations
    - **Cyclic Shift Logic**:
      - Applies right shifts of 0, 1, and 2 positions to create 3 pairs per group
      - Each shift moves difference elements to the right by the specified positions
@@ -265,6 +266,7 @@ The application uses the Strategy pattern to support multiple pair generation al
      - Uses absolute canonical form validation to prevent degenerate pairs
      - Ensures distance vectors are not absolute canonical identical
      - Maintains research validity by avoiding equivalent patterns
+     - Guarantees perfect mathematical symmetry without rounding approximations
    - **Linear Symmetry Logic**:
      - Tests if users view distance D and distance -D as equivalent
      - If symmetry hypothesis holds, users should show similar preference patterns for both pairs in each group
@@ -950,8 +952,8 @@ tests/
 │   └── load_test.py
 ├── services/                    # Service layer tests
 │   ├── pair_generation/             # Pair generation strategy tests
-│   │   ├── test_cyclic_shift_strategy.py
-│   │   ├── test_linear_symmetry_strategy.py
+│   │   ├── test_cyclic_shift_strategy.py      # Comprehensive validation for all 171 valid vectors
+│   │   ├── test_linear_symmetry_strategy.py   # Mathematical relationship verification
 │   │   └── test_*.py            # Other strategy tests
 │   └── test_survey_vector_generator.py
 ├── UI/                         # Frontend/UI tests
@@ -986,11 +988,16 @@ pytest tests/api/
 pytest tests/database/
 ```
 
-##### Unit Tests
-**Description:** Core algorithms and utilities
+##### Service Tests
+**Description:** Core algorithms and pair generation strategies
 ```bash
-pytest tests/unit/
+pytest tests/services/
 ```
+
+Key features:
+- **Comprehensive validation**: Tests all 171 valid budget vectors for algorithmic completeness
+- **Mathematical verification**: Ensures perfect cyclic shifts and linear symmetry relationships
+- **Performance testing**: Validates sub-3-second generation times
 
 ##### UI Tests
 **Description:** Frontend functionality
