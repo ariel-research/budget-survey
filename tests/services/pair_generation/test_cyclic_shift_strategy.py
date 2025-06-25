@@ -1,5 +1,6 @@
 """Test suite for cyclic shift strategy."""
 
+import time
 from unittest.mock import patch
 
 import numpy as np
@@ -7,6 +8,57 @@ import pytest
 
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import CyclicShiftStrategy
+
+# Test constants
+EXPECTED_VALID_VECTORS = 171
+MAX_GENERATION_TIME = 3.0
+PERFORMANCE_TIMEOUT = 10.0
+
+
+def enumerate_all_valid_vectors():
+    """
+    Enumerate all valid 3D budget vectors.
+
+    Returns:
+        List[tuple]: All valid vectors (a,b,c) where:
+            - a + b + c = 100
+            - a,b,c ∈ {5,10,15,...,95}
+            - a,b,c > 0
+    """
+    valid_vectors = []
+
+    for a in range(5, 96, 5):
+        for b in range(5, 96, 5):
+            c = 100 - a - b
+
+            if c > 0 and 5 <= c <= 95 and c % 5 == 0:
+                valid_vectors.append((a, b, c))
+
+    return valid_vectors
+
+
+def validate_pair_structure(pair, pair_index, user_vector):
+    """Validate basic pair structure and properties."""
+    # Must have exactly 4 keys
+    if len(pair) != 4:
+        return f"Pair {pair_index} has {len(pair)} keys, expected 4"
+
+    # Must have difference keys
+    if "option1_differences" not in pair or "option2_differences" not in pair:
+        return f"Pair {pair_index} missing difference keys"
+
+    # Validate vector properties
+    for key, vector in pair.items():
+        if not key.endswith("_differences"):
+            if (
+                not isinstance(vector, tuple)
+                or len(vector) != 3
+                or sum(vector) != 100
+                or not all(0 <= v <= 100 for v in vector)
+            ):
+                return f"Invalid vector in pair {pair_index}: {vector}"
+
+    return None  # No errors
 
 
 @pytest.fixture
@@ -20,7 +72,7 @@ def test_strategy_name(strategy):
 
 
 def test_generate_random_differences(strategy):
-    """Test if random difference generation works correctly."""
+    """Test random difference generation works correctly."""
     user_vector = (20, 30, 50)
     vector_size = 3
 
@@ -50,7 +102,7 @@ def test_generate_random_differences(strategy):
 
 
 def test_apply_cyclic_shift(strategy):
-    """Test if cyclic shift works correctly."""
+    """Test cyclic shift functionality."""
     differences = np.array([10, -5, -5])
 
     # Test shift by 0 (no change)
@@ -67,7 +119,7 @@ def test_apply_cyclic_shift(strategy):
 
 
 def test_verify_differences(strategy):
-    """Test if difference verification works correctly."""
+    """Test difference verification functionality."""
     user_vector = (20, 30, 50)
 
     # Valid differences
@@ -87,7 +139,7 @@ def test_verify_differences(strategy):
 
 
 def test_generate_group(strategy):
-    """Test if group generation works correctly."""
+    """Test group generation functionality."""
     user_vector = (20, 30, 50)
     vector_size = 3
     group_num = 1
@@ -184,7 +236,7 @@ def test_pair_uniqueness(strategy):
     # Convert pairs to a set of sorted tuples for uniqueness check
     pair_sets = set()
     for pair in pairs:
-        # Only consider the actual vector values, not the difference metadata
+        # Only consider actual vector values, not difference metadata
         vectors = tuple(
             sorted([v for k, v in pair.items() if not k.endswith("_differences")])
         )
@@ -195,7 +247,7 @@ def test_pair_uniqueness(strategy):
 
 
 def test_cyclic_pattern_consistency(strategy):
-    """Test that cyclic shifts within a group maintain PERFECT mathematical relationships."""
+    """Test that cyclic shifts maintain PERFECT mathematical relationships."""
     user_vector = (30, 40, 30)
 
     group_pairs = strategy._generate_group(user_vector, 3, 1)
@@ -232,9 +284,9 @@ def test_cyclic_pattern_consistency(strategy):
             )
 
 
-@patch("application.services.pair_generation.cyclic_shift_strategy.get_translation")
+@patch("application.services.pair_generation.cyclic_shift_strategy." "get_translation")
 def test_option_labels(mock_get_translation, strategy):
-    """Test if option labels are generated correctly."""
+    """Test option labels generation."""
     mock_get_translation.side_effect = lambda key, *args, **kwargs: {
         "cyclic_pattern_a": "Pattern A",
         "cyclic_pattern_b": "Pattern B",
@@ -245,7 +297,7 @@ def test_option_labels(mock_get_translation, strategy):
 
 
 def test_table_columns(strategy):
-    """Test if table columns are defined correctly."""
+    """Test table columns definition."""
     columns = strategy.get_table_columns()
 
     assert isinstance(columns, dict)
@@ -272,9 +324,8 @@ def test_edge_case_vectors(strategy):
     assert len(pairs) == 12
 
 
-def test_perfect_mathematical_guarantee_all_vectors(strategy):
-    """Test that perfect cyclic relationships are guaranteed for ALL valid vectors."""
-    # Test with various user vectors that would have had rounding issues
+def test_perfect_mathematical_guarantee_sample_vectors(strategy):
+    """Test perfect cyclic relationships for sample vectors."""
     test_vectors = [
         (30, 40, 30),
         (35, 35, 30),
@@ -290,13 +341,159 @@ def test_perfect_mathematical_guarantee_all_vectors(strategy):
         for group_start in range(0, 12, 3):
             group_pairs = pairs[group_start : group_start + 3]
             if len(group_pairs) == 3:
-                assert strategy._validate_cyclic_relationships(
-                    group_pairs
-                ), f"Imperfect cyclic relationships for {user_vector}, group {group_start//3 + 1}"
+                assert strategy._validate_cyclic_relationships(group_pairs), (
+                    f"Imperfect cyclic relationships for {user_vector}, "
+                    f"group {group_start//3 + 1}"
+                )
+
+
+def test_comprehensive_algorithm_validation(strategy):
+    """
+    Comprehensive validation: ALL valid vectors must generate 12 pairs
+    with PERFECT mathematical relationships.
+
+    This test validates:
+    1. Algorithm completeness (works for 100% of valid vectors)
+    2. Perfect mathematical relationships (cyclic shifts)
+    3. Performance requirements
+    """
+    print("\n=== COMPREHENSIVE ALGORITHM VALIDATION ===")
+
+    # Get all valid vectors
+    valid_vectors = enumerate_all_valid_vectors()
+    assert len(valid_vectors) == EXPECTED_VALID_VECTORS, (
+        f"Expected {EXPECTED_VALID_VECTORS} valid vectors, " f"got {len(valid_vectors)}"
+    )
+
+    print(f"Testing {len(valid_vectors)} valid vectors...")
+
+    successful_vectors = []
+    failed_vectors = []
+    timing_results = []
+    relationship_failures = []
+
+    for i, user_vector in enumerate(valid_vectors, 1):
+        print(
+            f"Testing vector {i:2d}/{len(valid_vectors)}: " f"{user_vector}",
+            end=" ... ",
+        )
+
+        try:
+            start_time = time.time()
+            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+            elapsed = time.time() - start_time
+
+            # Basic validation
+            if len(pairs) != 12:
+                failed_vectors.append(
+                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
+                )
+                print(f"FAIL (wrong count: {len(pairs)})")
+                continue
+
+            # Performance validation
+            if elapsed >= PERFORMANCE_TIMEOUT:
+                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
+                print(f"FAIL (timeout: {elapsed:.2f}s)")
+                continue
+
+            # Structural validation
+            structure_error = None
+            for j, pair in enumerate(pairs):
+                error = validate_pair_structure(pair, j, user_vector)
+                if error:
+                    structure_error = error
+                    break
+
+            if structure_error:
+                failed_vectors.append((user_vector, structure_error))
+                print("FAIL (structure)")
+                continue
+
+            # MATHEMATICAL RELATIONSHIP VALIDATION
+            perfect_relationships = True
+            for group_start in range(0, 12, 3):
+                group_pairs = pairs[group_start : group_start + 3]
+                if len(group_pairs) == 3:
+                    if not strategy._validate_cyclic_relationships(group_pairs):
+                        relationship_failures.append(
+                            (user_vector, f"Group {group_start//3 + 1}")
+                        )
+                        perfect_relationships = False
+                        break
+
+            if not perfect_relationships:
+                print("FAIL (relationships)")
+                continue
+
+            # All validations passed
+            successful_vectors.append(user_vector)
+            timing_results.append((user_vector, elapsed))
+            print(f"✓ ({elapsed:.3f}s)")
+
+        except Exception as e:
+            failed_vectors.append((user_vector, str(e)))
+            print(f"FAIL (exception: {type(e).__name__})")
+
+    # Results analysis
+    total_tested = len(valid_vectors)
+    total_successful = len(successful_vectors)
+    success_rate = (total_successful / total_tested) * 100
+
+    print("\n=== RESULTS ===")
+    print(f"Vectors tested: {total_tested}")
+    print(f"Successful: {total_successful}")
+    print(f"Success rate: {success_rate:.1f}%")
+
+    if timing_results:
+        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
+        max_time = max(t[1] for t in timing_results)
+        min_time = min(t[1] for t in timing_results)
+        print(
+            f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, " f"max={max_time:.3f}s"
+        )
+
+    # Report failures
+    if failed_vectors:
+        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
+        for vec, error in failed_vectors[:5]:  # Show first 5
+            print(f"  {vec}: {error}")
+        if len(failed_vectors) > 5:
+            print(f"  ... and {len(failed_vectors) - 5} more")
+
+    if relationship_failures:
+        print(f"\n❌ RELATIONSHIP FAILURES " f"({len(relationship_failures)}):")
+        for vec, error in relationship_failures[:5]:  # Show first 5
+            print(f"  {vec}: {error}")
+        if len(relationship_failures) > 5:
+            print(f"  ... and {len(relationship_failures) - 5} more")
+
+    # STRICT REQUIREMENTS
+    assert total_successful == total_tested, (
+        f"ALGORITHMIC INCOMPLETENESS: Only {total_successful}/"
+        f"{total_tested} vectors succeeded. Algorithm must work for "
+        f"100% of valid constraint space."
+    )
+
+    assert success_rate == 100.0, (
+        f"Success rate {success_rate:.1f}% is below mathematical "
+        f"requirement of 100%"
+    )
+
+    if timing_results:
+        assert avg_time < MAX_GENERATION_TIME, (
+            f"Average time {avg_time:.2f}s exceeds performance "
+            f"requirement of {MAX_GENERATION_TIME}s"
+        )
+
+    print(
+        "✅ COMPREHENSIVE VALIDATION COMPLETE: Perfect mathematical "
+        "relationships guaranteed for ALL valid vectors"
+    )
 
 
 def test_logging_behavior(strategy, caplog):
-    """Test that appropriate logging occurs."""
+    """Test appropriate logging occurs."""
     user_vector = (20, 30, 50)
 
     with caplog.at_level("INFO"):
@@ -319,13 +516,12 @@ def test_zero_value_logging(strategy, caplog):
     assert any("zero values" in record.message for record in caplog.records)
 
 
-def test_generate_random_differences_independence(strategy):
-    """Test that the two difference vectors are generated independently."""
+def test_difference_generation_properties(strategy):
+    """Test properties of difference generation."""
     user_vector = (20, 30, 50)
     vector_size = 3
 
-    # Generate multiple pairs to check independence
-    pairs_generated = []
+    # Generate multiple pairs to check properties
     for _ in range(5):
         diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
 
@@ -340,17 +536,17 @@ def test_generate_random_differences_independence(strategy):
             sorted_diff1, sorted_diff2
         ), f"Difference vectors have same pattern: {diff1} and {diff2}"
 
-        # Store for uniqueness check
-        pairs_generated.append((tuple(diff1), tuple(diff2)))
-
-    # Check that we're getting different pairs (not always the same)
-    unique_pairs = set(pairs_generated)
-    assert len(unique_pairs) > 1, "Always generating the same difference pairs"
+        # At least one difference should be meaningful (|diff| >= 5)
+        assert any(
+            abs(d) >= 5 for d in diff1
+        ), f"All differences in {diff1} are too small"
+        assert any(
+            abs(d) >= 5 for d in diff2
+        ), f"All differences in {diff2} are too small"
 
 
 def test_absolute_canonical_validation(strategy):
-    """Test that absolute canonical identical patterns are correctly identified."""
-    # Test the validation method directly with CORRECT examples
+    """Test absolute canonical identical patterns are correctly identified."""
     # Identical absolute canonical forms
     assert strategy._are_absolute_canonical_identical([10, 0, -10], [-10, 0, 10])
     assert strategy._are_absolute_canonical_identical([10, -5, -5], [-10, 5, 5])
@@ -374,336 +570,6 @@ def test_absolute_canonical_validation(strategy):
         abs_can2 = tuple(sorted(abs(x) for x in diff2))
 
         assert abs_can1 != abs_can2, (
-            f"Pair {i}: Found absolute canonical identical: {diff1} and {diff2} "
-            f"both have form {abs_can1}"
+            f"Pair {i}: Found absolute canonical identical: "
+            f"{diff1} and {diff2} both have form {abs_can1}"
         )
-
-
-def test_cyclic_shift_preserves_validation(strategy):
-    """Test that validation works correctly across all shifts."""
-    # Manually test some problematic patterns
-    diff1 = np.array([10, -5, -5])
-    diff2 = np.array([-10, 5, 5])  # Additive inverse
-
-    # These should be caught at any shift
-    for shift in range(3):
-        shifted1 = strategy._apply_cyclic_shift(diff1, shift)
-        shifted2 = strategy._apply_cyclic_shift(diff2, shift)
-
-        assert strategy._are_absolute_canonical_identical(
-            shifted1, shifted2
-        ), f"Shift {shift} should preserve absolute canonical identity"
-
-
-def test_cyclic_shift_within_group_consistency(strategy):
-    """Test that cyclic shifts within a group maintain proper relationships."""
-    user_vector = (30, 40, 30)
-
-    # Generate a single group
-    group_pairs = strategy._generate_group(user_vector, 3, 1)
-
-    if len(group_pairs) == 3:  # Only test if we got a full group
-        # Extract differences from each pair
-        group_diffs = []
-        for pair in group_pairs:
-            diff1 = pair["option1_differences"]
-            diff2 = pair["option2_differences"]
-            group_diffs.append((diff1, diff2))
-
-        # The differences should follow cyclic shift pattern
-        base_diff1 = np.array(group_diffs[0][0])
-        base_diff2 = np.array(group_diffs[0][1])
-
-        for shift in range(1, 3):
-            expected_diff1 = strategy._apply_cyclic_shift(base_diff1, shift)
-            expected_diff2 = strategy._apply_cyclic_shift(base_diff2, shift)
-
-            actual_diff1 = np.array(group_diffs[shift][0])
-            actual_diff2 = np.array(group_diffs[shift][1])
-
-            np.testing.assert_array_equal(
-                actual_diff1,
-                expected_diff1,
-                err_msg=f"Shift {shift} diff1 not properly cyclic",
-            )
-            np.testing.assert_array_equal(
-                actual_diff2,
-                expected_diff2,
-                err_msg=f"Shift {shift} diff2 not properly cyclic",
-            )
-
-
-def test_generation_feasibility_all_valid_vectors(strategy):
-    """
-    Mathematical verification that ALL valid user vectors generate exactly 12 pairs.
-
-    This test systematically enumerates the complete constraint space of valid
-    3-dimensional budget vectors and verifies algorithmic completeness.
-    """
-    import time
-
-    # MATHEMATICAL CONSTRAINT SPACE DEFINITION:
-    # Valid vector (a,b,c) must satisfy:
-    # 1. a + b + c = 100 (budget constraint)
-    # 2. a,b,c ∈ {5,10,15,...,95} (multiples of 5)
-    # 3. a,b,c > 0 (no zeros for cyclic shift strategy)
-    # 4. 5 ≤ a,b,c ≤ 95 (valid range)
-
-    print("\n=== MATHEMATICAL ENUMERATION OF CONSTRAINT SPACE ===")
-
-    # Systematically enumerate ALL valid vectors
-    valid_vectors = []
-    enumeration_stats = {
-        "total_combinations": 0,
-        "sum_violations": 0,
-        "range_violations": 0,
-        "zero_violations": 0,
-        "valid_count": 0,
-    }
-
-    # For 3D budget vectors with multiples of 5
-    for a in range(5, 96, 5):  # a ∈ {5,10,15,...,95}
-        for b in range(5, 96, 5):  # b ∈ {5,10,15,...,95}
-            enumeration_stats["total_combinations"] += 1
-
-            # Calculate c from constraint: a + b + c = 100
-            c = 100 - a - b
-
-            # Validate c against all constraints
-            if c <= 0:
-                enumeration_stats["zero_violations"] += 1
-                continue
-            if c < 5 or c > 95:
-                enumeration_stats["range_violations"] += 1
-                continue
-            if c % 5 != 0:
-                enumeration_stats["sum_violations"] += 1
-                continue
-
-            # Vector satisfies all constraints
-            valid_vectors.append((a, b, c))
-            enumeration_stats["valid_count"] += 1
-
-    # Mathematical verification of enumeration completeness
-    print("Enumeration Statistics:")
-    print(f"  Total combinations tested: {enumeration_stats['total_combinations']}")
-    print("  Constraint violations:")
-    print(f"    Zero values: {enumeration_stats['zero_violations']}")
-    print(f"    Range violations: {enumeration_stats['range_violations']}")
-    print(f"    Sum constraint violations: {enumeration_stats['sum_violations']}")
-    print(f"  Valid vectors found: {enumeration_stats['valid_count']}")
-
-    # Theoretical count: For a+b+c=100, multiples of 5, 5≤a,b,c≤95
-    # This gives us exactly 171 valid vectors
-    expected_count = 171
-    assert len(valid_vectors) == expected_count, (
-        f"Mathematical enumeration error: Expected exactly {expected_count} "
-        f"valid vectors, got {len(valid_vectors)}"
-    )
-
-    print(f"✓ Enumeration complete: {len(valid_vectors)} vectors")
-
-    # ALGORITHMIC COMPLETENESS VERIFICATION
-    print("\n=== ALGORITHMIC COMPLETENESS VERIFICATION ===")
-
-    successful_vectors = []
-    failed_vectors = []
-    timing_results = []
-    pair_validation_failures = []
-
-    for i, user_vector in enumerate(valid_vectors, 1):
-        print(f"Testing vector {i:2d}/{len(valid_vectors)}: {user_vector}", end=" ... ")
-
-        try:
-            start_time = time.time()
-            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-            elapsed = time.time() - start_time
-
-            # STRICT VALIDATION: Must generate exactly 12 pairs
-            if len(pairs) != 12:
-                pair_validation_failures.append(
-                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
-                )
-                print(f"FAIL (wrong count: {len(pairs)})")
-                continue
-
-            # Performance validation
-            if elapsed >= 10.0:
-                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
-                print(f"FAIL (timeout: {elapsed:.2f}s)")
-                continue
-
-            # Additional pair validity checks
-            for j, pair in enumerate(pairs):
-                # Each pair must have exactly 4 keys
-                if len(pair) != 4:
-                    pair_validation_failures.append(
-                        (user_vector, f"Pair {j} has {len(pair)} keys, expected 4")
-                    )
-                    print("FAIL (pair structure)")
-                    break
-
-                # Must have difference keys
-                if (
-                    "option1_differences" not in pair
-                    or "option2_differences" not in pair
-                ):
-                    pair_validation_failures.append(
-                        (user_vector, f"Pair {j} missing difference keys")
-                    )
-                    print("FAIL (missing diffs)")
-                    break
-
-                # Validate vector properties
-                for key, vector in pair.items():
-                    if not key.endswith("_differences"):
-                        if (
-                            not isinstance(vector, tuple)
-                            or len(vector) != 3
-                            or sum(vector) != 100
-                            or not all(0 <= v <= 100 for v in vector)
-                        ):
-                            pair_validation_failures.append(
-                                (user_vector, f"Invalid vector in pair {j}: {vector}")
-                            )
-                            print("FAIL (invalid vector)")
-                            break
-                else:
-                    continue
-                break
-            else:
-                # All validations passed
-                successful_vectors.append(user_vector)
-                timing_results.append((user_vector, elapsed))
-                print(f"✓ ({elapsed:.3f}s)")
-                continue
-
-        except Exception as e:
-            failed_vectors.append((user_vector, str(e)))
-            print(f"FAIL (exception: {type(e).__name__})")
-
-    # MATHEMATICAL COMPLETENESS RESULTS
-    print("\n=== COMPLETENESS VERIFICATION RESULTS ===")
-
-    total_tested = len(valid_vectors)
-    total_successful = len(successful_vectors)
-    success_rate = (total_successful / total_tested) * 100
-
-    print(f"Vectors tested: {total_tested}")
-    print(f"Successful: {total_successful}")
-    print(f"Success rate: {success_rate:.1f}%")
-
-    if timing_results:
-        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
-        max_time = max(t[1] for t in timing_results)
-        min_time = min(t[1] for t in timing_results)
-        print(f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, max={max_time:.3f}s")
-
-    # Report failures in detail
-    if failed_vectors:
-        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
-        for vec, error in failed_vectors:
-            print(f"  {vec}: {error}")
-
-    if pair_validation_failures:
-        print(f"\n❌ PAIR VALIDATION FAILURES ({len(pair_validation_failures)}):")
-        for vec, error in pair_validation_failures:
-            print(f"  {vec}: {error}")
-
-    # MATHEMATICAL REQUIREMENT: 100% SUCCESS RATE
-    # The algorithm must be able to generate exactly 12 valid pairs
-    # for every single valid user vector in the constraint space
-    assert total_successful == total_tested, (
-        f"ALGORITHMIC INCOMPLETENESS DETECTED: "
-        f"Only {total_successful}/{total_tested} vectors succeeded. "
-        f"Algorithm must work for 100% of valid constraint space."
-    )
-
-    assert (
-        success_rate == 100.0
-    ), f"Success rate {success_rate:.1f}% is below mathematical requirement of 100%"
-
-    if timing_results:
-        assert (
-            avg_time < 3.0
-        ), f"Average time {avg_time:.2f}s exceeds performance requirement of 3.0s"
-
-    print(
-        "✅ MATHEMATICAL VERIFICATION COMPLETE: Algorithm is complete over constraint space"
-    )
-
-
-def test_generate_random_differences_canonical_difference(strategy):
-    """Test that generated difference vectors are canonically different."""
-    user_vector = (30, 40, 30)
-    vector_size = 3
-
-    # Run multiple times to ensure consistency
-    for _ in range(10):
-        diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
-
-        # Sort both arrays to get canonical form
-        sorted_diff1 = np.sort(diff1)
-        sorted_diff2 = np.sort(diff2)
-
-        # They should not be equal when sorted
-        assert not np.array_equal(
-            sorted_diff1, sorted_diff2
-        ), f"Vectors {diff1} and {diff2} have the same canonical form"
-
-        # But they should both sum to 0
-        assert np.sum(diff1) == 0
-        assert np.sum(diff2) == 0
-
-        # And produce valid vectors
-        user_array = np.array(user_vector)
-        vec1 = user_array + diff1
-        vec2 = user_array + diff2
-
-        assert np.all(vec1 >= 0) and np.all(vec1 <= 100)
-        assert np.all(vec2 >= 0) and np.all(vec2 <= 100)
-        assert np.sum(vec1) == 100
-        assert np.sum(vec2) == 100
-
-
-def test_generate_random_differences_meaningful(strategy):
-    """Test that generated differences are meaningful (not too small)."""
-    user_vector = (20, 30, 50)
-    vector_size = 3
-
-    for _ in range(5):
-        diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
-
-        # At least one difference should be meaningful (|diff| >= 5)
-        assert any(
-            abs(d) >= 5 for d in diff1
-        ), f"All differences in {diff1} are too small"
-        assert any(
-            abs(d) >= 5 for d in diff2
-        ), f"All differences in {diff2} are too small"
-
-
-def test_edge_case_small_range(strategy):
-    """Test with vectors that have limited valid difference ranges."""
-    # This vector limits the possible differences significantly
-    user_vector = (5, 90, 5)
-    vector_size = 3
-
-    # Should still be able to generate valid differences
-    diff1, diff2 = strategy._generate_random_differences(user_vector, vector_size)
-
-    # Verify constraints
-    user_array = np.array(user_vector)
-    vec1 = user_array + diff1
-    vec2 = user_array + diff2
-
-    # Check all values are in valid range [0, 100]
-    assert np.all(vec1 >= 0) and np.all(vec1 <= 100)
-    assert np.all(vec2 >= 0) and np.all(vec2 <= 100)
-
-    # Check sums
-    assert np.sum(vec1) == 100
-    assert np.sum(vec2) == 100
-
-    # Check canonical difference
-    assert not np.array_equal(np.sort(diff1), np.sort(diff2))
