@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_translation('user_participation_title', 'answers') }}{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responses_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="answers-container">
+    <div class="answers-header">
+        <h1>{{ get_translation('user_participation_title', 'answers') }}</h1>
+    </div>
+    
+    <div class="answers-content">
+        {% if users %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable" 
+                                data-column="user_id" 
+                                data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}asc{% endif %}"
+                                onclick="sortTable('user_id')">
+                                {{ get_translation('user_id', 'answers') }}
+                                {% if sort_by == 'user_id' %}
+                                    {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                                {% endif %}
+                            </th>
+                            <th>{{ get_translation('successful_surveys', 'answers') }}</th>
+                            <th>{{ get_translation('failed_surveys', 'answers') }}</th>
+                            <th class="sortable" 
+                                data-column="last_activity" 
+                                data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}asc{% endif %}"
+                                onclick="sortTable('last_activity')">
+                                {{ get_translation('last_activity', 'answers') }}
+                                {% if sort_by == 'last_activity' %}
+                                    {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                                {% endif %}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="user-id-cell">
+                                <a href="{{ url_for('responses.get_user_responses_detail', user_id=user.user_id) }}" 
+                                   target="_blank" class="user-link">
+                                    {{ user.user_id }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="stats-value">{{ user.successful_surveys_count }}</span>
+                                {% if user.successful_survey_ids_list %}
+                                    <br>
+                                    {% for survey_id in user.successful_survey_ids_list %}
+                                        <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
+                                           target="_blank" 
+                                           style="color: #27ae60; text-decoration: none; margin-right: 8px;">{{ survey_id }}</a>
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="stats-value">{{ user.failed_surveys_count }}</span>
+                                {% if user.failed_survey_ids_list %}
+                                    <br>
+                                    {% for survey_id in user.failed_survey_ids_list %}
+                                        <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
+                                           target="_blank" 
+                                           style="color: #e74c3c; text-decoration: none; margin-right: 8px;">{{ survey_id }}</a>
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ user.last_activity.strftime('%d-%m-%Y %H:%M') if user.last_activity else '-' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="no-data">{{ get_translation('no_participation_data', 'answers') }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block floating_content %}
+<a href="#" id="back-to-top" class="back-to-top" aria-label="Back to top">↑</a>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="{{ url_for('static', filename='js/responses.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sorting.js') }}"></script>
+
+<script>
+function sortTable(column) {
+    const currentOrder = new URLSearchParams(window.location.search).get('sort_order') || 'asc';
+    const currentColumn = new URLSearchParams(window.location.search).get('sort_by');
+    
+    let newOrder = 'asc';
+    if (currentColumn === column && currentOrder === 'asc') {
+        newOrder = 'desc';
+    }
+    
+    const url = new URL(window.location);
+    url.searchParams.set('sort_by', column);
+    url.searchParams.set('sort_order', newOrder);
+    
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %} 

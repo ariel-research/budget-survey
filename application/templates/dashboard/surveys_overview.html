@@ -40,6 +40,14 @@
                     <div class="metric-label">{{ translations.unaware_users }}</div>
                 </div>
             </div>
+
+            <div class="metric-card" onclick="window.location.href='{{ url_for('responses.get_users_overview') }}';" style="cursor: pointer;">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ users_with_surveys }}</div>
+                    <div class="metric-label">{{ get_translation('user_participation_title', 'answers') }}</div>
+                </div>
+            </div>
         </div>
 
         <!-- Surveys Grid -->
