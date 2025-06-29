@@ -428,6 +428,19 @@ The application includes a 'Demo Mode' feature that allows users to explore the 
 
 This feature is ideal for training sessions and demonstrations, allowing users to experience the full functionality of the application without impacting real survey data.
 
+### User Participation Overview
+The application provides a comprehensive dashboard showing participation statistics for all users who have completed surveys.
+
+- **Purpose**: Monitor user engagement and survey completion patterns
+- **Key Features**:
+  - Shows successful and failed survey counts per user
+  - Color-coded clickable survey IDs (green for successful, red for failed)
+  - Sortable by User ID or Last Activity
+  - Accessible via dashboard metric card or direct URL: `/surveys/users`
+  - Full bilingual support with RTL/LTR layouts
+
+- **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
+
 ## Prerequisites
 - Python 3.8+
 - MySQL 8.0+
@@ -546,14 +559,18 @@ Note: Make sure your .env file is properly configured with the correct database 
      * Creates 'survey_analysis_report_dev.pdf'
 
 4. Survey Results
-   - All Responses: https://survey.csariel.xyz/surveys/responses
-   - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
-     * With filtering: https://survey.csariel.xyz/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors
-     * Other filters: v_users_preferring_rounded_weighted_vectors, v_users_preferring_any_weighted_vectors
-   - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
-   - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
-   - All Comments: https://survey.csariel.xyz/surveys/comments
-   - Survey Comments: https://survey.csariel.xyz/surveys/{survey_id}/comments
+   - `/surveys/responses` - All survey responses
+   - `/surveys/{survey_id}/responses` - Responses for specific survey
+     * With filtering: `/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors`
+     * Other filters: `v_users_preferring_rounded_weighted_vectors`, `v_users_preferring_any_weighted_vectors`
+   - `/surveys/users` - User Participation Overview
+     * Sortable by User ID or Last Activity
+     * Shows successful/failed survey counts per user
+     * Color-coded clickable survey IDs
+   - `/surveys/users/{user_id}/responses` - All responses from specific user
+   - `/surveys/{survey_id}/users/{user_id}/responses` - User's response to specific survey
+   - `/surveys/comments` - All user comments
+   - `/surveys/{survey_id}/comments` - Comments for specific survey
 
 ### API Endpoints
 - `/get_messages` - Returns JSON dictionary of error messages
@@ -584,6 +601,10 @@ Notes:
    - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
      * With filtering: https://survey.csariel.xyz/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors
      * Other filters: v_users_preferring_rounded_weighted_vectors, v_users_preferring_any_weighted_vectors
+   - User Participation Overview: https://survey.csariel.xyz/surveys/users
+     * Sortable by User ID or Last Activity
+     * Shows successful/failed survey counts per user
+     * Color-coded clickable survey IDs
    - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
    - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
    - All Comments: https://survey.csariel.xyz/surveys/comments
@@ -628,6 +649,7 @@ To modify the text displayed on each screen of the application, here's a guide t
        - `templates/responses/list.html` - All responses
        - `templates/responses/detail.html` - Survey responses
        - `templates/responses/user_detail.html` - User responses
+       - `templates/responses/users_overview.html` - User participation overview
      * Common:
        - `templates/error.html` - Error pages
 
