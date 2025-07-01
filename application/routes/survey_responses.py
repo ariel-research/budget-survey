@@ -650,7 +650,7 @@ def get_users_overview():
         Rendered template with user participation data
     """
     try:
-        # Get and validate sort parameters using standard naming convention
+        # Get and validate sort parameters
         sort_by = request.args.get("sort")
         sort_order = request.args.get("order", "asc")
 

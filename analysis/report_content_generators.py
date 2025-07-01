@@ -1657,12 +1657,33 @@ def generate_detailed_breakdown_table(
                 logger.warning(f"Error getting strategy columns: {e}")
                 # Fall back to default columns based on option labels
 
-        # Sort summaries within the survey group by response_created_at if available
-        sorted_summaries = sorted(
-            survey_summaries,
-            key=lambda x: x.get("response_created_at", ""),
-            reverse=True,  # Most recent first
-        )
+        # Sort summaries within the survey group based on user preferences
+        if sort_by and sort_order:
+            reverse_order = sort_order.lower() == "desc"
+            if sort_by == "user_id":
+                sorted_summaries = sorted(
+                    survey_summaries, key=lambda x: x["user_id"], reverse=reverse_order
+                )
+            elif sort_by == "created_at":
+                sorted_summaries = sorted(
+                    survey_summaries,
+                    key=lambda x: x.get("response_created_at", ""),
+                    reverse=reverse_order,
+                )
+            else:
+                # Default fallback (current behavior)
+                sorted_summaries = sorted(
+                    survey_summaries,
+                    key=lambda x: x.get("response_created_at", ""),
+                    reverse=True,  # Most recent first
+                )
+        else:
+            # No sorting specified, use default (current behavior)
+            sorted_summaries = sorted(
+                survey_summaries,
+                key=lambda x: x.get("response_created_at", ""),
+                reverse=True,  # Most recent first
+            )
 
         # Generate table rows
         rows = []
@@ -1893,13 +1914,25 @@ def generate_detailed_breakdown_table(
             header_cells.append(f"<th>{labels_to_use[1]}</th>")
 
         # Generate sortable headers with proper data-order attributes
-        user_id_data_order = ""
-        created_at_data_order = ""
-
+        # Each header needs a data-order attribute that specifies the next sort order
         if sort_by == "user_id":
-            user_id_data_order = f' data-order="{sort_order}"'
+            # Currently sorting by user_id, so toggle the order
+            user_id_data_order = (
+                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
+            )
+            # Other column defaults to desc when first clicked
+            created_at_data_order = ' data-order="desc"'
         elif sort_by == "created_at":
-            created_at_data_order = f' data-order="{sort_order}"'
+            # Currently sorting by created_at, so toggle the order
+            created_at_data_order = (
+                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
+            )
+            # Other column defaults to desc when first clicked
+            user_id_data_order = ' data-order="desc"'
+        else:
+            # No current sort, both default to desc when first clicked
+            user_id_data_order = ' data-order="desc"'
+            created_at_data_order = ' data-order="desc"'
 
         # Generate the complete table
         table = f"""
