@@ -35,6 +35,7 @@ def view_dashboard():
             total_surveys=dashboard_data["total_surveys"],
             total_participants=dashboard_data["total_participants"],
             unaware_users_count=dashboard_data["unaware_users_count"],
+            users_with_surveys=dashboard_data["users_with_surveys"],
             translations=translations,
             last_update_time=datetime.now().strftime("%Y-%m-%d %H:%M"),
         )

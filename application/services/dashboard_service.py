@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from database.queries import (
     get_active_surveys,
     get_blacklisted_users,
+    get_user_participation_overview,
     retrieve_completed_survey_responses,
 )
 
@@ -63,10 +64,15 @@ def get_dashboard_metrics() -> Dict[str, Any]:
         unaware_users = get_blacklisted_users()
         unaware_users_count = len(unaware_users)
 
+        # Get users with surveys count
+        user_participation_data = get_user_participation_overview()
+        users_with_surveys_count = len(user_participation_data)
+
         return {
             "total_surveys": len(processed_surveys),
             "total_participants": unique_participants,
             "unaware_users_count": unaware_users_count,
+            "users_with_surveys": users_with_surveys_count,
             "surveys": processed_surveys,
         }
 
@@ -76,5 +82,6 @@ def get_dashboard_metrics() -> Dict[str, Any]:
             "total_surveys": 0,
             "total_participants": 0,
             "unaware_users_count": 0,
+            "users_with_surveys": 0,
             "surveys": [],
         }

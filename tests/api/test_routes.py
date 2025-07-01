@@ -182,3 +182,74 @@ def test_panel4all_status_codes(app):
     assert "ATTENTION_FAILED" in app.config["PANEL4ALL"]["STATUS"]
     # assert app.config["PANEL4ALL"]["STATUS"]["COMPLETE"] == "finish"
     # assert app.config["PANEL4ALL"]["STATUS"]["ATTENTION_FAILED"] == "attentionfilter"
+
+
+def test_get_users_overview_route(client, monkeypatch):
+    """Tests the users overview endpoint with sample data."""
+
+    # Mock user participation data
+    mock_user_data = [
+        {
+            "user_id": "user123",
+            "successful_surveys_count": 2,
+            "failed_surveys_count": 1,
+            "last_activity": "2024-01-15 10:30:00",
+            "successful_survey_ids": "1,3",
+            "failed_survey_ids": "2",
+        },
+        {
+            "user_id": "user456",
+            "successful_surveys_count": 1,
+            "failed_surveys_count": 0,
+            "last_activity": "2024-01-14 09:15:00",
+            "successful_survey_ids": "1",
+            "failed_survey_ids": "",
+        },
+    ]
+
+    monkeypatch.setattr(
+        "database.queries.get_user_participation_overview", lambda: mock_user_data
+    )
+
+    # Test basic route
+    response = client.get("/surveys/users")
+    assert response.status_code == 200
+
+
+def test_get_users_overview_with_sorting(client, monkeypatch):
+    """Tests users overview endpoint with sorting parameters."""
+
+    mock_user_data = [
+        {
+            "user_id": "user123",
+            "successful_surveys_count": 2,
+            "failed_surveys_count": 1,
+            "last_activity": "2024-01-15 10:30:00",
+            "successful_survey_ids": "1,3",
+            "failed_survey_ids": "2",
+        }
+    ]
+
+    monkeypatch.setattr(
+        "database.queries.get_user_participation_overview", lambda: mock_user_data
+    )
+
+    # Test with valid sort parameters
+    response = client.get("/surveys/users?sort=user_id&order=desc")
+    assert response.status_code == 200
+
+    response = client.get("/surveys/users?sort=last_activity&order=asc")
+    assert response.status_code == 200
+
+
+def test_get_users_overview_empty_data(client, monkeypatch):
+    """Tests users overview endpoint when query succeeds but returns no data."""
+
+    # Test both None and empty list scenarios
+    for empty_result in [None, []]:
+        monkeypatch.setattr(
+            "database.queries.get_user_participation_overview", lambda: empty_result
+        )
+
+        response = client.get("/surveys/users")
+        assert response.status_code == 200

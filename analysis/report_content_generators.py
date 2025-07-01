@@ -1441,6 +1441,8 @@ def generate_detailed_user_choices(
     show_tables_only: bool = False,
     show_detailed_breakdown_table: bool = True,
     show_overall_survey_table=True,
+    sort_by: str = None,
+    sort_order: str = "asc",
 ) -> Dict[str, str]:
     """Generate detailed analysis of each user's choices for each survey.
 
@@ -1451,6 +1453,8 @@ def generate_detailed_user_choices(
         show_tables_only: If True, only show summary tables.
         show_detailed_breakdown_table: If True, include detailed breakdown table.
         show_overall_survey_table: If True, include overall survey table.
+        sort_by: Current sort field for table headers ('user_id', 'created_at').
+        sort_order: Current sort order for table headers ('asc', 'desc').
 
     Returns:
         Dict[str, str]: Dictionary containing HTML components:
@@ -1541,7 +1545,7 @@ def generate_detailed_user_choices(
     # 2. Detailed breakdown table (if requested)
     if show_detailed_breakdown_table:
         breakdown_html = generate_detailed_breakdown_table(
-            all_summaries, option_labels, strategy_name
+            all_summaries, option_labels, strategy_name, sort_by, sort_order
         )
         all_components.append(breakdown_html)
 
@@ -1592,7 +1596,11 @@ def generate_detailed_user_choices(
 
 
 def generate_detailed_breakdown_table(
-    summaries: List[Dict], option_labels: Tuple[str, str], strategy_name: str = None
+    summaries: List[Dict],
+    option_labels: Tuple[str, str],
+    strategy_name: str = None,
+    sort_by: str = None,
+    sort_order: str = "asc",
 ) -> str:
     """
     Generate detailed breakdown tables grouped by survey.
@@ -1601,6 +1609,8 @@ def generate_detailed_breakdown_table(
         summaries: List of dictionaries containing survey summaries.
         option_labels: Default labels (fallback if survey-specific not found).
         strategy_name: Name of the strategy used for the survey.
+        sort_by: Current sort field for table headers ('user_id', 'created_at').
+        sort_order: Current sort order for table headers ('asc', 'desc').
 
     Returns:
         str: HTML tables showing detailed breakdown by survey.
@@ -1647,12 +1657,33 @@ def generate_detailed_breakdown_table(
                 logger.warning(f"Error getting strategy columns: {e}")
                 # Fall back to default columns based on option labels
 
-        # Sort summaries within the survey group by response_created_at if available
-        sorted_summaries = sorted(
-            survey_summaries,
-            key=lambda x: x.get("response_created_at", ""),
-            reverse=True,  # Most recent first
-        )
+        # Sort summaries within the survey group based on user preferences
+        if sort_by and sort_order:
+            reverse_order = sort_order.lower() == "desc"
+            if sort_by == "user_id":
+                sorted_summaries = sorted(
+                    survey_summaries, key=lambda x: x["user_id"], reverse=reverse_order
+                )
+            elif sort_by == "created_at":
+                sorted_summaries = sorted(
+                    survey_summaries,
+                    key=lambda x: x.get("response_created_at", ""),
+                    reverse=reverse_order,
+                )
+            else:
+                # Default fallback (current behavior)
+                sorted_summaries = sorted(
+                    survey_summaries,
+                    key=lambda x: x.get("response_created_at", ""),
+                    reverse=True,  # Most recent first
+                )
+        else:
+            # No sorting specified, use default (current behavior)
+            sorted_summaries = sorted(
+                survey_summaries,
+                key=lambda x: x.get("response_created_at", ""),
+                reverse=True,  # Most recent first
+            )
 
         # Generate table rows
         rows = []
@@ -1882,6 +1913,27 @@ def generate_detailed_breakdown_table(
             header_cells.append(f"<th>{labels_to_use[0]}</th>")
             header_cells.append(f"<th>{labels_to_use[1]}</th>")
 
+        # Generate sortable headers with proper data-order attributes
+        # Each header needs a data-order attribute that specifies the next sort order
+        if sort_by == "user_id":
+            # Currently sorting by user_id, so toggle the order
+            user_id_data_order = (
+                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
+            )
+            # Other column defaults to desc when first clicked
+            created_at_data_order = ' data-order="desc"'
+        elif sort_by == "created_at":
+            # Currently sorting by created_at, so toggle the order
+            created_at_data_order = (
+                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
+            )
+            # Other column defaults to desc when first clicked
+            user_id_data_order = ' data-order="desc"'
+        else:
+            # No current sort, both default to desc when first clicked
+            user_id_data_order = ' data-order="desc"'
+            created_at_data_order = ' data-order="desc"'
+
         # Generate the complete table
         table = f"""
         <div class="summary-table-container">
@@ -1890,8 +1942,8 @@ def generate_detailed_breakdown_table(
                 <table>
                     <thead>
                         <tr>
-                            <th class="sortable" data-sort="user_id">{user_id_th}</th>
-                            <th class="sortable" data-sort="created_at">{resp_time_th}</th>
+                            <th class="sortable" data-sort="user_id"{user_id_data_order}>{user_id_th}</th>
+                            <th class="sortable" data-sort="created_at"{created_at_data_order}>{resp_time_th}</th>
                             {"".join(header_cells)}
                             <th>{view_resp_th}</th>
                         </tr>

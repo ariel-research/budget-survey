@@ -542,6 +542,17 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "קבוצות",
             "en": "groups",
         },
+        "user_participation_title": {
+            "he": "סקירת משתמשים",
+            "en": "User Participation Overview",
+        },
+        "successful_surveys": {"he": "סקרים מוצלחים", "en": "Successful Surveys"},
+        "failed_surveys": {"he": "סקרים שנכשלו", "en": "Failed Surveys"},
+        "last_activity": {"he": "פעילות אחרונה", "en": "Last Activity"},
+        "no_participation_data": {
+            "he": "אין נתוני השתתפות",
+            "en": "No participation data",
+        },
     },
 }
 

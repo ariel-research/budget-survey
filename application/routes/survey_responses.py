@@ -24,6 +24,7 @@ from database.queries import (
     get_survey_description,
     get_survey_pair_generation_config,
     get_survey_response_counts,
+    get_user_participation_overview,
     get_users_from_view,
     retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
@@ -255,6 +256,8 @@ def get_user_responses(
             show_tables_only=show_tables_only,
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
         # For backward compatibility
@@ -628,6 +631,87 @@ def list_all_comments():
         )
     except Exception as e:
         logger.error(f"Error retrieving all comments: {str(e)}")
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
+@responses_routes.route("/users")
+def get_users_overview():
+    """
+    Get user participation overview showing statistics for all users
+    who have completed surveys.
+
+    Returns:
+        Rendered template with user participation data
+    """
+    try:
+        # Get and validate sort parameters
+        sort_by = request.args.get("sort")
+        sort_order = request.args.get("order", "asc")
+
+        # Validate sorting parameters - allow user_id and last_activity
+        allowed_sort_fields = ["user_id", "last_activity"]
+        if sort_by not in allowed_sort_fields:
+            sort_by = None
+
+        allowed_sort_orders = ["asc", "desc"]
+        if sort_order not in allowed_sort_orders:
+            sort_order = "asc"
+
+        # Get user participation data
+        user_data = get_user_participation_overview()
+
+        if not user_data:
+            logger.info("No user participation data found")
+            return render_template(
+                "responses/users_overview.html",
+                users=[],
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+
+        # Apply sorting if requested
+        if sort_by:
+            reverse = sort_order.lower() == "desc"
+            if sort_by == "user_id":
+                user_data.sort(key=lambda x: x["user_id"], reverse=reverse)
+            elif sort_by == "last_activity":
+                user_data.sort(key=lambda x: x["last_activity"], reverse=reverse)
+
+        # Process survey IDs for template display
+        for user in user_data:
+            # Convert successful survey IDs to list
+            if user["successful_survey_ids"]:
+                user["successful_survey_ids_list"] = [
+                    int(sid) for sid in user["successful_survey_ids"].split(",")
+                ]
+            else:
+                user["successful_survey_ids_list"] = []
+
+            # Convert failed survey IDs to list
+            if user["failed_survey_ids"]:
+                user["failed_survey_ids_list"] = [
+                    int(sid) for sid in user["failed_survey_ids"].split(",")
+                ]
+            else:
+                user["failed_survey_ids_list"] = []
+
+        logger.info(f"Retrieved participation data for {len(user_data)} users")
+
+        return render_template(
+            "responses/users_overview.html",
+            users=user_data,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving user participation overview: {str(e)}")
         return (
             render_template(
                 "error.html",

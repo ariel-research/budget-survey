@@ -99,8 +99,8 @@
    ========================================================================== */
 .metrics-summary {
     display: grid;
-    grid-template-columns: repeat(3, minmax(200px, 250px));
-    gap: var(--spacing-xl);
+    grid-template-columns: repeat(4, minmax(180px, 220px));
+    gap: var(--spacing-lg);
     margin: var(--spacing-xl) auto;
     justify-content: center;
 }
@@ -118,6 +118,35 @@
 .metric-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* Clickable metric card styling */
+.metric-card.clickable {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition-base);
+    position: relative;
+}
+
+.metric-card.clickable:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+}
+
+.metric-card.clickable:after {
+    content: "→";
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    color: var(--color-primary);
+    font-size: var(--text-sm);
+    opacity: 0;
+    transition: var(--transition-base);
+}
+
+.metric-card.clickable:hover:after {
+    opacity: 1;
 }
 
 .metric-icon {
@@ -319,6 +348,12 @@
     flex-direction: row-reverse;
 }
 
+[dir="rtl"] .metric-card.clickable:after {
+    content: "←";
+    right: auto;
+    left: var(--spacing-sm);
+}
+
 /* ==========================================================================
    Responsive Design
    ========================================================================== */
@@ -336,7 +371,7 @@
     }
     
     .metrics-summary {
-        grid-template-columns: repeat(3, minmax(180px, 220px));
+        grid-template-columns: repeat(2, minmax(200px, 1fr));
         gap: var(--spacing-md);
     }
 }

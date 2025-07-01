@@ -932,3 +932,65 @@ def get_survey_response_counts(survey_id: int) -> Optional[Dict[str, int]]:
             f"Error checking survey response counts for survey {survey_id}: {str(e)}"
         )
         return None
+
+
+def get_user_participation_overview() -> List[Dict]:
+    """
+    Get comprehensive participation statistics for all users who have completed surveys.
+
+    Returns:
+        List[Dict]: A list of dictionaries containing user participation data.
+        Each dictionary contains:
+        - user_id: The user's ID
+        - successful_surveys_count: Number of completed surveys without attention check failure
+        - successful_survey_ids: Comma-separated list of successful survey IDs
+        - failed_surveys_count: Number of completed surveys with attention check failure
+        - failed_survey_ids: Comma-separated list of failed survey IDs
+        - last_activity: Most recent created_at timestamp across all surveys
+    """
+    query = """
+        SELECT 
+            sr.user_id,
+            SUM(CASE WHEN sr.completed = TRUE AND sr.attention_check_failed = FALSE THEN 1 ELSE 0 END) as successful_surveys_count,
+            GROUP_CONCAT(
+                CASE WHEN sr.completed = TRUE AND sr.attention_check_failed = FALSE 
+                THEN sr.survey_id ELSE NULL END 
+                ORDER BY sr.survey_id
+            ) as successful_survey_ids,
+            SUM(CASE WHEN sr.completed = TRUE AND sr.attention_check_failed = TRUE THEN 1 ELSE 0 END) as failed_surveys_count,
+            GROUP_CONCAT(
+                CASE WHEN sr.completed = TRUE AND sr.attention_check_failed = TRUE 
+                THEN sr.survey_id ELSE NULL END 
+                ORDER BY sr.survey_id
+            ) as failed_survey_ids,
+            MAX(sr.created_at) as last_activity
+        FROM survey_responses sr
+        WHERE sr.completed = TRUE
+        GROUP BY sr.user_id
+        HAVING (successful_surveys_count > 0 OR failed_surveys_count > 0)
+        ORDER BY last_activity DESC
+    """
+
+    logger.debug("Retrieving user participation overview")
+
+    try:
+        results = execute_query(query)
+        processed_results = []
+
+        for result in results:
+            processed_result = {
+                "user_id": result["user_id"],
+                "successful_surveys_count": result["successful_surveys_count"],
+                "successful_survey_ids": result["successful_survey_ids"] or "",
+                "failed_surveys_count": result["failed_surveys_count"],
+                "failed_survey_ids": result["failed_survey_ids"] or "",
+                "last_activity": result["last_activity"],
+            }
+            processed_results.append(processed_result)
+
+        logger.debug(f"Retrieved participation data for {len(processed_results)} users")
+        return processed_results
+
+    except Exception as e:
+        logger.error(f"Error retrieving user participation overview: {str(e)}")
+        return []
