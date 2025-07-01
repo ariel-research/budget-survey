@@ -256,6 +256,8 @@ def get_user_responses(
             show_tables_only=show_tables_only,
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
         # For backward compatibility
@@ -648,9 +650,9 @@ def get_users_overview():
         Rendered template with user participation data
     """
     try:
-        # Get sorting parameters
-        sort_by = request.args.get("sort_by")
-        sort_order = request.args.get("sort_order", "asc")
+        # Get and validate sort parameters using standard naming convention
+        sort_by = request.args.get("sort")
+        sort_order = request.args.get("order", "asc")
 
         # Validate sorting parameters - allow user_id and last_activity
         allowed_sort_fields = ["user_id", "last_activity"]

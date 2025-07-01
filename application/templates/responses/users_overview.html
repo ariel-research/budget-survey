@@ -19,23 +19,23 @@
                     <thead>
                         <tr>
                             <th class="sortable" 
-                                data-column="user_id" 
-                                data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}asc{% endif %}"
-                                onclick="sortTable('user_id')">
+                                data-sort="user_id" 
+                                data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
+                                {% if sort_by == 'user_id' %}data-sorted="true"{% endif %}>
                                 {{ get_translation('user_id', 'answers') }}
                                 {% if sort_by == 'user_id' %}
-                                    {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                                    {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
                                 {% endif %}
                             </th>
                             <th>{{ get_translation('successful_surveys', 'answers') }}</th>
                             <th>{{ get_translation('failed_surveys', 'answers') }}</th>
                             <th class="sortable" 
-                                data-column="last_activity" 
-                                data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}asc{% endif %}"
-                                onclick="sortTable('last_activity')">
+                                data-sort="last_activity" 
+                                data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
+                                {% if sort_by == 'last_activity' %}data-sorted="true"{% endif %}>
                                 {{ get_translation('last_activity', 'answers') }}
                                 {% if sort_by == 'last_activity' %}
-                                    {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                                    {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
                                 {% endif %}
                             </th>
                         </tr>
@@ -65,9 +65,7 @@
                                 {% if user.failed_survey_ids_list %}
                                     <br>
                                     {% for survey_id in user.failed_survey_ids_list %}
-                                        <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
-                                           target="_blank" 
-                                           style="color: #e74c3c; text-decoration: none; margin-right: 8px;">{{ survey_id }}</a>
+                                        <span style="color: #e74c3c; margin-right: 8px;">{{ survey_id }}</span>
                                     {% endfor %}
                                 {% endif %}
                             </td>
@@ -93,22 +91,4 @@
 {% block additional_scripts %}
 <script src="{{ url_for('static', filename='js/responses.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sorting.js') }}"></script>
-
-<script>
-function sortTable(column) {
-    const currentOrder = new URLSearchParams(window.location.search).get('sort_order') || 'asc';
-    const currentColumn = new URLSearchParams(window.location.search).get('sort_by');
-    
-    let newOrder = 'asc';
-    if (currentColumn === column && currentOrder === 'asc') {
-        newOrder = 'desc';
-    }
-    
-    const url = new URL(window.location);
-    url.searchParams.set('sort_by', column);
-    url.searchParams.set('sort_order', newOrder);
-    
-    window.location.href = url.toString();
-}
-</script>
 {% endblock %} 
