@@ -16,6 +16,7 @@ from database.queries import (
     get_latest_survey_timestamp,
     get_subjects,
     get_survey_name,
+    get_user_participation_overview,
     mark_survey_as_completed,
     retrieve_completed_survey_responses,
     user_exists,
@@ -700,6 +701,101 @@ def test_attention_check_handling(app_context, setup_test_data, cleanup_db):
     completed_responses = retrieve_completed_survey_responses()
     response_ids = [r["survey_response_id"] for r in completed_responses]
     assert failed_response_id not in response_ids
+
+
+def test_get_user_participation_overview(app_context, setup_test_data, cleanup_db):
+    """Test user participation overview with various scenarios."""
+
+    # Get test survey IDs
+    survey_query = "SELECT id FROM surveys ORDER BY id LIMIT 2"
+    result = execute_query(survey_query)
+    assert len(result) >= 2, "Need at least 2 surveys for this test"
+    survey_id_1, survey_id_2 = result[0]["id"], result[1]["id"]
+
+    # Create test users
+    user1 = generate_unique_id()
+    user2 = generate_unique_id()
+    user3 = generate_unique_id()
+
+    create_user(user1)
+    create_user(user2)
+    create_user(user3)
+
+    # User 1: Two successful surveys
+    response1_1 = create_survey_response(
+        user1, survey_id_1, [50, 50], "Success 1", attention_check_failed=False
+    )
+    mark_survey_as_completed(response1_1)
+
+    response1_2 = create_survey_response(
+        user1, survey_id_2, [60, 40], "Success 2", attention_check_failed=False
+    )
+    mark_survey_as_completed(response1_2)
+
+    # User 2: One successful, one failed
+    response2_1 = create_survey_response(
+        user2, survey_id_1, [40, 60], "Success", attention_check_failed=False
+    )
+    mark_survey_as_completed(response2_1)
+
+    response2_2 = create_survey_response(
+        user2, survey_id_2, [30, 70], "Failed", attention_check_failed=True
+    )
+    mark_survey_as_completed(response2_2)
+
+    # User 3: Only failed survey
+    response3_1 = create_survey_response(
+        user3, survey_id_1, [70, 30], "Failed", attention_check_failed=True
+    )
+    mark_survey_as_completed(response3_1)
+
+    # Test the function
+    overview = get_user_participation_overview()
+
+    # Should return data for all users (ordered by last_activity DESC)
+    assert len(overview) == 3, f"Expected 3 users, got {len(overview)}"
+
+    # Verify data structure and values
+    user_data = {user["user_id"]: user for user in overview}
+
+    # User 1: 2 successful, 0 failed
+    assert user1 in user_data
+    user1_data = user_data[user1]
+    assert user1_data["successful_surveys_count"] == 2
+    assert user1_data["failed_surveys_count"] == 0
+    expected_ids = {str(survey_id_1), str(survey_id_2)}
+    assert set(user1_data["successful_survey_ids"].split(",")) == expected_ids
+    assert user1_data["failed_survey_ids"] == ""
+    assert user1_data["last_activity"] is not None
+
+    # User 2: 1 successful, 1 failed
+    assert user2 in user_data
+    user2_data = user_data[user2]
+    assert user2_data["successful_surveys_count"] == 1
+    assert user2_data["failed_surveys_count"] == 1
+    assert user2_data["successful_survey_ids"] == str(survey_id_1)
+    assert user2_data["failed_survey_ids"] == str(survey_id_2)
+    assert user2_data["last_activity"] is not None
+
+    # User 3: 0 successful, 1 failed
+    assert user3 in user_data
+    user3_data = user_data[user3]
+    assert user3_data["successful_surveys_count"] == 0
+    assert user3_data["failed_surveys_count"] == 1
+    assert user3_data["successful_survey_ids"] == ""
+    assert user3_data["failed_survey_ids"] == str(survey_id_1)
+    assert user3_data["last_activity"] is not None
+
+
+def test_get_user_participation_overview_empty(app_context, cleanup_db):
+    """Test user participation overview when no completed surveys exist."""
+
+    # Create a user but no completed surveys
+    user_id = generate_unique_id()
+    create_user(user_id)
+
+    overview = get_user_participation_overview()
+    assert overview == [], "Should return empty list when no completed surveys"
 
 
 if __name__ == "__main__":
