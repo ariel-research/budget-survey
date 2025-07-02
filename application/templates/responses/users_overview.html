@@ -50,24 +50,30 @@
                                 </a>
                             </td>
                             <td>
-                                <span class="stats-value">{{ user.successful_surveys_count }}</span>
-                                {% if user.successful_survey_ids_list %}
-                                    <br>
-                                    {% for survey_id in user.successful_survey_ids_list %}
-                                        <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
-                                           target="_blank" 
-                                           style="color: #27ae60; text-decoration: none; margin-right: 8px;">{{ survey_id }}</a>
-                                    {% endfor %}
-                                {% endif %}
+                                <div class="survey-count-container">
+                                    <span class="survey-count-label">{{ user.successful_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
+                                    {% if user.successful_survey_ids_list %}
+                                        <div class="survey-ids-list">
+                                            {% for survey_id in user.successful_survey_ids_list %}
+                                                <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
+                                                   target="_blank" 
+                                                   class="survey-id-badge successful">{{ survey_id }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
-                                <span class="stats-value">{{ user.failed_surveys_count }}</span>
-                                {% if user.failed_survey_ids_list %}
-                                    <br>
-                                    {% for survey_id in user.failed_survey_ids_list %}
-                                        <span style="color: #e74c3c; margin-right: 8px;">{{ survey_id }}</span>
-                                    {% endfor %}
-                                {% endif %}
+                                <div class="survey-count-container">
+                                    <span class="survey-count-label">{{ user.failed_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
+                                    {% if user.failed_survey_ids_list %}
+                                        <div class="survey-ids-list">
+                                            {% for survey_id in user.failed_survey_ids_list %}
+                                                <span class="survey-id-badge failed">{{ survey_id }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
                                 {{ user.last_activity.strftime('%d-%m-%Y %H:%M') if user.last_activity else '-' }}

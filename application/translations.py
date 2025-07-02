@@ -548,6 +548,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "successful_surveys": {"he": "סקרים מוצלחים", "en": "Successful Surveys"},
         "failed_surveys": {"he": "סקרים שנכשלו", "en": "Failed Surveys"},
+        "surveys": {"he": "סקרים", "en": "surveys"},
         "last_activity": {"he": "פעילות אחרונה", "en": "Last Activity"},
         "no_participation_data": {
             "he": "אין נתוני השתתפות",
