@@ -354,8 +354,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Users with at least one successful completion",
         },
         "excluded_users_description": {
-            "he": "משתמשים החסומים כעת (כולל מוצלחים בעבר)",
-            "en": "Currently blocked users (includes past successful users)",
+            "he": "משתמשים החסומים כעת",
+            "en": "Currently blocked users",
         },
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
         "view_responses": {"he": "צפה בתשובות", "en": "View Responses"},
