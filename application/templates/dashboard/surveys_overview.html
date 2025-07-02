@@ -22,6 +22,7 @@
                 <div class="metric-content">
                     <div class="metric-value">{{ total_surveys }}</div>
                     <div class="metric-label">{{ translations.total_surveys }}</div>
+                    <div class="metric-description">{{ translations.total_surveys_description }}</div>
                 </div>
             </div>
 
@@ -30,6 +31,7 @@
                 <div class="metric-content">
                     <div class="metric-value">{{ total_participants }}</div>
                     <div class="metric-label">{{ translations.total_participants }}</div>
+                    <div class="metric-description">{{ translations.total_participants_description }}</div>
                 </div>
             </div>
             
@@ -37,7 +39,8 @@
                 <div class="metric-icon">⚠️</div>
                 <div class="metric-content">
                     <div class="metric-value">{{ unaware_users_count }}</div>
-                    <div class="metric-label">{{ translations.unaware_users }}</div>
+                    <div class="metric-label">{{ translations.excluded_users }}</div>
+                    <div class="metric-description">{{ translations.excluded_users_description }}</div>
                 </div>
             </div>
 
@@ -45,7 +48,8 @@
                 <div class="metric-icon">📋</div>
                 <div class="metric-content">
                     <div class="metric-value">{{ users_with_surveys }}</div>
-                    <div class="metric-label">{{ get_translation('user_participation_title', 'answers') }}</div>
+                    <div class="metric-label">{{ translations.all_participants }}</div>
+                    <div class="metric-description">{{ translations.all_participants_description }}</div>
                 </div>
             </a>
         </div>

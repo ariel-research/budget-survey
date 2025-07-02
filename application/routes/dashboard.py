@@ -22,8 +22,21 @@ def view_dashboard():
             "title": get_translation("title", "dashboard"),
             "subtitle": get_translation("subtitle", "dashboard"),
             "total_surveys": get_translation("total_surveys", "dashboard"),
+            "total_surveys_description": get_translation(
+                "total_surveys_description", "dashboard"
+            ),
             "total_participants": get_translation("total_participants", "dashboard"),
-            "unaware_users": get_translation("unaware_users", "dashboard"),
+            "excluded_users": get_translation("excluded_users", "dashboard"),
+            "all_participants": get_translation("all_participants", "dashboard"),
+            "total_participants_description": get_translation(
+                "total_participants_description", "dashboard"
+            ),
+            "excluded_users_description": get_translation(
+                "excluded_users_description", "dashboard"
+            ),
+            "all_participants_description": get_translation(
+                "all_participants_description", "dashboard"
+            ),
             "last_updated": get_translation("last_updated", "dashboard"),
             "view_responses": get_translation("view_responses", "dashboard"),
             "take_survey": get_translation("take_survey", "dashboard"),

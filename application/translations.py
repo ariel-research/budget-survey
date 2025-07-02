@@ -335,7 +335,28 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "View and manage active surveys",
         },
         "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
-        "total_participants": {"he": "סך כל המשתתפים", "en": "Total Participants"},
+        "total_surveys_description": {
+            "he": "סקרים פעילים במערכת",
+            "en": "Active surveys in the system",
+        },
+        "total_participants": {
+            "he": "עברו בדיקות ערנות",
+            "en": "Passed Attention Checks",
+        },
+        "excluded_users": {"he": "משתמשים חסומים", "en": "Blocked Users"},
+        "all_participants": {"he": "סך כל המשתתפים", "en": "All Participants"},
+        "all_participants_description": {
+            "he": "משתמשים שהשלימו סקרים כלשהם",
+            "en": "Users who completed any survey",
+        },
+        "total_participants_description": {
+            "he": "משתמשים עם לפחות השלמה מוצלחת",
+            "en": "Users with at least one successful completion",
+        },
+        "excluded_users_description": {
+            "he": "משתמשים החסומים כעת (כולל מוצלחים בעבר)",
+            "en": "Currently blocked users (includes past successful users)",
+        },
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
         "view_responses": {"he": "צפה בתשובות", "en": "View Responses"},
         "take_survey": {"he": "מלא סקר", "en": "Take Survey"},
