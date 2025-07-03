@@ -1983,8 +1983,63 @@ def generate_overall_statistics_table(
     th_avg_perc = get_translation("average_percentage", "answers")
     note = get_translation("based_on_responses", "answers", x=len(summaries))
 
+    # Simplified table for cyclic_shift and linear_symmetry strategies
+    if strategy_name in ["cyclic_shift", "linear_symmetry"]:
+        # Calculate average consistency rate across all users
+        total_consistency = 0
+        valid_summaries = 0
+
+        for summary in summaries:
+            if "choices" in summary:
+                choices = summary["choices"]
+
+                if strategy_name == "cyclic_shift":
+                    consistencies = _calculate_cyclic_shift_group_consistency(choices)
+                elif strategy_name == "linear_symmetry":
+                    consistencies = _calculate_linear_symmetry_group_consistency(
+                        choices
+                    )
+                else:
+                    continue
+
+                overall_consistency = consistencies.get("overall", 0.0)
+                total_consistency += overall_consistency
+                valid_summaries += 1
+
+        # Calculate average consistency
+        avg_consistency = (
+            total_consistency / valid_summaries if valid_summaries > 0 else 0
+        )
+
+        # Get translation for consistency rate label
+        consistency_rate_label = "Average Consistency Rate"
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_metric}</th>
+                            <th>{th_avg_perc}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="highlight-row">
+                            <td>{consistency_rate_label}</td>
+                            <td>{avg_consistency:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
+        </div>
+        """
+        return overall_table
+
     # Different table for extreme vectors strategy
-    if strategy_name == "extreme_vectors":
+    elif strategy_name == "extreme_vectors":
         # Calculate average consistency across all responses
         total_consistency = 0
         valid_summaries = 0
