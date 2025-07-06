@@ -3,31 +3,95 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: budget_survey_db
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-survey}
+      MYSQL_USER: ${MYSQL_USER:-survey}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-survey_password}
     ports:
-     - "${MYSQL_PORT}:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - budget_survey_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      start_period: 40s
+      interval: 30s
+    restart: unless-stopped
 
-  # app:
-  #   build: .
-  #   container_name: flask_app
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: budget_survey_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - FLASK_ENV=production
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-survey}
+      - MYSQL_USER=${MYSQL_USER:-survey}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-survey_password}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-your-secret-key-here}
+    ports:
+      - "${APP_PORT:-5001}:5001"
+    volumes:
+      - app_logs:/app/logs
+      - app_data:/app/data
+    networks:
+      - budget_survey_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Development override - uncomment for development
+  # app-dev:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   container_name: budget_survey_app_dev
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
   #   environment:
-  #     - FLASK_ENV=production
-  #     - FLASK_APP=app.py
-  #     - PYTHONUNBUFFERED=1
+  #     - FLASK_ENV=development
+  #     - MYSQL_HOST=db
+  #     - MYSQL_PORT=3306
+  #     - MYSQL_DATABASE=${MYSQL_DATABASE:-survey}
+  #     - MYSQL_USER=${MYSQL_USER:-survey}
+  #     - MYSQL_PASSWORD=${MYSQL_PASSWORD:-survey_password}
+  #     - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key}
   #   ports:
-  #     - "5001:5001"
+  #     - "${DEV_APP_PORT:-5000}:5001"
   #   volumes:
   #     - .:/app
-  #   depends_on:
-  #     - db
+  #     - app_logs:/app/logs
+  #     - app_data:/app/data
+  #   networks:
+  #     - budget_survey_network
+  #   restart: unless-stopped
+
+networks:
+  budget_survey_network:
+    driver: bridge
 
 volumes:
   db_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_data:
+    driver: local
