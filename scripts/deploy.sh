@@ -210,7 +210,6 @@ deploy_dev() {
         print_success "Development environment deployed successfully!"
         print_success "Application: http://localhost:5000"
         print_success "phpMyAdmin: http://localhost:8080"
-        print_success "Mailhog: http://localhost:8025"
         print_success ""
         print_status "Useful commands:"
         print_status "  View logs: $COMPOSE_CMD -f docker-compose.dev.yml logs -f"

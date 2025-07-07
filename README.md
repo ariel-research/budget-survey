@@ -503,14 +503,14 @@ The application provides a comprehensive dashboard showing participation statist
    # Edit .env with your preferred settings
    ```
 
- 3. Start the development environment:
-    ```bash
-    # Option A: Using deployment script (Recommended)
-    ./scripts/deploy.sh dev
+3. Start the development environment:
+   ```bash
+   # Using deployment script (Recommended)
+   ./scripts/deploy.sh dev
 
-    # Option B: Manual command
-    docker-compose -f docker-compose.dev.yml up -d
-    ```
+   # Or manual command
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
 
  4. Access the application at: http://localhost:5000
 
@@ -545,12 +545,16 @@ You can set up the database using one of two methods:
 
 1. Ensure you have Docker and Docker Compose installed on your system.
 
-2. Navigate to the project root directory where the docker-compose.yml file is located.
+2. Navigate to the project root directory.
 
-3. Run the following command to start the MySQL container and set up the database:
+3. Start the database using the development environment:
 
-   ```
-   docker-compose up -d db
+   ```bash
+   # Start full development environment (recommended)
+   ./scripts/deploy.sh dev
+   
+   # Or just the database
+   docker-compose -f docker-compose.dev.yml up -d db
    ```
 
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
@@ -617,9 +621,14 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Install Docker Compose
+# Install Docker Compose (v2 plugin)
+# Docker Compose v2 is now bundled with Docker Desktop and Docker Engine
+# For standalone installation:
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
+
+# Or install as Docker plugin (recommended):
+# sudo apt-get install docker-compose-plugin
 
 sudo reboot
 ```

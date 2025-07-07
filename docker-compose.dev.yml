@@ -83,17 +83,6 @@ services:
       - budget_survey_network_dev
     restart: unless-stopped
 
-  # Optional: Mailhog for email testing
-  mailhog:
-    image: mailhog/mailhog
-    container_name: budget_survey_mailhog_dev
-    ports:
-      - "${MAILHOG_SMTP_PORT:-1025}:1025"
-      - "${MAILHOG_WEB_PORT:-8025}:8025"
-    networks:
-      - budget_survey_network_dev
-    restart: unless-stopped
-
 networks:
   budget_survey_network_dev:
     driver: bridge
