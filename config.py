@@ -54,7 +54,7 @@ class Config:
 class TestConfig(Config):
     """Test-specific configuration."""
 
-    MYSQL_DATABASE: str = "test_survey"
+    MYSQL_DATABASE: str = os.getenv("TEST_MYSQL_DATABASE", "test_survey")
     TESTING: bool = True
 
 
