@@ -508,8 +508,8 @@ The application provides a comprehensive dashboard showing participation statist
    # Using deployment script (Recommended)
    ./scripts/deploy.sh dev
 
-   # Or manual command
-   docker-compose -f docker-compose.dev.yml up -d
+   # Or manual command (use 'docker compose' for v2 or 'docker-compose' for v1)
+   docker compose -f docker-compose.dev.yml up -d
    ```
 
  4. Access the application at: http://localhost:5000
@@ -554,7 +554,7 @@ You can set up the database using one of two methods:
    ./scripts/deploy.sh dev
    
    # Or just the database
-   docker-compose -f docker-compose.dev.yml up -d db
+   docker compose -f docker-compose.dev.yml up -d db
    ```
 
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
@@ -562,6 +562,8 @@ This will create a MySQL container, create the database, and run the initializat
 Note: Make sure your .env file is properly configured with the correct database connection details before running either method.
 
 ## Docker Guide
+
+> **Note**: This guide uses `docker compose` (v2) syntax. If you have the older standalone `docker-compose` (v1), replace `docker compose` with `docker-compose` in the commands below. The deployment script automatically detects and uses the correct version.
 
 ### Quick Start
 
@@ -595,16 +597,16 @@ Note: Make sure your .env file is properly configured with the correct database 
 3. **Common development commands:**
    ```bash
    # View logs
-   docker-compose -f docker-compose.dev.yml logs -f app
+   docker compose -f docker-compose.dev.yml logs -f app
 
    # Run tests
-   docker-compose -f docker-compose.dev.yml exec app pytest
+   docker compose -f docker-compose.dev.yml exec app pytest
 
    # Access shell
-   docker-compose -f docker-compose.dev.yml exec app bash
+   docker compose -f docker-compose.dev.yml exec app bash
 
    # Stop
-   docker-compose -f docker-compose.dev.yml down
+   docker compose -f docker-compose.dev.yml down
    ```
 
 ### Production Deployment (AWS EC2)
@@ -621,14 +623,14 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Install Docker Compose (v2 plugin)
-# Docker Compose v2 is now bundled with Docker Desktop and Docker Engine
-# For standalone installation:
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Install Docker Compose v2 (recommended)
+# Docker Compose v2 comes built-in with Docker Desktop
+# For Ubuntu/Debian server installations:
+sudo apt-get install docker-compose-plugin
 
-# Or install as Docker plugin (recommended):
-# sudo apt-get install docker-compose-plugin
+# Alternative: Install standalone docker-compose (v1 - legacy):
+# sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+# sudo chmod +x /usr/local/bin/docker-compose
 
 sudo reboot
 ```
@@ -661,13 +663,13 @@ sudo chown $USER:$USER ssl/*
 **Management:**
 ```bash
 # Update application
-git pull && docker-compose -f docker-compose.prod.yml up -d --build
+git pull && docker compose -f docker-compose.prod.yml up -d --build
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.prod.yml logs -f
 
 # Backup database
-docker-compose -f docker-compose.prod.yml exec db mysqldump -u root -p survey > backup.sql
+docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p survey > backup.sql
 ```
 
 ### Environment Configuration
@@ -696,11 +698,11 @@ SURVEY_BASE_URL=http://localhost:5001|https://your-domain.com
 
 ```bash
 # Container won't start
-docker-compose logs [service_name]
+docker compose logs [service_name]
 
 # Database connection issues
-docker-compose logs db
-docker-compose restart db
+docker compose logs db
+docker compose restart db
 
 # Port already in use
 sudo lsof -i :5001
