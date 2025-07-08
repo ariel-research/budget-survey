@@ -627,11 +627,6 @@ sudo usermod -aG docker $USER
 # Docker Compose v2 comes built-in with Docker Desktop
 # For Ubuntu/Debian server installations:
 sudo apt-get install docker-compose-plugin
-
-# Alternative: Install standalone docker-compose (v1 - legacy):
-# sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-# sudo chmod +x /usr/local/bin/docker-compose
-
 sudo reboot
 ```
 

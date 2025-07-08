@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
@@ -54,6 +52,7 @@ services:
       - /app/__pycache__  # Exclude cache from mounting
       - app_logs_dev:/app/logs
       - app_data_dev:/app/data
+
     networks:
       - budget_survey_network_dev
     healthcheck:

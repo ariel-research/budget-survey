@@ -119,6 +119,10 @@ check_port_conflicts() {
 setup_environment() {
     print_status "Setting up environment configuration..."
     
+    # Enable BuildKit for better caching and performance
+    export DOCKER_BUILDKIT=1
+    export COMPOSE_DOCKER_CLI_BUILD=1
+    
     if [ ! -f "$PROJECT_ROOT/.env" ]; then
         if [ -f "$PROJECT_ROOT/.env.example" ]; then
             cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"

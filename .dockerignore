@@ -1,7 +1,79 @@
-# Version control
+# Git
 .git
 .gitignore
 .gitattributes
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Environment & Config
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+
+# Logs
+logs/
+*.log
+
+# Data
+data/
+*.sql
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Node modules (if any)
+node_modules/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Migration files (optional, depending on your needs)
+migrations/
+
+# SSL certificates (security)
+ssl/
+*.pem
+*.key
+*.crt
+*.cert
 
 # Python cache and build artifacts
 __pycache__/
