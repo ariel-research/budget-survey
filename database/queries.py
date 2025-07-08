@@ -33,7 +33,7 @@ def create_user(user_id: str) -> str:
 
 
 def create_survey_response(
-    user_id: int,
+    user_id: str,
     survey_id: int,
     optimal_allocation: list,
     user_comment: str,
@@ -43,7 +43,7 @@ def create_survey_response(
     Inserts a new survey response into the survey_responses table.
 
     Args:
-        user_id (int): The ID of the user submitting the survey.
+        user_id (str): The ID of the user submitting the survey.
         survey_id (int): The ID of the survey.
         optimal_allocation (list): The user optimal allocation in JSON format.
         user_comment (str): The user's comment on the survey.
@@ -307,13 +307,13 @@ def get_subjects(survey_id: int) -> List[str]:
         return []
 
 
-def check_user_participation(user_id: int, survey_id: int) -> bool:
+def check_user_participation(user_id: str, survey_id: int) -> bool:
     """
     Checks if a user has successfully completed a specific survey.
     Counts also completions where attention checks were not passed.
 
     Args:
-        user_id (int): The ID of the user.
+        user_id (str): The ID of the user.
         survey_id (int): The ID of the survey.
 
     Returns:

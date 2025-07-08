@@ -643,7 +643,7 @@ cp .env.example .env
 # MYSQL_PASSWORD=secure-password
 # SURVEY_BASE_URL=https://your-domain.com
 
-# Setup SSL (Let's Encrypt)
+# Setup SSL
 sudo apt install certbot
 sudo certbot certonly --standalone -d your-domain.com
 mkdir -p ssl
