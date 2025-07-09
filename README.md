@@ -1,63 +1,185 @@
 # Budget Survey Application
 
+A research tool for collecting data on budget allocation preferences using multiple algorithmic strategies. Users create ideal budget allocations, then compare pairs of alternatives to understand decision-making patterns.
+
+**🚀 [Try it live](https://survey.csariel.xyz)**
+
+## Quick Start
+
+### Just want to run it?
+```bash
+git clone https://github.com/ariel-research/budget-survey
+cd budget-survey
+./scripts/deploy.sh dev
+```
+→ Open http://localhost:5000
+
+### Just want to understand it?
+1. **Users allocate** a 100-unit budget across subjects (e.g., Health: 60, Education: 25, Defense: 15)
+2. **System generates** 10 comparison pairs using research algorithms 
+3. **Users choose** their preference from each pair
+4. **Data reveals** decision-making patterns and algorithmic preferences
+
+---
+
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-  - [Automatic Budget Rescaling](#automatic-budget-rescaling)
-  - [Pair Generation Strategies](#pair-generation-strategies)
-  - [Language Support](#language-support)
-  - [Attention Check Handling](#attention-check-handling)
-  - [User Blacklist](#user-blacklist)
-  - [Demo Mode](#demo-mode)
+### 👋 Getting Started
+- [What's This?](#whats-this)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-  - [Local Development](#local-development)
-  - [Docker Development](#docker-development)
-- [Database Setup](#database-setup)
-  - [Method 1: Manual Setup using MySQL Client](#method-1-manual-setup-using-mysql-client)
-  - [Method 2: Using Docker Compose](#method-2-using-docker-compose)
-- [Docker Guide](#docker-guide)
-  - [Quick Start with Docker](#quick-start-with-docker)
-  - [Development with Docker](#development-with-docker)
-  - [Production Deployment](#production-deployment)
-  - [Docker Commands Reference](#docker-commands-reference)
-  - [Environment Configuration](#environment-configuration)
-  - [Health Checks and Monitoring](#health-checks-and-monitoring)
-  - [Troubleshooting](#troubleshooting)
+
+### 🚀 Running & Using
 - [Running the Application](#running-the-application)
+- [Common Commands](#common-commands)
 - [Endpoints](#endpoints)
-  - [Main Routes](#main-routes)
-  - [API Endpoints](#api-endpoints)
-- [Screen Text Locations](#screen-text-locations)
-- [Database](#database)
+- [Live Application Endpoints](#live-application-endpoints)
+
+### 🔬 For Researchers
 - [Modifying the Survey](#modifying-the-survey)
-  - [Changing the Active Survey](#changing-the-active-survey)
-  - [Adding or Modifying Surveys](#adding-or-modifying-surveys)
-  - [Changing Strategy Names and Colors](#changing-strategy-names-and-colors)
-  - [Modifying Awareness Questions](#modifying-awareness-questions)
-- [Algorithm](#algorithm)
 - [Analysis](#analysis)
-  - [Running the Analysis](#running-the-analysis)
-  - [Generating the Survey Report](#generating-the-survey-report)
-  - [Key Components and Functions](#key-components-and-functions)
-  - [Generated Files](#generated-files)
-  - [Table Explanations](#table-explanations)
+- [Algorithm](#algorithm)
+
+### 🛠 For Developers
+- [Features](#features)
+- [Database](#database)
+- [Docker Guide](#docker-guide)
 - [Testing](#testing)
-  - [Test Structure](#test-structure)
-  - [Running Tests](#running-tests)
-    - [Quick Start](#quick-start)
-    - [Test Categories](#test-categories)
-      - [Analysis Tests](#analysis-tests)
-      - [API Tests](#api-tests)
-      - [Database Tests](#database-tests)
-      - [Unit Tests](#unit-tests)
-      - [UI Tests](#ui-tests)
-      - [Load Testing](#load-testing)
 - [Development](#development)
 
-## Overview
-This project aims to collect data to develop an algorithm for optimal budget calculations, considering the votes of many users. Users allocate money among a few subjects, creating their optimal allocation. They then compare ten pairs of options, optimizing for difference and ratio against their optimal allocation.
+---
+
+## What's This?
+
+This is a **research application** for studying budget allocation preferences. It's designed for academic research into algorithmic decision-making and preference revelation.
+
+**The Process:**
+1. 📝 **Budget Creation**: Users allocate 100 units across subjects (e.g., government ministries)
+2. 🔄 **Pair Generation**: System creates comparison pairs using one of 8 research strategies
+3. 🎯 **Preference Collection**: Users choose between alternatives in each pair
+4. 📊 **Analysis**: Data reveals patterns in decision-making and strategy effectiveness
+
+**Key Features:**
+- 8 research-validated pair generation strategies
+- Hebrew/English bilingual support with RTL/LTR layouts  
+- Quality control via attention checks and user blacklisting
+- Comprehensive analysis and PDF report generation
+- Production-ready Docker deployment
+
+**Use Cases:**
+- Academic research on preference revelation
+- Policy research on budget allocation
+- Algorithm testing and validation
+- User experience studies
+
+## Prerequisites
+
+### Local Development
+- Python 3.8+
+- MySQL 8.0+
+- pip
+- virtualenv
+
+### Docker Development (Recommended)
+- Docker 20.10+
+- Docker Compose 2.0+
+- Git
+
+## Installation
+
+### Local Development
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/ariel-research/budget-survey
+   cd budget-survey
+   ```
+
+2. Create and activate a virtual environment:
+   ```
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Set up the MySQL database (see Database section below)
+
+5. Create a `.env` file in the project root and add the necessary environment variables (see `.env.example` for reference)
+
+### Docker Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ariel-research/budget-survey
+   cd budget-survey
+   ```
+
+2. Copy environment file and configure:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred settings
+   ```
+
+3. Start the development environment:
+   ```bash
+   # Using deployment script (Recommended)
+   ./scripts/deploy.sh dev
+
+   # Or manual command (use 'docker compose' for v2 or 'docker-compose' for v1)
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+4. Access the application at: http://localhost:5000
+
+## Running the Application
+
+1. Activate the virtual environment (if not already activated)
+
+2. Run the Flask application using either of these commands:
+   ```
+   python app.py
+   ```
+   This will run the application on port 5001.
+
+   or
+   ```
+   flask run
+   ```
+   This will run the application on port 5000.
+
+3. Access the application based on the command used:
+   - If using `python app.py`: http://localhost:5001
+   - If using `flask run`: http://localhost:5000
+
+## Common Commands
+
+```bash
+# Development
+./scripts/deploy.sh dev                              # Start everything (recommended)
+docker compose -f docker-compose.dev.yml logs -f app # View application logs
+docker compose -f docker-compose.dev.yml exec app bash # Access application shell
+docker compose -f docker-compose.dev.yml down       # Stop everything
+
+# Analysis & Reports
+python -m analysis.survey_analysis                  # Run survey analysis
+python -m analysis.survey_report_generator_pdf      # Generate PDF report  
+open https://survey.csariel.xyz/report              # View live report
+
+# Testing
+pytest                                               # Run all tests
+pytest tests/services/                               # Test strategies
+pytest tests/analysis/                               # Test analysis
+pytest tests/api/                                    # Test endpoints
+
+# Configuration
+SURVEY_ID = 4                                        # Change active survey (edit config.py)
+curl http://localhost:5001/health                    # Check application health
+docker compose -f docker-compose.dev.yml ps         # View application status
+```
 
 ## Features
 
@@ -451,70 +573,13 @@ The application provides a comprehensive dashboard showing participation statist
 
 - **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
 
-## Prerequisites
+## Database
 
-### Local Development
-- Python 3.8+
-- MySQL 8.0+
-- pip
-- virtualenv
+The application uses a MySQL database with multilingual support. Here's the schema:
 
-### Docker Development (Recommended)
-- Docker 20.10+
-- Docker Compose 2.0+
-- Git
+![Database Schema](docs/db_schema_diagram.png)
 
-## Installation
-
-### Local Development
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/ariel-research/budget-survey
-   cd budget-survey
-   ```
-
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate
-   ```
-
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Set up the MySQL database (see Database section below)
-
-5. Create a `.env` file in the project root and add the necessary environment variables (see `.env.example` for reference)
-
-### Docker Development
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ariel-research/budget-survey
-   cd budget-survey
-   ```
-
-2. Copy environment file and configure:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your preferred settings
-   ```
-
-3. Start the development environment:
-   ```bash
-   # Using deployment script (Recommended)
-   ./scripts/deploy.sh dev
-
-   # Or manual command (use 'docker compose' for v2 or 'docker-compose' for v1)
-   docker compose -f docker-compose.dev.yml up -d
-   ```
-
- 4. Access the application at: http://localhost:5000
-
-## Database Setup
+### Database Setup
 
 You can set up the database using one of two methods:
 
@@ -564,23 +629,6 @@ Note: Make sure your .env file is properly configured with the correct database 
 ## Docker Guide
 
 > **Note**: This guide uses `docker compose` (v2) syntax. If you have the older standalone `docker-compose` (v1), replace `docker compose` with `docker-compose` in the commands below. The deployment script automatically detects and uses the correct version.
-
-### Quick Start
-
-**Development:**
-```bash
-# Start everything with one command
-./scripts/deploy.sh dev
-
-# Access: http://localhost:5000
-# phpMyAdmin: http://localhost:8080
-```
-
-**Production (AWS EC2):**
-```bash
-# One-command deployment
-./scripts/deploy.sh prod
-```
 
 ### Development Setup
 
@@ -712,26 +760,6 @@ sudo chown -R $USER:$USER .
 curl http://localhost:5001/health
 ```
 
-## Running the Application
-
-1. Activate the virtual environment (if not already activated)
-
-2. Run the Flask application using either of these commands:
-   ```
-   python app.py
-   ```
-   This will run the application on port 5001.
-
-   or
-   ```
-   flask run
-   ```
-   This will run the application on port 5000.
-
-3. Access the application based on the command used:
-   - If using `python app.py`: http://localhost:5001
-   - If using `flask run`: http://localhost:5000
-
 ## Endpoints
 
 ### Main Routes
@@ -813,51 +841,6 @@ Notes:
   * userID: Required for user identification
   * surveyID: Required but not used internally
   * internalID: Optional, overrides default survey ID from config
-
-## Live Application Update
-
-To update the live application after code changes:
-
-* Log into the server (ssh survey@csariel.xyz)
-* Inside the `app` folder, do `git pull`
-* `sudo myservice status` - check that the service is running;
-* `sudo myservice restart`
-
-## Screen Text Locations
-To modify the text displayed on each screen of the application, here's a guide to which files contain the text for each screen:
-
-1. **Translations**
-   - File: `application/translations.py`
-   - Contains all translatable text in both Hebrew and English
-   - Includes both user interface text and error messages
-   - Organized in sections: "messages" for errors, "survey" for UI text
-
-2. **Templates**
-   - All templates use translation keys instead of hardcoded text
-   - Hebrew is the default language
-   - Templates automatically handle RTL/LTR based on selected language
-   - Files:
-     * Survey Taking:
-       - `templates/index.html` - Landing/consent page
-       - `templates/create_vector.html` - Budget allocation
-       - `templates/survey.html` - Pair comparisons
-       - `templates/thank_you.html` - Completion page
-     * Survey Results:
-       - `templates/dashboard/surveys_overview.html` - Dashboard view
-       - `templates/responses/list.html` - All responses
-       - `templates/responses/detail.html` - Survey responses
-       - `templates/responses/user_detail.html` - User responses
-       - `templates/responses/users_overview.html` - User participation overview
-     * Common:
-       - `templates/error.html` - Error pages
-
-Note: Dynamic content (survey name, subjects) is loaded from the database in the appropriate language based on user preference.
-
-
-## Database
-The application uses a MySQL database with multilingual support. Here's the schema:
-
-![Database Schema](docs/db_schema_diagram.png)
 
 ## Modifying the Survey
 
@@ -1188,6 +1171,13 @@ Run all tests:
 pytest
 ```
 
+#### Automated Testing (CI/CD)
+GitHub Actions automatically runs the full test suite on every push and pull request:
+- ✅ Builds Docker containers with all dependencies
+- ✅ Runs complete test suite across all categories
+- ✅ Validates production build compatibility
+- 📊 View results at: [Actions tab](../../actions)
+
 #### Test Categories
 
 ##### Analysis Tests
@@ -1256,8 +1246,28 @@ This command does the following:
 Note: It's crucial to have your application server running before starting the Locust test. The load test will attempt to interact with your live application, so an active server is necessary for accurate results.
 
 ## Development
+
+### Development Setup & Workflow
 - Use the provided `.pre-commit-config.yaml` for code formatting and linting
-- Run tests using `pytest`
-- Logs are stored in the `logs` directory
+- Run tests using `pytest` before committing changes
 - Database migrations are stored in `migrations/` directory
-- Follow the timestamp-based naming convention (e.g., `20250216_add_attention_check_column.sql`)
+- Follow timestamp-based naming convention (e.g., `20250216_add_attention_check_column.sql`)
+
+### Important Directories
+- **Logs**: Stored in the `logs` directory
+- **Data**: Analysis outputs stored in `data` directory  
+- **Migrations**: Database changes in `migrations/` directory
+- **Tests**: All tests in `tests/` with category-based organization
+
+### Live Application Updates
+To update the live application after code changes:
+- Log into the server
+- Inside the `app` folder: `git pull`
+- Check service status: `sudo myservice status`
+- Restart service: `sudo myservice restart`
+
+### Screen Text Locations
+To modify displayed text:
+- **Translations**: `application/translations.py` (Hebrew/English)
+- **Templates**: `templates/` directory with translation key usage
+- **Dynamic content**: Loaded from database based on user language preference
