@@ -1,0 +1,84 @@
+name: 🧪 Test & Build
+
+# Run on pushes to main branches and pull requests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Get the code
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    # Setup environment file for testing
+    - name: ⚙️ Setup test environment
+      run: |
+        cp .env.example .env
+        echo "FLASK_ENV=testing" >> .env
+        echo "MYSQL_HOST=db" >> .env
+        echo "MYSQL_DATABASE=test_survey" >> .env
+        echo "MYSQL_USER=survey_dev" >> .env
+        echo "MYSQL_PASSWORD=dev_password" >> .env
+    
+    # Build and test with Docker (matches your local development)
+    - name: 🐳 Build Docker containers
+      run: docker compose -f docker-compose.dev.yml build
+    
+    - name: 🚀 Start services
+      run: docker compose -f docker-compose.dev.yml up -d
+    
+    # Wait for services to be ready
+    - name: ⏱️ Wait for services
+      run: |
+        echo "Waiting for services to be healthy..."
+        sleep 30
+        
+        # Check if services are running
+        docker compose -f docker-compose.dev.yml ps
+    
+    # Run your comprehensive test suite
+    - name: 🧪 Run tests
+      run: |
+        echo "Running comprehensive test suite..."
+        docker compose -f docker-compose.dev.yml exec -T app python -m pytest \
+          tests/ \
+          --maxfail=5 \
+          --tb=short \
+          -v
+    
+    # Check if the app is accessible
+    - name: 🩺 Health check
+      run: |
+        echo "Testing application health..."
+        sleep 5
+        curl -f http://localhost:5000/health || echo "Health check failed"
+    
+    # Always cleanup, even if tests fail
+    - name: 🧹 Cleanup
+      if: always()
+      run: |
+        docker compose -f docker-compose.dev.yml logs app || true
+        docker compose -f docker-compose.dev.yml down -v
+        docker system prune -f
+
+  # Build production image to ensure it works
+  build-prod:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🏗️ Test production build
+      run: |
+        cp .env.example .env
+        echo "FLASK_ENV=production" >> .env
+        docker build -t budget-survey:test-prod --target production .
+        echo "✅ Production build successful!" 

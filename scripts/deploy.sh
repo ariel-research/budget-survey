@@ -244,6 +244,16 @@ deploy_prod() {
     print_status "Waiting for services to be healthy..."
     sleep 20
     
+    # Run tests before completing deployment
+    print_status "Running tests to verify deployment..."
+    if ! $COMPOSE_CMD -f docker-compose.prod.yml exec -T app pytest --maxfail=1 -q; then
+        print_error "Tests failed! Rolling back deployment..."
+        $COMPOSE_CMD -f docker-compose.prod.yml down
+        print_error "Deployment aborted. Previous version (if any) is still running."
+        exit 1
+    fi
+    print_success "All tests passed!"
+    
     # Check service status
     if $COMPOSE_CMD -f docker-compose.prod.yml ps | grep -q "healthy\|Up"; then
         print_success "Production environment deployed successfully!"
