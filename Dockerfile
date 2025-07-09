@@ -25,7 +25,10 @@ RUN apk update && apk upgrade && apk add --no-cache \
     cairo-dev \
     pango-dev \
     gdk-pixbuf-dev \
-    shared-mime-info
+    shared-mime-info \
+    harfbuzz-dev \
+    freetype-dev \
+    fontconfig-dev
 
 # Create directory for wheels
 WORKDIR /app
@@ -51,11 +54,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Install runtime dependencies
 RUN apk update && apk upgrade && apk add --no-cache \
-    # Required for WeasyPrint (PDF generation)
     cairo \
     pango \
+    pango-dev \
     gdk-pixbuf \
     shared-mime-info \
+    harfbuzz \
+    harfbuzz-dev \
+    freetype \
+    freetype-dev \
+    fontconfig \
+    fontconfig-dev \
+    # Required fonts for Hebrew/RTL support
+    font-noto \
+    font-noto-hebrew \
+    ttf-dejavu \
     # Required for MySQL connection
     mysql-dev \
     # Health check utilities

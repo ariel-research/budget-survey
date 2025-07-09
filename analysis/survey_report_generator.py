@@ -178,8 +178,11 @@ def generate_pdf(
         css_path = os.path.abspath("analysis/templates/report_style.css")
         css = CSS(filename=css_path)
         base_url = os.path.dirname(css_path)
+
+        # Workaround for Alpine Linux WeasyPrint font optimization crash
+        # Disable font optimization to prevent segfault with Hebrew text
         HTML(string=html_content, base_url=base_url).write_pdf(
-            output_path, stylesheets=[css]
+            output_path, stylesheets=[css], optimize_size=()
         )
         logger.info(f"PDF saved to {output_path}")
     except Exception as e:
