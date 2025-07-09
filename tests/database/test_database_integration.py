@@ -157,8 +157,9 @@ def generate_unique_id():
     """
     Helper function to generate a random unique ID for users.
     This ensures that each test works with unique data.
+    Returns string to match database VARCHAR column.
     """
-    return random.randint(100000, 999999)
+    return str(random.randint(100000, 999999))
 
 
 def test_database_connection(db_connection):

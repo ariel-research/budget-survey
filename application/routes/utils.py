@@ -8,6 +8,7 @@ from application.translations import (
     get_translation,
     set_language,
 )
+from database.db import get_db
 
 util_routes = Blueprint("utils", __name__)
 
@@ -18,6 +19,51 @@ def before_request():
     lang = request.args.get("lang")
     if lang in ["en", "he"]:
         set_language(lang)
+
+
+@util_routes.route("/health")
+def health_check():
+    """
+    Health check endpoint for Docker and monitoring.
+    Returns 200 OK if the application and database are healthy.
+    """
+    try:
+        # Test database connection
+        db = get_db()
+        if db and db.is_connected():
+            return (
+                jsonify(
+                    {
+                        "status": "healthy",
+                        "database": "connected",
+                        "application": "running",
+                    }
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "status": "unhealthy",
+                        "database": "disconnected",
+                        "application": "running",
+                    }
+                ),
+                503,
+            )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "status": "unhealthy",
+                    "database": "error",
+                    "application": "running",
+                    "error": str(e),
+                }
+            ),
+            503,
+        )
 
 
 @util_routes.route("/get_messages")
@@ -58,5 +104,5 @@ def change_language():
 
     new_query = urlencode(query_params, doseq=True)
     return redirect(
-        f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{new_query}"
+        f"{parsed_url.scheme}://{parsed_url.netloc}" f"{parsed_url.path}?{new_query}"
     )

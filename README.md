@@ -12,9 +12,19 @@
   - [Demo Mode](#demo-mode)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+  - [Local Development](#local-development)
+  - [Docker Development](#docker-development)
 - [Database Setup](#database-setup)
   - [Method 1: Manual Setup using MySQL Client](#method-1-manual-setup-using-mysql-client)
   - [Method 2: Using Docker Compose](#method-2-using-docker-compose)
+- [Docker Guide](#docker-guide)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Development with Docker](#development-with-docker)
+  - [Production Deployment](#production-deployment)
+  - [Docker Commands Reference](#docker-commands-reference)
+  - [Environment Configuration](#environment-configuration)
+  - [Health Checks and Monitoring](#health-checks-and-monitoring)
+  - [Troubleshooting](#troubleshooting)
 - [Running the Application](#running-the-application)
 - [Endpoints](#endpoints)
   - [Main Routes](#main-routes)
@@ -442,13 +452,21 @@ The application provides a comprehensive dashboard showing participation statist
 - **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
 
 ## Prerequisites
+
+### Local Development
 - Python 3.8+
 - MySQL 8.0+
 - pip
 - virtualenv
-- Docker (optional, only if you prefer to use Docker for database setup)
+
+### Docker Development (Recommended)
+- Docker 20.10+
+- Docker Compose 2.0+
+- Git
 
 ## Installation
+
+### Local Development
 
 1. Clone the repository:
    ```
@@ -470,6 +488,31 @@ The application provides a comprehensive dashboard showing participation statist
 4. Set up the MySQL database (see Database section below)
 
 5. Create a `.env` file in the project root and add the necessary environment variables (see `.env.example` for reference)
+
+### Docker Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ariel-research/budget-survey
+   cd budget-survey
+   ```
+
+2. Copy environment file and configure:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred settings
+   ```
+
+3. Start the development environment:
+   ```bash
+   # Using deployment script (Recommended)
+   ./scripts/deploy.sh dev
+
+   # Or manual command (use 'docker compose' for v2 or 'docker-compose' for v1)
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+ 4. Access the application at: http://localhost:5000
 
 ## Database Setup
 
@@ -502,17 +545,172 @@ You can set up the database using one of two methods:
 
 1. Ensure you have Docker and Docker Compose installed on your system.
 
-2. Navigate to the project root directory where the docker-compose.yml file is located.
+2. Navigate to the project root directory.
 
-3. Run the following command to start the MySQL container and set up the database:
+3. Start the database using the development environment:
 
-   ```
-   docker-compose up -d db
+   ```bash
+   # Start full development environment (recommended)
+   ./scripts/deploy.sh dev
+   
+   # Or just the database
+   docker compose -f docker-compose.dev.yml up -d db
    ```
 
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
 
 Note: Make sure your .env file is properly configured with the correct database connection details before running either method.
+
+## Docker Guide
+
+> **Note**: This guide uses `docker compose` (v2) syntax. If you have the older standalone `docker-compose` (v1), replace `docker compose` with `docker-compose` in the commands below. The deployment script automatically detects and uses the correct version.
+
+### Quick Start
+
+**Development:**
+```bash
+# Start everything with one command
+./scripts/deploy.sh dev
+
+# Access: http://localhost:5000
+# phpMyAdmin: http://localhost:8080
+```
+
+**Production (AWS EC2):**
+```bash
+# One-command deployment
+./scripts/deploy.sh prod
+```
+
+### Development Setup
+
+1. **Copy environment file:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Start development environment:**
+   ```bash
+   ./scripts/deploy.sh dev
+   ```
+
+3. **Common development commands:**
+   ```bash
+   # View logs
+   docker compose -f docker-compose.dev.yml logs -f app
+
+   # Run tests
+   docker compose -f docker-compose.dev.yml exec app pytest
+
+   # Access shell
+   docker compose -f docker-compose.dev.yml exec app bash
+
+   # Stop
+   docker compose -f docker-compose.dev.yml down
+   ```
+
+### Production Deployment (AWS EC2)
+
+**Prerequisites:**
+- Ubuntu 20.04+ EC2 instance
+- Domain name
+- Docker installed
+
+**Installation:**
+```bash
+# Install Docker on EC2
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose v2 (recommended)
+# Docker Compose v2 comes built-in with Docker Desktop
+# For Ubuntu/Debian server installations:
+sudo apt-get install docker-compose-plugin
+sudo reboot
+```
+
+**Deployment:**
+```bash
+# Clone and configure
+git clone https://github.com/ariel-research/budget-survey
+cd budget-survey
+cp .env.example .env
+
+# Edit .env with production settings:
+# FLASK_ENV=production
+# FLASK_SECRET_KEY=your-secret-key
+# MYSQL_PASSWORD=secure-password
+# SURVEY_BASE_URL=https://your-domain.com
+
+# Setup SSL
+sudo apt install certbot
+sudo certbot certonly --standalone -d your-domain.com
+mkdir -p ssl
+sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
+sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
+sudo chown $USER:$USER ssl/*
+
+# Deploy
+./scripts/deploy.sh prod
+```
+
+**Management:**
+```bash
+# Update application
+git pull && docker compose -f docker-compose.prod.yml up -d --build
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Backup database
+docker compose -f docker-compose.prod.yml exec db mysqldump -u root -p survey > backup.sql
+```
+
+### Environment Configuration
+
+Create `.env` file with these required variables:
+
+```bash
+# Application
+FLASK_ENV=development|production
+FLASK_SECRET_KEY=your-secret-key
+APP_PORT=5001
+
+# Database
+MYSQL_HOST=db  # Use 'db' for Docker, 'localhost' for local
+MYSQL_DATABASE=survey
+MYSQL_USER=survey_user
+MYSQL_PASSWORD=secure_password
+
+# Survey
+SURVEY_BASE_URL=http://localhost:5001|https://your-domain.com
+```
+
+### Troubleshooting
+
+**Common issues:**
+
+```bash
+# Container won't start
+docker compose logs [service_name]
+
+# Database connection issues
+docker compose logs db
+docker compose restart db
+
+# Port already in use
+sudo lsof -i :5001
+# Change APP_PORT in .env
+
+# Permission issues
+sudo chown -R $USER:$USER .
+```
+
+**Health check:**
+```bash
+curl http://localhost:5001/health
+```
 
 ## Running the Application
 
