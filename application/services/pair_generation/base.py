@@ -105,9 +105,32 @@ class PairGenerationStrategy(ABC):
         Returns:
             tuple: Vector of integers summing to 100, each divisible by 5
         """
-        vector = np.random.rand(size)
-        vector = np.floor(vector / vector.sum() * 20).astype(int)
-        vector[-1] = 20 - vector[:-1].sum()
+        # Maximum value before multiplying by 5 is 19 (to ensure final <= 95)
+        max_value = 19
+        max_attempts = 100
+
+        for attempt in range(max_attempts):
+            vector = np.random.rand(size)
+            vector = np.floor(vector / vector.sum() * 20).astype(int)
+            vector[-1] = 20 - vector[:-1].sum()
+
+            # Check if all values are within the acceptable range
+            if np.all(vector >= 0) and np.all(vector <= max_value):
+                np.random.shuffle(vector)
+                vector = vector * 5
+                return tuple(vector)
+
+        # Fallback: Generate a more evenly distributed vector
+        # This ensures we don't get stuck in an infinite loop
+        base_value = 20 // size
+        remainder = 20 % size
+        vector = np.full(size, base_value)
+
+        # Distribute remainder randomly
+        if remainder > 0:
+            indices = np.random.choice(size, remainder, replace=False)
+            vector[indices] += 1
+
         np.random.shuffle(vector)
         vector = vector * 5
         return tuple(vector)
@@ -164,7 +187,9 @@ class PairGenerationStrategy(ABC):
         pass
 
     def _are_absolute_canonical_identical(
-        self, v1: Union[np.ndarray, list, tuple], v2: Union[np.ndarray, list, tuple]
+        self,
+        v1: Union[np.ndarray, list, tuple],
+        v2: Union[np.ndarray, list, tuple],
     ) -> bool:
         """
         Check if vectors have identical absolute value canonical forms.
@@ -187,7 +212,7 @@ class PairGenerationStrategy(ABC):
 
             Different patterns are distinct:
             >>> _are_absolute_canonical_identical([20, -10, -10], [15, -10, -5])
-            False  # [10, 10, 20] != [5, 10, 15]
+            False  # Different canonical forms
         """
         v1_abs_canonical = tuple(sorted(abs(x) for x in v1))
         v2_abs_canonical = tuple(sorted(abs(x) for x in v2))
