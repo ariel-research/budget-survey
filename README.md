@@ -4,6 +4,13 @@ A research tool for collecting data on budget allocation preferences using multi
 
 **🚀 [Try it live](https://survey.csariel.xyz)**
 
+---
+
+**Documentation:**
+- See the `docs/threshold_detection_research/` directory for research papers and supporting materials related to threshold detection and survey methodology.
+
+---
+
 ## Quick Start
 
 ### Just want to run it?
