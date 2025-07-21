@@ -360,6 +360,24 @@
    padding: var(--spacing-sm) var(--spacing-md);
 }
 
+/* Ideal Budget Column Styling */
+.ideal-budget {
+    font-family: monospace;
+    background-color: #f8f9fa;
+    text-align: center;
+    font-size: 0.9em;
+    white-space: nowrap;
+    padding: 8px 4px;
+}
+
+/* Responsive design adjustments */
+@media (max-width: 768px) {
+    .ideal-budget {
+        font-size: 0.8em;
+        padding: 4px 2px;
+    }
+}
+
 /* ==========================================================================
   Table Styles
   ========================================================================== */
@@ -1258,15 +1276,6 @@ th.sortable[data-order="desc"]::after {
     }
 }
 
-/* RTL Support for Survey Count Containers */
-[dir="rtl"] .survey-count-container {
-    align-items: flex-end;
-}
-
-[dir="rtl"] .survey-ids-list {
-    flex-direction: row-reverse;
-    justify-content: flex-start;
-}
 
 /* ==========================================================================
   RTL Support
@@ -1410,6 +1419,20 @@ th.sortable[data-order="desc"]::after {
 
 [dir="rtl"] .cyclic-shift-consistency-container .overall-consistency td:first-child {
     text-align: center;
+}
+
+/* Survey Count Containers */
+[dir="rtl"] .survey-count-container {
+   align-items: flex-end;
+}
+
+[dir="rtl"] .survey-ids-list {
+   flex-direction: row-reverse;
+   justify-content: flex-start;
+}
+
+[dir="rtl"] .ideal-budget {
+   text-align: center;
 }
 
 /* ==========================================================================
