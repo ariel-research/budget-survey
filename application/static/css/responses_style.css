@@ -361,9 +361,8 @@
 }
 
 /* Ideal Budget Column Styling */
-.ideal-budget {
+.ideal-budget-cell {
     font-family: monospace;
-    background-color: #f8f9fa;
     text-align: center;
     font-size: 0.9em;
     white-space: nowrap;
@@ -372,7 +371,7 @@
 
 /* Responsive design adjustments */
 @media (max-width: 768px) {
-    .ideal-budget {
+    .ideal-budget-cell {
         font-size: 0.8em;
         padding: 4px 2px;
     }

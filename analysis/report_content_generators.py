@@ -1869,7 +1869,7 @@ def generate_detailed_breakdown_table(
                     {tooltip}
                 </td>
                 <td>{timestamp}</td>
-                <td class="ideal-budget">{ideal_budget}</td>
+                <td class="ideal-budget-cell">{ideal_budget}</td>
                 {"".join(data_cells)}
                 {view_cell}
             </tr>
