@@ -1497,6 +1497,7 @@ def generate_detailed_user_choices(
                 "survey_id": survey_id,
                 "stats": stats,
                 "response_created_at": response_created_at,
+                "choices": choices,  # Store choices for all strategies
             }
             # Add strategy labels from the first choice (same for survey)
             if choices and "strategy_labels" in choices[0]:
@@ -1505,27 +1506,6 @@ def generate_detailed_user_choices(
             # Add strategy name from the first choice (same for survey)
             if choices and "strategy_name" in choices[0]:
                 summary["strategy_name"] = choices[0]["strategy_name"]
-
-            # Store choices for extreme_vectors strategy to calculate consistency
-            if strategy_name == "extreme_vectors" or (
-                "strategy_name" in summary
-                and summary["strategy_name"] == "extreme_vectors"
-            ):
-                summary["choices"] = choices
-
-            # Store choices for cyclic_shift strategy to calculate consistency
-            elif strategy_name == "cyclic_shift" or (
-                "strategy_name" in summary
-                and summary["strategy_name"] == "cyclic_shift"
-            ):
-                summary["choices"] = choices
-
-            # Store choices for linear_symmetry strategy to calculate consistency
-            elif strategy_name == "linear_symmetry" or (
-                "strategy_name" in summary
-                and summary["strategy_name"] == "linear_symmetry"
-            ):
-                summary["choices"] = choices
 
             all_summaries.append(summary)
 
@@ -1703,7 +1683,6 @@ def generate_detailed_breakdown_table(
                     timestamp = created_at.strftime("%d-%m-%Y %H:%M")
                 else:
                     # Attempt to handle string/other formats if necessary
-                    # This part might need adjustment based on actual data types
                     try:
                         dt_obj = pd.to_datetime(created_at)
                         timestamp = dt_obj.strftime("%d-%m-%Y %H:%M")
@@ -1715,6 +1694,11 @@ def generate_detailed_breakdown_table(
                 if is_truncated
                 else ""
             )
+
+            # Extract ideal budget if choices are available
+            ideal_budget = "N/A"
+            if "choices" in summary:
+                ideal_budget = _format_ideal_budget(summary["choices"])
 
             # Generate data cells based on strategy columns
             data_cells = []
@@ -1885,6 +1869,7 @@ def generate_detailed_breakdown_table(
                     {tooltip}
                 </td>
                 <td>{timestamp}</td>
+                <td class="ideal-budget">{ideal_budget}</td>
                 {"".join(data_cells)}
                 {view_cell}
             </tr>
@@ -1895,6 +1880,7 @@ def generate_detailed_breakdown_table(
         breakdown_title = get_translation("survey_response_breakdown", "answers")
         user_id_th = get_translation("user_id", "answers")
         resp_time_th = get_translation("response_time", "answers")
+        ideal_budget_th = get_translation("ideal_budget", "answers")
         view_resp_th = get_translation("view_response", "answers")
 
         # Generate header cells based on strategy columns
@@ -1944,6 +1930,7 @@ def generate_detailed_breakdown_table(
                         <tr>
                             <th class="sortable" data-sort="user_id"{user_id_data_order}>{user_id_th}</th>
                             <th class="sortable" data-sort="created_at"{created_at_data_order}>{resp_time_th}</th>
+                            <th>{ideal_budget_th}</th>
                             {"".join(header_cells)}
                             <th>{view_resp_th}</th>
                         </tr>
@@ -2856,6 +2843,28 @@ def _generate_linear_symmetry_consistency_table(choices: List[Dict]) -> str:
     except Exception as e:
         logger.error(f"Error generating linear symmetry consistency table: {str(e)}")
         return ""
+
+
+def _format_ideal_budget(choices: List[Dict]) -> str:
+    """
+    Extract and format the ideal budget allocation from user choices.
+
+    Args:
+        choices: List of choices for the user (should all have same
+                optimal_allocation)
+
+    Returns:
+        str: Formatted ideal budget string like "[60, 25, 15]"
+    """
+    if not choices:
+        return "N/A"
+
+    try:
+        # Get optimal allocation from first choice (all should be same)
+        optimal_allocation = json.loads(choices[0]["optimal_allocation"])
+        return str(optimal_allocation)
+    except (json.JSONDecodeError, KeyError, IndexError):
+        return "N/A"
 
 
 if __name__ == "__main__":
