@@ -2462,47 +2462,57 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
 
     # Get translations
     user_id_label = get_translation("user_id", "answers")
-    matrix_title = "User-Survey Performance Matrix"  # Fallback title
+    matrix_title = get_translation("user_survey_matrix", "answers")
+    matrix_description = get_translation("matrix_description", "answers")
+    users_summary_label = get_translation("matrix_summary_users", "answers")
+    surveys_summary_label = get_translation("matrix_summary_surveys", "answers")
+    responses_summary_label = get_translation(
+        "matrix_summary_total_responses", "answers"
+    )
+    survey_label = get_translation("survey_label", "answers")
 
     # Generate table headers
     header_cells = [f'<th class="matrix-user-header">{user_id_label}</th>']
 
     for survey_id in sorted_surveys:
         info = survey_info[survey_id]
-        # strategy_name = info["strategy_name"]
         strategy_columns = info["strategy_columns"]
 
-        # Generate column headers based on strategy
+        # Build the sub-header label using translations
+        sub_header = ""
         if "consistency" in strategy_columns:
-            header_cells.append(
-                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Consistency</small></th>'
-            )
+            sub_header = get_translation("consistency", "answers")
         elif (
             "group_consistency" in strategy_columns
             or "linear_consistency" in strategy_columns
         ):
-            header_cells.append(
-                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Group Consistency</small></th>'
-            )
+            sub_header = get_translation("group_consistency", "answers")
         elif "sum" in strategy_columns and "ratio" in strategy_columns:
-            header_cells.append(
-                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Sum / Ratio</small></th>'
-            )
+            sum_label = get_translation("sum", "answers")
+            ratio_label = get_translation("ratio", "answers")
+            sub_header = f"{sum_label} / {ratio_label}"
         elif "rss" in strategy_columns:
+            rss_label = get_translation("root_sum_squared", "answers")
             if "sum" in strategy_columns:
-                header_cells.append(
-                    f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>RSS / Sum</small></th>'
-                )
+                sum_label = get_translation("sum", "answers")
+                sub_header = f"{rss_label} / {sum_label}"
             elif "ratio" in strategy_columns:
-                header_cells.append(
-                    f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>RSS / Ratio</small></th>'
-                )
+                ratio_label = get_translation("ratio", "answers")
+                sub_header = f"{rss_label} / {ratio_label}"
+        elif "option1" in strategy_columns and "option2" in strategy_columns:
+            # This case correctly pulls from strategy definitions which should be translated
+            option1_name = strategy_columns["option1"]["name"]
+            option2_name = strategy_columns["option2"]["name"]
+            sub_header = f"{option1_name} / {option2_name}"
         else:
-            header_cells.append(
-                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Opt1 / Opt2</small></th>'
-            )
+            # Fallback for any other case
+            sub_header = "Opt1 / Opt2"
 
-    # Generate table rows
+        header_cells.append(
+            f'<th class="matrix-survey-header" data-survey="{survey_id}">{survey_label}: {survey_id}<br><small>{sub_header}</small></th>'
+        )
+
+    # Generate table rows (this part of the function remains the same)
     rows = []
     for user_id in sorted_users:
         user_data = users[user_id]
@@ -2534,7 +2544,6 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
                 # Generate cell content based on strategy
                 if "consistency" in strategy_columns:
                     consistency = metrics.get("consistency", 0)
-                    highlight = "highlight-cell" if consistency >= 70 else ""
                     cell_content = f'<span class="metric-value">{consistency}%</span>'
 
                 elif (
@@ -2542,7 +2551,6 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
                     or "linear_consistency" in strategy_columns
                 ):
                     consistency = metrics.get("group_consistency", 0.0)
-                    highlight = "highlight-cell" if consistency >= 80 else ""
                     cell_content = (
                         f'<span class="metric-value">{consistency:.0f}%</span>'
                     )
@@ -2550,37 +2558,34 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
                     sum_percent = metrics.get("sum_percent", 0)
                     ratio_percent = metrics.get("ratio_percent", 0)
-                    highlight = "highlight-cell" if sum_percent > ratio_percent else ""
                     cell_content = f'<span class="metric-pair">{sum_percent:.0f}% / {ratio_percent:.0f}%</span>'
 
                 elif "rss" in strategy_columns:
                     rss_percent = metrics.get("rss_percent", 0)
                     if "sum" in strategy_columns:
                         sum_percent = metrics.get("sum_percent", 0)
-                        highlight = (
-                            "highlight-cell" if rss_percent > sum_percent else ""
-                        )
                         cell_content = f'<span class="metric-pair">{rss_percent:.0f}% / {sum_percent:.0f}%</span>'
                     elif "ratio" in strategy_columns:
                         ratio_percent = metrics.get("ratio_percent", 0)
-                        highlight = (
-                            "highlight-cell" if rss_percent > ratio_percent else ""
-                        )
                         cell_content = f'<span class="metric-pair">{rss_percent:.0f}% / {ratio_percent:.0f}%</span>'
                     else:
                         cell_content = (
                             f'<span class="metric-value">{rss_percent:.0f}%</span>'
                         )
-                        highlight = ""
+
+                elif "option1" in strategy_columns and "option2" in strategy_columns:
+                    # Generic case for strategies with option1/option2 columns
+                    opt1_percent = metrics.get("option1_percent", 0)
+                    opt2_percent = metrics.get("option2_percent", 0)
+                    cell_content = f'<span class="metric-pair">{opt1_percent:.0f}% / {opt2_percent:.0f}%</span>'
 
                 else:
                     opt1_percent = metrics.get("option1_percent", 0)
                     opt2_percent = metrics.get("option2_percent", 0)
-                    highlight = "highlight-cell" if opt1_percent > opt2_percent else ""
                     cell_content = f'<span class="metric-pair">{opt1_percent:.0f}% / {opt2_percent:.0f}%</span>'
 
                 row_cells.append(
-                    f'<td class="matrix-data-cell {highlight}" data-survey="{survey_id}">{cell_content}</td>'
+                    f'<td class="matrix-data-cell" data-survey="{survey_id}">{cell_content}</td>'
                 )
             else:
                 # User didn't participate in this survey
@@ -2597,8 +2602,7 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
     <div class="matrix-container">
         <h2 class="matrix-title">{matrix_title}</h2>
         <div class="matrix-description">
-            <p>Matrix shows strategy-specific performance metrics for each user-survey combination. 
-            Highlighted cells indicate superior performance. "-" indicates no participation.</p>
+            <p>{matrix_description}</p>
         </div>
         <div class="matrix-table-wrapper">
             <table class="matrix-table">
@@ -2613,7 +2617,7 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
             </table>
         </div>
         <div class="matrix-summary">
-            <p><strong>Users:</strong> {len(sorted_users)} | <strong>Surveys:</strong> {len(sorted_surveys)} | <strong>Total Responses:</strong> {len(performance_data)}</p>
+            <p><strong>{users_summary_label}:</strong> {len(sorted_users)} | <strong>{surveys_summary_label}:</strong> {len(sorted_surveys)} | <strong>{responses_summary_label}:</strong> {len(performance_data)}</p>
         </div>
     </div>
     """

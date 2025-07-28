@@ -208,3 +208,23 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
         if weight is None:
             return "Random Vector"
         return f"Average Weighted Vector: {int(weight * 100)}%"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the weighted average vector response breakdown table.
+
+        Returns:
+            Dict with column definitions for Random and Weighted Average options.
+        """
+        return {
+            "option1": {
+                "name": get_translation("random", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "option2": {
+                "name": get_translation("weighted_average", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
