@@ -994,3 +994,194 @@ def get_user_participation_overview() -> List[Dict]:
     except Exception as e:
         logger.error(f"Error retrieving user participation overview: {str(e)}")
         return []
+
+
+def get_user_survey_performance_data() -> List[Dict]:
+    """
+    Get comprehensive user performance data across all surveys for matrix display.
+
+    Returns:
+        List[Dict]: List containing user-survey performance data with strategy-specific metrics.
+                   Each dict contains: user_id, survey_id, strategy_name, strategy_columns,
+                   basic_stats, strategy_metrics, ideal_budget, response_created_at
+    """
+    try:
+        # Get all user choices data
+        user_choices = retrieve_user_survey_choices()
+
+        if not user_choices:
+            logger.info("No user choices data found")
+            return []
+
+        # Group choices by user and survey
+        grouped_choices = {}
+        survey_strategies = {}  # Cache strategy info
+
+        for choice in user_choices:
+            user_id = choice["user_id"]
+            survey_id = choice["survey_id"]
+
+            if user_id not in grouped_choices:
+                grouped_choices[user_id] = {}
+            if survey_id not in grouped_choices[user_id]:
+                grouped_choices[user_id][survey_id] = []
+
+            grouped_choices[user_id][survey_id].append(choice)
+
+            # Cache survey strategy info
+            if survey_id not in survey_strategies:
+                config = get_survey_pair_generation_config(survey_id)
+                if config:
+                    try:
+                        from application.services.pair_generation.base import (
+                            StrategyRegistry,
+                        )
+
+                        strategy = StrategyRegistry.get_strategy(config["strategy"])
+                        survey_strategies[survey_id] = {
+                            "strategy_name": strategy.get_strategy_name(),
+                            "strategy_columns": strategy.get_table_columns(),
+                        }
+                    except ValueError:
+                        survey_strategies[survey_id] = {
+                            "strategy_name": "unknown",
+                            "strategy_columns": {},
+                        }
+                else:
+                    survey_strategies[survey_id] = {
+                        "strategy_name": "unknown",
+                        "strategy_columns": {},
+                    }
+
+        # Generate performance data for each user-survey combination
+        performance_data = []
+
+        for user_id, user_surveys in grouped_choices.items():
+            for survey_id, choices in user_surveys.items():
+                strategy_info = survey_strategies.get(survey_id, {})
+                strategy_name = strategy_info.get("strategy_name", "unknown")
+                strategy_columns = strategy_info.get("strategy_columns", {})
+
+                # Calculate basic choice statistics
+                from analysis.report_content_generators import (
+                    calculate_choice_statistics,
+                )
+
+                basic_stats = calculate_choice_statistics(choices)
+
+                # Calculate strategy-specific metrics
+                strategy_metrics = {}
+
+                if "consistency" in strategy_columns:
+                    # Handle extreme_vectors strategy
+                    from analysis.report_content_generators import (
+                        _extract_extreme_vector_preferences,
+                    )
+
+                    try:
+                        _, processed_pairs, _, consistency_info, _ = (
+                            _extract_extreme_vector_preferences(choices)
+                        )
+                        if processed_pairs > 0 and consistency_info:
+                            total_matches = sum(
+                                matches for matches, total, _ in consistency_info
+                            )
+                            total_pairs = sum(total for _, total, _ in consistency_info)
+                            overall_consistency = (
+                                int(round(100 * total_matches / total_pairs))
+                                if total_pairs > 0
+                                else 0
+                            )
+                            strategy_metrics["consistency"] = overall_consistency
+                        else:
+                            strategy_metrics["consistency"] = 0
+                    except Exception:
+                        strategy_metrics["consistency"] = 0
+
+                elif (
+                    "group_consistency" in strategy_columns
+                    or "linear_consistency" in strategy_columns
+                ):
+                    # Handle cyclic_shift and linear_symmetry strategies
+                    try:
+                        if strategy_name == "cyclic_shift":
+                            from analysis.report_content_generators import (
+                                _calculate_cyclic_shift_group_consistency,
+                            )
+
+                            consistencies = _calculate_cyclic_shift_group_consistency(
+                                choices
+                            )
+                        elif strategy_name == "linear_symmetry":
+                            from analysis.report_content_generators import (
+                                _calculate_linear_symmetry_group_consistency,
+                            )
+
+                            consistencies = (
+                                _calculate_linear_symmetry_group_consistency(choices)
+                            )
+                        else:
+                            consistencies = {"overall": 0.0}
+
+                        overall_consistency = consistencies.get("overall", 0.0)
+                        strategy_metrics["group_consistency"] = overall_consistency
+                    except Exception:
+                        strategy_metrics["group_consistency"] = 0.0
+
+                elif "sum" in strategy_columns and "ratio" in strategy_columns:
+                    # Handle optimization_metrics and similar strategies
+                    strategy_metrics["sum_percent"] = basic_stats["sum_percent"]
+                    strategy_metrics["ratio_percent"] = basic_stats["ratio_percent"]
+
+                elif "rss" in strategy_columns:
+                    # Handle root sum squared strategies
+                    if "sum" in strategy_columns:  # root_sum_squared_sum
+                        rss_percent = 100 - basic_stats["sum_percent"]
+                        strategy_metrics["rss_percent"] = rss_percent
+                        strategy_metrics["sum_percent"] = basic_stats["sum_percent"]
+                    elif "ratio" in strategy_columns:  # root_sum_squared_ratio
+                        rss_percent = 100 - basic_stats["ratio_percent"]
+                        strategy_metrics["rss_percent"] = rss_percent
+                        strategy_metrics["ratio_percent"] = basic_stats["ratio_percent"]
+
+                else:
+                    # Default: use option percentages
+                    strategy_metrics["option1_percent"] = basic_stats["option1_percent"]
+                    strategy_metrics["option2_percent"] = basic_stats["option2_percent"]
+
+                # Extract ideal budget
+                ideal_budget = "N/A"
+                if choices:
+                    try:
+                        import json
+
+                        optimal_allocation = json.loads(
+                            choices[0]["optimal_allocation"]
+                        )
+                        ideal_budget = str(optimal_allocation)
+                    except (json.JSONDecodeError, KeyError, IndexError):
+                        pass
+
+                performance_record = {
+                    "user_id": user_id,
+                    "survey_id": survey_id,
+                    "strategy_name": strategy_name,
+                    "strategy_columns": strategy_columns,
+                    "basic_stats": basic_stats,
+                    "strategy_metrics": strategy_metrics,
+                    "ideal_budget": ideal_budget,
+                    "response_created_at": (
+                        choices[0].get("response_created_at") if choices else None
+                    ),
+                }
+
+                performance_data.append(performance_record)
+
+        logger.info(
+            f"Generated performance data for {len(performance_data)} user-survey combinations"
+        )
+        return performance_data
+
+    except Exception as e:
+        logger.error(f"Error getting user survey performance data: {str(e)}")
+        return []
