@@ -577,8 +577,22 @@ The application provides a comprehensive dashboard showing participation statist
   - Sortable by User ID or Last Activity
   - Accessible via dashboard metric card or direct URL: `/surveys/users`
   - Full bilingual support with RTL/LTR layouts
+  - Navigation to Performance Matrix for detailed metrics
 
 - **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
+
+### User-Survey Performance Matrix
+The application provides a detailed matrix view showing strategy-specific performance metrics for each user-survey combination.
+
+- **Purpose**: Analyze user performance patterns across different survey strategies
+- **Key Features**:
+  - Matrix format with users as rows and surveys as columns
+  - Strategy-specific metric labels (e.g., "Random / Weighted Average", "Sum / Ratio")
+  - Sticky User ID column for easy navigation
+  - Full bilingual support with RTL/LTR layouts
+  - Accessible via direct URL: `/surveys/users/matrix`
+
+- **Data Displayed**: Performance metrics for each user-survey combination, with "-" indicating no participation
 
 ## Database
 
@@ -800,6 +814,9 @@ curl http://localhost:5001/health
      * Sortable by User ID or Last Activity
      * Shows successful/failed survey counts per user
      * Color-coded clickable survey IDs
+   - `/surveys/users/matrix` - User-Survey Performance Matrix
+     * Shows strategy-specific metrics for each user-survey combination
+     * Displays performance data across all surveys in a matrix format
    - `/surveys/users/{user_id}/responses` - All responses from specific user
    - `/surveys/{survey_id}/users/{user_id}/responses` - User's response to specific survey
    - `/surveys/comments` - All user comments
@@ -838,6 +855,9 @@ Notes:
      * Sortable by User ID or Last Activity
      * Shows successful/failed survey counts per user
      * Color-coded clickable survey IDs
+   - User-Survey Performance Matrix: https://survey.csariel.xyz/surveys/users/matrix
+     * Shows strategy-specific metrics for each user-survey combination
+     * Displays performance data across all surveys in a matrix format
    - User Responses: https://survey.csariel.xyz/surveys/users/{user_id}/responses
    - User Survey Response: https://survey.csariel.xyz/surveys/{survey_id}/users/{user_id}/responses
    - All Comments: https://survey.csariel.xyz/surveys/comments

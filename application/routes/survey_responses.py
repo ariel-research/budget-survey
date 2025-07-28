@@ -11,6 +11,7 @@ from flask import Blueprint, render_template, request
 from analysis.report_content_generators import (
     generate_aggregated_percentile_breakdown,
     generate_detailed_user_choices,
+    generate_user_survey_matrix_html,
 )
 from application.exceptions import (
     ResponseProcessingError,
@@ -25,6 +26,7 @@ from database.queries import (
     get_survey_pair_generation_config,
     get_survey_response_counts,
     get_user_participation_overview,
+    get_user_survey_performance_data,
     get_users_from_view,
     retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
@@ -32,6 +34,24 @@ from database.queries import (
 
 logger = logging.getLogger(__name__)
 responses_routes = Blueprint("responses", __name__)
+
+
+@responses_routes.route("/users/matrix")
+def users_matrix():
+    """Get detailed matrix view of user participation across surveys"""
+    try:
+        performance_data = get_user_survey_performance_data()
+        matrix_html = generate_user_survey_matrix_html(performance_data)
+        return render_template("responses/users_matrix.html", matrix_html=matrix_html)
+    except Exception as e:
+        logger.error(f"Error generating user-survey matrix: {e}", exc_info=True)
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("matrix_generation_error", "messages"),
+            ),
+            500,
+        )
 
 
 def validate_sort_params(sort_by, sort_order):

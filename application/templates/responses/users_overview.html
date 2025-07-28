@@ -10,6 +10,10 @@
 <div class="answers-container">
     <div class="answers-header">
         <h1>{{ get_translation('user_participation_title', 'answers') }}</h1>
+        <div class="navigation-tabs">
+            <a href="{{ url_for('responses.get_users_overview') }}" class="tab active">{{ get_translation('users_overview_tab', 'answers') }}</a>
+            <a href="{{ url_for('responses.users_matrix') }}" class="tab">{{ get_translation('user_matrix_tab', 'answers') }}</a>
+        </div>
     </div>
     
     <div class="answers-content">

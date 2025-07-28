@@ -132,6 +132,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "המשתמש חסום מהשתתפות בסקרים עקב כישלון בבדיקת הערנות",
             "en": "User is blacklisted from participating in surveys due to failing attention checks",
         },
+        "no_data_available": {
+            "he": "אין נתונים זמינים להצגה",
+            "en": "No data available to display",
+        },
+        "matrix_generation_error": {
+            "he": "שגיאה ביצירת מטריצת המשתמשים",
+            "en": "Error generating the user matrix",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -536,8 +544,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "average_consistency": {"en": "Average Consistency", "he": "עקביות ממוצעת"},
         # Group consistency translations for cyclic shift
         "group_consistency": {
-            "he": "עקביות קבוצתית",
-            "en": "Group Consistency",
+            "he": "עקביות",
+            "en": "Consistency",
         },
         "group": {
             "he": "קבוצה",
@@ -574,6 +582,38 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "no_participation_data": {
             "he": "אין נתוני השתתפות",
             "en": "No participation data",
+        },
+        "user_survey_matrix": {
+            "he": "מטריצת ביצועי משתמשים",
+            "en": "User-Survey Performance Matrix",
+        },
+        "users_overview_tab": {
+            "he": "סקירת משתמשים",
+            "en": "Users Overview",
+        },
+        "user_matrix_tab": {
+            "he": "מטריצת ביצועים",
+            "en": "Performance Matrix",
+        },
+        "matrix_description": {
+            "he": "מטריצה המציגה מדדי ביצוע ספציפיים עבור כל מענה לסקר. '-' מציין אי השתתפות.",
+            "en": "Matrix showing strategy-specific performance metrics for each user-survey combination. '-' indicates no participation.",
+        },
+        "matrix_summary_users": {
+            "he": "משתמשים",
+            "en": "Users",
+        },
+        "matrix_summary_surveys": {
+            "he": "סקרים",
+            "en": "Surveys",
+        },
+        "matrix_summary_total_responses": {
+            "he": "סך כל התשובות",
+            "en": "Total Responses",
+        },
+        "survey_label": {
+            "he": "סקר",
+            "en": "Survey",
         },
     },
 }

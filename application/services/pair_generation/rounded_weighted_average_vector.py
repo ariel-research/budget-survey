@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -33,7 +33,8 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
             weighted_vector: The weighted vector to be rounded.
 
         Returns:
-            np.ndarray: Rounded vector that sums to 100 with all values multiples of 5.
+            np.ndarray: Rounded vector that sums to 100 with all values
+            multiples of 5.
         """
         # First round everything to nearest multiple of 5
         rounded = np.round(weighted_vector / 5) * 5
@@ -63,7 +64,8 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
             tuple: Rounded weighted combination vector
 
         Raises:
-            ValueError: If resulting vector is identical to either input vector
+            ValueError: If resulting vector is identical to either input
+            vector
         """
         self._validate_weight(x_weight)
         y_weight = 1 - x_weight
@@ -103,3 +105,25 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
         if weight is None:
             return "Random Vector"
         return f"Rounded Weighted Average Vector: {int(weight * 100)}%"
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the rounded weighted average vector
+        response breakdown table.
+
+        Returns:
+            Dict with column definitions for Random and Weighted Average
+            options.
+        """
+        return {
+            "option1": {
+                "name": get_translation("random", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "option2": {
+                "name": get_translation("weighted_average", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
