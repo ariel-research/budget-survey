@@ -132,6 +132,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "המשתמש חסום מהשתתפות בסקרים עקב כישלון בבדיקת הערנות",
             "en": "User is blacklisted from participating in surveys due to failing attention checks",
         },
+        "no_data_available": {
+            "he": "אין נתונים זמינים להצגה",
+            "en": "No data available to display",
+        },
+        "matrix_generation_error": {
+            "he": "שגיאה ביצירת מטריצת המשתמשים",
+            "en": "Error generating the user matrix",
+        },
     },
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
@@ -574,6 +582,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "no_participation_data": {
             "he": "אין נתוני השתתפות",
             "en": "No participation data",
+        },
+        "user_survey_matrix": {
+            "he": "מטריצת ביצועי משתמשים",
+            "en": "User-Survey Performance Matrix",
+        },
+        "users_overview_tab": {
+            "he": "סקירת משתמשים",
+            "en": "Users Overview",
+        },
+        "user_matrix_tab": {
+            "he": "מטריצת ביצועים",
+            "en": "Performance Matrix",
         },
     },
 }
