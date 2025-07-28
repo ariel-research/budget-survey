@@ -544,8 +544,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "average_consistency": {"en": "Average Consistency", "he": "עקביות ממוצעת"},
         # Group consistency translations for cyclic shift
         "group_consistency": {
-            "he": "עקביות קבוצתית",
-            "en": "Group Consistency",
+            "he": "עקביות",
+            "en": "Consistency",
         },
         "group": {
             "he": "קבוצה",
@@ -594,6 +594,26 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "user_matrix_tab": {
             "he": "מטריצת ביצועים",
             "en": "Performance Matrix",
+        },
+        "matrix_description": {
+            "he": "מטריצה המציגה מדדי ביצוע ספציפיים עבור כל מענה לסקר. '-' מציין אי השתתפות.",
+            "en": "Matrix showing strategy-specific performance metrics for each user-survey combination. '-' indicates no participation.",
+        },
+        "matrix_summary_users": {
+            "he": "משתמשים",
+            "en": "Users",
+        },
+        "matrix_summary_surveys": {
+            "he": "סקרים",
+            "en": "Surveys",
+        },
+        "matrix_summary_total_responses": {
+            "he": "סך כל התשובות",
+            "en": "Total Responses",
+        },
+        "survey_label": {
+            "he": "סקר",
+            "en": "Survey",
         },
     },
 }
