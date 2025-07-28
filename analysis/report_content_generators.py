@@ -2419,7 +2419,206 @@ def generate_methodology_description() -> str:
     return methodology
 
 
-# Add new function after the existing extreme vector functions
+def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
+    """
+    Generate HTML matrix table showing user performance across all surveys.
+
+    Args:
+        performance_data: List of user-survey performance records from get_user_survey_performance_data()
+
+    Returns:
+        str: HTML string containing the responsive matrix table
+    """
+    if not performance_data:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Organize data by user and survey
+    users = {}
+    all_surveys = set()
+    survey_info = {}  # Store strategy info for each survey
+
+    for record in performance_data:
+        user_id = record["user_id"]
+        survey_id = record["survey_id"]
+
+        all_surveys.add(survey_id)
+
+        if user_id not in users:
+            users[user_id] = {}
+
+        users[user_id][survey_id] = record
+
+        # Cache survey strategy info
+        if survey_id not in survey_info:
+            survey_info[survey_id] = {
+                "strategy_name": record["strategy_name"],
+                "strategy_columns": record["strategy_columns"],
+            }
+
+    # Sort users and surveys
+    sorted_users = sorted(users.keys())
+    sorted_surveys = sorted(all_surveys)
+
+    # Get translations
+    user_id_label = get_translation("user_id", "answers")
+    matrix_title = "User-Survey Performance Matrix"  # Fallback title
+
+    # Generate table headers
+    header_cells = [f'<th class="matrix-user-header">{user_id_label}</th>']
+
+    for survey_id in sorted_surveys:
+        info = survey_info[survey_id]
+        # strategy_name = info["strategy_name"]
+        strategy_columns = info["strategy_columns"]
+
+        # Generate column headers based on strategy
+        if "consistency" in strategy_columns:
+            header_cells.append(
+                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Consistency</small></th>'
+            )
+        elif (
+            "group_consistency" in strategy_columns
+            or "linear_consistency" in strategy_columns
+        ):
+            header_cells.append(
+                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Group Consistency</small></th>'
+            )
+        elif "sum" in strategy_columns and "ratio" in strategy_columns:
+            header_cells.append(
+                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Sum / Ratio</small></th>'
+            )
+        elif "rss" in strategy_columns:
+            if "sum" in strategy_columns:
+                header_cells.append(
+                    f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>RSS / Sum</small></th>'
+                )
+            elif "ratio" in strategy_columns:
+                header_cells.append(
+                    f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>RSS / Ratio</small></th>'
+                )
+        else:
+            header_cells.append(
+                f'<th class="matrix-survey-header" data-survey="{survey_id}">Survey {survey_id}<br><small>Opt1 / Opt2</small></th>'
+            )
+
+    # Generate table rows
+    rows = []
+    for user_id in sorted_users:
+        user_data = users[user_id]
+
+        # Format user ID (with truncation if needed)
+        display_id, is_truncated = _format_user_id(user_id)
+        tooltip = (
+            f'<span class="user-id-tooltip">{user_id}</span>' if is_truncated else ""
+        )
+
+        row_cells = [
+            f"""
+            <td class="matrix-user-cell{' truncated' if is_truncated else ''}">
+                <a href="/surveys/users/{user_id}/responses" class="user-link" target="_blank">
+                    {display_id}
+                </a>
+                {tooltip}
+            </td>
+        """
+        ]
+
+        for survey_id in sorted_surveys:
+            if survey_id in user_data:
+                record = user_data[survey_id]
+                metrics = record["strategy_metrics"]
+                info = survey_info[survey_id]
+                strategy_columns = info["strategy_columns"]
+
+                # Generate cell content based on strategy
+                if "consistency" in strategy_columns:
+                    consistency = metrics.get("consistency", 0)
+                    highlight = "highlight-cell" if consistency >= 70 else ""
+                    cell_content = f'<span class="metric-value">{consistency}%</span>'
+
+                elif (
+                    "group_consistency" in strategy_columns
+                    or "linear_consistency" in strategy_columns
+                ):
+                    consistency = metrics.get("group_consistency", 0.0)
+                    highlight = "highlight-cell" if consistency >= 80 else ""
+                    cell_content = (
+                        f'<span class="metric-value">{consistency:.0f}%</span>'
+                    )
+
+                elif "sum" in strategy_columns and "ratio" in strategy_columns:
+                    sum_percent = metrics.get("sum_percent", 0)
+                    ratio_percent = metrics.get("ratio_percent", 0)
+                    highlight = "highlight-cell" if sum_percent > ratio_percent else ""
+                    cell_content = f'<span class="metric-pair">{sum_percent:.0f}% / {ratio_percent:.0f}%</span>'
+
+                elif "rss" in strategy_columns:
+                    rss_percent = metrics.get("rss_percent", 0)
+                    if "sum" in strategy_columns:
+                        sum_percent = metrics.get("sum_percent", 0)
+                        highlight = (
+                            "highlight-cell" if rss_percent > sum_percent else ""
+                        )
+                        cell_content = f'<span class="metric-pair">{rss_percent:.0f}% / {sum_percent:.0f}%</span>'
+                    elif "ratio" in strategy_columns:
+                        ratio_percent = metrics.get("ratio_percent", 0)
+                        highlight = (
+                            "highlight-cell" if rss_percent > ratio_percent else ""
+                        )
+                        cell_content = f'<span class="metric-pair">{rss_percent:.0f}% / {ratio_percent:.0f}%</span>'
+                    else:
+                        cell_content = (
+                            f'<span class="metric-value">{rss_percent:.0f}%</span>'
+                        )
+                        highlight = ""
+
+                else:
+                    opt1_percent = metrics.get("option1_percent", 0)
+                    opt2_percent = metrics.get("option2_percent", 0)
+                    highlight = "highlight-cell" if opt1_percent > opt2_percent else ""
+                    cell_content = f'<span class="metric-pair">{opt1_percent:.0f}% / {opt2_percent:.0f}%</span>'
+
+                row_cells.append(
+                    f'<td class="matrix-data-cell {highlight}" data-survey="{survey_id}">{cell_content}</td>'
+                )
+            else:
+                # User didn't participate in this survey
+                row_cells.append(
+                    f'<td class="matrix-data-cell no-participation" data-survey="{survey_id}"><span class="no-data-indicator">-</span></td>'
+                )
+
+        rows.append(
+            f'<tr class="matrix-row" data-user="{user_id}">{"".join(row_cells)}</tr>'
+        )
+
+    # Generate complete HTML
+    matrix_html = f"""
+    <div class="matrix-container">
+        <h2 class="matrix-title">{matrix_title}</h2>
+        <div class="matrix-description">
+            <p>Matrix shows strategy-specific performance metrics for each user-survey combination. 
+            Highlighted cells indicate superior performance. "-" indicates no participation.</p>
+        </div>
+        <div class="matrix-table-wrapper">
+            <table class="matrix-table">
+                <thead>
+                    <tr class="matrix-header-row">
+                        {"".join(header_cells)}
+                    </tr>
+                </thead>
+                <tbody>
+                    {"".join(rows)}
+                </tbody>
+            </table>
+        </div>
+        <div class="matrix-summary">
+            <p><strong>Users:</strong> {len(sorted_users)} | <strong>Surveys:</strong> {len(sorted_surveys)} | <strong>Total Responses:</strong> {len(performance_data)}</p>
+        </div>
+    </div>
+    """
+
+    return matrix_html
 
 
 def _calculate_cyclic_shift_group_consistency(choices: List[Dict]) -> Dict[str, float]:
