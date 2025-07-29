@@ -1686,9 +1686,6 @@ th.sortable[data-order="desc"]::after {
 
 .metric-pair {
    font-family: var(--font-family-mono);
-   font-size: var(--font-size-sm);
-   display: block;
-   line-height: 1.4;
 }
 
 .no-data-indicator {

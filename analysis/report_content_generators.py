@@ -2474,7 +2474,8 @@ def _generate_matrix_data_cell(record: Dict) -> str:
     elif "sum" in strategy_columns and "ratio" in strategy_columns:
         sum_percent = metrics.get("sum_percent", 0)
         ratio_percent = metrics.get("ratio_percent", 0)
-        cell_content = f'<span class="metric-pair">{sum_percent:.0f}% / {ratio_percent:.0f}%</span>'
+        # cell_content = f'<span class="metric-pair">{sum_percent:.0f}% / {ratio_percent:.0f}%</span>'
+        cell_content = f'<span class="metric-pair">{sum_percent:.0f}%&nbsp;/&nbsp;{ratio_percent:.0f}%</span>'
     elif "rss" in strategy_columns:
         rss_percent = metrics.get("rss_percent", 0)
         if "sum" in strategy_columns:
