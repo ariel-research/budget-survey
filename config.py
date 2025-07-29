@@ -22,7 +22,7 @@ class Config:
     PORT: int = 5001
     DEBUG: bool = os.getenv("FLASK_ENV", "development") == "development"
 
-    PAGINATION_PER_PAGE: int = 20
+    PAGINATION_PER_PAGE: int = 10
 
     # Security settings
     SECRET_KEY = os.getenv(
