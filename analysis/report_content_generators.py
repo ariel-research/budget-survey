@@ -2576,6 +2576,17 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
         )
 
     # 5. Assemble Final HTML
+    # Add note about current page data if this appears to be paginated data
+    page_note = ""
+    if len(sorted_users) <= 20:  # Likely paginated if showing 20 or fewer users
+        page_note_text = get_translation(
+            "current_page_summary", "pagination", users_count=len(sorted_users)
+        )
+        page_note = (
+            f'<br><small style="color: #7f8c8d; font-style: italic;">'
+            f"{page_note_text}</small>"
+        )
+
     matrix_html = f"""
     <div class="matrix-container">
         <h2 class="matrix-title">{matrix_title}</h2>
@@ -2587,7 +2598,7 @@ def generate_user_survey_matrix_html(performance_data: List[Dict]) -> str:
             </table>
         </div>
         <div class="matrix-summary">
-            <p><strong>{users_summary_label}:</strong> {len(sorted_users)} | <strong>{surveys_summary_label}:</strong> {len(sorted_surveys)} | <strong>{responses_summary_label}:</strong> {len(performance_data)}</p>
+            <p><strong>{users_summary_label}:</strong> {len(sorted_users)} | <strong>{surveys_summary_label}:</strong> {len(sorted_surveys)} | <strong>{responses_summary_label}:</strong> {len(performance_data)}{page_note}</p>
         </div>
     </div>
     """

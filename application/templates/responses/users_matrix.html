@@ -22,6 +22,43 @@
         {% else %}
             <p class="no-data">{{ get_translation('no_data_available', 'messages') }}</p>
         {% endif %}
+        
+        {% if pagination and pagination.total_pages > 1 %}
+        <nav class="pagination-nav" aria-label="{{ get_translation('pagination.title', 'dashboard', default='Pagination') }}">
+            <ul class="pagination">
+                <li class="page-item {{ 'disabled' if pagination.page <= 1 }}">
+                    <a class="page-link" 
+                       href="{{ url_for('responses.users_matrix', page=pagination.page - 1) if pagination.page > 1 else '#' }}"
+                       aria-label="{{ get_translation('previous', 'pagination') }}"
+                       title="{{ get_translation('previous', 'pagination') }}"
+                       {% if pagination.page <= 1 %}aria-disabled="true"{% endif %}>
+                        <span class="nav-arrow" aria-hidden="true">&lsaquo;</span>
+                        <span class="nav-text">{{ get_translation('previous', 'pagination') }}</span>
+                    </a>
+                </li>
+
+                <li class="page-item">
+                    <span class="pagination-status" aria-current="page">
+                        {{ get_translation('page_info_with_users', 'pagination', 
+                           page=pagination.page, 
+                           total_pages=pagination.total_pages, 
+                           total_users=pagination.total_users) }}
+                    </span>
+                </li>
+
+                <li class="page-item {{ 'disabled' if pagination.page >= pagination.total_pages }}">
+                    <a class="page-link" 
+                       href="{{ url_for('responses.users_matrix', page=pagination.page + 1) if pagination.page < pagination.total_pages else '#' }}"
+                       aria-label="{{ get_translation('next', 'pagination') }}"
+                       title="{{ get_translation('next', 'pagination') }}"
+                       {% if pagination.page >= pagination.total_pages %}aria-disabled="true"{% endif %}>
+                        <span class="nav-text">{{ get_translation('next', 'pagination') }}</span>
+                        <span class="nav-arrow" aria-hidden="true">&rsaquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -32,4 +69,49 @@
 
 {% block additional_scripts %}
 <script src="{{ url_for('static', filename='js/responses.js') }}"></script>
-{% endblock %} 
+<script>
+// Enhanced pagination experience
+document.addEventListener('DOMContentLoaded', function() {
+    // Add keyboard navigation for pagination
+    document.addEventListener('keydown', function(e) {
+        const paginationNav = document.querySelector('.pagination-nav');
+        if (!paginationNav) return;
+        
+        // Find the correct previous and next links
+        const prevLink = paginationNav.querySelector('a[aria-label="{{ get_translation('previous', 'pagination') }}"]');
+        const nextLink = paginationNav.querySelector('a[aria-label="{{ get_translation('next', 'pagination') }}"]');
+        
+        // Check if the parent item is disabled
+        const isPrevDisabled = prevLink ? prevLink.closest('.page-item.disabled') : true;
+        const isNextDisabled = nextLink ? nextLink.closest('.page-item.disabled') : true;
+        
+        // Previous page: Left arrow or P key
+        if ((e.key === 'ArrowLeft' || e.key.toLowerCase() === 'p') && !isPrevDisabled && !e.target.matches('input, textarea, select')) {
+            e.preventDefault();
+            prevLink.click();
+        }
+        
+        // Next page: Right arrow or N key
+        if ((e.key === 'ArrowRight' || e.key.toLowerCase() === 'n') && !isNextDisabled && !e.target.matches('input, textarea, select')) {
+            e.preventDefault();
+            nextLink.click();
+        }
+    });
+    
+    // Add loading state when navigation links are clicked
+    const paginationLinks = document.querySelectorAll('.pagination .page-item:not(.disabled) .page-link');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+                return;
+            }
+            const nav = this.closest('.pagination-nav');
+            if (nav) {
+                nav.classList.add('loading');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

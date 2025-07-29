@@ -4,9 +4,10 @@ Handles all survey response related endpoints including responses and comments.
 """
 
 import logging
+import math
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, current_app, render_template, request
 
 from analysis.report_content_generators import (
     generate_aggregated_percentile_breakdown,
@@ -22,6 +23,7 @@ from application.services.pair_generation.base import StrategyRegistry
 from application.services.response_formatter import ResponseFormatter
 from application.translations import get_translation
 from database.queries import (
+    get_paginated_user_ids,
     get_survey_description,
     get_survey_pair_generation_config,
     get_survey_response_counts,
@@ -34,24 +36,6 @@ from database.queries import (
 
 logger = logging.getLogger(__name__)
 responses_routes = Blueprint("responses", __name__)
-
-
-@responses_routes.route("/users/matrix")
-def users_matrix():
-    """Get detailed matrix view of user participation across surveys"""
-    try:
-        performance_data = get_user_survey_performance_data()
-        matrix_html = generate_user_survey_matrix_html(performance_data)
-        return render_template("responses/users_matrix.html", matrix_html=matrix_html)
-    except Exception as e:
-        logger.error(f"Error generating user-survey matrix: {e}", exc_info=True)
-        return (
-            render_template(
-                "error.html",
-                message=get_translation("matrix_generation_error", "messages"),
-            ),
-            500,
-        )
 
 
 def validate_sort_params(sort_by, sort_order):
@@ -118,8 +102,9 @@ def get_user_responses(
 
             if not temp_user_ids:
                 log_msg = (
-                    f"No users found matching general criteria of view '{view_filter}'. "
-                    f"No responses will be shown for survey {survey_id} with this filter."
+                    f"No users found matching general criteria of view "
+                    f"'{view_filter}'. No responses will be shown for survey "
+                    f"{survey_id} with this filter."
                 )
                 logger.info(log_msg)
 
@@ -736,6 +721,62 @@ def get_users_overview():
             render_template(
                 "error.html",
                 message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
+@responses_routes.route("/users/matrix")
+def users_matrix():
+    """Get detailed matrix view of user participation across surveys with
+    pagination"""
+    try:
+        # Define pagination settings from the app config
+        per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+        # Get current page number from request args, default to 1
+        page = request.args.get("page", 1, type=int)
+        if page < 1:
+            page = 1
+
+        # Get paginated user IDs and total count
+        user_ids, total_users = get_paginated_user_ids(page, per_page)
+
+        if not user_ids:
+            # No users found, render empty matrix
+            matrix_html = "<p>No user data available.</p>"
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": 0,
+            }
+        else:
+            # Get performance data for the current page of users
+            performance_data = get_user_survey_performance_data(user_ids)
+            matrix_html = generate_user_survey_matrix_html(performance_data)
+
+            # Calculate pagination info
+            total_pages = math.ceil(total_users / per_page)
+
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": total_pages,
+            }
+
+        return render_template(
+            "responses/users_matrix.html",
+            matrix_html=matrix_html,
+            pagination=pagination,
+        )
+    except Exception as e:
+        logger.error(f"Error generating user-survey matrix: {e}", exc_info=True)
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("matrix_generation_error", "messages"),
             ),
             500,
         )

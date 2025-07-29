@@ -13,8 +13,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "The sum must be 100 and each number must be divisible by 5.",
         },
         "total_not_100": {
-            "he": "נא לוודא שהסכום הכולל הוא 100 ושכל המספרים מתחלקים ב-5. השתמשו בכפתור 'שנה קנה מידה' להתאמה אוטומטית.",
-            "en": "Please ensure the total sum is 100 and all numbers are divisible by 5. Use the 'Rescale' button for automatic adjustment.",
+            "he": "נא לוודא שהסכום הכולל הוא 100 ושכל המספרים מתחלקים ב-5. "
+            "השתמשו בכפתור 'שנה קנה מידה' להתאמה אוטומטית.",
+            "en": "Please ensure the total sum is 100 and all numbers are "
+            "divisible by 5. Use the 'Rescale' button for automatic adjustment.",
         },
         "choose_all_pairs": {
             "he": "נא לבחור אפשרות אחת עבור כל זוג.",
@@ -73,8 +75,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Cannot rescale when the total sum is 0",
         },
         "rescale_error_too_many_zeros": {
-            "he": "לא ניתן לשנות קנה מידה כאשר יותר מנושא אחד מקבל 0. שנו לפחות אחד מהערכים להיות מעל 0.",
-            "en": "Cannot rescale when more than one issue has 0. Change at least one value to be above 0.",
+            "he": "לא ניתן לשנות קנה מידה כאשר יותר מנושא אחד מקבל 0. "
+            "שנו לפחות אחד מהערכים להיות מעל 0.",
+            "en": "Cannot rescale when more than one issue has 0. "
+            "Change at least one value to be above 0.",
         },
         "min_two_departments": {
             "he": "יש להקצות תקציב לשני נושאים שונים לפחות.",
@@ -139,6 +143,56 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "matrix_generation_error": {
             "he": "שגיאה ביצירת מטריצת המשתמשים",
             "en": "Error generating the user matrix",
+        },
+    },
+    "pagination": {  # Pagination controls
+        "previous": {
+            "he": "הקודם",
+            "en": "Previous",
+        },
+        "next": {
+            "he": "הבא",
+            "en": "Next",
+        },
+        "page_info": {
+            "he": "עמוד {page} מתוך {total_pages}",
+            "en": "Page {page} of {total_pages}",
+        },
+        "page_info_with_users": {
+            "he": "עמוד {page} מתוך {total_pages} ({total_users} סך המשתמשים)",
+            "en": "Page {page} of {total_pages} ({total_users} users total)",
+        },
+        "users_total": {
+            "he": "{total_users} סך המשתמשים",
+            "en": "{total_users} users total",
+        },
+        "showing_page_data": {
+            "he": "מציג נתונים עבור עמוד {page} בלבד",
+            "en": "Showing data for page {page} only",
+        },
+        "current_page_summary": {
+            "he": "הסיכום מתייחס לעמוד הנוכחי בלבד ({users_count} משתמשים)",
+            "en": "Summary refers to current page only ({users_count} users)",
+        },
+        "first": {
+            "he": "ראשון",
+            "en": "First",
+        },
+        "last": {
+            "he": "אחרון",
+            "en": "Last",
+        },
+        "go_to_page": {
+            "he": "עבור לעמוד {page}",
+            "en": "Go to page {page}",
+        },
+        "current_page": {
+            "he": "עמוד נוכחי {page}",
+            "en": "Current page {page}",
+        },
+        "loading": {
+            "he": "טוען...",
+            "en": "Loading...",
         },
     },
     "survey": {  # Survey content
@@ -506,7 +560,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "ratio_optimized": {"he": "אופטימיזציה לפי יחס", "en": "Ratio optimized"},
         "sum": {"he": "סכום", "en": "Sum"},
         "ratio": {"he": "יחס", "en": "Ratio"},
-        "root_sum_squared": {"he": "שורש סכום הריבועים", "en": "Root sum squared"},
+        "root_sum_squared": {"he": "שורש סכום הריבועים", "en": "Root Sum Squared"},
         "weighted_average": {"he": "ממוצע משוקלל", "en": "Weighted Average"},
         "random": {"he": "אקראי", "en": "Random"},
         "none": {"he": "אין", "en": "none"},
