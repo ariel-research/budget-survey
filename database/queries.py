@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from application.translations import get_current_language
 from logging_config import setup_logging
@@ -996,9 +996,69 @@ def get_user_participation_overview() -> List[Dict]:
         return []
 
 
-def get_user_survey_performance_data() -> List[Dict]:
+def get_paginated_user_ids(page: int, per_page: int) -> Tuple[List[str], int]:
+    """
+    Get paginated list of user IDs who have completed surveys, ordered by most recent activity.
+
+    Args:
+        page (int): Page number (1-based)
+        per_page (int): Number of users per page
+
+    Returns:
+        Tuple[List[str], int]: (list of user IDs for current page, total user count)
+    """
+    # First get the total count of distinct users
+    count_query = """
+        SELECT COUNT(DISTINCT user_id) as total_count
+        FROM survey_responses 
+        WHERE completed = TRUE AND attention_check_failed = FALSE
+    """
+
+    try:
+        count_result = execute_query(count_query, fetch_one=True)
+        total_count = count_result["total_count"] if count_result else 0
+
+        # If no users found, return empty result
+        if total_count == 0:
+            logger.info("No completed survey responses found for pagination")
+            return [], 0
+
+        # Calculate offset for pagination (page is 1-based)
+        offset = (page - 1) * per_page
+
+        # Get paginated user IDs ordered by most recent activity
+        paginated_query = """
+            SELECT DISTINCT user_id
+            FROM survey_responses 
+            WHERE completed = TRUE AND attention_check_failed = FALSE
+            GROUP BY user_id
+            ORDER BY MAX(created_at) DESC
+            LIMIT %s OFFSET %s
+        """
+
+        paginated_result = execute_query(paginated_query, (per_page, offset))
+        user_ids = (
+            [row["user_id"] for row in paginated_result] if paginated_result else []
+        )
+
+        logger.debug(
+            f"Retrieved {len(user_ids)} user IDs for page {page} (total: {total_count})"
+        )
+        return user_ids, total_count
+
+    except Exception as e:
+        logger.error(f"Error retrieving paginated user IDs: {str(e)}")
+        return [], 0
+
+
+def get_user_survey_performance_data(
+    user_ids: Optional[List[str]] = None,
+) -> List[Dict]:
     """
     Get comprehensive user performance data across all surveys for matrix display.
+
+    Args:
+        user_ids (Optional[List[str]]): If provided, filter results to these users only
 
     Returns:
         List[Dict]: List containing user-survey performance data with strategy-specific metrics.
@@ -1012,6 +1072,16 @@ def get_user_survey_performance_data() -> List[Dict]:
         if not user_choices:
             logger.info("No user choices data found")
             return []
+
+        # Filter by user_ids if provided
+        if user_ids is not None:
+            original_count = len(user_choices)
+            user_choices = [
+                choice for choice in user_choices if choice["user_id"] in user_ids
+            ]
+            logger.debug(
+                f"Filtered user choices from {original_count} to {len(user_choices)} based on user_ids filter"
+            )
 
         # Group choices by user and survey
         grouped_choices = {}
