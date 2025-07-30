@@ -677,8 +677,10 @@ def get_users_overview():
         if sort_order not in allowed_sort_orders:
             sort_order = "asc"
 
-        # Get paginated user IDs and total count
-        user_ids, total_users = get_paginated_user_ids(page, per_page)
+        # Get paginated user IDs and total count with sorting
+        user_ids, total_users = get_paginated_user_ids(
+            page, per_page, sort_by or "last_activity", sort_order
+        )
 
         if not user_ids:
             # No users found, render empty overview
@@ -699,14 +701,6 @@ def get_users_overview():
 
         # Get user participation data for the current page of users
         user_data = get_user_participation_overview(user_ids)
-
-        # Apply sorting if requested
-        if sort_by:
-            reverse = sort_order.lower() == "desc"
-            if sort_by == "user_id":
-                user_data.sort(key=lambda x: x["user_id"], reverse=reverse)
-            elif sort_by == "last_activity":
-                user_data.sort(key=lambda x: x["last_activity"], reverse=reverse)
 
         # Process survey IDs for template display
         for user in user_data:

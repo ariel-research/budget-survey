@@ -1013,13 +1013,17 @@ def get_user_participation_overview(user_ids: Optional[List[str]] = None) -> Lis
         return []
 
 
-def get_paginated_user_ids(page: int, per_page: int) -> Tuple[List[str], int]:
+def get_paginated_user_ids(
+    page: int, per_page: int, sort_by: str = "last_activity", sort_order: str = "desc"
+) -> Tuple[List[str], int]:
     """
-    Get paginated list of user IDs who have completed surveys, ordered by most recent activity.
+    Get paginated list of user IDs who have completed surveys, with configurable sorting.
 
     Args:
         page (int): Page number (1-based)
         per_page (int): Number of users per page
+        sort_by (str): Field to sort by ('user_id' or 'last_activity')
+        sort_order (str): Sort order ('asc' or 'desc')
 
     Returns:
         Tuple[List[str], int]: (list of user IDs for current page, total user count)
@@ -1043,13 +1047,26 @@ def get_paginated_user_ids(page: int, per_page: int) -> Tuple[List[str], int]:
         # Calculate offset for pagination (page is 1-based)
         offset = (page - 1) * per_page
 
-        # Get paginated user IDs ordered by most recent activity
-        paginated_query = """
+        # Whitelist of allowed sort columns and their corresponding SQL expressions
+        allowed_sort_columns = {
+            "user_id": "user_id",
+            "last_activity": "MAX(created_at)",
+        }
+        sort_column = allowed_sort_columns.get(
+            sort_by, "MAX(created_at)"
+        )  # Default to last_activity
+
+        # Sanitize sort order
+        if sort_order.upper() not in ["ASC", "DESC"]:
+            sort_order = "DESC"
+
+        # Build the final paginated query using the safe, dynamic values
+        paginated_query = f"""
             SELECT DISTINCT user_id
             FROM survey_responses 
             WHERE completed = TRUE AND attention_check_failed = FALSE
             GROUP BY user_id
-            ORDER BY MAX(created_at) DESC
+            ORDER BY {sort_column} {sort_order.upper()}
             LIMIT %s OFFSET %s
         """
 
@@ -1059,7 +1076,8 @@ def get_paginated_user_ids(page: int, per_page: int) -> Tuple[List[str], int]:
         )
 
         logger.debug(
-            f"Retrieved {len(user_ids)} user IDs for page {page} (total: {total_count})"
+            f"Retrieved {len(user_ids)} user IDs for page {page} "
+            f"(total: {total_count}, sort: {sort_by} {sort_order})"
         )
         return user_ids, total_count
 
