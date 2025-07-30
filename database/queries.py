@@ -934,9 +934,12 @@ def get_survey_response_counts(survey_id: int) -> Optional[Dict[str, int]]:
         return None
 
 
-def get_user_participation_overview() -> List[Dict]:
+def get_user_participation_overview(user_ids: Optional[List[str]] = None) -> List[Dict]:
     """
     Get comprehensive participation statistics for all users who have completed surveys.
+
+    Args:
+        user_ids (Optional[List[str]]): If provided, filter results to these users only
 
     Returns:
         List[Dict]: A list of dictionaries containing user participation data.
@@ -966,15 +969,29 @@ def get_user_participation_overview() -> List[Dict]:
             MAX(sr.created_at) as last_activity
         FROM survey_responses sr
         WHERE sr.completed = TRUE
+    """
+
+    params = []
+
+    # Add user_ids filter if provided
+    if user_ids is not None:
+        # Create placeholders for the IN clause
+        placeholders = ", ".join(["%s"] * len(user_ids))
+        query += f" AND sr.user_id IN ({placeholders})"
+        params.extend(user_ids)
+
+    query += """
         GROUP BY sr.user_id
         HAVING (successful_surveys_count > 0 OR failed_surveys_count > 0)
         ORDER BY last_activity DESC
     """
 
-    logger.debug("Retrieving user participation overview")
+    logger.debug(
+        f"Retrieving user participation overview{' for specific users' if user_ids else ''}"
+    )
 
     try:
-        results = execute_query(query)
+        results = execute_query(query, tuple(params) if params else None)
         processed_results = []
 
         for result in results:
