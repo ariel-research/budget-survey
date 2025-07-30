@@ -27,25 +27,13 @@
                     <table class="matrix-table">
                         <thead>
                             <tr class="matrix-header-row">
-                                <th class="matrix-user-header sortable" 
-                                    data-sort="user_id" 
-                                    data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
-                                    {% if sort_by == 'user_id' %}data-sorted="true"{% endif %}>
+                                <th class="matrix-user-header sortable" data-sort="user_id">
                                     {{ get_translation('user_id', 'answers') }}
-                                    {% if sort_by == 'user_id' %}
-                                        {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
-                                    {% endif %}
                                 </th>
                                 <th class="matrix-survey-header">{{ get_translation('successful_surveys', 'answers') }}</th>
                                 <th class="matrix-survey-header">{{ get_translation('failed_surveys', 'answers') }}</th>
-                                <th class="matrix-survey-header sortable" 
-                                    data-sort="last_activity" 
-                                    data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
-                                    {% if sort_by == 'last_activity' %}data-sorted="true"{% endif %}>
+                                <th class="matrix-survey-header sortable" data-sort="last_activity">
                                     {{ get_translation('last_activity', 'answers') }}
-                                    {% if sort_by == 'last_activity' %}
-                                        {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
-                                    {% endif %}
                                 </th>
                             </tr>
                         </thead>
