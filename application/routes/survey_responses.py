@@ -144,7 +144,7 @@ def get_user_responses(
                 ]
                 logger.debug(
                     f"Applied view filter '{view_filter}': "
-                    f"{original_choice_count} initial choices -> {len(user_choices)} choices."
+                    f"{original_choice_count} initial -> {len(user_choices)} choices."
                 )
 
             # Filter by the specific survey ID of the request
@@ -170,7 +170,8 @@ def get_user_responses(
                         key=lambda x: x["response_created_at"], reverse=reverse
                     )
 
-            # Handle the case where we have a view filter but no matching choices for the survey
+            # Handle the case where we have a view filter but no matching
+            # choices for the survey
             if survey_id is not None and not user_choices and view_filter:
                 logger.info(
                     f"No responses found for survey {survey_id} with "
@@ -649,12 +650,20 @@ def list_all_comments():
 def get_users_overview():
     """
     Get user participation overview showing statistics for all users
-    who have completed surveys.
+    who have completed surveys with pagination.
 
     Returns:
         Rendered template with user participation data
     """
     try:
+        # Define pagination settings from the app config
+        per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+        # Get current page number from request args, default to 1
+        page = request.args.get("page", 1, type=int)
+        if page < 1:
+            page = 1
+
         # Get and validate sort parameters
         sort_by = request.args.get("sort")
         sort_order = request.args.get("order", "asc")
@@ -668,17 +677,28 @@ def get_users_overview():
         if sort_order not in allowed_sort_orders:
             sort_order = "asc"
 
-        # Get user participation data
-        user_data = get_user_participation_overview()
+        # Get paginated user IDs and total count
+        user_ids, total_users = get_paginated_user_ids(page, per_page)
 
-        if not user_data:
+        if not user_ids:
+            # No users found, render empty overview
             logger.info("No user participation data found")
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": 0,
+            }
             return render_template(
                 "responses/users_overview.html",
                 users=[],
                 sort_by=sort_by,
                 sort_order=sort_order,
+                pagination=pagination,
             )
+
+        # Get user participation data for the current page of users
+        user_data = get_user_participation_overview(user_ids)
 
         # Apply sorting if requested
         if sort_by:
@@ -706,13 +726,27 @@ def get_users_overview():
             else:
                 user["failed_survey_ids_list"] = []
 
-        logger.info(f"Retrieved participation data for {len(user_data)} users")
+        # Calculate pagination info
+        total_pages = math.ceil(total_users / per_page)
+
+        pagination = {
+            "page": page,
+            "per_page": per_page,
+            "total_users": total_users,
+            "total_pages": total_pages,
+        }
+
+        logger.info(
+            f"Retrieved participation data for {len(user_data)} users "
+            f"(page {page} of {total_pages})"
+        )
 
         return render_template(
             "responses/users_overview.html",
             users=user_data,
             sort_by=sort_by,
             sort_order=sort_order,
+            pagination=pagination,
         )
 
     except Exception as e:

@@ -18,77 +18,135 @@
     
     <div class="answers-content">
         {% if users %}
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="sortable" 
-                                data-sort="user_id" 
-                                data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
-                                {% if sort_by == 'user_id' %}data-sorted="true"{% endif %}>
-                                {{ get_translation('user_id', 'answers') }}
-                                {% if sort_by == 'user_id' %}
-                                    {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
-                                {% endif %}
-                            </th>
-                            <th>{{ get_translation('successful_surveys', 'answers') }}</th>
-                            <th>{{ get_translation('failed_surveys', 'answers') }}</th>
-                            <th class="sortable" 
-                                data-sort="last_activity" 
-                                data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
-                                {% if sort_by == 'last_activity' %}data-sorted="true"{% endif %}>
-                                {{ get_translation('last_activity', 'answers') }}
-                                {% if sort_by == 'last_activity' %}
-                                    {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
-                                {% endif %}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td class="user-id-cell">
-                                <a href="{{ url_for('responses.get_user_responses_detail', user_id=user.user_id) }}" 
-                                   target="_blank" class="user-link">
-                                    {{ user.user_id }}
-                                </a>
-                            </td>
-                            <td>
-                                <div class="survey-count-container">
-                                    <span class="survey-count-label">{{ user.successful_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
-                                    {% if user.successful_survey_ids_list %}
-                                        <div class="survey-ids-list">
-                                            {% for survey_id in user.successful_survey_ids_list %}
-                                                <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
-                                                   target="_blank" 
-                                                   class="survey-id-badge successful">{{ survey_id }}</a>
-                                            {% endfor %}
-                                        </div>
+            <div class="matrix-container">
+                <h2 class="matrix-title">{{ get_translation('user_participation_title', 'answers') }}</h2>
+                <div class="matrix-description">
+                    <p>{{ get_translation('participation_overview_description', 'answers') }}</p>
+                </div>
+                <div class="matrix-table-wrapper">
+                    <table class="matrix-table">
+                        <thead>
+                            <tr class="matrix-header-row">
+                                <th class="matrix-user-header sortable" 
+                                    data-sort="user_id" 
+                                    data-order="{% if sort_by == 'user_id' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
+                                    {% if sort_by == 'user_id' %}data-sorted="true"{% endif %}>
+                                    {{ get_translation('user_id', 'answers') }}
+                                    {% if sort_by == 'user_id' %}
+                                        {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
                                     {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="survey-count-container">
-                                    <span class="survey-count-label">{{ user.failed_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
-                                    {% if user.failed_survey_ids_list %}
-                                        <div class="survey-ids-list">
-                                            {% for survey_id in user.failed_survey_ids_list %}
-                                                <span class="survey-id-badge failed">{{ survey_id }}</span>
-                                            {% endfor %}
-                                        </div>
+                                </th>
+                                <th class="matrix-survey-header">{{ get_translation('successful_surveys', 'answers') }}</th>
+                                <th class="matrix-survey-header">{{ get_translation('failed_surveys', 'answers') }}</th>
+                                <th class="matrix-survey-header sortable" 
+                                    data-sort="last_activity" 
+                                    data-order="{% if sort_by == 'last_activity' %}{{ 'desc' if sort_order == 'asc' else 'asc' }}{% else %}desc{% endif %}"
+                                    {% if sort_by == 'last_activity' %}data-sorted="true"{% endif %}>
+                                    {{ get_translation('last_activity', 'answers') }}
+                                    {% if sort_by == 'last_activity' %}
+                                        {% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}
                                     {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                {{ user.last_activity.strftime('%d-%m-%Y %H:%M') if user.last_activity else '-' }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                                         {% for user in users %}
+                             <tr class="matrix-row" data-user="{{ user.user_id }}">
+                                 <td class="matrix-user-cell{% if user.user_id|length > 12 %} truncated{% endif %}">
+                                     <a href="{{ url_for('responses.get_user_responses_detail', user_id=user.user_id) }}" 
+                                        target="_blank" class="user-link" 
+                                        title="{{ user.user_id }}">
+                                         {% if user.user_id|length > 12 %}{{ user.user_id[:9] }}...{% else %}{{ user.user_id }}{% endif %}
+                                     </a>
+                                     {% if user.user_id|length > 12 %}
+                                     <span class="user-id-tooltip">{{ user.user_id }}</span>
+                                     {% endif %}
+                                 </td>
+                                <td class="matrix-data-cell">
+                                    <div class="survey-count-container">
+                                        <span class="survey-count-label">{{ user.successful_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
+                                        {% if user.successful_survey_ids_list %}
+                                            <div class="survey-ids-list">
+                                                {% for survey_id in user.successful_survey_ids_list %}
+                                                    <a href="{{ url_for('responses.get_user_survey_response', survey_id=survey_id, user_id=user.user_id) }}" 
+                                                       target="_blank" 
+                                                       class="survey-id-badge successful">{{ survey_id }}</a>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="matrix-data-cell">
+                                    <div class="survey-count-container">
+                                        <span class="survey-count-label">{{ user.failed_surveys_count }} {{ get_translation('surveys', 'answers') }}</span>
+                                        {% if user.failed_survey_ids_list %}
+                                            <div class="survey-ids-list">
+                                                {% for survey_id in user.failed_survey_ids_list %}
+                                                    <span class="survey-id-badge failed">{{ survey_id }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="matrix-data-cell">
+                                    {{ user.last_activity.strftime('%d-%m-%Y %H:%M') if user.last_activity else '-' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="matrix-summary">
+                    {% if pagination %}
+                    <p>{{ get_translation('users_overview_description', 'answers', current_users_count=users|length, total_users_count=pagination.total_users) }}</p>
+                    {% else %}
+                    <p>{{ get_translation('users_overview_description', 'answers', current_users_count=users|length, total_users_count=users|length) }}</p>
+                    {% endif %}
+                </div>
             </div>
         {% else %}
-            <p class="no-data">{{ get_translation('no_participation_data', 'answers') }}</p>
+            <div class="matrix-container">
+                <p class="no-data">{{ get_translation('no_participation_data', 'answers') }}</p>
+            </div>
+        {% endif %}
+        
+        {% if pagination and pagination.total_pages > 1 %}
+        <nav class="pagination-nav" aria-label="{{ get_translation('pagination.title', 'dashboard') }}">
+            <ul class="pagination">
+                <li class="page-item {{ 'disabled' if pagination.page <= 1 }}">
+                    <a class="page-link" 
+                       href="{{ url_for('responses.get_users_overview', page=pagination.page - 1, sort=sort_by, order=sort_order) if pagination.page > 1 else '#' }}"
+                       aria-label="{{ get_translation('previous', 'pagination') }}"
+                       title="{{ get_translation('previous', 'pagination') }}"
+                       data-pagination-role="previous"
+                       {% if pagination.page <= 1 %}aria-disabled="true"{% endif %}>
+                        <span class="nav-arrow" aria-hidden="true">&lsaquo;</span>
+                        <span class="nav-text">{{ get_translation('previous', 'pagination') }}</span>
+                    </a>
+                </li>
+
+                <li class="page-item">
+                    <span class="pagination-status" aria-current="page">
+                        {{ get_translation('page_info_with_users', 'pagination', 
+                           page=pagination.page, 
+                           total_pages=pagination.total_pages, 
+                           total_users=pagination.total_users) }}
+                    </span>
+                </li>
+
+                <li class="page-item {{ 'disabled' if pagination.page >= pagination.total_pages }}">
+                    <a class="page-link" 
+                       href="{{ url_for('responses.get_users_overview', page=pagination.page + 1, sort=sort_by, order=sort_order) if pagination.page < pagination.total_pages else '#' }}"
+                       aria-label="{{ get_translation('next', 'pagination') }}"
+                       title="{{ get_translation('next', 'pagination') }}"
+                       data-pagination-role="next"
+                       {% if pagination.page >= pagination.total_pages %}aria-disabled="true"{% endif %}>
+                        <span class="nav-text">{{ get_translation('next', 'pagination') }}</span>
+                        <span class="nav-arrow" aria-hidden="true">&rsaquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
         {% endif %}
     </div>
 </div>
@@ -101,4 +159,5 @@
 {% block additional_scripts %}
 <script src="{{ url_for('static', filename='js/responses.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sorting.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
 {% endblock %} 

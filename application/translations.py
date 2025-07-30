@@ -629,6 +629,16 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "סקירת משתמשים",
             "en": "User Participation Overview",
         },
+        "participation_overview_description": {
+            "he": "סקירה כללית של המשתתפים בסקרים, המציגה "
+            "סקרים שהסתיימו בהצלחה וכאלה שנכשלו.",
+            "en": "An overview of user participation, showing successful and "
+            "failed survey completions.",
+        },
+        "users_overview_description": {
+            "he": "מציג {current_users_count} מתוך {total_users_count} משתמשים בסך הכל",
+            "en": "Showing {current_users_count} of {total_users_count} total users",
+        },
         "successful_surveys": {"he": "סקרים מוצלחים", "en": "Successful Surveys"},
         "failed_surveys": {"he": "סקרים שנכשלו", "en": "Failed Surveys"},
         "surveys": {"he": "סקרים", "en": "surveys"},
