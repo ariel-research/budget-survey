@@ -434,6 +434,24 @@ The application uses the Strategy pattern to support multiple pair generation al
      - Group-level consistency metrics showing symmetry adherence
      - Helps identify if users have directional biases in budget allocation preferences
 
+9. **Asymmetric Loss Distribution Strategy**
+   - Strategy name: `asymmetric_loss_distribution`
+   - Tests user preferences between concentrated vs. distributed budget changes using a calibrated-magnitude approach.
+   - **Algorithm Overview**:
+     - Generates 12 pairs based on a "calibrated-magnitude" approach.
+     - `base_unit = max(1, round(min(ideal_budget) / 10))`
+     - Four magnitude levels are tested for each of the 3 budget categories.
+   - **Comparison Types**:
+     - **Type A (Primary)**: Concentrated loss vs. Distributed loss.
+     - **Type B (Fallback)**: Concentrated funding vs. Distributed funding.
+   - **Special Handling**:
+     - Throws `UnsuitableForStrategyError` if the user's ideal budget contains any zero values.
+   - **Analysis Features**:
+     - Preference Consistency: Measures overall preference for distributed vs. concentrated changes.
+     - Magnitude Sensitivity: Analyzes how the magnitude of the change affects user preferences.
+     - Type A vs. Type B Patterns: Compares user choices in the primary test vs. the fallback scenario.
+
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

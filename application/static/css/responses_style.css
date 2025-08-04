@@ -31,6 +31,7 @@
    --color-extreme-vectors: #6366F1;         /* Indigo */
    --color-cyclic-shift: #F59E0B;            /* Amber */
    --color-linear-symmetry: #EF4444;         /* Red */
+   --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
    
    /* Spacing */
    --spacing-xs: 0.25rem;
@@ -228,6 +229,9 @@
 }
 .strategy-badge[data-strategy="linear_symmetry"] { 
    background: var(--color-linear-symmetry);
+}
+.strategy-badge[data-strategy="asymmetric_loss_distribution"] { 
+   background: var(--color-asymmetric-loss-distribution);
 }
 
 /* ==========================================================================

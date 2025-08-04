@@ -540,6 +540,42 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
                 f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
             )
 
+    # For asymmetric_loss_distribution strategy, add magnitude information if not already present
+    elif (
+        "Concentrated Changes" in str(strategy_1)
+        or "Distributed Changes" in str(strategy_1)
+        or "שינויים מרוכזים" in str(strategy_1)
+        or "שינויים מבוזרים" in str(strategy_1)
+    ):
+        # Check if magnitude info is already present
+        if "(" not in str(strategy_1) and ")" not in str(strategy_1):
+            try:
+                # Extract magnitude from the pair data
+                optimal_allocation = json.loads(choice["optimal_allocation"])
+
+                # Calculate differences for both options
+                diff_1 = [
+                    abs(option_1[i] - optimal_allocation[i])
+                    for i in range(len(option_1))
+                ]
+                diff_2 = [
+                    abs(option_2[i] - optimal_allocation[i])
+                    for i in range(len(option_2))
+                ]
+
+                # The magnitude is the maximum difference (this matches the asymmetric_loss_distribution algorithm)
+                magnitude_1 = max(diff_1)
+                magnitude_2 = max(diff_2)
+
+                # Add magnitude information to strategy labels
+                strategy_1 = f"{strategy_1} ({magnitude_1})"
+                strategy_2 = f"{strategy_2} ({magnitude_2})"
+
+            except (KeyError, ValueError, json.JSONDecodeError) as e:
+                logger.warning(
+                    f"Failed to calculate magnitude for asymmetric_loss_distribution: {e}"
+                )
+
     # Generate raw choice info HTML
     trans_orig = get_translation("original_choice", "answers")
     trans_opt = get_translation("option_number", "answers", number=raw_choice)
@@ -1490,6 +1526,26 @@ def generate_detailed_user_choices(
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
+
+            # Get strategy-specific metrics for enhanced stats
+            try:
+                from database.queries import get_user_survey_performance_data
+
+                performance_data = get_user_survey_performance_data([user_id])
+                user_survey_perf = None
+                for perf in performance_data:
+                    if perf["user_id"] == user_id and perf["survey_id"] == survey_id:
+                        user_survey_perf = perf
+                        break
+
+                if user_survey_perf and user_survey_perf.get("strategy_metrics"):
+                    # Merge strategy-specific metrics into basic stats
+                    stats.update(user_survey_perf["strategy_metrics"])
+            except Exception as e:
+                logger.warning(
+                    f"Failed to get strategy metrics for user {user_id}, survey {survey_id}: {e}"
+                )
+
             # Add timestamp from the first choice (should be same for response)
             response_created_at = choices[0].get("response_created_at")
             summary = {
@@ -1820,6 +1876,37 @@ def generate_detailed_breakdown_table(
                     )
                     data_cells.append(
                         f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
+                    )
+                elif (
+                    "concentrated_changes" in strategy_columns
+                    and "distributed_changes" in strategy_columns
+                ):
+                    # Handle asymmetric_loss_distribution strategy
+                    concentrated_percent = summary["stats"][
+                        "concentrated_changes_percent"
+                    ]
+                    distributed_percent = summary["stats"][
+                        "distributed_changes_percent"
+                    ]
+
+                    highlight_concentrated = (
+                        "highlight-row"
+                        if concentrated_percent > distributed_percent
+                        else ""
+                    )
+                    highlight_distributed = (
+                        "highlight-row"
+                        if distributed_percent > concentrated_percent
+                        else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_concentrated}">'
+                        f'{format(concentrated_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_distributed}">'
+                        f'{format(distributed_percent, ".1f")}%</td>'
                     )
                 elif "option1" in strategy_columns and "option2" in strategy_columns:
                     # Default case with option1/option2 columns
@@ -2444,6 +2531,14 @@ def _generate_matrix_header_cell(survey_id: int, strategy_columns: Dict) -> str:
         elif "ratio" in strategy_columns:
             ratio_label = get_translation("ratio", "answers")
             sub_header = f"{rss_label} / {ratio_label}"
+    elif (
+        "concentrated_changes" in strategy_columns
+        and "distributed_changes" in strategy_columns
+    ):
+        # Handle asymmetric_loss_distribution strategy
+        concentrated_name = strategy_columns["concentrated_changes"]["name"]
+        distributed_name = strategy_columns["distributed_changes"]["name"]
+        sub_header = f"{concentrated_name} / {distributed_name}"
     elif "option1" in strategy_columns and "option2" in strategy_columns:
         option1_name = strategy_columns["option1"]["name"]
         option2_name = strategy_columns["option2"]["name"]
@@ -2486,6 +2581,17 @@ def _generate_matrix_data_cell(record: Dict) -> str:
             cell_content = f'<span class="metric-pair">{rss_percent:.0f}% / {ratio_percent:.0f}%</span>'
         else:
             cell_content = f'<span class="metric-value">{rss_percent:.0f}%</span>'
+    elif (
+        "concentrated_changes" in strategy_columns
+        and "distributed_changes" in strategy_columns
+    ):
+        # Handle asymmetric_loss_distribution strategy
+        concentrated_percent = metrics.get("concentrated_changes_percent", 0)
+        distributed_percent = metrics.get("distributed_changes_percent", 0)
+        cell_content = (
+            f'<span class="metric-pair">{concentrated_percent:.0f}% / '
+            f"{distributed_percent:.0f}%</span>"
+        )
     elif "option1" in strategy_columns and "option2" in strategy_columns:
         opt1_percent = metrics.get("option1_percent", 0)
         opt2_percent = metrics.get("option2_percent", 0)

@@ -1,5 +1,6 @@
 """Package for survey pair generation strategies."""
 
+from .asymmetric_loss_distribution import AsymmetricLossDistributionStrategy
 from .base import PairGenerationStrategy, StrategyRegistry
 from .cyclic_shift_strategy import CyclicShiftStrategy
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
@@ -21,6 +22,7 @@ StrategyRegistry.register(RootSumSquaredRatioStrategy)
 StrategyRegistry.register(ExtremeVectorsStrategy)
 StrategyRegistry.register(CyclicShiftStrategy)
 StrategyRegistry.register(LinearSymmetryStrategy)
+StrategyRegistry.register(AsymmetricLossDistributionStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -33,4 +35,5 @@ __all__ = [
     "ExtremeVectorsStrategy",
     "CyclicShiftStrategy",
     "LinearSymmetryStrategy",
+    "AsymmetricLossDistributionStrategy",
 ]

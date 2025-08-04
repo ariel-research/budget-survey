@@ -679,6 +679,22 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "סקר",
             "en": "Survey",
         },
+        "concentrated_changes": {
+            "he": "מרוכזים",
+            "en": "Concentrated",
+        },
+        "distributed_changes": {
+            "he": "מבוזרים",
+            "en": "Distributed",
+        },
+        "preference_consistency": {
+            "he": "עקביות העדפות",
+            "en": "Preference Consistency",
+        },
+        "magnitude_sensitivity": {
+            "he": "רגישות לגודל השינוי",
+            "en": "Magnitude Sensitivity",
+        },
     },
 }
 
