@@ -1249,6 +1249,20 @@ def get_user_survey_performance_data(
                         strategy_metrics["rss_percent"] = rss_percent
                         strategy_metrics["ratio_percent"] = basic_stats["ratio_percent"]
 
+                elif (
+                    "concentrated_changes" in strategy_columns
+                    and "distributed_changes" in strategy_columns
+                ):
+                    # Handle asymmetric_loss_distribution strategy
+                    # Use option1_percent for concentrated changes,
+                    # option2_percent for distributed changes
+                    strategy_metrics["concentrated_changes_percent"] = basic_stats[
+                        "option1_percent"
+                    ]
+                    strategy_metrics["distributed_changes_percent"] = basic_stats[
+                        "option2_percent"
+                    ]
+
                 else:
                     # Default: use option percentages
                     strategy_metrics["option1_percent"] = basic_stats["option1_percent"]

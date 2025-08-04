@@ -26,7 +26,8 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
     3. 12 Pairs Total: 3 target categories * 4 magnitude levels
     4. Two Comparison Types:
        - Type A (Primary): target loses 2x vs. target gains 2x.
-       - Type B (Fallback): Funds for target boost come from one vs. many sources.
+       - Type B (Fallback): Funds for target boost come from one vs.
+         many sources.
     """
 
     def generate_pairs(
@@ -49,13 +50,16 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
         """
         if vector_size != 3:
             raise ValueError(
-                "AsymmetricLossDistributionStrategy only supports vector_size=3."
+                "AsymmetricLossDistributionStrategy only supports " "vector_size=3."
             )
 
         if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values, unsuitable.")
+            logger.info(
+                f"User vector {user_vector} contains zero values, " f"unsuitable."
+            )
             raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for this strategy."
+                "User vector contains zero values and is unsuitable for "
+                "this strategy."
             )
 
         self._validate_vector(user_vector, vector_size)
@@ -117,12 +121,22 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
                         and np.all(vec_b2 <= 100)
                     ):
                         raise ValueError(
-                            f"Could not generate valid Type B fallback pair for user_vector={user_vector}, target_idx={target_idx}, x={x}"
+                            f"Could not generate valid Type B fallback pair "
+                            f"for user_vector={user_vector}, "
+                            f"target_idx={target_idx}, x={x}"
                         )
 
                     option1_vec, option2_vec = tuple(vec_b1.tolist()), tuple(
                         vec_b2.tolist()
                     )
+
+                # Create strategy labels with magnitude information
+                concentrated_label = get_translation("concentrated_changes", "answers")
+                distributed_label = get_translation("distributed_changes", "answers")
+
+                # Add magnitude in parentheses for display in Type column
+                option1_strategy = f"{concentrated_label} ({x})"
+                option2_strategy = f"{distributed_label} ({x})"
 
                 pairs.append(
                     {
@@ -131,6 +145,8 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
                         "pair_type": pair_type,
                         "magnitude": x,
                         "target_category": target_idx,
+                        "option1_strategy": option1_strategy,
+                        "option2_strategy": option2_strategy,
                     }
                 )
 
@@ -155,14 +171,14 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
     def get_table_columns(self) -> Dict[str, Dict]:
         """Get column definitions for the survey response breakdown table."""
         return {
-            "preference_consistency": {
-                "name": get_translation("preference_consistency", "answers"),
+            "concentrated_changes": {
+                "name": get_translation("concentrated_changes", "answers"),
                 "type": "percentage",
                 "highlight": True,
             },
-            "magnitude_sensitivity": {
-                "name": get_translation("magnitude_sensitivity", "answers"),
-                "type": "text",
-                "highlight": False,
+            "distributed_changes": {
+                "name": get_translation("distributed_changes", "answers"),
+                "type": "percentage",
+                "highlight": True,
             },
         }
