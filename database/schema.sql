@@ -64,6 +64,7 @@ CREATE TABLE `survey_responses` (
   `user_comment` TEXT DEFAULT NULL,
   `completed` BOOLEAN DEFAULT FALSE,
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
+  `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`user_id`), -- Index for potential joins/lookups
   INDEX (`survey_id`), -- Index for potential joins/lookups

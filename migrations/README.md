@@ -38,13 +38,28 @@ python migrations/run_migration.py --test-only migrations/migration_filename.sql
 
 ### Docker Database Connections
 
-If you're using MySQL in a Docker container with port mapping, you can specify the host and port directly:
+#### Option 1: Running from inside Docker container (Recommended)
+If you're using the Docker setup, run migrations from inside the app container:
 
 ```bash
-python migrations/run_migration.py migrations/20250511_retroactive_unaware_users.sql --host localhost --port 3307
+docker compose -f docker-compose.dev.yml exec app python migrations/run_migration.py migrations/migration_filename.sql --host db --port 3306
 ```
 
-This is useful when the MySQL server is running on a non-standard port (e.g., Docker mapped port).
+For example:
+```bash
+docker compose -f docker-compose.dev.yml exec app python migrations/run_migration.py migrations/20250806_add_transitivity_analysis.sql --host db --port 3306
+```
+
+**Important**: Use `--host db` (Docker service name) and `--port 3306` (container port), not the host-mapped port.
+
+#### Option 2: Running from host machine
+If you need to run migrations from outside the Docker container (e.g., for external database connections), use the host-mapped port:
+
+```bash
+python migrations/run_migration.py migrations/migration_filename.sql --host localhost --port 3307
+```
+
+This is useful when connecting to the MySQL server from the host machine via the mapped port.
 
 ## Migration Naming Convention
 
@@ -69,3 +84,4 @@ In chronological order:
 - `20250511_retroactive_unaware_users.sql` - Retroactively blacklists users who failed attention checks but weren't previously marked as blacklisted
 - `20250514_add_weighted_vector_views.sql` - Creates SQL views for analyzing user preferences for weighted vector strategies
 - `20250616_add_option_differences.sql` - Adds option1_differences and option2_differences columns to comparison_pairs table for storing vector differences (used by cyclic shift strategy)
+- `20250806_add_transitivity_analysis.sql` - Adds transitivity_analysis JSON column to survey_responses table for storing transitivity metrics from extreme vectors strategy analysis
