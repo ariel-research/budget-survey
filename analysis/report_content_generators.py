@@ -868,8 +868,162 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     )
     percentile_table_html = _generate_percentile_breakdown_table(percentile_data)
 
-    # Return both tables
-    return main_table_html + percentile_table_html
+    # Generate transitivity analysis table
+    transitivity_table = generate_transitivity_analysis_table(choices)
+
+    # Return all tables
+    return main_table_html + percentile_table_html + transitivity_table
+
+
+def _get_transitivity_interpretation(rate: float) -> str:
+    """Generate interpretation text for transitivity rate."""
+    if rate == 100:
+        return get_translation("perfect_logical_consistency", "answers")
+    elif rate >= 75:
+        return get_translation("high_logical_consistency", "answers")
+    elif rate >= 50:
+        return get_translation("moderate_consistency", "answers")
+    else:
+        return get_translation("low_consistency", "answers")
+
+
+def _get_stability_interpretation(score: float) -> str:
+    """Generate interpretation text for order stability."""
+    if score >= 75:
+        return get_translation("stable_preference_order", "answers")
+    elif score >= 50:
+        return get_translation("partially_stable_order", "answers")
+    elif score >= 25:
+        return get_translation("variable_preferences", "answers")
+    else:
+        return get_translation("highly_variable_preferences", "answers")
+
+
+def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
+    """Generate HTML table showing transitivity analysis for all percentile groups."""
+
+    try:
+        from analysis.transitivity_analyzer import TransitivityAnalyzer
+
+        analyzer = TransitivityAnalyzer()
+        report = analyzer.get_full_transitivity_report(choices)
+
+        # Get translations
+        title = get_translation("transitivity_analysis_title", "answers")
+        group_label = get_translation("group", "answers")
+        order_label = get_translation("preference_order", "answers")
+        status_label = get_translation("transitivity_status", "answers")
+        trans_transitive = get_translation("transitive", "answers")
+        trans_intransitive = get_translation("intransitive", "answers")
+        trans_transitivity_rate = get_translation(
+            "overall_transitivity_rate", "answers"
+        )
+        trans_order_stability = get_translation("order_stability", "answers")
+
+        # Generate enhanced rows with visual indicators
+        rows_html = []
+        for group_key, group_name in [
+            ("core", "Core"),
+            ("25", "25%"),
+            ("50", "50%"),
+            ("75", "75%"),
+        ]:
+            if group_key in report:
+                data = report[group_key]
+
+                # Enhanced status badge with SVG icon
+                if data["is_transitive"]:
+                    status_html = f"""
+                        <span class="transitivity-status status-transitive">
+                            <svg class="status-icon check" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M13.485 1.929a1 1 0 011.414 1.414l-8 8a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6.5 9.525l7.485-7.596z"/>
+                            </svg>
+                            {trans_transitive}
+                        </span>
+                    """
+                else:
+                    status_html = f"""
+                        <span class="transitivity-status status-intransitive">
+                            <svg class="status-icon cross" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/>
+                            </svg>
+                            {trans_intransitive}
+                        </span>
+                    """
+
+                # Enhanced preference order display
+                order_html = f'<span class="preference-order">{data["order"]}</span>'
+
+                # Group badge with color coding
+                group_badge = (
+                    f'<span class="group-badge group-{group_key}">{group_name}</span>'
+                )
+
+                rows_html.append(
+                    f"""
+                    <tr class="transitivity-row" data-group="{group_key}">
+                        <td>{group_badge}</td>
+                        <td>{order_html}</td>
+                        <td>{status_html}</td>
+                    </tr>
+                """
+                )
+
+        # Calculate metric classes based on performance
+        rate = report.get("transitivity_rate", 0.0)
+        stability = report.get("order_stability_score", 0.0)
+
+        rate_class = (
+            "metric-high"
+            if rate >= 80
+            else "metric-medium" if rate >= 50 else "metric-low"
+        )
+        stability_class = (
+            "metric-high"
+            if stability >= 70
+            else "metric-medium" if stability >= 40 else "metric-low"
+        )
+
+        # Enhanced summary metrics with interpretations
+        summary_html = f"""
+            <div class="transitivity-summary-metrics">
+                <div class="metric-card">
+                    <div class="metric-value {rate_class}">{rate:.0f}%</div>
+                    <div class="metric-label">{trans_transitivity_rate}</div>
+                    <div class="metric-subtext">{_get_transitivity_interpretation(rate)}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value {stability_class}">{stability:.0f}%</div>
+                    <div class="metric-label">{trans_order_stability}</div>
+                    <div class="metric-subtext">{_get_stability_interpretation(stability)}</div>
+                </div>
+            </div>
+        """
+
+        html = f"""
+        <div class="transitivity-analysis-container">
+            <h4>{title}</h4>
+            <table class="transitivity-table">
+                <thead>
+                    <tr>
+                        <th>{group_label}</th>
+                        <th>{order_label}</th>
+                        <th>{status_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows_html)}
+                </tbody>
+            </table>
+            {summary_html}
+        </div>
+        """
+
+        return html
+
+    except Exception as e:
+        logger.error(f"Error generating transitivity analysis table: {e}")
+        return ""
 
 
 def _extract_extreme_vector_preferences(

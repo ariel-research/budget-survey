@@ -332,6 +332,20 @@ The application uses the Strategy pattern to support multiple pair generation al
        - Provides separate consistency scores for each comparison group (A vs B, A vs C, B vs C)
        - Includes an "All Percentiles" summary row with overall consistency metrics
 
+#### Transitivity Analysis
+
+For extreme_vectors surveys, the system analyzes logical consistency:
+
+- **Groups analyzed**: Core vectors, 25%, 50%, 75% weighted
+- **Transitivity check**: If A>B and B>C, then A>C must hold
+- **Metrics**:
+  - Preference order per group (e.g., A>B>C)
+  - Transitivity status (✓/✗)
+  - Overall transitivity rate (0-100%)
+  - Order Consistency score (consistency of order across groups)
+
+Note: '>' represents observed choice, which may include cases of user indifference.
+
 7. **Cyclic Shift Strategy**
    - Strategy name: `cyclic_shift`
    - Generates 12 comparison pairs organized into 4 groups using cyclic shifts of difference vectors

@@ -695,6 +695,66 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "רגישות לגודל השינוי",
             "en": "Magnitude Sensitivity",
         },
+        "transitivity_analysis_title": {
+            "he": "ניתוח טרנזיטיביות",
+            "en": "Transitivity Analysis",
+        },
+        "preference_order": {
+            "he": "סדר העדפה",
+            "en": "Preference Order",
+        },
+        "transitivity_status": {
+            "he": "סטטוס טרנזיטיביות",
+            "en": "Transitivity Status",
+        },
+        "transitive": {
+            "he": "טרנזיטיבי",
+            "en": "Transitive",
+        },
+        "intransitive": {
+            "he": "לא טרנזיטיבי",
+            "en": "Intransitive",
+        },
+        "overall_transitivity_rate": {
+            "he": "שיעור טרנזיטיביות כללי",
+            "en": "Overall Transitivity Rate",
+        },
+        "order_stability": {
+            "he": "עקביות סדר העדפות (קבוצות טרנזיטיביות)",
+            "en": "Order Consistency (Transitive Groups)",
+        },
+        "perfect_logical_consistency": {
+            "he": "עקביות לוגית מושלמת",
+            "en": "Perfect logical consistency",
+        },
+        "high_logical_consistency": {
+            "he": "עקביות לוגית גבוהה",
+            "en": "High logical consistency",
+        },
+        "moderate_consistency": {
+            "he": "עקביות בינונית",
+            "en": "Moderate consistency",
+        },
+        "low_consistency": {
+            "he": "עקביות נמוכה",
+            "en": "Low consistency",
+        },
+        "stable_preference_order": {
+            "he": "סדר העדפות יציב בקבוצות הטרנזיטיביות",
+            "en": "Stable preference order in transitive groups",
+        },
+        "partially_stable_order": {
+            "he": "סדר יציב חלקית בקבוצות הטרנזיטיביות",
+            "en": "Partially stable order in transitive groups",
+        },
+        "variable_preferences": {
+            "he": "העדפות משתנות בקבוצות הטרנזיטיביות",
+            "en": "Variable preferences in transitive groups",
+        },
+        "highly_variable_preferences": {
+            "he": "העדפות משתנות מאוד בקבוצות הטרנזיטיביות",
+            "en": "Highly variable preferences in transitive groups",
+        },
     },
 }
 

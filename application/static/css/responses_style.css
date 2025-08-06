@@ -1230,6 +1230,192 @@ th.sortable[data-order="desc"]::after {
 }
 
 /* ==========================================================================
+  Transitivity Analysis Table Styles
+  ========================================================================== */
+.transitivity-analysis-container {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.transitivity-analysis-container h4 {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.transitivity-table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.transitivity-table th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 16px 20px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--color-border);
+    font-size: var(--font-size-base);
+}
+
+.transitivity-table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    text-align: center;
+    transition: background-color 0.2s ease;
+}
+
+.transitivity-table tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.transitivity-table td:first-child {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-background-alt);
+    text-align: left;
+    padding-left: 24px;
+}
+
+.preference-order {
+    font-family: var(--font-family-mono);
+    font-size: 1.1em;
+    color: var(--color-primary);
+    font-weight: 600;
+    letter-spacing: 1px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.transitivity-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.status-transitive {
+    background: var(--color-ratio-light);
+    color: var(--color-ratio);
+}
+
+.status-intransitive {
+    background: #fee;
+    color: #e74c3c;
+}
+
+.group-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: white;
+}
+
+.group-badge.group-core {
+    background: var(--color-primary);
+}
+
+.group-badge.group-25 {
+    background: var(--color-secondary);
+}
+
+.group-badge.group-50 {
+    background: var(--color-ratio);
+}
+
+.group-badge.group-75 {
+    background: var(--color-better);
+}
+
+.transitivity-summary-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.metric-card {
+    text-align: center;
+    padding: var(--spacing-md);
+    border-radius: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-value.metric-high {
+    color: var(--color-ratio);
+}
+
+.metric-value.metric-medium {
+    color: var(--color-better);
+}
+
+.metric-value.metric-low {
+    color: #e74c3c;
+}
+
+.metric-label {
+    color: var(--color-text-light);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+}
+
+.metric-subtext {
+    color: var(--color-text-light);
+    font-size: var(--font-size-xs);
+    font-style: italic;
+}
+
+/* Status Icons */
+.status-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.status-icon.check {
+    color: var(--color-ratio);
+}
+
+.status-icon.cross {
+    color: #e74c3c;
+}
+
+/* ==========================================================================
   Empty Filter Message
   ========================================================================== */
 .empty-filter-message {
@@ -1854,6 +2040,39 @@ th.sortable[data-order="desc"]::after {
     text-align: center;
 }
 
+/* Transitivity Analysis RTL */
+[dir="rtl"] .transitivity-table th,
+[dir="rtl"] .transitivity-table td {
+    text-align: right;
+}
+
+[dir="rtl"] .transitivity-table td:first-child {
+    text-align: right;
+    padding-right: 24px;
+    padding-left: 20px;
+}
+
+[dir="rtl"] .transitivity-analysis-container h4 {
+    text-align: right;
+}
+
+[dir="rtl"] .transitivity-summary-metrics {
+    direction: rtl;
+}
+
+[dir="rtl"] .metric-card {
+    text-align: center;
+}
+
+[dir="rtl"] .group-badge {
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+[dir="rtl"] .transitivity-status {
+    flex-direction: row-reverse;
+}
+
 /* Survey Count Containers */
 [dir="rtl"] .survey-count-container {
    align-items: flex-end;
@@ -2035,6 +2254,28 @@ th.sortable[data-order="desc"]::after {
       font-size: var(--font-size-base);
    }
 
+   /* Transitivity Analysis Responsive */
+   .transitivity-summary-metrics {
+      grid-template-columns: 1fr;
+   }
+   
+   .transitivity-table {
+      font-size: var(--font-size-sm);
+   }
+   
+   .preference-order {
+      font-size: 1em;
+   }
+   
+   .metric-value {
+      font-size: 1.5rem;
+   }
+   
+   .transitivity-status {
+      padding: 4px 8px;
+      font-size: var(--font-size-xs);
+   }
+
 }
 
 @media (max-width: 480px) {
@@ -2070,6 +2311,24 @@ th.sortable[data-order="desc"]::after {
   
   .consistency-note {
       font-size: var(--font-size-xs);
+  }
+  
+  /* Transitivity Analysis 480px Responsive */
+  .transitivity-analysis-container {
+      padding: var(--spacing-md);
+  }
+  
+  .transitivity-table th,
+  .transitivity-table td {
+      padding: 8px 12px;
+  }
+  
+  .metric-card {
+      padding: var(--spacing-sm);
+  }
+  
+  .metric-value {
+      font-size: 1.25rem;
   }
 
 }
