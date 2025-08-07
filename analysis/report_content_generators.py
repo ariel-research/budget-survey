@@ -10,6 +10,7 @@ import pandas as pd
 
 from analysis.utils import is_sum_optimized
 from application.translations import get_translation
+from database.queries import get_subjects
 
 logger = logging.getLogger(__name__)
 
@@ -455,7 +456,9 @@ def choice_explanation_string_version2(
     """
 
 
-def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> str:
+def _generate_choice_pair_html(
+    choice: Dict, option_labels: Tuple[str, str], subjects: List[str] = None
+) -> str:
     """Generate HTML for a single choice pair."""
     option_1 = json.loads(choice["option_1"])
     option_2 = json.loads(choice["option_2"])
@@ -540,41 +543,114 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
                 f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
             )
 
-    # For asymmetric_loss_distribution strategy, add magnitude information if not already present
+    # For asymmetric_loss_distribution strategy, create new UI with target and action labels
     elif (
         "Concentrated Changes" in str(strategy_1)
         or "Distributed Changes" in str(strategy_1)
         or "שינויים מרוכזים" in str(strategy_1)
         or "שינויים מבוזרים" in str(strategy_1)
     ):
-        # Check if magnitude info is already present
-        if "(" not in str(strategy_1) and ")" not in str(strategy_1):
-            try:
-                # Extract magnitude from the pair data
-                optimal_allocation = json.loads(choice["optimal_allocation"])
-
-                # Calculate differences for both options
-                diff_1 = [
-                    abs(option_1[i] - optimal_allocation[i])
-                    for i in range(len(option_1))
+        try:
+            # Helper function to format vector with bold target element
+            def format_vector_with_bold(vector, target_idx):
+                parts = [
+                    f"<b>{val}</b>" if i == target_idx else str(val)
+                    for i, val in enumerate(vector)
                 ]
-                diff_2 = [
-                    abs(option_2[i] - optimal_allocation[i])
-                    for i in range(len(option_2))
-                ]
+                return f"[{', '.join(parts)}]"
 
-                # The magnitude is the maximum difference (this matches the asymmetric_loss_distribution algorithm)
-                magnitude_1 = max(diff_1)
-                magnitude_2 = max(diff_2)
+            # Get required data from the choice dictionary
+            magnitude = choice.get("magnitude")
+            target_category = choice.get("target_category")
 
-                # Add magnitude information to strategy labels
-                strategy_1 = f"{strategy_1} ({magnitude_1})"
-                strategy_2 = f"{strategy_2} ({magnitude_2})"
+            # If strategy data is missing, calculate from the vectors
+            if magnitude is None or target_category is None:
+                try:
+                    optimal_allocation = json.loads(choice["optimal_allocation"])
 
-            except (KeyError, ValueError, json.JSONDecodeError) as e:
-                logger.warning(
-                    f"Failed to calculate magnitude for asymmetric_loss_distribution: {e}"
+                    # Calculate differences for both options
+                    diff_1 = [
+                        abs(option_1[i] - optimal_allocation[i])
+                        for i in range(len(option_1))
+                    ]
+                    diff_2 = [
+                        abs(option_2[i] - optimal_allocation[i])
+                        for i in range(len(option_2))
+                    ]
+
+                    # Find the target category (the one with maximum change)
+                    max_diff_1 = max(diff_1)
+                    max_diff_2 = max(diff_2)
+                    target_category = diff_1.index(max_diff_1)
+
+                    # The magnitude is half the total change (since strategy uses 2*x)
+                    magnitude = max_diff_1 // 2 if max_diff_1 > 0 else max_diff_2 // 2
+
+                except (KeyError, ValueError, json.JSONDecodeError):
+                    magnitude = None
+                    target_category = None
+
+            # If we have the necessary data from the strategy
+            if magnitude is not None and target_category is not None and subjects:
+                total_change = 2 * magnitude
+
+                # Get target category name
+                if target_category < len(subjects):
+                    target_name = subjects[target_category]
+                else:
+                    target_name = f"Category {target_category + 1}"
+
+                # Generate new action-oriented labels
+                decrease_label = get_translation(
+                    "decrease_target_by", "answers", amount=total_change
                 )
+                increase_label = get_translation(
+                    "increase_target_by", "answers", amount=total_change
+                )
+
+                # Determine new labels based on strategy names
+                option1_strategy = str(choice.get("option1_strategy", ""))
+                if "Concentrated" in option1_strategy or "מרוכזים" in option1_strategy:
+                    new_strategy_1 = decrease_label
+                    new_strategy_2 = increase_label
+                else:
+                    new_strategy_1 = increase_label
+                    new_strategy_2 = decrease_label
+
+                # Update the strategy labels
+                strategy_1 = new_strategy_1
+                strategy_2 = new_strategy_2
+
+                # Update the option display to use bold formatting for target
+                option_1_formatted = format_vector_with_bold(option_1, target_category)
+                option_2_formatted = format_vector_with_bold(option_2, target_category)
+
+                # Store formatted options for later use
+                choice["_formatted_option_1"] = option_1_formatted
+                choice["_formatted_option_2"] = option_2_formatted
+                choice["_target_name"] = target_name
+
+            else:
+                # Fallback to original magnitude display if data is missing
+                if "(" not in str(strategy_1) and ")" not in str(strategy_1):
+                    optimal_allocation = json.loads(choice["optimal_allocation"])
+                    diff_1 = [
+                        abs(option_1[i] - optimal_allocation[i])
+                        for i in range(len(option_1))
+                    ]
+                    diff_2 = [
+                        abs(option_2[i] - optimal_allocation[i])
+                        for i in range(len(option_2))
+                    ]
+                    magnitude_1 = max(diff_1)
+                    magnitude_2 = max(diff_2)
+                    strategy_1 = f"{strategy_1} ({magnitude_1})"
+                    strategy_2 = f"{strategy_2} ({magnitude_2})"
+
+        except (KeyError, ValueError, json.JSONDecodeError) as e:
+            logger.warning(
+                f"Failed to process asymmetric_loss_distribution strategy: {e}"
+            )
 
     # Generate raw choice info HTML
     trans_orig = get_translation("original_choice", "answers")
@@ -596,10 +672,21 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
     check_1 = "✓" if user_choice == 1 else ""
     check_2 = "✓" if user_choice == 2 else ""
 
+    # Check if we have formatted options and target name from asymmetric_loss_distribution
+    option_1_display = choice.get("_formatted_option_1", str(option_1))
+    option_2_display = choice.get("_formatted_option_2", str(option_2))
+    target_name = choice.get("_target_name")
+
+    # Build the pair header with target info if available
+    header_content = f"{pair_num_label} #{choice['pair_number']}"
+    if target_name:
+        target_label = get_translation("target_is", "answers", target_name=target_name)
+        header_content += f" ({target_label})"
+
     return f"""
     <div class="choice-pair">
         <div class="pair-header">
-            <h5>{pair_num_label} #{choice["pair_number"]}</h5>
+            <h5>{header_content}</h5>
             <div class="raw-choice-info">
                 {raw_choice_html}
             </div>
@@ -613,12 +700,12 @@ def _generate_choice_pair_html(choice: Dict, option_labels: Tuple[str, str]) -> 
                 </tr>
                 <tr>
                     <td class="selection-column">{check_1}</td>
-                    <td class="option-column">{str(option_1)}</td>
+                    <td class="option-column">{option_1_display}</td>
                     <td>{strategy_1}</td>
                 </tr>
                 <tr>
                     <td class="selection-column">{check_2}</td>
-                    <td class="option-column">{str(option_2)}</td>
+                    <td class="option-column">{option_2_display}</td>
                     <td>{strategy_2}</td>
                 </tr>
             </table>
@@ -770,6 +857,14 @@ def _generate_survey_choices_html(
     # Get survey-specific option labels if available
     survey_labels = choices[0].get("strategy_labels", option_labels)
 
+    # Get survey subjects for asymmetric_loss_distribution strategy
+    subjects = None
+    if strategy_name == "asymmetric_loss_distribution":
+        try:
+            subjects = get_subjects(survey_id)
+        except Exception as e:
+            logger.warning(f"Failed to get subjects for survey {survey_id}: {e}")
+
     # Survey header and ideal budget
     first_choice = choices[0]
     optimal_allocation = json.loads(first_choice["optimal_allocation"])
@@ -808,7 +903,7 @@ def _generate_survey_choices_html(
     # Generate individual choice pairs
     pairs_list = []
     for i, choice in enumerate(choices):
-        pair_html = _generate_choice_pair_html(choice, survey_labels)
+        pair_html = _generate_choice_pair_html(choice, survey_labels, subjects)
         pairs_list.append(f'<div class="choice-pair">{pair_html}</div>')
 
     if pairs_list:

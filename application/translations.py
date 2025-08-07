@@ -755,6 +755,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "העדפות משתנות מאוד בקבוצות הטרנזיטיביות",
             "en": "Highly variable preferences in transitive groups",
         },
+        "decrease_target_by": {
+            "he": "הפחתה המטרה ב-{amount}",
+            "en": "Decrease target by {amount}",
+        },
+        "increase_target_by": {
+            "he": "הגדלה המטרה ב-{amount}",
+            "en": "Increase target by {amount}",
+        },
+        "target_is": {
+            "he": "מטרה: {target_name}",
+            "en": "Target: {target_name}",
+        },
     },
 }
 

@@ -538,6 +538,15 @@
    white-space: nowrap;
 }
 
+/* Enhanced style for the targeted budget number */
+.option-column b {
+   font-weight: 700;
+   color: var(--color-primary);
+   background-color: rgba(241, 196, 15, 0.2); /* A faint yellow highlight */
+   padding: 2px 4px;
+   border-radius: 3px;
+}
+
 .table-container tr:hover {
    background-color: var(--color-background-alt);
 }
