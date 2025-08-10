@@ -559,16 +559,15 @@ def _generate_choice_pair_html(
                 ]
                 return f"[{', '.join(parts)}]"
 
-            # Get required data from the choice dictionary
-            magnitude = choice.get("magnitude")
+            # Get target category from choice dictionary
             target_category = choice.get("target_category")
 
-            # If strategy data is missing, calculate from the vectors
-            if magnitude is None or target_category is None:
+            # If target_category is missing, find it from the vectors
+            if target_category is None:
                 try:
                     optimal_allocation = json.loads(choice["optimal_allocation"])
 
-                    # Calculate differences for both options
+                    # Calculate differences for both options to find target
                     diff_1 = [
                         abs(option_1[i] - optimal_allocation[i])
                         for i in range(len(option_1))
@@ -580,72 +579,82 @@ def _generate_choice_pair_html(
 
                     # Find the target category (the one with maximum change)
                     max_diff_1 = max(diff_1)
-                    max_diff_2 = max(diff_2)
                     target_category = diff_1.index(max_diff_1)
 
-                    # The magnitude is half the total change (since strategy uses 2*x)
-                    magnitude = max_diff_1 // 2 if max_diff_1 > 0 else max_diff_2 // 2
-
                 except (KeyError, ValueError, json.JSONDecodeError):
-                    magnitude = None
                     target_category = None
 
-            # If we have the necessary data from the strategy
-            if magnitude is not None and target_category is not None and subjects:
-                total_change = 2 * magnitude
+            # If we have target_category and subjects
+            if target_category is not None and subjects:
+                try:
+                    optimal_allocation = json.loads(choice["optimal_allocation"])
 
-                # Get target category name
-                if target_category < len(subjects):
-                    target_name = subjects[target_category]
-                else:
-                    target_name = f"Category {target_category + 1}"
+                    # Calculate actual changes for the target category
+                    target_value_ideal = optimal_allocation[target_category]
+                    change_1 = option_1[target_category] - target_value_ideal
+                    change_2 = option_2[target_category] - target_value_ideal
 
-                # Generate new action-oriented labels
-                decrease_label = get_translation(
-                    "decrease_target_by", "answers", amount=total_change
-                )
-                increase_label = get_translation(
-                    "increase_target_by", "answers", amount=total_change
-                )
+                    # Generate labels based on actual changes
+                    if change_1 < 0:
+                        strategy_1 = get_translation(
+                            "decrease_target_by", "answers", amount=abs(change_1)
+                        )
+                    else:
+                        strategy_1 = get_translation(
+                            "increase_target_by", "answers", amount=change_1
+                        )
 
-                # Determine new labels based on strategy names
-                option1_strategy = str(choice.get("option1_strategy", ""))
-                if "Concentrated" in option1_strategy or "מרוכזים" in option1_strategy:
-                    new_strategy_1 = decrease_label
-                    new_strategy_2 = increase_label
-                else:
-                    new_strategy_1 = increase_label
-                    new_strategy_2 = decrease_label
+                    if change_2 < 0:
+                        strategy_2 = get_translation(
+                            "decrease_target_by", "answers", amount=abs(change_2)
+                        )
+                    else:
+                        strategy_2 = get_translation(
+                            "increase_target_by", "answers", amount=change_2
+                        )
 
-                # Update the strategy labels
-                strategy_1 = new_strategy_1
-                strategy_2 = new_strategy_2
+                    # Get target category name
+                    if target_category < len(subjects):
+                        target_name = subjects[target_category]
+                    else:
+                        target_name = f"Category {target_category + 1}"
 
-                # Update the option display to use bold formatting for target
-                option_1_formatted = format_vector_with_bold(option_1, target_category)
-                option_2_formatted = format_vector_with_bold(option_2, target_category)
+                    # Update the option display to use bold formatting for target
+                    option_1_formatted = format_vector_with_bold(
+                        option_1, target_category
+                    )
+                    option_2_formatted = format_vector_with_bold(
+                        option_2, target_category
+                    )
 
-                # Store formatted options for later use
-                choice["_formatted_option_1"] = option_1_formatted
-                choice["_formatted_option_2"] = option_2_formatted
-                choice["_target_name"] = target_name
+                    # Store formatted options for later use
+                    choice["_formatted_option_1"] = option_1_formatted
+                    choice["_formatted_option_2"] = option_2_formatted
+                    choice["_target_name"] = target_name
+
+                except (KeyError, ValueError, json.JSONDecodeError):
+                    # Fallback to original strategy names if calculation fails
+                    pass
 
             else:
                 # Fallback to original magnitude display if data is missing
                 if "(" not in str(strategy_1) and ")" not in str(strategy_1):
-                    optimal_allocation = json.loads(choice["optimal_allocation"])
-                    diff_1 = [
-                        abs(option_1[i] - optimal_allocation[i])
-                        for i in range(len(option_1))
-                    ]
-                    diff_2 = [
-                        abs(option_2[i] - optimal_allocation[i])
-                        for i in range(len(option_2))
-                    ]
-                    magnitude_1 = max(diff_1)
-                    magnitude_2 = max(diff_2)
-                    strategy_1 = f"{strategy_1} ({magnitude_1})"
-                    strategy_2 = f"{strategy_2} ({magnitude_2})"
+                    try:
+                        optimal_allocation = json.loads(choice["optimal_allocation"])
+                        diff_1 = [
+                            abs(option_1[i] - optimal_allocation[i])
+                            for i in range(len(option_1))
+                        ]
+                        diff_2 = [
+                            abs(option_2[i] - optimal_allocation[i])
+                            for i in range(len(option_2))
+                        ]
+                        magnitude_1 = max(diff_1)
+                        magnitude_2 = max(diff_2)
+                        strategy_1 = f"{strategy_1} ({magnitude_1})"
+                        strategy_2 = f"{strategy_2} ({magnitude_2})"
+                    except (KeyError, ValueError, json.JSONDecodeError):
+                        pass
 
         except (KeyError, ValueError, json.JSONDecodeError) as e:
             logger.warning(
