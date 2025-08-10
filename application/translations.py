@@ -680,12 +680,12 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Survey",
         },
         "concentrated_changes": {
-            "he": "מרוכזים",
-            "en": "Concentrated",
+            "he": "מרוכז (הפחתת יעד)",
+            "en": "Concentrated (Target Decreases)",
         },
         "distributed_changes": {
-            "he": "מבוזרים",
-            "en": "Distributed",
+            "he": "מבוזר (הגדלת יעד)",
+            "en": "Distributed (Target Increases)",
         },
         "preference_consistency": {
             "he": "עקביות העדפות",
