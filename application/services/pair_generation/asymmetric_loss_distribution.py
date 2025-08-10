@@ -31,10 +31,10 @@ class AsymmetricLossDistributionStrategy(PairGenerationStrategy):
 
     # Fixed difference vectors for Type B fallback
     TYPE_B_VECTORS = {
-        1: [(1, -2, 1), (-1, 2, -1)],
-        2: [(2, -4, 2), (-2, 4, -2)],
-        3: [(1, -3, 2), (-1, 3, -2)],
-        4: [(2, -5, 3), (-2, 5, -3)],
+        1: [(-2, 1, 1), (2, -1, -1)],  # Concentrated at index 0: -2/+2
+        2: [(-4, 2, 2), (4, -2, -2)],  # Concentrated at index 0: -4/+4
+        3: [(-3, 1, 2), (3, -1, -2)],  # Concentrated at index 0: -3/+3
+        4: [(-5, 2, 3), (5, -2, -3)],  # Concentrated at index 0: -5/+5
     }
 
     def generate_pairs(
