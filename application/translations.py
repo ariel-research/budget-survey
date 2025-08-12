@@ -769,6 +769,33 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מטרה: {target_name}",
             "en": "Target: {target_name}",
         },
+        "asymmetric_matrix_title": {
+            "he": "מטריצת התפלגות הפסד אסימטרי",
+            "en": "Asymmetric Loss Distribution Matrix",
+        },
+        "magnitude_levels_note": {
+            "he": "רמות עוצמה (X = יחידת בסיס × מכפיל)",
+            "en": "Magnitude Levels (X = base_unit × multiplier)",
+        },
+        "legend_title": {"he": "מקרא", "en": "Legend"},
+        "legend_note": {
+            "he": "התא מציג בחירה בודדת בעוצמה זו. כחול = הקטנה מרוכזת בפרויקט היעד; כתום = הקטנה מחולקת שווה בשווה בין שני הפרויקטים האחרים (היעד גדל).",
+            "en": "Cell shows a single choice at that magnitude. Blue = concentrated decrease in the target; Orange = decrease split evenly across the other two (target increases).",
+        },
+        "legend_concentrated_desc": {
+            "he": "הקטנה מרוכזת בפרויקט היעד (כל ההקטנה נלקחת ממנו; האחרים גדלים בשווה)",
+            "en": "Concentrated decrease in the target project (entire decrease from target; the other two increase equally)",
+        },
+        "legend_distributed_desc": {
+            "he": "הקטנה מבוזרת על פני שני הפרויקטים האחרים (מחולקת שווה בשווה; היעד גדל)",
+            "en": "Distributed decrease across the other two projects (split evenly; target increases)",
+        },
+        "target_category": {"he": "קטגוריית יעד", "en": "Target Category"},
+        "magnitude_level": {"he": "רמת עוצמה", "en": "Magnitude Level"},
+        "decrease_preference": {"he": "מעדיף הקטנה", "en": "Prefers Decrease"},
+        "increase_preference": {"he": "מעדיף הגדלה", "en": "Prefers Increase"},
+        "color_legend_title": {"he": "מקרא צבעים", "en": "Color Legend"},
+        "data_summary_title": {"he": "סיכום נתונים", "en": "Data Summary"},
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},

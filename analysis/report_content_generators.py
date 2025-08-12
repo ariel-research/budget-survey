@@ -557,12 +557,19 @@ def _generate_choice_pair_html(
                 f"{diff_2_formatted}</small>"
             )
 
-    # For asymmetric_loss_distribution strategy, create new UI
+    # For asymmetric_loss_distribution strategy, create new UI with
+    # target and action labels. Make detection language-agnostic by
+    # preferring the explicit strategy_name on the choice when available.
     elif (
-        "Concentrated Changes" in str(strategy_1)
+        choice.get("strategy_name") == "asymmetric_loss_distribution"
+        or "Concentrated Changes" in str(strategy_1)
         or "Distributed Changes" in str(strategy_1)
         or "שינויים מרוכזים" in str(strategy_1)
         or "שינויים מבוזרים" in str(strategy_1)
+        or get_translation("concentrated_changes", "answers") in str(strategy_1)
+        or get_translation("distributed_changes", "answers") in str(strategy_1)
+        or get_translation("concentrated_changes", "answers") in str(strategy_2)
+        or get_translation("distributed_changes", "answers") in str(strategy_2)
     ):
         try:
             # Helper function to format vector with bold target element
@@ -598,8 +605,8 @@ def _generate_choice_pair_html(
                 except (KeyError, ValueError, json.JSONDecodeError):
                     target_category = None
 
-            # If we have target_category and subjects
-            if target_category is not None and subjects:
+            # If we have target_category, format and label regardless of subjects
+            if target_category is not None:
                 try:
                     optimal_allocation = json.loads(choice["optimal_allocation"])
 
@@ -635,8 +642,8 @@ def _generate_choice_pair_html(
                             amount=change_2,
                         )
 
-                    # Get target category name
-                    if target_category < len(subjects):
+                    # Get target category name (fallback without subjects)
+                    if subjects and target_category < len(subjects):
                         target_name = subjects[target_category]
                     else:
                         target_name = f"Category {target_category + 1}"
@@ -937,6 +944,12 @@ def _generate_survey_choices_html(
         if consistency_table:
             html_parts.append(consistency_table)
 
+    # Special handling for asymmetric_loss_distribution strategy (single-user matrix)
+    elif strategy_name == "asymmetric_loss_distribution":
+        matrix_html = _generate_single_user_asymmetric_matrix_table(choices, survey_id)
+        if matrix_html:
+            html_parts.append(matrix_html)
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -1014,6 +1027,393 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
 
     # Return all tables
     return main_table_html + percentile_table_html + transitivity_table
+
+
+def _generate_single_user_asymmetric_matrix_data(
+    choices: List[Dict], survey_id: int
+) -> Dict:
+    """
+    Process single user's asymmetric loss distribution choices into matrix format.
+
+    Returns a dictionary with matrix data, totals, type distribution, subjects,
+    ideal budget and magnitude levels present for this user's choices.
+    """
+    try:
+        # Subjects for target categories with fallback labels
+        subjects = []
+        try:
+            subjects = get_subjects(survey_id) or []
+        except Exception as e:
+            logger.warning(f"get_subjects failed for survey {survey_id}: {e}")
+        if not subjects:
+            subjects = [
+                f"Category {i}" for i in range(3)
+            ]  # Fallback if DB subjects missing
+
+        # Ideal budget
+        ideal_budget: List[int] = []
+        if choices and choices[0].get("optimal_allocation"):
+            try:
+                ideal_budget = list(json.loads(choices[0]["optimal_allocation"]))
+            except Exception:
+                ideal_budget = []
+
+        # Helpers to robustly extract fields
+        def extract_target_category(choice: Dict) -> Optional[int]:
+            tc = choice.get("target_category")
+            if tc is not None:
+                return int(tc)
+            pair_num = choice.get("pair_number")
+            if isinstance(pair_num, int) and pair_num > 0:
+                return min(2, (pair_num - 1) // 4)
+            return None
+
+        magnitude_levels_set = set()
+        type_a_count = 0
+        type_b_count = 0
+
+        # matrix[target][magnitude] = { 'decrease_chosen': bool, 'has_data': bool }
+        matrix: Dict[int, Dict[int, Dict[str, bool]]] = {0: {}, 1: {}, 2: {}}
+
+        # Regex to capture magnitude and type from strategy strings like "(..., Type A)"
+        type_pattern = re.compile(r"Type\s*([AB])", re.IGNORECASE)
+        mag_in_paren_pattern = re.compile(r"\((\d+)\s*,\s*Type\s*[AB]\)")
+
+        for choice in choices:
+            # Determine target category
+            target_category = extract_target_category(choice)
+            if target_category is None or target_category not in (0, 1, 2):
+                logger.warning(
+                    f"Skipping choice without valid target_category: {choice.get('id', '')}"
+                )
+                continue
+
+            # Determine magnitude (prefer explicit field or parse from strategy)
+            magnitude: Optional[int] = None
+            if "magnitude" in choice and isinstance(
+                choice.get("magnitude"), (int, float)
+            ):
+                magnitude = int(choice["magnitude"])
+            else:
+                s1 = str(choice.get("option1_strategy", ""))
+                s2 = str(choice.get("option2_strategy", ""))
+                m = mag_in_paren_pattern.search(s1) or mag_in_paren_pattern.search(s2)
+                if m:
+                    try:
+                        magnitude = int(m.group(1))
+                    except Exception:
+                        magnitude = None
+
+            # Fallback: infer target, type and magnitude from vectors and ideal budget
+            # Initialize pair_type early so it exists for later checks
+            pair_type = str(choice.get("pair_type", "")).upper()
+            # Load ideal allocation robustly (already-parsed list or JSON string)
+            opt_alloc = []
+            raw_opt = choice.get("optimal_allocation")
+            if ideal_budget:
+                opt_alloc = list(ideal_budget)
+            elif isinstance(raw_opt, (list, tuple)):
+                opt_alloc = list(raw_opt)
+            elif isinstance(raw_opt, str):
+                try:
+                    opt_alloc = list(json.loads(raw_opt))
+                except Exception:
+                    opt_alloc = []
+
+            # Load vectors robustly (already list or JSON string)
+            vec1 = None
+            vec2 = None
+            raw_v1 = choice.get("option_1")
+            raw_v2 = choice.get("option_2")
+            if isinstance(raw_v1, (list, tuple)):
+                vec1 = list(raw_v1)
+            elif isinstance(raw_v1, str):
+                try:
+                    vec1 = list(json.loads(raw_v1))
+                except Exception:
+                    vec1 = None
+            if isinstance(raw_v2, (list, tuple)):
+                vec2 = list(raw_v2)
+            elif isinstance(raw_v2, str):
+                try:
+                    vec2 = list(json.loads(raw_v2))
+                except Exception:
+                    vec2 = None
+
+            if (
+                (target_category is None or magnitude is None)
+                and opt_alloc
+                and vec1
+                and vec2
+            ):
+                # Compute deltas relative to ideal
+                d1 = [v - o for v, o in zip(vec1, opt_alloc)]
+                d2 = [v - o for v, o in zip(vec2, opt_alloc)]
+
+                # Infer target index by selecting the largest total movement.
+                # This is robust for both Type A and Type B pairs and avoids
+                # mis-detecting index 0 when equal-opposite patterns are not
+                # strictly present in stored data.
+                inferred_idx = max(
+                    range(len(opt_alloc)), key=lambda i: abs(d1[i]) + abs(d2[i])
+                )
+
+                if target_category is None:
+                    target_category = inferred_idx
+
+                # Infer magnitude and type
+                delta_target_abs = max(abs(d1[inferred_idx]), abs(d2[inferred_idx]))
+                other_idxs = [i for i in range(len(opt_alloc)) if i != inferred_idx]
+                a1 = [abs(d1[i]) for i in other_idxs]
+                a2 = [abs(d2[i]) for i in other_idxs]
+
+                is_type_a_pattern = (
+                    a1[0] == a1[1]
+                    and a2[0] == a2[1]
+                    and a1[0] == a2[0]
+                    and (2 * a1[0]) == delta_target_abs
+                )
+
+                if magnitude is None:
+                    magnitude = (
+                        int(delta_target_abs // 2)
+                        if is_type_a_pattern
+                        else int(delta_target_abs)
+                    )
+
+                # Record inferred pair_type, counting will be handled uniformly later
+                if pair_type not in ("A", "B"):
+                    pair_type = "A" if is_type_a_pattern else "B"
+
+            if magnitude is None:
+                logger.warning(
+                    f"Skipping choice without determinable magnitude: {choice.get('id', '')}"
+                )
+                continue
+
+            magnitude_levels_set.add(magnitude)
+
+            # Determine Type A/B (finalize and count once)
+            pair_type = (
+                str(choice.get("pair_type", "")).upper()
+                if pair_type not in ("A", "B")
+                else pair_type
+            )
+            if pair_type not in ("A", "B"):
+                s1 = str(choice.get("option1_strategy", ""))
+                s2 = str(choice.get("option2_strategy", ""))
+                mt = type_pattern.search(s1) or type_pattern.search(s2)
+                if mt:
+                    pair_type = mt.group(1).upper()
+            if pair_type == "A":
+                type_a_count += 1
+            elif pair_type == "B":
+                type_b_count += 1
+
+            # Determine user choice as decrease vs increase
+            user_choice = choice.get("user_choice")
+            if user_choice not in (1, 2):
+                logger.warning(
+                    f"Skipping choice with invalid user_choice: {choice.get('id', '')}"
+                )
+                continue
+
+            # Prefer vector-based detection of decrease
+            chose_decrease = None
+            if opt_alloc and vec1 and vec2 and target_category is not None:
+                d1 = [v - o for v, o in zip(vec1, opt_alloc)]
+                d2 = [v - o for v, o in zip(vec2, opt_alloc)]
+                chose_decrease = (user_choice == 1 and d1[target_category] < 0) or (
+                    user_choice == 2 and d2[target_category] < 0
+                )
+            else:
+                option1_strategy = str(choice.get("option1_strategy", ""))
+                option2_strategy = str(choice.get("option2_strategy", ""))
+                is_opt1_decrease = "Concentrated" in option1_strategy or (
+                    get_translation("concentrated_changes", "answers")
+                    in option1_strategy
+                )
+                is_opt2_decrease = "Concentrated" in option2_strategy or (
+                    get_translation("concentrated_changes", "answers")
+                    in option2_strategy
+                )
+                chose_decrease = (user_choice == 1 and is_opt1_decrease) or (
+                    user_choice == 2 and is_opt2_decrease
+                )
+
+            matrix[target_category][magnitude] = {
+                "decrease_chosen": bool(chose_decrease),
+                "has_data": True,
+            }
+
+        # Build totals
+        magnitude_levels = sorted(magnitude_levels_set)
+
+        row_totals: Dict[int, Dict[str, float]] = {}
+        col_totals: Dict[int, Dict[str, float]] = {
+            m: {"decrease_count": 0, "total_count": 0, "percentage": 0.0}
+            for m in magnitude_levels
+        }
+        grand_decrease = 0
+        grand_total = 0
+
+        for target in (0, 1, 2):
+            decrease_count = 0
+            total_count = 0
+            for m in magnitude_levels:
+                cell = matrix[target].get(m)
+                if cell and cell.get("has_data"):
+                    total_count += 1
+                    if cell.get("decrease_chosen"):
+                        decrease_count += 1
+                        col_totals[m]["decrease_count"] += 1
+                    col_totals[m]["total_count"] += 1
+            row_totals[target] = {
+                "decrease_count": decrease_count,
+                "total_count": total_count,
+                "percentage": (
+                    (decrease_count / total_count * 100) if total_count else 0.0
+                ),
+            }
+            grand_decrease += decrease_count
+            grand_total += total_count
+
+        for m in magnitude_levels:
+            dc = col_totals[m]["decrease_count"]
+            tc = col_totals[m]["total_count"]
+            col_totals[m]["percentage"] = (dc / tc * 100) if tc else 0.0
+
+        grand = {
+            "decrease_count": grand_decrease,
+            "total_count": grand_total,
+            "percentage": (grand_decrease / grand_total * 100) if grand_total else 0.0,
+        }
+
+        return {
+            "matrix": matrix,
+            "row_totals": row_totals,
+            "col_totals": col_totals,
+            "grand_total": grand,
+            "type_distribution": {"type_a": type_a_count, "type_b": type_b_count},
+            "subjects": subjects,
+            "ideal_budget": ideal_budget,
+            "magnitude_levels": magnitude_levels,
+        }
+    except Exception as e:
+        logger.warning(f"Failed generating asymmetric matrix data: {e}")
+        return {}
+
+
+def _generate_single_user_asymmetric_matrix_table(
+    choices: List[Dict], survey_id: int
+) -> str:
+    """Generate HTML matrix table for single user's asymmetric responses."""
+    data = _generate_single_user_asymmetric_matrix_data(choices, survey_id)
+    if not data or not data.get("magnitude_levels"):
+        return ""
+
+    subjects = data["subjects"]
+    magnitude_levels: List[int] = data["magnitude_levels"]
+    matrix = data["matrix"]
+    row_totals = data["row_totals"]
+    col_totals = data["col_totals"]
+    grand = data["grand_total"]
+    type_dist = data["type_distribution"]
+
+    # Translations
+    title = get_translation("asymmetric_matrix_title", "answers")
+    target_category_label = get_translation("target_category", "answers")
+    magnitude_note = get_translation("magnitude_levels_note", "answers")
+
+    # Build table header
+    header_cells = [f"<th>{html.escape(target_category_label)}</th>"]
+    for m in magnitude_levels:
+        header_cells.append(f"<th>X={m}</th>")
+    header_cells.append("<th>%</th>")
+
+    rows_html = []
+    for target in (0, 1, 2):
+        subject_name = (
+            subjects[target] if target < len(subjects) else f"Category {target}"
+        )
+        cells = [f"<td>{html.escape(subject_name)}</td>"]
+        for m in magnitude_levels:
+            cell = matrix.get(target, {}).get(m)
+            if not cell or not cell.get("has_data"):
+                cells.append('<td class="matrix-cell-no-data" title="No data">–</td>')
+            else:
+                if cell.get("decrease_chosen"):
+                    cells.append(
+                        '<td class="matrix-cell-decrease" aria-label="Concentrated decrease"><span class="matrix-choice-dot decrease" aria-hidden="true"></span></td>'
+                    )
+                else:
+                    cells.append(
+                        '<td class="matrix-cell-increase" aria-label="Distributed decrease"><span class="matrix-choice-dot increase" aria-hidden="true"></span></td>'
+                    )
+        rt = row_totals.get(target, {"percentage": 0.0})
+        cells.append(f"<td><b>{rt['percentage']:.0f}%</b></td>")
+        rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+    # Column totals row
+    totals_cells = ['<td class="matrix-totals-row"><b>Total</b></td>']
+    for m in magnitude_levels:
+        pct = col_totals[m]["percentage"]
+        totals_cells.append(f'<td class="matrix-totals-row"><b>{pct:.0f}%</b></td>')
+    totals_cells.append(
+        f"<td class=\"matrix-totals-row\"><b>{grand['percentage']:.0f}%</b></td>"
+    )
+
+    # Legend and data summary
+    legend_title = get_translation("legend_title", "answers")
+    legend_note = get_translation("legend_note", "answers")
+
+    summary_html = (
+        '<div class="asymmetric-matrix-summary">'
+        f'<div class="legend-title">{legend_title}</div>'
+        '<div class="asymmetric-legend">'
+        '<div class="legend-section">'
+        '<div class="legend-items">'
+        "<div class='legend-item'>"
+        "<span class='legend-square decrease'></span>"
+        f"<span class='legend-label'>{get_translation('legend_concentrated_desc','answers')}</span>"
+        "</div>"
+        "<div class='legend-item'>"
+        "<span class='legend-square increase'></span>"
+        f"<span class='legend-label'>{get_translation('legend_distributed_desc','answers')}</span>"
+        "</div>"
+        "</div>"
+        "</div>"
+        '<div class="legend-section legend-note">'
+        f'<div class="legend-microcopy">{legend_note}</div>'
+        "<div class='legend-badges'>"
+        f"<span class='legend-badge'>Type A: {type_dist['type_a']}</span>"
+        f"<span class='legend-badge'>Type B: {type_dist['type_b']}</span>"
+        "</div>"
+        "</div>"
+        "</div>"
+        "</div>"
+    )
+
+    table_html = (
+        '<div class="asymmetric-matrix-container">'
+        f'<h4 class="asymmetric-matrix-title">{html.escape(title)}</h4>'
+        f'<div class="asymmetric-magnitude-note">{html.escape(magnitude_note)}</div>'
+        '<table class="asymmetric-matrix-table">'
+        + "<thead><tr>"
+        + "".join(header_cells)
+        + "</tr></thead>"
+        + "<tbody>"
+        + "".join(rows_html)
+        + '<tr class="matrix-totals-row">'
+        + "".join(totals_cells)
+        + "</tr>"
+        + "</tbody>"
+        + "</table>"
+        + summary_html
+        + "</div>"
+    )
+
+    return table_html
 
 
 def _get_transitivity_interpretation(rate: float) -> str:
@@ -2554,6 +2954,9 @@ def generate_overall_statistics_table(
             total_order_consistency / valid_summaries if valid_summaries > 0 else 0
         )
 
+        # Get translation for consistency
+        overall_consistency_label = get_translation("overall_consistency", "answers")
+
         # Get translations for all three labels
         overall_consistency_label = get_translation("overall_consistency", "answers")
         avg_transitivity_label = get_translation("transitivity_rate", "answers")
@@ -3385,7 +3788,7 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
             return ""
 
         # Get translations
-        group_label = get_translation("group", "answers", fallback="Group")
+        group_label = get_translation("group", "answers")
         consistency_label = get_translation("consistency", "answers")
         overall_label = get_translation("overall", "answers")
         table_title = get_translation("group_consistency", "answers")
@@ -3423,7 +3826,7 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
         )
 
         # Get translation for "groups"
-        groups_label = get_translation("groups", "answers", fallback="groups")
+        groups_label = get_translation("groups", "answers")
 
         table_html = f"""
         <div class="cyclic-shift-consistency-container">
@@ -3481,7 +3884,7 @@ def _generate_linear_symmetry_consistency_table(choices: List[Dict]) -> str:
             return ""
 
         # Get translations
-        group_label = get_translation("group", "answers", fallback="Group")
+        group_label = get_translation("group", "answers")
         consistency_label = get_translation("consistency_percent", "answers")
         overall_label = get_translation("overall", "answers")
         table_title = get_translation("group_consistency", "answers")

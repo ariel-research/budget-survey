@@ -289,32 +289,91 @@ class SurveySessionData:
             - option1_differences: Differences for option 1 (if available)
             - option2_differences: Differences for option 2 (if available)
         """
-        # Extract the strategy descriptions and vectors
-        strategy_descriptions = list(pair.keys())
-        vectors = list(pair.values())
+        # Identify the two vector entries robustly (ignore metadata keys)
+        vector_items = [
+            (k, v)
+            for k, v in pair.items()
+            if isinstance(v, (list, tuple)) and len(v) == 3 and sum(v) == 100
+        ]
+
+        if len(vector_items) < 2:
+            # Fallback to previous behavior (assume first two values are vectors)
+            strategy_descriptions = list(pair.keys())
+            vectors = list(pair.values())
+            option1_diffs = pair.get("option1_differences")
+            option2_diffs = pair.get("option2_differences")
+            if random.random() < 0.5:
+                return (
+                    vectors[1],
+                    vectors[0],
+                    True,
+                    strategy_descriptions[1],
+                    strategy_descriptions[0],
+                    option2_diffs,
+                    option1_diffs,
+                )
+            return (
+                vectors[0],
+                vectors[1],
+                False,
+                strategy_descriptions[0],
+                strategy_descriptions[1],
+                option1_diffs,
+                option2_diffs,
+            )
+
+        # Map vector labels to their strategy text if available
+        (label1, vec1), (label2, vec2) = vector_items[:2]
+        opt1_text = label1
+        opt2_text = label2
+
+        provided_opt1 = pair.get("option1_strategy")
+        provided_opt2 = pair.get("option2_strategy")
+
+        # Prefer provided strategy strings (contain magnitude/type for asymmetric strategy)
+        if provided_opt1 and provided_opt2:
+            try:
+                conc_label = get_translation("concentrated_changes", "answers")
+                dist_label = get_translation("distributed_changes", "answers")
+            except Exception:
+                conc_label = "Concentrated"
+                dist_label = "Distributed"
+
+            def pick_text(lbl: str) -> str:
+                if conc_label in lbl or "Concentrated" in lbl:
+                    return provided_opt1
+                if dist_label in lbl or "Distributed" in lbl:
+                    return provided_opt2
+                # Fallback to provided option1 for first and option2 for second
+                return provided_opt1 if lbl == label1 else provided_opt2
+
+            opt1_text = pick_text(label1)
+            opt2_text = pick_text(label2)
 
         # Extract differences if they exist
         option1_diffs = pair.get("option1_differences")
         option2_diffs = pair.get("option2_differences")
 
+        # Randomize order consistently for vectors, texts, and diffs
         if random.random() < 0.5:  # 50% chance to swap
             return (
-                vectors[1],  # option1
-                vectors[0],  # option2
-                True,  # was_swapped
-                strategy_descriptions[1],  # option1_strategy
-                strategy_descriptions[0],  # option2_strategy
-                option2_diffs,  # option1_differences (swapped)
-                option1_diffs,  # option2_differences (swapped)
+                vec2,
+                vec1,
+                True,
+                opt2_text,
+                opt1_text,
+                option2_diffs,
+                option1_diffs,
             )
+
         return (
-            vectors[0],  # option1
-            vectors[1],  # option2
-            False,  # was_swapped
-            strategy_descriptions[0],  # option1_strategy
-            strategy_descriptions[1],  # option2_strategy
-            option1_diffs,  # option1_differences
-            option2_diffs,  # option2_differences
+            vec1,
+            vec2,
+            False,
+            opt1_text,
+            opt2_text,
+            option1_diffs,
+            option2_diffs,
         )
 
     def to_template_data(self) -> Dict:

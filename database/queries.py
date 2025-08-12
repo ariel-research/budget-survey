@@ -479,9 +479,15 @@ def retrieve_user_survey_choices() -> List[Dict]:
     try:
         results = execute_query(query)
         if results:
-            # Parse JSON fields for differences
+            # Parse JSON fields and enrich with strategy metadata for
+            # asymmetric_loss_distribution rendering
+            import re
+
+            type_re = re.compile(r"Type\s*([AB])", re.IGNORECASE)
+            mag_re = re.compile(r"\((\d+)\s*,\s*Type\s*[AB]\)")
+
             for result in results:
-                # Parse option1_differences if it exists and is not None
+                # Parse differences if present
                 if result.get("option1_differences"):
                     try:
                         result["option1_differences"] = json.loads(
@@ -490,7 +496,6 @@ def retrieve_user_survey_choices() -> List[Dict]:
                     except (json.JSONDecodeError, TypeError):
                         result["option1_differences"] = None
 
-                # Parse option2_differences if it exists and is not None
                 if result.get("option2_differences"):
                     try:
                         result["option2_differences"] = json.loads(
@@ -498,6 +503,53 @@ def retrieve_user_survey_choices() -> List[Dict]:
                         )
                     except (json.JSONDecodeError, TypeError):
                         result["option2_differences"] = None
+
+                # Try to enrich with pair_type, magnitude, target_category
+                try:
+                    opt_alloc = json.loads(result.get("optimal_allocation", "[]"))
+                except (json.JSONDecodeError, TypeError):
+                    opt_alloc = []
+
+                try:
+                    v1 = json.loads(result.get("option_1", "[]"))
+                except (json.JSONDecodeError, TypeError):
+                    v1 = []
+                try:
+                    v2 = json.loads(result.get("option_2", "[]"))
+                except (json.JSONDecodeError, TypeError):
+                    v2 = []
+
+                s1 = str(result.get("option1_strategy", ""))
+                s2 = str(result.get("option2_strategy", ""))
+
+                m = mag_re.search(s1) or mag_re.search(s2)
+                t = type_re.search(s1) or type_re.search(s2)
+
+                if m:
+                    try:
+                        result["magnitude"] = int(m.group(1))
+                    except Exception:
+                        pass
+                if t:
+                    result["pair_type"] = t.group(1).upper()
+
+                # Infer target index from vectors when possible
+                if opt_alloc and v1 and v2 and len(opt_alloc) == 3:
+                    try:
+                        d1 = [a - b for a, b in zip(v1, opt_alloc)]
+                        d2 = [a - b for a, b in zip(v2, opt_alloc)]
+
+                        # Choose the index with the largest total movement
+                        # relative to the ideal allocation. For Type A pairs
+                        # the target index changes by 2x while the others by x,
+                        # so argmax(abs(d1)+abs(d2)) reliably identifies target.
+                        inferred = max(
+                            range(len(opt_alloc)),
+                            key=lambda i: abs(d1[i]) + abs(d2[i]),
+                        )
+                        result["target_category"] = int(inferred)
+                    except Exception:
+                        pass
 
             logger.debug(f"Retrieved choices data for {len(results)} comparison pairs")
             return results
