@@ -284,7 +284,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "התאמה אוטומטית של הערכים באופן יחסי כך שיסתכמו ל-100",
             "en": "Automatically adjust values proportionally to sum to 100",
         },
-        "total": {"he": 'סה"כ:', "en": "Total:"},
+        "total": {"he": "סך הכל", "en": "Total"},
         "consent_title": {"he": "טופס הסכמה", "en": "Consent Form"},
         "consent_text": {
             "he": "לפני התחלת המענה על השאלון, נבקשך להצהיר/ה בזאת כי ניתן לך מידע באשר למחקר ולמטרותיו, וכי מילוי השאלון נעשה מרצונך החופשי, שהנך משתתפ/ת במחקר מתוך הסכמה מלאה, ידוע לך כי אינך חייב/ת להשתתף במחקר וכי בכל שלב את/ה יכול/ה להפסיק לענות על השאלון. השאלון הוא אנונימי ומובטחת לך סודיות באשר לזהותך האישית ולא יעשה כל שימוש בפרטים שמלאת מלבד לצורך מחקר זה. בכל בעיה שקשורה למחקר תוכל/י לפנות אלינו להתייעצות נוספת.",
@@ -725,6 +725,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "עקביות סדר העדפות (קבוצות טרנזיטיביות)",
             "en": "Order Consistency (Transitive Groups)",
         },
+        "total": {"he": 'סה"כ', "en": "Total"},
         "perfect_logical_consistency": {
             "he": "עקביות לוגית מושלמת",
             "en": "Perfect logical consistency",

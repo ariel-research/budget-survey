@@ -1355,7 +1355,10 @@ def _generate_single_user_asymmetric_matrix_table(
         rows_html.append("<tr>" + "".join(cells) + "</tr>")
 
     # Column totals row
-    totals_cells = ['<td class="matrix-totals-row"><b>Total</b></td>']
+    total_label = get_translation("total", "answers")
+    totals_cells = [
+        f'<td class="matrix-totals-row"><b>{html.escape(total_label)}</b></td>'
+    ]
     for m in magnitude_levels:
         pct = col_totals[m]["percentage"]
         totals_cells.append(f'<td class="matrix-totals-row"><b>{pct:.0f}%</b></td>')
