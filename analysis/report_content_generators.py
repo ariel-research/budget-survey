@@ -54,7 +54,8 @@ def calculate_user_consistency(
     consistency_threshold: Min ratio to be considered consistent (default: 0.8).
 
     Returns:
-    tuple: (consistency_%, qualified_users, total_responses, min_surveys, total_surveys)
+    tuple: (consistency_%, qualified_users, total_responses, min_surveys,
+    total_surveys)
         - consistency_%: Percentage of users with consistent preferences.
         - qualified_users: # users completing min required surveys.
         - total_responses: Total number of survey responses in dataset.
@@ -161,7 +162,7 @@ def generate_executive_summary(
 
     content = f"""
     <p>{report_line}</p>
-    
+
     <p>Key findings:</p>
     <ol>
         <li>{pref_line}</li>
@@ -217,7 +218,10 @@ def generate_overall_stats(
                 <li>Total survey responses: {total_survey_responses}
                     <ul>
                         <li>Unique participants: {unique_users}</li>
-                        <li>Participants who took multiple surveys: {multi_survey_users}</li>
+                        <li>
+                            Participants who took multiple surveys:
+                            {multi_survey_users}
+                        </li>
                     </ul>
                 </li>
             </ul>
@@ -227,7 +231,10 @@ def generate_overall_stats(
             <h3>Response Details</h3>
             <ul>
                 <li>Total answers collected: {total_answers}</li>
-                <li>Average answers per survey response: {avg_answers_per_user:.1f}</li>
+                <li>
+                    Average answers per survey response:
+                    {avg_answers_per_user:.1f}
+                </li>
             </ul>
         </div>
     </div>
@@ -265,7 +272,7 @@ def generate_survey_analysis(summary_stats: pd.DataFrame) -> str:
 
         survey_content = f"""
         <h3>Survey {row['survey_id']}</h3>
-        <p>This survey had {row['total_survey_responses']} participants 
+        <p>This survey had {row['total_survey_responses']} participants
            providing {row['total_answers']} answers.</p>
         <p>The results show {interpretation}:</p>
         <ul>
@@ -321,7 +328,10 @@ def choice_explanation_string_version1(
     Explain user's choice between two options (version 1).
     """
     is_sum = is_sum_optimized(
-        tuple(optimal_allocation), tuple(option_1), tuple(option_2), user_choice
+        tuple(optimal_allocation),
+        tuple(option_1),
+        tuple(option_2),
+        user_choice,
     )
     opt_type = "Sum" if is_sum else "Ratio"
     css_class = "optimization-sum" if is_sum else "optimization-ratio"
@@ -390,7 +400,9 @@ def choice_explanation_string_version2(
     """
     Explain user's choice between two options (formatted table, version 2).
     """
-    from application.services.pair_generation import OptimizationMetricsStrategy
+    from application.services.pair_generation import (
+        OptimizationMetricsStrategy,
+    )
     from application.translations import get_translation
 
     strategy = OptimizationMetricsStrategy()  # Create instance
@@ -474,7 +486,7 @@ def _generate_choice_pair_html(
         strategy_1 = survey_labels[0]
         strategy_2 = survey_labels[1]
 
-    # For cyclic shift strategy, calculate actual differences between ideal and final vectors
+    # For cyclic shift strategy, calculate actual differences
     if "Cyclic Pattern" in str(strategy_1) or "Cyclic Pattern" in str(strategy_2):
         # Get the user's optimal allocation for this choice
         optimal_allocation = json.loads(choice["optimal_allocation"])
@@ -505,10 +517,10 @@ def _generate_choice_pair_html(
         diff_2_formatted = format_differences(actual_diff_2)
 
         strategy_1 = (
-            f"{strategy_1}<br><small>{changes_label}: {diff_1_formatted}</small>"
+            f"{strategy_1}<br><small>{changes_label}: " f"{diff_1_formatted}</small>"
         )
         strategy_2 = (
-            f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
+            f"{strategy_2}<br><small>{changes_label}: " f"{diff_2_formatted}</small>"
         )
 
     # For linear symmetry strategy, use stored differences
@@ -534,16 +546,18 @@ def _generate_choice_pair_html(
         if diff_1:
             diff_1_formatted = format_differences(diff_1)
             strategy_1 = (
-                f"{strategy_1}<br><small>{changes_label}: {diff_1_formatted}</small>"
+                f"{strategy_1}<br><small>{changes_label}: "
+                f"{diff_1_formatted}</small>"
             )
 
         if diff_2:
             diff_2_formatted = format_differences(diff_2)
             strategy_2 = (
-                f"{strategy_2}<br><small>{changes_label}: {diff_2_formatted}</small>"
+                f"{strategy_2}<br><small>{changes_label}: "
+                f"{diff_2_formatted}</small>"
             )
 
-    # For asymmetric_loss_distribution strategy, create new UI with target and action labels
+    # For asymmetric_loss_distribution strategy, create new UI
     elif (
         "Concentrated Changes" in str(strategy_1)
         or "Distributed Changes" in str(strategy_1)
@@ -597,20 +611,28 @@ def _generate_choice_pair_html(
                     # Generate labels based on actual changes
                     if change_1 < 0:
                         strategy_1 = get_translation(
-                            "decrease_target_by", "answers", amount=abs(change_1)
+                            "decrease_target_by",
+                            "answers",
+                            amount=abs(change_1),
                         )
                     else:
                         strategy_1 = get_translation(
-                            "increase_target_by", "answers", amount=change_1
+                            "increase_target_by",
+                            "answers",
+                            amount=change_1,
                         )
 
                     if change_2 < 0:
                         strategy_2 = get_translation(
-                            "decrease_target_by", "answers", amount=abs(change_2)
+                            "decrease_target_by",
+                            "answers",
+                            amount=abs(change_2),
                         )
                     else:
                         strategy_2 = get_translation(
-                            "increase_target_by", "answers", amount=change_2
+                            "increase_target_by",
+                            "answers",
+                            amount=change_2,
                         )
 
                     # Get target category name
@@ -619,7 +641,7 @@ def _generate_choice_pair_html(
                     else:
                         target_name = f"Category {target_category + 1}"
 
-                    # Update the option display to use bold formatting for target
+                    # Update the option display to use bold formatting
                     option_1_formatted = format_vector_with_bold(
                         option_1, target_category
                     )
@@ -637,7 +659,7 @@ def _generate_choice_pair_html(
                     pass
 
             else:
-                # Fallback to original magnitude display if data is missing
+                # Fallback to original magnitude display
                 if "(" not in str(strategy_1) and ")" not in str(strategy_1):
                     try:
                         optimal_allocation = json.loads(choice["optimal_allocation"])
@@ -658,7 +680,7 @@ def _generate_choice_pair_html(
 
         except (KeyError, ValueError, json.JSONDecodeError) as e:
             logger.warning(
-                f"Failed to process asymmetric_loss_distribution strategy: {e}"
+                "Failed to process asymmetric_loss_distribution strategy: " f"{e}"
             )
 
     # Generate raw choice info HTML
@@ -669,7 +691,9 @@ def _generate_choice_pair_html(
         f'<span class="raw-choice-label">{trans_orig}: </span>'
         f'<span class="raw-choice-value">{trans_opt}</span>'
         if raw_choice is not None
-        else f'<span class="raw-choice-unavailable">{trans_orig}: {trans_na}</span>'
+        else (
+            f'<span class="raw-choice-unavailable">{trans_orig}: ' f"{trans_na}</span>"
+        )
     )
 
     # Table headers
@@ -681,7 +705,7 @@ def _generate_choice_pair_html(
     check_1 = "✓" if user_choice == 1 else ""
     check_2 = "✓" if user_choice == 2 else ""
 
-    # Check if we have formatted options and target name from asymmetric_loss_distribution
+    # Check if we have formatted options and target name
     option_1_display = choice.get("_formatted_option_1", str(option_1))
     option_2_display = choice.get("_formatted_option_2", str(option_2))
     target_name = choice.get("_target_name")
@@ -769,7 +793,9 @@ def _generate_survey_summary_html(
     """
 
 
-def _generate_extreme_vector_consistency_summary(choices: List[Dict]) -> str:
+def _generate_extreme_vector_consistency_summary(
+    choices: List[Dict],
+) -> str:
     """
     Generate a simple consistency summary for extreme vector surveys.
 
@@ -778,12 +804,16 @@ def _generate_extreme_vector_consistency_summary(choices: List[Dict]) -> str:
                 extreme_vectors strategy.
 
     Returns:
-        str: HTML string showing consistency percentages for each comparison group.
+        str: HTML string showing consistency percentages for each group.
     """
     # Extract consistency information
-    _, processed_pairs, _, consistency_info, _ = _extract_extreme_vector_preferences(
-        choices
-    )
+    (
+        _,
+        processed_pairs,
+        _,
+        consistency_info,
+        _,
+    ) = _extract_extreme_vector_preferences(choices)
 
     if processed_pairs == 0 or not consistency_info:
         return ""  # Don't show summary if no valid data
@@ -822,15 +852,21 @@ def _generate_extreme_vector_consistency_summary(choices: List[Dict]) -> str:
         <div class="table-container">
             <table>
                 <tr>
-                    <td>{a_vs_b} {get_translation("consistency", "answers")}:</td>
+                    <td>
+                        {a_vs_b} {get_translation("consistency", "answers")}:
+                    </td>
                     <td>{consistency_percentages[0]}%</td>
                 </tr>
                 <tr>
-                    <td>{a_vs_c} {get_translation("consistency", "answers")}:</td>
+                    <td>
+                        {a_vs_c} {get_translation("consistency", "answers")}:
+                    </td>
                     <td>{consistency_percentages[1]}%</td>
                 </tr>
                 <tr>
-                    <td>{b_vs_c} {get_translation("consistency", "answers")}:</td>
+                    <td>
+                        {b_vs_c} {get_translation("consistency", "answers")}:
+                    </td>
                     <td>{consistency_percentages[2]}%</td>
                 </tr>
                 <tr class="overall-consistency">
@@ -850,13 +886,11 @@ def _generate_survey_choices_html(
     strategy_name: str = None,
 ) -> str:
     """Generate HTML for choices made in a single survey.
-
     Args:
         survey_id: ID of the survey
         choices: List of choices for a single survey
         option_labels: Labels for the two options
         strategy_name: Name of the strategy used for the survey
-
     Returns:
         str: HTML for the survey choices
     """
@@ -883,7 +917,8 @@ def _generate_survey_choices_html(
     html_parts = [
         '<div class="survey-choices">',
         f"<h4>{survey_id_label}: {survey_id}</h4>",
-        f'<div class="ideal-budget">{ideal_budget_label}: {optimal_allocation}</div>',
+        f'<div class="ideal-budget">{ideal_budget_label}: '
+        f"{optimal_allocation}</div>",
     ]
 
     # Special handling for extreme_vectors strategy
@@ -944,9 +979,13 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
     logger.debug("Generating extreme vector analysis summary table for single user.")
 
     # Extract preference data from choices
-    counts, processed_pairs, expected_pairs, consistency_info, percentile_data = (
-        _extract_extreme_vector_preferences(choices)
-    )
+    (
+        counts,
+        processed_pairs,
+        expected_pairs,
+        consistency_info,
+        percentile_data,
+    ) = _extract_extreme_vector_preferences(choices)
 
     logger.debug(f"counts: {counts}")
     logger.debug(f"processed_pairs: {processed_pairs}")
@@ -1004,7 +1043,10 @@ def _get_stability_interpretation(score: float) -> str:
 
 
 def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
-    """Generate HTML table showing transitivity analysis for all percentile groups."""
+    """
+    Generate HTML table showing transitivity analysis for all percentile
+    groups.
+    """
 
     try:
         from analysis.transitivity_analyzer import TransitivityAnalyzer
@@ -1039,8 +1081,12 @@ def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
                 if data["is_transitive"]:
                     status_html = f"""
                         <span class="transitivity-status status-transitive">
-                            <svg class="status-icon check" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M13.485 1.929a1 1 0 011.414 1.414l-8 8a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6.5 9.525l7.485-7.596z"/>
+                            <svg class="status-icon check" width="16"
+                                height="16" viewBox="0 0 16 16"
+                                fill="currentColor">
+                                <path d="M13.485 1.929a1 1 0 011.414 1.414l-8
+                                8a1 1 0 01-1.414 0l-3-3a1 1 0
+                                011.414-1.414L6.5 9.525l7.485-7.596z"/>
                             </svg>
                             {trans_transitive}
                         </span>
@@ -1048,8 +1094,15 @@ def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
                 else:
                     status_html = f"""
                         <span class="transitivity-status status-intransitive">
-                            <svg class="status-icon cross" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/>
+                            <svg class="status-icon cross" width="16"
+                                height="16" viewBox="0 0 16 16"
+                                fill="currentColor">
+                                <path d="M4.646 4.646a.5.5 0 01.708 0L8
+                                7.293l2.646-2.647a.5.5 0 01.708.708L8.707
+                                8l2.647 2.646a.5.5 0 01-.708.708L8
+                                8.707l-2.646 2.647a.5.5 0
+                                01-.708-.708L7.293 8 4.646
+                                5.354a.5.5 0 010-.708z"/>
                             </svg>
                             {trans_intransitive}
                         </span>
@@ -1060,7 +1113,8 @@ def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
 
                 # Group badge with color coding
                 group_badge = (
-                    f'<span class="group-badge group-{group_key}">{group_name}</span>'
+                    '<span class="group-badge group-'
+                    f'{group_key}">{group_name}</span>'
                 )
 
                 rows_html.append(
@@ -1077,56 +1131,67 @@ def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
         rate = report.get("transitivity_rate", 0.0)
         stability = report.get("order_stability_score", 0.0)
 
-        rate_class = (
-            "metric-high"
-            if rate >= 80
-            else "metric-medium" if rate >= 50 else "metric-low"
-        )
-        stability_class = (
-            "metric-high"
-            if stability >= 70
-            else "metric-medium" if stability >= 40 else "metric-low"
-        )
+        # Format stability score for display
+        if isinstance(stability, str):
+            stability_score_str = stability
+        else:
+            stability_score_str = f"{stability:.1f}%"
 
-        # Enhanced summary metrics with interpretations
-        summary_html = f"""
-            <div class="transitivity-summary-metrics">
-                <div class="metric-card">
-                    <div class="metric-value {rate_class}">{rate:.0f}%</div>
-                    <div class="metric-label">{trans_transitivity_rate}</div>
-                    <div class="metric-subtext">{_get_transitivity_interpretation(rate)}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value {stability_class}">{stability:.0f}%</div>
-                    <div class="metric-label">{trans_order_stability}</div>
-                    <div class="metric-subtext">{_get_stability_interpretation(stability)}</div>
-                </div>
-            </div>
-        """
+        # Interpretations
+        transitivity_interpretation = _get_transitivity_interpretation(rate)
+        stability_interpretation = _get_stability_interpretation(stability)
 
+        # Generate pairwise consistency table
+        pairwise_consistency = report.get("pairwise_consistency", {})
+        pairwise_table = _generate_pairwise_consistency_table(pairwise_consistency)
+
+        # Construct the full table with metrics panel
         html = f"""
         <div class="transitivity-analysis-container">
-            <h4>{title}</h4>
-            <table class="transitivity-table">
-                <thead>
-                    <tr>
-                        <th>{group_label}</th>
-                        <th>{order_label}</th>
-                        <th>{status_label}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {''.join(rows_html)}
-                </tbody>
-            </table>
-            {summary_html}
+            <h4 class="custom-header">{title}</h4>
+            <div class="transitivity-grid">
+                <div class="transitivity-table-wrapper">
+                    <table id="transitivity-table">
+                        <thead>
+                            <tr>
+                                <th>{group_label}</th>
+                                <th>{order_label}</th>
+                                <th>{status_label}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {''.join(rows_html)}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="transitivity-metrics-panel">
+                    <div class="metric-group">
+                        <div class="metric-item">
+                            <div class="metric-value">{rate:.1f}%</div>
+                            <div class="metric-label">
+                                {trans_transitivity_rate}
+                            </div>
+                            <div class="metric-description">
+                                {transitivity_interpretation}
+                            </div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">{stability_score_str}</div>
+                            <div class="metric-label">{trans_order_stability}</div>
+                            <div class="metric-description">
+                                {stability_interpretation}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {pairwise_table}
         </div>
         """
-
         return html
-
     except Exception as e:
-        logger.error(f"Error generating transitivity analysis table: {e}")
+        logger.error(f"Error generating transitivity table: {e}", exc_info=True)
         return ""
 
 
@@ -1140,7 +1205,8 @@ def _extract_extreme_vector_preferences(
     Dict[int, Dict[str, List[int]]],
 ]:
     """
-    Extract extreme vector preferences from user choices, and calculate consistency for weighted pairs.
+    Extract extreme vector preferences from user choices, and calculate
+    consistency for weighted pairs.
 
     Args:
         choices: List of choice dictionaries
@@ -1150,13 +1216,18 @@ def _extract_extreme_vector_preferences(
         - counts_matrix: 3x3 grid of preference counts
         - processed_pairs: number of successfully processed pairs
         - expected_pairs: expected number of pairs
-        - consistency_info: list of (matches, total, core_preference) for each group (A vs B, ...)
+        - consistency_info: list of (matches, total, core_preference)
+          for each group (A vs B, ...)
         - percentile_data: Dict mapping percentiles to group consistency data
     """
     # Extract the basic preference data
-    counts, core_preferences, weighted_answers, processed_pairs, percentile_data = (
-        _extract_preference_counts(choices)
-    )
+    (
+        counts,
+        core_preferences,
+        weighted_answers,
+        processed_pairs,
+        percentile_data,
+    ) = _extract_preference_counts(choices)
 
     # Calculate consistency metrics between core preferences and weighted answers
     consistency_info = _calculate_consistency_metrics(
@@ -1191,7 +1262,8 @@ def _extract_preference_counts(
         Tuple containing:
         - counts_matrix: 3x3 grid of preference counts
         - core_preferences: List of core preferences (A/B/C) for each group
-        - weighted_answers: List of lists containing weighted pair preferences for each group
+        - weighted_answers: List of lists containing weighted pair preferences
+          for each group
         - processed_pairs: Number of successfully processed pairs
         - percentile_data: Dict mapping percentiles to group consistency data
     """
@@ -1205,7 +1277,11 @@ def _extract_preference_counts(
 
     # Store for each group: core_preference, list of weighted answers
     core_preferences = [None, None, None]  # 0: A vs B, 1: A vs C, 2: B vs C
-    weighted_answers = [[], [], []]  # Each is a list of user choices for weighted pairs
+    weighted_answers = [
+        [],
+        [],
+        [],
+    ]  # Each is a list of user choices for weighted pairs
 
     # Initialize percentile tracking
     percentile_data = {
@@ -1252,9 +1328,10 @@ def _extract_preference_counts(
                 continue
 
             # Process the comparison and update counts
-            comparison_type, preferred_name = _determine_comparison_and_preference(
-                name1, name2, user_choice
-            )
+            (
+                comparison_type,
+                preferred_name,
+            ) = _determine_comparison_and_preference(name1, name2, user_choice)
             if comparison_type is None or preferred_name is None:
                 continue
             if preferred_name not in name_to_index:
@@ -1271,7 +1348,7 @@ def _extract_preference_counts(
                 # Core pair: store the user's preference for this group
                 core_preferences[group_idx] = preferred_name
             elif is_weighted:
-                # Weighted pair: store the user's answer (A/B/C) for this group
+                # Weighted pair: store user's answer (A/B/C) for this group
                 weighted_answers[group_idx].append(preferred_name)
 
                 # Extract percentile from strategy string
@@ -1285,9 +1362,10 @@ def _extract_preference_counts(
 
                 if percentile is not None:
                     group_key = (
-                        f"{group_names[group_idx][0]}_vs_{group_names[group_idx][1]}"
+                        f"{group_names[group_idx][0]}_vs_"
+                        f"{group_names[group_idx][1]}"
                     )
-                    # matches[0] is total, matches[1] is matches with core preference
+                    # matches[0] is total, matches[1] is matches
                     if core_preferences[group_idx] is not None:
                         percentile_data[percentile][group_key][0] += 1
                         if preferred_name == core_preferences[group_idx]:
@@ -1297,18 +1375,27 @@ def _extract_preference_counts(
             logger.error(f"Error processing extreme choice: {e}", exc_info=True)
             continue
 
-    return counts, core_preferences, weighted_answers, processed_pairs, percentile_data
+    return (
+        counts,
+        core_preferences,
+        weighted_answers,
+        processed_pairs,
+        percentile_data,
+    )
 
 
 def _calculate_consistency_metrics(
-    core_preferences: List[Optional[str]], weighted_answers: List[List[str]]
+    core_preferences: List[Optional[str]],
+    weighted_answers: List[List[str]],
 ) -> List[Tuple[int, int, Optional[str]]]:
     """
-    Calculate consistency metrics between core preferences and weighted answers.
+    Calculate consistency metrics between core and weighted preferences.
 
     Args:
+
         core_preferences: List of core preferences (A/B/C) for each group
-        weighted_answers: List of lists containing weighted pair preferences for each group
+        weighted_answers: List of lists containing weighted pair preferences
+          for each group
 
     Returns:
         List of tuples (matches, total, core_preference) for each group
@@ -1846,6 +1933,7 @@ def generate_detailed_user_choices(
     # 3. User-specific details (only if not in tables-only mode)
     if not show_tables_only:
         user_details = []
+
         for user_id, surveys in grouped_choices.items():
             user_details.append(f'<section id="user-{user_id}" class="user-choices">')
             user_details.append(
@@ -1858,9 +1946,13 @@ def generate_detailed_user_choices(
                 if choices and "strategy_name" in choices[0]:
                     survey_strategy_name = choices[0]["strategy_name"]
 
-                # Check if this is the extreme vectors strategy
-                # Generate the specific summary table for this user/survey
+                # Generate transitivity report for extreme vectors
                 if survey_strategy_name == "extreme_vectors":
+                    transitivity_table = generate_transitivity_analysis_table(choices)
+                    if transitivity_table:
+                        user_details.append(transitivity_table)
+
+                    # Generate the specific summary table for this user/survey
                     extreme_table_html = _generate_extreme_vector_analysis_table(
                         choices
                     )
@@ -3413,6 +3505,56 @@ def _format_ideal_budget(choices: List[Dict]) -> str:
         return str(optimal_allocation)
     except (json.JSONDecodeError, KeyError, IndexError):
         return "N/A"
+
+
+def _generate_pairwise_consistency_table(
+    pairwise_consistency: Dict,
+) -> str:
+    """Generate HTML table for pairwise consistency analysis."""
+    if not pairwise_consistency:
+        return ""
+
+    headers = [
+        get_translation("comparison_pair", "headers"),
+        get_translation("dominant_preference", "headers"),
+        get_translation("consistent_groups", "headers"),
+    ]
+
+    rows = []
+    for pair, data in pairwise_consistency.items():
+        pair_str = pair.replace("_", " ").replace("vs", "vs.")
+        dominant_pref = data.get("dominant_preference", "N/A")
+        consistent_groups = data.get("consistent_groups", "N/A")
+        total_groups = data.get("total_groups", "N/A")
+        rows.append(
+            f"""
+            <tr>
+                <td>{pair_str}</td>
+                <td>{dominant_pref}</td>
+                <td>{consistent_groups}/{total_groups}</td>
+            </tr>
+            """
+        )
+
+    caption = get_translation("pairwise_consistency_caption", "tables")
+    table_title = get_translation("pairwise_consistency_title", "tables")
+
+    return f"""
+    <div class="pairwise-consistency-container">
+        <h5 class="custom-header">{table_title}</h5>
+        <p class="caption">{caption}</p>
+        <table class="dataframe">
+            <thead>
+                <tr>
+                    {''.join(f'<th>{h}</th>' for h in headers)}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(rows)}
+            </tbody>
+        </table>
+    </div>
+    """
 
 
 if __name__ == "__main__":

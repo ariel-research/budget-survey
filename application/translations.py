@@ -768,6 +768,24 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Target: {target_name}",
         },
     },
+    "headers": {
+        "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},
+        "dominant_preference": {
+            "he": "העדפה דומיננטית",
+            "en": "Dominant Preference",
+        },
+        "consistent_groups": {"he": "קבוצות עקביות", "en": "Consistent Groups"},
+    },
+    "tables": {
+        "pairwise_consistency_title": {
+            "he": "עקביות זוגות",
+            "en": "Pairwise Consistency",
+        },
+        "pairwise_consistency_caption": {
+            "he": "הטבלה מסכמת את עקביות הבחירות בין כל זוגות האפשרויות על פני כל קבוצות האחוזונים.",
+            "en": "This table summarizes the consistency of choices for each pair of options across all percentile groups.",
+        },
+    },
 }
 
 

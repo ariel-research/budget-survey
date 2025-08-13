@@ -380,7 +380,7 @@ class TestTransitivityAnalyzer(unittest.TestCase):
 
         # Should handle empty input gracefully
         self.assertEqual(report["transitivity_rate"], 0.0)
-        self.assertEqual(report["order_stability_score"], 0.0)
+        self.assertEqual(report["order_stability_score"], "N/A")
 
         for group in ["core", "25", "50", "75"]:
             self.assertFalse(report[group]["is_transitive"])

@@ -155,7 +155,8 @@ class TransitivityAnalyzer:
                 order_str = ">".join(perm)
                 return (order_str, True)
 
-        # If no consistent ordering found, show the actual preferences that create the cycle
+        # If no consistent ordering found, show the actual preferences that
+        # create the cycle
         return (self._format_intransitive_cycle(prefs), False)
 
     def _is_order_consistent(
@@ -237,6 +238,61 @@ class TransitivityAnalyzer:
             "comparisons": comparisons,
         }
 
+    def _analyze_pairwise_consistency(self, groups: Dict[str, Dict]) -> Dict:
+        """
+        Analyze consistency for each pair across all groups.
+
+        Args:
+            groups: Dictionary with group data from
+                   extract_preferences_by_group()
+
+        Returns:
+            Dictionary with pairwise consistency analysis
+        """
+        pairs = ["A_vs_B", "A_vs_C", "B_vs_C"]
+        pairwise_results = {}
+
+        for pair in pairs:
+            preferences = []
+            total_groups = 0
+
+            # Collect preferences for this pair across all groups
+            for group_key in ["core", "25", "50", "75"]:
+                if group_key in groups and pair in groups[group_key]:
+                    preferences.append(groups[group_key][pair])
+                    total_groups += 1
+
+            if preferences:
+                # Find the most common preference
+                from collections import Counter
+
+                preference_counts = Counter(preferences)
+                dominant_pref, count = preference_counts.most_common(1)[0]
+
+                # Calculate consistency
+                consistent_groups = count
+                percentage = (
+                    (consistent_groups / total_groups * 100)
+                    if total_groups > 0
+                    else 0.0
+                )
+
+                # Format dominant preference (e.g., "A" -> "A>B")
+                pair_vectors = pair.split("_vs_")
+                if dominant_pref == pair_vectors[0]:
+                    dominant_preference = f"{pair_vectors[0]}>{pair_vectors[1]}"
+                else:
+                    dominant_preference = f"{pair_vectors[1]}>{pair_vectors[0]}"
+
+                pairwise_results[pair] = {
+                    "consistent_groups": consistent_groups,
+                    "total_groups": total_groups,
+                    "percentage": percentage,
+                    "dominant_preference": dominant_preference,
+                }
+
+        return pairwise_results
+
     def get_full_transitivity_report(self, choices: List[Dict]) -> Dict:
         """
         Generate complete transitivity analysis across all groups.
@@ -285,14 +341,21 @@ class TransitivityAnalyzer:
             (transitive_count / total_groups * 100) if total_groups > 0 else 0.0
         )
 
-        # Calculate order stability (how often the same order appears among transitive groups)
-        if orders:
+        # Calculate order stability with proper edge case handling
+        if not orders:
+            order_stability = "N/A"  # No transitive groups
+        elif len(set(orders)) == len(orders):
+            order_stability = 0.0  # All orders unique - no consistency
+        else:
+            # At least some orders repeat
             most_common_order = max(set(orders), key=orders.count)
             order_stability = orders.count(most_common_order) / len(orders) * 100
-        else:
-            order_stability = 0.0
 
         report["transitivity_rate"] = transitivity_rate
         report["order_stability_score"] = order_stability
+
+        # Add pairwise consistency analysis
+        pairwise_consistency = self._analyze_pairwise_consistency(groups)
+        report["pairwise_consistency"] = pairwise_consistency
 
         return report
