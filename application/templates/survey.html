@@ -45,6 +45,82 @@ and collects the user's preferences through a form submission.
         <input type="hidden" name="q" value="{{ external_q_argument }}">
         {% endif %}
         
+        {% if is_ranking_based %}
+        <!-- Ranking-based survey: Show ranking questions -->
+        {% for question in ranking_questions %}
+        <div class="ranking-container">
+            <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
+            <p>{{ get_translation('ranking_instructions') }}</p>
+            
+            <div class="ranking-options">
+                <div class="option" data-option="A">
+                    <h4>{{ get_translation('option_a_label') }}:</h4>
+                    {% for subject, value in zip(subjects, question.option_a) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="option" data-option="B">
+                    <h4>{{ get_translation('option_b_label') }}:</h4>
+                    {% for subject, value in zip(subjects, question.option_b) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="option" data-option="C">
+                    <h4>{{ get_translation('option_c_label') }}:</h4>
+                    {% for subject, value in zip(subjects, question.option_c) %}
+                    <div>
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="ranking-inputs">
+                <label>{{ get_translation('rank_1') }} ({{ get_translation('most_preferred') }}):</label>
+                <select name="rank_1_q{{ question.question_number }}" required>
+                    <option value="">{{ get_translation('select_option') }}</option>
+                    <option value="A">{{ get_translation('option_a_label') }}</option>
+                    <option value="B">{{ get_translation('option_b_label') }}</option>
+                    <option value="C">{{ get_translation('option_c_label') }}</option>
+                </select>
+                
+                <label>{{ get_translation('rank_2') }}:</label>
+                <select name="rank_2_q{{ question.question_number }}" required>
+                    <option value="">{{ get_translation('select_option') }}</option>
+                    <option value="A">{{ get_translation('option_a_label') }}</option>
+                    <option value="B">{{ get_translation('option_b_label') }}</option>
+                    <option value="C">{{ get_translation('option_c_label') }}</option>
+                </select>
+                
+                <label>{{ get_translation('rank_3') }} ({{ get_translation('least_preferred') }}):</label>
+                <select name="rank_3_q{{ question.question_number }}" required>
+                    <option value="">{{ get_translation('select_option') }}</option>
+                    <option value="A">{{ get_translation('option_a_label') }}</option>
+                    <option value="B">{{ get_translation('option_b_label') }}</option>
+                    <option value="C">{{ get_translation('option_c_label') }}</option>
+                </select>
+            </div>
+            
+            <!-- Hidden fields for question metadata -->
+            <input type="hidden" name="question_{{ question.question_number }}_option_a" value="{{ question.option_a|join(',') }}">
+            <input type="hidden" name="question_{{ question.question_number }}_option_b" value="{{ question.option_b|join(',') }}">
+            <input type="hidden" name="question_{{ question.question_number }}_option_c" value="{{ question.option_c|join(',') }}">
+            <input type="hidden" name="question_{{ question.question_number }}_magnitude" value="{{ question.magnitude }}">
+            <input type="hidden" name="question_{{ question.question_number }}_vector_type" value="{{ question.vector_type }}">
+        </div>
+        {% endfor %}
+        
+        {% else %}
+        <!-- Traditional pair-based survey -->
         {% for pair in comparison_pairs %}
         <div class="pair-container">
             <h3>{{ get_translation('pair') }} {{ pair.question_number }}</h3>
@@ -93,6 +169,7 @@ and collects the user's preferences through a form submission.
             </div>
         </div>
         {% endfor %}
+        {% endif %}
 
         <div class="comment-section">
             <h3>{{ get_translation('comments') }}</h3>

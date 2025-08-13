@@ -1443,6 +1443,52 @@ def _get_stability_interpretation(score: float) -> str:
         return get_translation("highly_variable_preferences", "answers")
 
 
+def generate_preference_ranking_consistency_tables(choices: List[Dict]) -> str:
+    """
+    Generate consistency analysis tables for preference ranking survey strategy.
+
+    This strategy generates 4 tables:
+    1. Preference A vs B consistency table
+    2. Preference A vs C consistency table
+    3. Preference B vs C consistency table
+    4. Final Ranking Summary table with overall consistency rate
+
+    Args:
+        choices: List of user choices from preference ranking survey
+
+    Returns:
+        str: HTML containing all 4 consistency analysis tables
+    """
+    logger.debug("Generating preference ranking consistency tables")
+
+    if not choices:
+        return ""
+
+    # TODO: Implement full analysis when survey data is available
+    # For now, return a placeholder that shows the expected structure
+
+    # Get translations
+    title = get_translation("preference_consistency", "answers")
+
+    placeholder_html = f"""
+    <div class="preference-ranking-analysis">
+        <h3>{title}</h3>
+        <p>Preference ranking consistency analysis will be available when 
+        survey data is collected.</p>
+        <p>Expected tables:</p>
+        <ul>
+            <li>Table 1: Preference A vs B consistency</li>
+            <li>Table 2: Preference A vs C consistency</li>
+            <li>Table 3: Preference B vs C consistency</li>
+            <li>Table 4: Final Ranking Summary with overall consistency 
+            rate</li>
+        </ul>
+    </div>
+    """
+
+    return placeholder_html
+
+
 def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
     """
     Generate HTML table showing transitivity analysis for all percentile

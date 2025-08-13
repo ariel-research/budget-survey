@@ -495,6 +495,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_option": {"he": "אפשרות", "en": "Option"},
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
+        "option_a_label": {"he": "אפשרות א", "en": "Option A"},
+        "option_b_label": {"he": "אפשרות ב", "en": "Option B"},
         "user_responses_title": {
             "he": "תשובות משתמש {user_id} לסקר {survey_id}",
             "en": "User {user_id} Responses to survey {survey_id}",
@@ -797,6 +799,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "increase_preference": {"he": "מעדיף הגדלה", "en": "Prefers Increase"},
         "color_legend_title": {"he": "מקרא צבעים", "en": "Color Legend"},
         "data_summary_title": {"he": "סיכום נתונים", "en": "Data Summary"},
+        # Ranking survey translations
+        "question": {"he": "שאלה", "en": "Question"},
+        "ranking_instructions": {
+            "he": "אנא דרגו את האפשרויות לפי העדפתכם (1 = הכי מועדף, 3 = הכי פחות מועדף)",
+            "en": "Please rank the options by your preference (1 = most preferred, 3 = least preferred)",
+        },
+        "rank_1": {"he": "דירוג 1", "en": "Rank 1"},
+        "rank_2": {"he": "דירוג 2", "en": "Rank 2"},
+        "rank_3": {"he": "דירוג 3", "en": "Rank 3"},
+        "most_preferred": {"he": "הכי מועדף", "en": "Most preferred"},
+        "least_preferred": {"he": "הכי פחות מועדף", "en": "Least preferred"},
+        "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},
