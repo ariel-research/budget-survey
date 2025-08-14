@@ -198,8 +198,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
     "survey": {  # Survey content
         "welcome": {"he": "ברוכים הבאים לסקר", "en": "Welcome to the Survey"},
         "intro_text": {
-            "he": "נעים מאוד, אנו פרופ' אראל סגל-הלוי ופרופ' נועם חזון עורכים מחקר בנושא העדפות אזרחים לגבי חלוקת תקציב. המחקר נערך במסגרת המחלקה למדעי המחשב באוניברסיטת אריאל. אנו מזמינים אותך להשתתף במחקר שלנו על ידי מתן מענה על שאלון מקוון שאורכו כ-5 דקות.",
-            "en": "Hello, we are Prof. Erel Segal-Halevi and Prof. Noam Hazon conducting research on citizens' preferences regarding budget allocation. The research is conducted at the Computer Science Department of Ariel University. We invite you to participate in our research by answering an online questionnaire that takes about 5 minutes.",
+            "he": "נעים מאוד, אנו פרופ' אראל סגל-הלוי מאוניברסיטת אריאל ופרופ' ריקה גונן מהאוניברסיטה הפתוחה עורכים מחקר בנושא העדפות אזרחים לגבי חלוקת תקציב. אנו מזמינים אותך להשתתף במחקר שלנו על ידי מתן מענה על שאלון מקוון שאורכו כ-5 דקות.",
+            "en": "Hello, we are Prof. Erel Segal-Halevi from Ariel University and Prof. Rica Gonen from the Open University. We are conducting research on citizens' preferences regarding budget allocation. We invite you to participate in our research by answering an online questionnaire that takes about 5 minutes.",
         },
         "survey_responses_title": {"he": "תוצאות הסקר", "en": "Survey Responses"},
         "survey_responses_for": {
