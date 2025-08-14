@@ -220,8 +220,7 @@ def generate_overall_stats(
                     <ul>
                         <li>Unique participants: {unique_users}</li>
                         <li>
-                            Participants who took multiple surveys:
-                            {multi_survey_users}
+                            Participants who took multiple surveys: {multi_survey_users}
                         </li>
                     </ul>
                 </li>
