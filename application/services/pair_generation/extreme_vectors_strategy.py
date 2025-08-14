@@ -185,5 +185,15 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
                 "name": get_translation("overall_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
-            }
+            },
+            "transitivity_rate": {
+                "name": get_translation("transitivity_rate", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "order_consistency": {
+                "name": get_translation("order_consistency", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
         }

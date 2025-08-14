@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from analysis.transitivity_analyzer import TransitivityAnalyzer
 from analysis.utils import is_sum_optimized
 from application.translations import get_translation
 from database.queries import get_subjects
@@ -825,9 +826,7 @@ def _generate_extreme_vector_consistency_summary(
     a_vs_b = get_translation("a_vs_b", "answers")
     a_vs_c = get_translation("a_vs_c", "answers")
     b_vs_c = get_translation("b_vs_c", "answers")
-    overall = get_translation(
-        "overall_consistency", "answers", fallback="Overall consistency"
-    )
+    overall = get_translation("overall_consistency", "answers")
 
     # Calculate consistency percentages for each group
     consistency_percentages = []
@@ -2111,8 +2110,12 @@ def generate_detailed_breakdown_table(
 
             # If we have strategy-specific columns
             if strategy_columns:
-                if "consistency" in strategy_columns and "choices" in summary:
-                    # Handle extreme_vectors strategy with consistency column
+                if (
+                    "consistency" in strategy_columns
+                    or "transitivity_rate" in strategy_columns
+                    or "order_consistency" in strategy_columns
+                ) and "choices" in summary:
+                    # Handle extreme_vectors strategy with consistency and transitivity columns
                     choices = summary["choices"]
                     _, processed_pairs, _, consistency_info, _ = (
                         _extract_extreme_vector_preferences(choices)
@@ -2129,12 +2132,46 @@ def generate_detailed_breakdown_table(
                         else 0
                     )
 
-                    # Highlight row if consistency is high
-                    highlight = "highlight-row" if overall_consistency >= 70 else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight}">{overall_consistency}%</td>'
+                    # Get transitivity metrics
+                    analyzer = TransitivityAnalyzer()
+                    transitivity_report = analyzer.get_full_transitivity_report(choices)
+                    transitivity_rate = transitivity_report.get(
+                        "transitivity_rate", 0.0
                     )
+                    order_stability = transitivity_report.get(
+                        "order_stability_score", 0.0
+                    )
+
+                    # Handle string case for order_stability
+                    if isinstance(order_stability, str):
+                        order_stability = 0.0
+
+                    # Generate cells with highlighting
+                    highlight_consistency = (
+                        "highlight-row" if overall_consistency >= 70 else ""
+                    )
+                    highlight_transitivity = (
+                        "highlight-row" if transitivity_rate >= 75 else ""
+                    )
+                    highlight_order = "highlight-row" if order_stability >= 75 else ""
+
+                    # Add consistency column if requested
+                    if "consistency" in strategy_columns:
+                        data_cells.append(
+                            f'<td class="{highlight_consistency}">{overall_consistency}%</td>'
+                        )
+
+                    # Add transitivity rate column if requested
+                    if "transitivity_rate" in strategy_columns:
+                        data_cells.append(
+                            f'<td class="{highlight_transitivity}">{transitivity_rate:.1f}%</td>'
+                        )
+
+                    # Add order consistency column if requested
+                    if "order_consistency" in strategy_columns:
+                        data_cells.append(
+                            f'<td class="{highlight_order}">{order_stability:.1f}%</td>'
+                        )
                 elif "group_consistency" in strategy_columns and "choices" in summary:
                     # Handle cyclic_shift strategy with group consistency
                     choices = summary["choices"]
@@ -2493,9 +2530,7 @@ def generate_overall_statistics_table(
         )
 
         # Get translation for consistency
-        overall_consistency_label = get_translation(
-            "overall_consistency", "answers", fallback="Overall consistency"
-        )
+        overall_consistency_label = get_translation("overall_consistency", "answers")
 
         overall_table = f"""
         <div class="summary-table-container">
