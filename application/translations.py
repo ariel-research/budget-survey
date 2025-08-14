@@ -553,6 +553,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "inconsistent": {"he": "לא עקבי", "en": "Inconsistent"},
         "consistency": {"he": "עקביות", "en": "consistency"},
         "overall_consistency": {"he": "עקביות כוללת", "en": "Overall Consistency"},
+        "transitivity_rate": {"he": "שיעור טרנזיטיביות", "en": "Transitivity Rate"},
+        "order_consistency": {"he": "עקביות סדר העדפות", "en": "Order Consistency"},
         "user_optimizes": {"he": "אופטימיזצית משתמש", "en": "User optimizes"},
         "sum_of_differences": {"he": "סכום ההפרשים", "en": "Sum of differences"},
         "minimum_ratio": {"he": "יחס מינימלי", "en": "Minimum ratio"},
