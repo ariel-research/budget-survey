@@ -1944,12 +1944,8 @@ def generate_detailed_user_choices(
                 if choices and "strategy_name" in choices[0]:
                     survey_strategy_name = choices[0]["strategy_name"]
 
-                # Generate transitivity report for extreme vectors
+                # Check if this is the extreme vectors strategy
                 if survey_strategy_name == "extreme_vectors":
-                    transitivity_table = generate_transitivity_analysis_table(choices)
-                    if transitivity_table:
-                        user_details.append(transitivity_table)
-
                     # Generate the specific summary table for this user/survey
                     extreme_table_html = _generate_extreme_vector_analysis_table(
                         choices
@@ -2500,19 +2496,25 @@ def generate_overall_statistics_table(
 
     # Different table for extreme vectors strategy
     elif strategy_name == "extreme_vectors":
-        # Calculate average consistency across all responses
+        # Initialize counters for all three metrics
         total_consistency = 0
+        total_transitivity_rate = 0
+        total_order_consistency = 0
         valid_summaries = 0
+
+        analyzer = TransitivityAnalyzer()
 
         for summary in summaries:
             if "choices" in summary:
                 choices = summary["choices"]
+
+                # Calculate existing consistency metric
                 _, processed_pairs, _, consistency_info, _ = (
                     _extract_extreme_vector_preferences(choices)
                 )
 
                 if processed_pairs > 0 and consistency_info:
-                    # Calculate overall consistency for this summary
+                    # Overall consistency calculation
                     total_matches = sum(
                         matches for matches, total, _ in consistency_info
                     )
@@ -2521,16 +2523,43 @@ def generate_overall_statistics_table(
                     if total_pairs > 0:
                         consistency = (total_matches / total_pairs) * 100
                         total_consistency += consistency
+
+                        # Calculate transitivity metrics
+                        transitivity_report = analyzer.get_full_transitivity_report(
+                            choices
+                        )
+                        transitivity_rate = transitivity_report.get(
+                            "transitivity_rate", 0.0
+                        )
+                        order_stability = transitivity_report.get(
+                            "order_stability_score", 0.0
+                        )
+
+                        # Handle string case for order stability
+                        if isinstance(order_stability, str):
+                            order_stability = 0.0
+
+                        total_transitivity_rate += transitivity_rate
+                        total_order_consistency += order_stability
                         valid_summaries += 1
 
-        # Calculate average consistency
+        # Calculate averages for all three metrics
         avg_consistency = (
             total_consistency / valid_summaries if valid_summaries > 0 else 0
         )
+        avg_transitivity_rate = (
+            total_transitivity_rate / valid_summaries if valid_summaries > 0 else 0
+        )
+        avg_order_consistency = (
+            total_order_consistency / valid_summaries if valid_summaries > 0 else 0
+        )
 
-        # Get translation for consistency
+        # Get translations for all three labels
         overall_consistency_label = get_translation("overall_consistency", "answers")
+        avg_transitivity_label = get_translation("transitivity_rate", "answers")
+        avg_order_label = get_translation("order_consistency", "answers")
 
+        # Generate three-row table
         overall_table = f"""
         <div class="summary-table-container">
             <h2>{title}</h2>
@@ -2546,6 +2575,14 @@ def generate_overall_statistics_table(
                         <tr class="highlight-row">
                             <td>{overall_consistency_label}</td>
                             <td>{avg_consistency:.1f}%</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td>{avg_transitivity_label}</td>
+                            <td>{avg_transitivity_rate:.1f}%</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td>{avg_order_label}</td>
+                            <td>{avg_order_consistency:.1f}%</td>
                         </tr>
                     </tbody>
                 </table>
