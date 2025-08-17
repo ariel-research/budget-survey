@@ -52,7 +52,9 @@ async function loadMessages() {
             choose_all_pairs: "Please choose one option for each pair.",
             invalid_vector: "The sum must be 100 and each number must be divisible by 5.",
             min_two_departments: "Budget must be allocated to at least two departments.",
-            rescale_error_too_small: "Cannot rescale when the total sum is 0"
+            rescale_error_too_small: "Cannot rescale when the total sum is 0",
+            ranking_validation_error: "Please rank all options for each question",
+            duplicate_ranking_error: "Cannot give the same rank to multiple options"
         };
     }
 }
@@ -243,6 +245,14 @@ function initializeSurveyForm() {
         return;
     }
 
+    // Check if this is a ranking-based survey
+    const rankingQuestions = document.querySelectorAll('.ranking-question');
+    if (rankingQuestions.length > 0) {
+        initializeRankingValidation(form, submitBtn);
+        return;
+    }
+
+    // Traditional radio-based survey
     // Dynamically count the total number of radio groups on the page
     const radioGroups = new Set();
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -256,6 +266,197 @@ function initializeSurveyForm() {
 
     form.addEventListener('submit', handleSurveySubmission);
     updateSubmitButtonState(submitBtn);
+}
+
+/**
+ * Initialize ranking validation for ranking-based surveys
+ */
+function initializeRankingValidation(form, submitBtn) {
+    const rankingQuestions = document.querySelectorAll('.ranking-question');
+    console.log(`Detected ${rankingQuestions.length} ranking questions`);
+
+    // Set up event listeners for all ranking dropdowns
+    rankingQuestions.forEach(question => {
+        const dropdowns = question.querySelectorAll('.rank-dropdown');
+        const optionCards = question.querySelectorAll('.option-card');
+        
+        dropdowns.forEach(dropdown => {
+            dropdown.addEventListener('change', function() {
+                validateSingleQuestion(question);
+                updateVisualFeedback(question);
+                updateRankingSubmitButtonState(submitBtn);
+            });
+        });
+    });
+
+    // Set up form submission validation
+    form.addEventListener('submit', handleRankingSubmission);
+    
+    // Initial button state update
+    updateRankingSubmitButtonState(submitBtn);
+}
+
+/**
+ * Validate ranking for a single question
+ */
+function validateSingleQuestion(question) {
+    const dropdowns = question.querySelectorAll('.rank-dropdown');
+    const values = Array.from(dropdowns).map(d => d.value).filter(v => v);
+    const hasDuplicates = values.length !== new Set(values).size;
+    const isComplete = values.length === 3;
+    
+    const feedback = question.querySelector('.ranking-feedback');
+    
+    // Clear previous states
+    dropdowns.forEach(dropdown => {
+        dropdown.classList.remove('error', 'completed');
+    });
+    
+    if (hasDuplicates) {
+        // Show duplicate error
+        feedback.textContent = state.messages.duplicate_ranking_error || 
+                              'Cannot give the same rank to multiple options';
+        feedback.className = 'ranking-feedback error';
+        feedback.style.display = 'block';
+        
+        // Mark conflicting dropdowns
+        const valueCounts = {};
+        dropdowns.forEach(dropdown => {
+            if (dropdown.value) {
+                valueCounts[dropdown.value] = (valueCounts[dropdown.value] || 0) + 1;
+                if (valueCounts[dropdown.value] > 1) {
+                    dropdown.classList.add('error');
+                }
+            }
+        });
+        
+        return false;
+    } else if (!isComplete) {
+        // Show incomplete message if any dropdown has been touched
+        const touchedDropdowns = Array.from(dropdowns).filter(d => d.value);
+        if (touchedDropdowns.length > 0) {
+            feedback.textContent = state.messages.ranking_validation_error || 
+                                  'Please rank all options for each question';
+            feedback.className = 'ranking-feedback error';
+            feedback.style.display = 'block';
+        } else {
+            feedback.style.display = 'none';
+        }
+        return false;
+    } else {
+        // All good - hide feedback and mark as completed
+        feedback.style.display = 'none';
+        dropdowns.forEach(dropdown => {
+            if (dropdown.value) {
+                dropdown.classList.add('completed');
+            }
+        });
+        return true;
+    }
+}
+
+/**
+ * Update visual feedback for option cards based on selections
+ */
+function updateVisualFeedback(question) {
+    const dropdowns = question.querySelectorAll('.rank-dropdown');
+    const optionCards = question.querySelectorAll('.option-card');
+    
+    // Clear all selections
+    optionCards.forEach(card => card.classList.remove('selected'));
+    
+    // Highlight selected options
+    dropdowns.forEach(dropdown => {
+        if (dropdown.value) {
+            const card = question.querySelector(`[data-option="${dropdown.value}"]`);
+            if (card) {
+                card.classList.add('selected');
+            }
+        }
+    });
+    
+    // Update rank selector states
+    const rankSelectors = question.querySelectorAll('.rank-selector');
+    rankSelectors.forEach((selector, index) => {
+        const dropdown = selector.querySelector('.rank-dropdown');
+        if (dropdown.value) {
+            selector.classList.add('completed');
+        } else {
+            selector.classList.remove('completed');
+        }
+    });
+}
+
+/**
+ * Update submit button state for ranking surveys
+ */
+function updateRankingSubmitButtonState(submitBtn) {
+    const rankingQuestions = document.querySelectorAll('.ranking-question');
+    let allValid = true;
+    let totalQuestions = rankingQuestions.length;
+    let validQuestions = 0;
+    
+    rankingQuestions.forEach(question => {
+        const isValid = validateSingleQuestion(question);
+        if (isValid) {
+            validQuestions++;
+        } else {
+            allValid = false;
+        }
+    });
+    
+    // Update submit button
+    submitBtn.disabled = !allValid;
+    submitBtn.classList.toggle('btn-disabled', !allValid);
+    
+    // Update button title with progress
+    const progressText = allValid ? 
+        'Ready to submit' : 
+        `${validQuestions}/${totalQuestions} questions completed`;
+    submitBtn.title = progressText;
+    
+    // Add pulse animation when all complete
+    if (allValid && !state.wasSubmitEnabled) {
+        state.wasSubmitEnabled = true;
+        submitBtn.classList.add('btn-pulse');
+        setTimeout(() => submitBtn.classList.remove('btn-pulse'), 1000);
+    }
+    if (!allValid) state.wasSubmitEnabled = false;
+}
+
+/**
+ * Handle ranking survey form submission
+ */
+function handleRankingSubmission(e) {
+    e.preventDefault();
+    
+    const rankingQuestions = document.querySelectorAll('.ranking-question');
+    let hasErrors = false;
+    
+    // Validate all questions one final time
+    rankingQuestions.forEach(question => {
+        if (!validateSingleQuestion(question)) {
+            hasErrors = true;
+        }
+    });
+    
+    if (hasErrors) {
+        showAlert(state.messages.ranking_validation_error || 
+                 'Please complete all rankings before submitting');
+        
+        // Scroll to first error
+        const firstError = document.querySelector('.ranking-feedback.error');
+        if (firstError) {
+            firstError.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+        return;
+    }
+    
+    // All validations passed - submit the form
+    e.target.submit();
 }
 
 /**

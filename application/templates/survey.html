@@ -48,67 +48,114 @@ and collects the user's preferences through a form submission.
         {% if is_ranking_based %}
         <!-- Ranking-based survey: Show ranking questions -->
         {% for question in ranking_questions %}
-        <div class="ranking-container">
-            <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
-            <p>{{ get_translation('ranking_instructions') }}</p>
+        <div class="ranking-question" data-question="{{ question.question_number }}">
+            <div class="question-header">
+                <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
+                <p class="ranking-instructions">{{ get_translation('ranking_instructions') }}</p>
+            </div>
             
-            <div class="ranking-options">
-                <div class="option" data-option="A">
-                    <h4>{{ get_translation('option_a_label') }}:</h4>
-                    {% for subject, value in zip(subjects, question.option_a) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
+            <div class="ranking-layout">
+                <!-- Option Cards -->
+                <div class="option-cards">
+                    <div class="option-card" data-option="A">
+                        <div class="option-header">
+                            <h4>{{ get_translation('option_a_label') }}</h4>
+                        </div>
+                        <div class="budget-breakdown">
+                            {% for subject, value in zip(subjects, question.option_a) %}
+                            <div class="budget-item">
+                                <span class="subject">{{ subject }}:</span>
+                                <span class="value">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                    {% endfor %}
+                    
+                    <div class="option-card" data-option="B">
+                        <div class="option-header">
+                            <h4>{{ get_translation('option_b_label') }}</h4>
+                        </div>
+                        <div class="budget-breakdown">
+                            {% for subject, value in zip(subjects, question.option_b) %}
+                            <div class="budget-item">
+                                <span class="subject">{{ subject }}:</span>
+                                <span class="value">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="option-card" data-option="C">
+                        <div class="option-header">
+                            <h4>{{ get_translation('option_c_label') }}</h4>
+                        </div>
+                        <div class="budget-breakdown">
+                            {% for subject, value in zip(subjects, question.option_c) %}
+                            <div class="budget-item">
+                                <span class="subject">{{ subject }}:</span>
+                                <span class="value">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="option" data-option="B">
-                    <h4>{{ get_translation('option_b_label') }}:</h4>
-                    {% for subject, value in zip(subjects, question.option_b) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
+                <!-- Ranking Controls -->
+                <div class="ranking-controls">
+                    <div class="rank-selector">
+                        <label class="rank-label">
+                            {{ get_translation('rank_1') }} 
+                            <span class="rank-description">({{ get_translation('most_preferred') }})</span>
+                        </label>
+                        <select name="rank_1_q{{ question.question_number }}" 
+                                class="rank-dropdown" 
+                                data-rank="1" 
+                                data-question="{{ question.question_number }}" 
+                                required>
+                            <option value="">{{ get_translation('select_option') }}</option>
+                            <option value="A">{{ get_translation('option_a_label') }}</option>
+                            <option value="B">{{ get_translation('option_b_label') }}</option>
+                            <option value="C">{{ get_translation('option_c_label') }}</option>
+                        </select>
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="option" data-option="C">
-                    <h4>{{ get_translation('option_c_label') }}:</h4>
-                    {% for subject, value in zip(subjects, question.option_c) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
+                    
+                    <div class="rank-selector">
+                        <label class="rank-label">
+                            {{ get_translation('rank_2') }}
+                        </label>
+                        <select name="rank_2_q{{ question.question_number }}" 
+                                class="rank-dropdown" 
+                                data-rank="2" 
+                                data-question="{{ question.question_number }}" 
+                                required>
+                            <option value="">{{ get_translation('select_option') }}</option>
+                            <option value="A">{{ get_translation('option_a_label') }}</option>
+                            <option value="B">{{ get_translation('option_b_label') }}</option>
+                            <option value="C">{{ get_translation('option_c_label') }}</option>
+                        </select>
                     </div>
-                    {% endfor %}
+                    
+                    <div class="rank-selector">
+                        <label class="rank-label">
+                            {{ get_translation('rank_3') }} 
+                            <span class="rank-description">({{ get_translation('least_preferred') }})</span>
+                        </label>
+                        <select name="rank_3_q{{ question.question_number }}" 
+                                class="rank-dropdown" 
+                                data-rank="3" 
+                                data-question="{{ question.question_number }}" 
+                                required>
+                            <option value="">{{ get_translation('select_option') }}</option>
+                            <option value="A">{{ get_translation('option_a_label') }}</option>
+                            <option value="B">{{ get_translation('option_b_label') }}</option>
+                            <option value="C">{{ get_translation('option_c_label') }}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
-            <div class="ranking-inputs">
-                <label>{{ get_translation('rank_1') }} ({{ get_translation('most_preferred') }}):</label>
-                <select name="rank_1_q{{ question.question_number }}" required>
-                    <option value="">{{ get_translation('select_option') }}</option>
-                    <option value="A">{{ get_translation('option_a_label') }}</option>
-                    <option value="B">{{ get_translation('option_b_label') }}</option>
-                    <option value="C">{{ get_translation('option_c_label') }}</option>
-                </select>
-                
-                <label>{{ get_translation('rank_2') }}:</label>
-                <select name="rank_2_q{{ question.question_number }}" required>
-                    <option value="">{{ get_translation('select_option') }}</option>
-                    <option value="A">{{ get_translation('option_a_label') }}</option>
-                    <option value="B">{{ get_translation('option_b_label') }}</option>
-                    <option value="C">{{ get_translation('option_c_label') }}</option>
-                </select>
-                
-                <label>{{ get_translation('rank_3') }} ({{ get_translation('least_preferred') }}):</label>
-                <select name="rank_3_q{{ question.question_number }}" required>
-                    <option value="">{{ get_translation('select_option') }}</option>
-                    <option value="A">{{ get_translation('option_a_label') }}</option>
-                    <option value="B">{{ get_translation('option_b_label') }}</option>
-                    <option value="C">{{ get_translation('option_c_label') }}</option>
-                </select>
-            </div>
+            <!-- Validation feedback area -->
+            <div class="ranking-feedback" style="display: none;"></div>
             
             <!-- Hidden fields for question metadata -->
             <input type="hidden" name="question_{{ question.question_number }}_option_a" value="{{ question.option_a|join(',') }}">

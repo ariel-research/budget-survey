@@ -347,6 +347,31 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "התקציב האידיאלי שלך אינו מתאים לסוג הסקר הזה.",
             "en": "Your ideal budget is not suitable for this type of survey.",
         },
+        # Ranking survey interface
+        "question": {"he": "שאלה", "en": "Question"},
+        "ranking_instructions": {
+            "he": "אנא דרגו את שלושת האפשרויות הבאות מהטובה ביותר לגרועה ביותר "
+            "(1 = הטובה ביותר, 3 = הגרועה ביותר)",
+            "en": "Please rank the following three options from best to worst "
+            "(1 = best, 3 = worst)",
+        },
+        "option_a_label": {"he": "אפשרות א", "en": "Option A"},
+        "option_b_label": {"he": "אפשרות ב", "en": "Option B"},
+        "option_c_label": {"he": "אפשרות ג", "en": "Option C"},
+        "rank_1": {"he": "דירוג 1", "en": "Rank 1"},
+        "rank_2": {"he": "דירוג 2", "en": "Rank 2"},
+        "rank_3": {"he": "דירוג 3", "en": "Rank 3"},
+        "most_preferred": {"he": "הטוב ביותר", "en": "Most preferred"},
+        "least_preferred": {"he": "הגרוע ביותר", "en": "Least preferred"},
+        "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
+        "ranking_validation_error": {
+            "he": "אנא דרגו את כל האפשרויות עבור כל שאלה",
+            "en": "Please rank all options for each question",
+        },
+        "duplicate_ranking_error": {
+            "he": "לא ניתן לתת את אותו דירוג לשתי אפשרויות",
+            "en": "Cannot give the same rank to multiple options",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
