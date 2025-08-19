@@ -674,12 +674,6 @@ input[type="radio"] {
         left: 0.25rem;
     }
     
-    .ranking-question[data-progress]::before {
-        position: static;
-        display: inline-block;
-        margin-bottom: 0.5rem;
-    }
-
     /* FORCE REMOVE GRID ON MOBILE - Use !important to override */
     .ranking-layout {
         display: flex !important;
@@ -1103,27 +1097,6 @@ input[type="radio"] {
 .rtl .rank-selector[data-rank="1"] { border-right-color: #f39c12; }
 .rtl .rank-selector[data-rank="2"] { border-right-color: #95a5a6; }
 .rtl .rank-selector[data-rank="3"] { border-right-color: #cd7f32; }
-
-/* Question progress indicator */
-.ranking-question[data-progress]::before {
-    content: attr(data-progress);
-    position: absolute;
-    top: -0.5rem;
-    right: 1rem;
-    background: var(--color-primary);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    z-index: 10;
-}
-
-/* RTL support for progress indicator */
-.rtl .ranking-question[data-progress]::before {
-    right: auto;
-    left: 1rem;
-}
 
 /* Question completion indicator */
 .ranking-question.question-complete {

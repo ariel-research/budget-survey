@@ -50,8 +50,7 @@ ENHANCED: Now includes UX improvements for ranking interface
         <!-- Ranking-based survey: Show ranking questions -->
         {% for question in ranking_questions %}
         <div class="ranking-question{% if question.get('is_awareness') %} awareness-question{% endif %}" 
-             data-question="{{ question.question_number }}"
-             data-progress="{{ loop.index }}/{{ ranking_questions|length }}">
+             data-question="{{ question.question_number }}">
             <div class="question-header">
                 <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
                 <p class="ranking-instructions">{{ get_translation('ranking_instructions') }}</p>

@@ -272,7 +272,6 @@ function initializeSurveyForm() {
 
 /**
  * Initialize ranking validation for ranking-based surveys
- * ENHANCED: Now includes UX improvements
  */
 function initializeRankingValidation(form, submitBtn) {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
@@ -283,18 +282,15 @@ function initializeRankingValidation(form, submitBtn) {
         const dropdowns = question.querySelectorAll('.rank-dropdown');
         const optionCards = question.querySelectorAll('.option-card');
         
-        // ENHANCED: Add question progress indicator
-        question.setAttribute('data-progress', `${questionIndex + 1}/${rankingQuestions.length}`);
-        
         dropdowns.forEach(dropdown => {
             dropdown.addEventListener('change', function() {
                 validateSingleQuestion(question);
                 updateVisualFeedback(question);
                 updateRankingSubmitButtonState(submitBtn);
-                updateSelectionFeedback(question); // ENHANCED: Add selection feedback
+                updateSelectionFeedback(question); // Selection feedback
             });
 
-            // ENHANCED: Add focus/blur events for highlighting
+            // Focus/blur events for highlighting
             dropdown.addEventListener('focus', function() {
                 highlightOption(question, this.value);
             });
@@ -303,7 +299,7 @@ function initializeRankingValidation(form, submitBtn) {
                 clearHighlights(question);
             });
 
-            // ENHANCED: Add keyboard navigation
+            // Keyboard navigation
             dropdown.addEventListener('keydown', function(e) {
                 const currentIndex = Array.from(dropdowns).indexOf(this);
                 
@@ -327,7 +323,7 @@ function initializeRankingValidation(form, submitBtn) {
 }
 
 /**
- * ENHANCED: Visual connection between options and rankings
+ * Visual connection between options and rankings
  */
 function initializeRankingEnhancements() {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
@@ -354,7 +350,7 @@ function initializeRankingEnhancements() {
 }
 
 /**
- * ENHANCED: Highlight option when focused in dropdown
+ * Highlight option when focused in dropdown
  */
 function highlightOption(question, optionLetter) {
     // Clear existing highlights
@@ -370,7 +366,7 @@ function highlightOption(question, optionLetter) {
 }
 
 /**
- * ENHANCED: Clear all option highlights
+ * Clear all option highlights
  */
 function clearHighlights(question) {
     question.querySelectorAll('.option-card').forEach(card => {
@@ -379,7 +375,7 @@ function clearHighlights(question) {
 }
 
 /**
- * ENHANCED: Update selection feedback with progress indicators
+ * Update selection feedback with progress indicators
  */
 function updateSelectionFeedback(question) {
     const dropdowns = question.querySelectorAll('.rank-dropdown');
@@ -488,7 +484,6 @@ function updateVisualFeedback(question) {
 
 /**
  * Update submit button state for ranking surveys
- * ENHANCED: Better progress feedback
  */
 function updateRankingSubmitButtonState(submitBtn) {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
@@ -500,7 +495,7 @@ function updateRankingSubmitButtonState(submitBtn) {
         const isValid = validateSingleQuestion(question);
         if (isValid) {
             validQuestions++;
-            // ENHANCED: Mark question as complete
+            // Mark question as complete
             question.classList.add('question-complete');
         } else {
             allValid = false;
@@ -512,7 +507,7 @@ function updateRankingSubmitButtonState(submitBtn) {
     submitBtn.disabled = !allValid;
     submitBtn.classList.toggle('btn-disabled', !allValid);
     
-    // ENHANCED: Better progress feedback
+    // Progress feedback
     const progressText = allValid ? 
         'Ready to submit' : 
         `Complete all rankings (${validQuestions}/${totalQuestions})`;
