@@ -617,10 +617,8 @@ input[type="radio"] {
 
 /* ==========================================================================
    9. Responsive Design
-   Purpose: Mobile and tablet adaptations
-   Used by: All components for responsive behavior
    ========================================================================== */
-@media (max-width: 768px) {
+   @media (max-width: 768px) {
     .options-container {
         flex-direction: column;
     }
@@ -649,6 +647,127 @@ input[type="radio"] {
         width: 100%;
         min-width: auto;
     }
+
+    /* FORCE REMOVE GRID ON MOBILE - Use !important to override */
+    .ranking-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+        grid-template-columns: none !important;
+    }
+    
+    /* Force option cards to appear first */
+    .option-cards {
+        order: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Force ranking controls to appear below options */
+    .ranking-controls {
+        order: 2 !important;
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+        max-width: none !important;
+        top: auto !important;
+        padding: 1rem 0 !important;
+        align-items: center !important;
+    }
+    
+    .rank-selector {
+        width: auto !important;
+        max-width: 350px !important;
+        min-width: 280px !important;
+        padding: 1rem !important;
+    }
+    
+    .rank-dropdown {
+        width: 100% !important;
+        font-size: 1rem !important;
+        padding: 0.75rem 1rem !important;
+        min-height: 48px !important;
+    }
+    
+    /* Mobile option card styling */
+    .option-card {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .option-header h4 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .budget-breakdown {
+        gap: 0.25rem;
+    }
+    
+    .budget-item {
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .budget-item .subject {
+        font-size: 0.85rem;
+    }
+    
+    .budget-item .value {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    
+    .rank-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    
+    .rank-description {
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+    
+    /* Enhanced visual feedback */
+    .rank-dropdown.completed {
+        font-weight: 600;
+        border-width: 3px;
+        background-color: var(--color-background-info);
+    }
+    
+    .rank-selector.completed {
+        background: linear-gradient(135deg, var(--color-background-info) 0%, var(--color-background-light) 100%);
+        border-color: var(--color-success);
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+    }
+    
+    .rank-selector.completed .rank-label::after {
+        content: " ✓";
+        color: var(--color-success);
+        font-weight: bold;
+    }
+
+    /* RTL Support for mobile */
+    .rtl .rank-dropdown {
+        background-position: left 0.75rem center;
+        padding-left: 2rem;
+        padding-right: 1rem;
+    }
+
+    .rtl .ranking-layout,
+    .rtl .ranking-controls {
+        direction: rtl;
+    }
+
+    .rtl .rank-selector.completed .rank-label::after {
+        content: " ✓ ";
+        margin-right: 0.5rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -671,53 +790,86 @@ input[type="radio"] {
         font-size: 1rem;
     }
 
-    .ranking-layout {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-    
-    .ranking-controls {
-        order: -1; /* Show controls above cards on mobile */
-        position: static;
-        flex-direction: row;
-        gap: 1rem;
-        overflow-x: auto;
-        padding-bottom: 1rem;
-    }
-    
-    .rank-selector {
-        min-width: 200px;
-        flex-shrink: 0;
-    }
-    
+    /* Enhanced 480px Compact Side-by-Side Layout */
     .ranking-question {
-        margin: 1rem 0;
-        padding: 1.5rem;
+        margin: 0.75rem 0; /* Reduced margin for smaller screens */
+        padding: 1rem; /* Reduced padding */
     }
     
     .question-header h3 {
-        font-size: 1.3rem;
+        font-size: 1.2rem; /* Slightly smaller for small screens */
     }
     
     .ranking-instructions {
-        font-size: 1rem;
+        font-size: 0.9rem; /* Smaller instructions text */
+        padding: 0.75rem; /* Reduced padding */
     }
-
+    
+    /* Maintain flexbox vertical layout but more compact for small screens */
+    .ranking-layout {
+        gap: 1rem; /* Reduced gap for smaller screens */
+    }
+    
     .ranking-controls {
-        flex-direction: column;
-        gap: 1rem;
+        padding: 0.75rem 0; /* Reduced padding for small screens */
+        gap: 0.75rem; /* Tighter spacing between rank selectors */
     }
     
     .rank-selector {
-        min-width: auto;
+        min-width: 250px !important;
+        max-width: 300px !important;
+    }
+    
+    .rank-label {
+        font-size: 0.85rem; /* Smaller label for small screens */
+        margin-bottom: 0.4rem;
+    }
+    
+    .rank-dropdown {
+        font-size: 0.95rem; /* Readable text for small screens */
+        padding: 0.6rem 0.8rem; /* Compact padding optimized for small screens */
+        min-height: 44px; /* Maintain touch-friendly size */
+        width: 100%; /* Full width for easier touch interaction */
     }
     
     .option-card {
-        padding: 1rem;
+        padding: 0.75rem; /* Even more compact */
+    }
+    
+    .option-header h4 {
+        font-size: 0.9rem; /* Smaller option titles */
     }
     
     .budget-item {
-        font-size: 0.95rem;
+        font-size: 0.8rem; /* Smaller budget text */
+        padding: 0.2rem 0;
+    }
+    
+    .budget-item .value {
+        font-size: 0.9rem; /* Smaller values */
+    }
+
+    /* Additional mobile positioning fix for 480px */
+    .ranking-controls {
+        position: static;
+        top: auto; /* Reset sticky positioning for small mobile */
+    }
+
+    /* RTL Support for 480px breakpoint - Flexbox Vertical Layout */
+    .rtl .rank-dropdown {
+        background-position: left 0.6rem center; /* Adjusted for small screen mobile layout */
+        padding-left: 1.8rem;
+        padding-right: 0.8rem;
+    }
+
+    .rtl .ranking-layout,
+    .rtl .ranking-controls {
+        direction: rtl;
+    }
+
+    .rtl .rank-selector.completed .rank-label::after {
+        content: " ✓ ";
+        margin-right: 0.4rem; /* Appropriate margin for small screen flexbox layout */
     }
 
 }
@@ -881,7 +1033,7 @@ input[type="radio"] {
 .ranking-layout {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 2rem;
+    gap: 3rem;
     align-items: start;
 }
 

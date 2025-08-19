@@ -211,7 +211,12 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
             (4, x2, "negative", "X2_negative"),
         ]
 
-        for question_num, magnitude, vector_type, question_label in question_configs:
+        for (
+            question_num,
+            magnitude,
+            vector_type,
+            question_label,
+        ) in question_configs:
             # Generate base difference vector
             if vector_type == "positive":
                 base_diff = np.array([2 * magnitude, -magnitude, -magnitude])
