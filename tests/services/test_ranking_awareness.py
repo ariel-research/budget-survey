@@ -383,3 +383,81 @@ class TestRankingAwarenessIntegration:
         ]:
             assert sum(option) == 100
             assert all(0 <= val <= 100 for val in option)
+
+    def test_awareness_question_not_stored_in_database(self):
+        """Test that awareness questions are filtered out of database storage."""
+        # Mock form data for ranking survey with awareness question at position 3
+        form_data = {
+            "user_vector": "35,35,30",
+            "rank_1_q1": "A",  # Regular ranking question
+            "rank_2_q1": "B",
+            "rank_3_q1": "C",
+            "rank_1_q2": "B",  # Regular ranking question
+            "rank_2_q2": "A",
+            "rank_3_q2": "C",
+            "rank_1_q3": "B",  # Awareness question - should be excluded
+            "rank_2_q3": "A",
+            "rank_3_q3": "C",
+            "is_awareness_q3": "true",  # Mark as awareness question
+            "rank_1_q4": "C",  # Regular ranking question
+            "rank_2_q4": "A",
+            "rank_3_q4": "B",
+            "rank_1_q5": "A",  # Regular ranking question
+            "rank_2_q5": "C",
+            "rank_3_q5": "B",
+            # Complete question metadata for all questions
+            "question_1_option_a": "30,40,30",
+            "question_1_option_b": "40,30,30",
+            "question_1_option_c": "35,35,30",
+            "question_1_magnitude": "6",
+            "question_1_vector_type": "positive",
+            "question_2_option_a": "25,45,30",
+            "question_2_option_b": "45,25,30",
+            "question_2_option_c": "35,35,30",
+            "question_2_magnitude": "6",
+            "question_2_vector_type": "negative",
+            "question_3_option_a": "45,25,30",  # Awareness question options
+            "question_3_option_b": "35,35,30",  # User's ideal (correct)
+            "question_3_option_c": "25,45,30",
+            "question_4_option_a": "23,47,30",
+            "question_4_option_b": "47,23,30",
+            "question_4_option_c": "35,35,30",
+            "question_4_magnitude": "12",
+            "question_4_vector_type": "positive",
+            "question_5_option_a": "29,41,30",
+            "question_5_option_b": "41,29,30",
+            "question_5_option_c": "35,35,30",
+            "question_5_magnitude": "12",
+            "question_5_vector_type": "negative",
+        }
+
+        submission = SurveySubmission.from_form_data(form_data, "user123", 1)
+
+        # Should have exactly 12 comparison pairs (4 questions × 3 pairs each)
+        # Question 3 (awareness) should be excluded from database storage
+        assert len(submission.comparison_pairs) == 12
+
+        # Verify no pairs contain awareness question references
+        awareness_pairs = [
+            pair
+            for pair in submission.comparison_pairs
+            if "Q3" in pair.option1_strategy or "Q3" in pair.option2_strategy
+        ]
+        assert len(awareness_pairs) == 0, f"Found awareness pairs: {awareness_pairs}"
+
+        # Verify we have pairs for Q1, Q2, Q4, Q5 (but not Q3)
+        question_numbers = set()
+        for pair in submission.comparison_pairs:
+            # Extract question number from strategy string
+            strategy = pair.option1_strategy
+            if "Q" in strategy:
+                q_part = strategy.split("Q")[1].split(" ")[0]
+                question_numbers.add(int(q_part))
+
+        expected_questions = {1, 2, 4, 5}  # No Q3 (awareness)
+        assert question_numbers == expected_questions
+
+        # Awareness validation should still work
+        is_valid, error, status = submission.validate()
+        assert is_valid is True  # Correct awareness answer
+        assert status == "complete"

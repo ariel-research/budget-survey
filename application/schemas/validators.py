@@ -85,13 +85,20 @@ class SurveySubmission:
                   other error
         """
         try:
-            # Determine if ranking survey by checking for ranking data
+            # Determine if ranking survey by checking for ranking data in pairs
+            # or by the format of awareness answers (string vs int for ranking vs traditional)
             is_ranking_survey = any(
                 hasattr(pair, "option1_strategy")
                 and pair.option1_strategy
                 and "Preference Ranking" in pair.option1_strategy
                 for pair in self.comparison_pairs
             )
+
+            # If no pairs, check awareness answer format to detect ranking surveys
+            if not is_ranking_survey and len(self.comparison_pairs) == 0:
+                is_ranking_survey = len(self.awareness_answers) == 1 and isinstance(
+                    self.awareness_answers[0], str
+                )
             # Validate awareness checks based on survey type
             if is_ranking_survey:
                 # For ranking surveys: expect single answer 'B'
@@ -183,6 +190,10 @@ class SurveySubmission:
                 ranking_questions.add(question_num)
 
         for question_num in sorted(ranking_questions):
+            # Skip awareness questions (don't store in database)
+            if form_data.get(f"is_awareness_q{question_num}") == "true":
+                continue
+
             # Get the ranking responses
             rank_1 = form_data.get(f"rank_1_q{question_num}", "")  # Most preferred
             rank_2 = form_data.get(f"rank_2_q{question_num}", "")
