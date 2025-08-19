@@ -465,6 +465,38 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      - Magnitude Sensitivity: Analyzes how the magnitude of the change affects user preferences.
      - Type A vs. Type B Patterns: Compares user choices in the primary test vs. the fallback scenario.
 
+10. **Preference Ranking Survey Strategy**
+    - Strategy name: `preference_ranking_survey`
+    - Tests user preference order through forced-ranking methodology instead of pairwise comparisons
+    - **Algorithm Overview**:
+      - Generates 4 forced-ranking questions (5 questions including 1 awareness check at position 3)
+      - Each question presents 3 budget options that users rank from most to least preferred
+      - Converts rankings to 12 comparison pairs for analysis (4 questions × 3 pairs each)
+      - Uses two magnitude levels: X1 = max(1, round(0.2 × min(user_vector))), X2 = max(1, round(0.4 × min(user_vector)))
+    - **Question Generation**:
+      - Creates base difference vectors: Positive (+2X, -X, -X) and Negative (-2X, +X, +X)
+      - Generates 3 options per question using base vector and 2 cyclic shifts
+      - 4 questions test: X1_positive, X1_negative, X2_positive, X2_negative
+    - **Special Handling**:
+      - Ranking-based interface: Users rank 3 options instead of choosing between 2
+      - Includes awareness check at position 3 where user's ideal allocation is Option B
+      - Throws `UnsuitableForStrategyError` if user's ideal budget contains any zero values
+      - Only supports 3-subject budget allocations (vector_size=3)
+    - Parameters:
+      - `num_pairs`: Number of pairs to generate (default: 12, always generates exactly 12)
+    - Example:
+      ```python
+      # For user_vector = [60, 25, 15]:
+      # X1 = max(1, round(0.2 × 15)) = 3, X2 = max(1, round(0.4 × 15)) = 6
+      
+      # Question 1 (X1_positive): base_diff = [6, -3, -3]
+      # Option A: [60, 25, 15] + [6, -3, -3] = [66, 22, 12]
+      # Option B: [60, 25, 15] + [-3, 6, -3] = [57, 31, 12] (shift 1)
+      # Option C: [60, 25, 15] + [-3, -3, 6] = [57, 22, 21] (shift 2)
+      # User ranks: A > B > C (creates 3 pairs: A vs B, A vs C, B vs C)
+      ```
+    - **Core Hypothesis**: User's underlying preference order will be consistently revealed across all ranking questions, providing insights into stable budget allocation priorities
+
 
 #### Adding New Strategies
 
