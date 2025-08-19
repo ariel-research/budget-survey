@@ -21,7 +21,10 @@ from database.queries import (
     user_exists,
 )
 
-from .awareness_check import generate_awareness_questions
+from .awareness_check import (
+    generate_awareness_questions,
+    generate_ranking_awareness_question,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +174,8 @@ class SurveyService:
             )
 
             logger.info(
-                f"Successfully generated {len(comparison_pairs)} pairs and {len(awareness_questions)} awareness questions"
+                f"Successfully generated {len(comparison_pairs)} pairs and "
+                f"{len(awareness_questions)} awareness questions"
             )
             return comparison_pairs, awareness_questions
 
@@ -180,6 +184,60 @@ class SurveyService:
             raise
         except Exception as e:
             logger.error(f"Error generating pairs: {str(e)}")
+            raise ValueError(get_translation("pair_generation_error", "messages"))
+
+    @staticmethod
+    def generate_ranking_questions(
+        user_vector: List[int], num_subjects: int, survey_id: int
+    ) -> List[Dict]:
+        """
+        Generate ranking questions for ranking-based strategies.
+
+        Args:
+            user_vector: User's ideal budget allocation
+            num_subjects: Number of budget subjects
+            survey_id: The internal survey identifier
+
+        Returns:
+            List of ranking questions with options A, B, C
+
+        Raises:
+            ValueError: If strategy configuration is invalid or strategy is not ranking-based
+        """
+        logger.debug(f"Generating ranking questions for survey {survey_id}")
+
+        # Get strategy configuration
+        config = get_survey_pair_generation_config(survey_id)
+        if not config:
+            logger.warning(f"No configuration found for survey {survey_id}")
+            raise ValueError(get_translation("survey_not_found", "messages"))
+
+        try:
+            # Parse and validate configuration
+            strategy_name = config.get("strategy")
+            if not strategy_name:
+                raise ValueError("Missing strategy name in configuration")
+
+            # Get strategy and check if it's ranking-based
+            strategy = StrategyRegistry.get_strategy(strategy_name)
+            if not strategy.is_ranking_based():
+                raise ValueError(f"Strategy {strategy_name} is not ranking-based")
+
+            # Generate ranking questions using strategy's method
+            ranking_questions = strategy.generate_ranking_questions(
+                tuple(user_vector), vector_size=num_subjects
+            )
+
+            logger.info(
+                f"Successfully generated {len(ranking_questions)} ranking questions"
+            )
+            return ranking_questions
+
+        except UnsuitableForStrategyError:
+            # Re-raise unsuitable strategy errors to be handled by the route
+            raise
+        except Exception as e:
+            logger.error(f"Error generating ranking questions: {str(e)}")
             raise ValueError(get_translation("pair_generation_error", "messages"))
 
     @staticmethod
@@ -289,127 +347,236 @@ class SurveySessionData:
             - option1_differences: Differences for option 1 (if available)
             - option2_differences: Differences for option 2 (if available)
         """
-        # Extract the strategy descriptions and vectors
-        strategy_descriptions = list(pair.keys())
-        vectors = list(pair.values())
+        # Identify the two vector entries robustly (ignore metadata keys)
+        vector_items = [
+            (k, v)
+            for k, v in pair.items()
+            if isinstance(v, (list, tuple)) and len(v) == 3 and sum(v) == 100
+        ]
+
+        if len(vector_items) < 2:
+            # Fallback to previous behavior (assume first two values are vectors)
+            strategy_descriptions = list(pair.keys())
+            vectors = list(pair.values())
+            option1_diffs = pair.get("option1_differences")
+            option2_diffs = pair.get("option2_differences")
+            if random.random() < 0.5:
+                return (
+                    vectors[1],
+                    vectors[0],
+                    True,
+                    strategy_descriptions[1],
+                    strategy_descriptions[0],
+                    option2_diffs,
+                    option1_diffs,
+                )
+            return (
+                vectors[0],
+                vectors[1],
+                False,
+                strategy_descriptions[0],
+                strategy_descriptions[1],
+                option1_diffs,
+                option2_diffs,
+            )
+
+        # Map vector labels to their strategy text if available
+        (label1, vec1), (label2, vec2) = vector_items[:2]
+        opt1_text = label1
+        opt2_text = label2
+
+        provided_opt1 = pair.get("option1_strategy")
+        provided_opt2 = pair.get("option2_strategy")
+
+        # Prefer provided strategy strings (contain magnitude/type for asymmetric strategy)
+        if provided_opt1 and provided_opt2:
+            try:
+                conc_label = get_translation("concentrated_changes", "answers")
+                dist_label = get_translation("distributed_changes", "answers")
+            except Exception:
+                conc_label = "Concentrated"
+                dist_label = "Distributed"
+
+            def pick_text(lbl: str) -> str:
+                if conc_label in lbl or "Concentrated" in lbl:
+                    return provided_opt1
+                if dist_label in lbl or "Distributed" in lbl:
+                    return provided_opt2
+                # Fallback to provided option1 for first and option2 for second
+                return provided_opt1 if lbl == label1 else provided_opt2
+
+            opt1_text = pick_text(label1)
+            opt2_text = pick_text(label2)
 
         # Extract differences if they exist
         option1_diffs = pair.get("option1_differences")
         option2_diffs = pair.get("option2_differences")
 
+        # Randomize order consistently for vectors, texts, and diffs
         if random.random() < 0.5:  # 50% chance to swap
             return (
-                vectors[1],  # option1
-                vectors[0],  # option2
-                True,  # was_swapped
-                strategy_descriptions[1],  # option1_strategy
-                strategy_descriptions[0],  # option2_strategy
-                option2_diffs,  # option1_differences (swapped)
-                option1_diffs,  # option2_differences (swapped)
+                vec2,
+                vec1,
+                True,
+                opt2_text,
+                opt1_text,
+                option2_diffs,
+                option1_diffs,
             )
+
         return (
-            vectors[0],  # option1
-            vectors[1],  # option2
-            False,  # was_swapped
-            strategy_descriptions[0],  # option1_strategy
-            strategy_descriptions[1],  # option2_strategy
-            option1_diffs,  # option1_differences
-            option2_diffs,  # option2_differences
+            vec1,
+            vec2,
+            False,
+            opt1_text,
+            opt2_text,
+            option1_diffs,
+            option2_diffs,
         )
 
     def to_template_data(self) -> Dict:
         """Convert session data to template variables."""
-        original_pairs, awareness_questions = SurveyService.generate_survey_pairs(
-            self.user_vector, len(self.subjects), self.internal_survey_id
-        )
+        # Get strategy configuration to check if it's ranking-based
+        from application.services.pair_generation import StrategyRegistry
+        from database.queries import get_survey_pair_generation_config
 
-        # Combine pair data with its presentation state
-        presentation_pairs = []
+        config = get_survey_pair_generation_config(self.internal_survey_id)
+        strategy_name = config.get("strategy") if config else None
+        is_ranking_strategy = False
 
-        # Add first awareness question
-        presentation_pairs.append(
-            {
-                "display": (
-                    awareness_questions[0]["option1"],
-                    awareness_questions[0]["option2"],
-                ),
-                "was_swapped": False,
-                "is_awareness": True,
-                "question_number": 1,
+        if strategy_name:
+            try:
+                strategy = StrategyRegistry.get_strategy(strategy_name)
+                is_ranking_strategy = strategy.is_ranking_based()
+            except Exception:
+                logger.warning(f"Could not check strategy {strategy_name}")
+
+        if is_ranking_strategy:
+            # Generate ranking questions for ranking-based strategies
+            ranking_questions = SurveyService.generate_ranking_questions(
+                self.user_vector, len(self.subjects), self.internal_survey_id
+            )
+
+            # Generate single ranking awareness question
+            ranking_awareness_question = generate_ranking_awareness_question(
+                self.user_vector, len(self.subjects)
+            )
+
+            # Insert awareness question at position 3 (after first 2 ranking questions)
+            all_questions = (
+                ranking_questions[:2]  # First 2 ranking questions
+                + [ranking_awareness_question]  # Awareness question at position 3
+                + ranking_questions[2:]  # Remaining 2 ranking questions
+            )
+
+            # Renumber all questions sequentially to avoid duplicates
+            for i, question in enumerate(all_questions, 1):
+                question["question_number"] = i
+
+            return {
+                "user_vector": self.user_vector,
+                "ranking_questions": all_questions,
+                "awareness_positions": [2],  # 0-indexed position of awareness question
+                "subjects": self.subjects,
+                "user_id": self.user_id,
+                "survey_id": self.external_survey_id,
+                "is_ranking_based": True,
+                "zip": zip,
             }
-        )
+        else:
+            # Generate pairs for traditional strategies
+            original_pairs, awareness_questions = SurveyService.generate_survey_pairs(
+                self.user_vector, len(self.subjects), self.internal_survey_id
+            )
 
-        # Add first half of comparison pairs
-        midpoint = len(original_pairs) // 2
-        for i, pair in enumerate(original_pairs[:midpoint]):
-            (
-                option1,
-                option2,
-                was_swapped,
-                option1_strategy,
-                option2_strategy,
-                option1_differences,
-                option2_differences,
-            ) = self._randomize_pair_options(pair)
-            pair_data = {
-                "display": (option1, option2),
-                "was_swapped": was_swapped,
-                "option1_strategy": option1_strategy,
-                "option2_strategy": option2_strategy,
-                "is_awareness": False,
-                "question_number": i + 2,
+            # Combine pair data with its presentation state
+            presentation_pairs = []
+
+            # Add first awareness question
+            presentation_pairs.append(
+                {
+                    "display": (
+                        awareness_questions[0]["option1"],
+                        awareness_questions[0]["option2"],
+                    ),
+                    "was_swapped": False,
+                    "is_awareness": True,
+                    "question_number": 1,
+                }
+            )
+
+            # Add first half of comparison pairs
+            midpoint = len(original_pairs) // 2
+            for i, pair in enumerate(original_pairs[:midpoint]):
+                (
+                    option1,
+                    option2,
+                    was_swapped,
+                    option1_strategy,
+                    option2_strategy,
+                    option1_differences,
+                    option2_differences,
+                ) = self._randomize_pair_options(pair)
+                pair_data = {
+                    "display": (option1, option2),
+                    "was_swapped": was_swapped,
+                    "option1_strategy": option1_strategy,
+                    "option2_strategy": option2_strategy,
+                    "is_awareness": False,
+                    "question_number": i + 2,
+                }
+                # Add differences if they exist
+                if option1_differences is not None:
+                    pair_data["option1_differences"] = option1_differences
+                if option2_differences is not None:
+                    pair_data["option2_differences"] = option2_differences
+                presentation_pairs.append(pair_data)
+
+            # Add second awareness question
+            presentation_pairs.append(
+                {
+                    "display": (
+                        awareness_questions[1]["option1"],
+                        awareness_questions[1]["option2"],
+                    ),
+                    "was_swapped": False,
+                    "is_awareness": True,
+                    "question_number": midpoint + 2,
+                }
+            )
+
+            # Add remaining comparison pairs
+            for i, pair in enumerate(original_pairs[midpoint:]):
+                (
+                    option1,
+                    option2,
+                    was_swapped,
+                    option1_strategy,
+                    option2_strategy,
+                    option1_differences,
+                    option2_differences,
+                ) = self._randomize_pair_options(pair)
+                pair_data = {
+                    "display": (option1, option2),
+                    "was_swapped": was_swapped,
+                    "option1_strategy": option1_strategy,
+                    "option2_strategy": option2_strategy,
+                    "is_awareness": False,
+                    "question_number": i + midpoint + 3,
+                }
+                # Add differences if they exist
+                if option1_differences is not None:
+                    pair_data["option1_differences"] = option1_differences
+                if option2_differences is not None:
+                    pair_data["option2_differences"] = option2_differences
+                presentation_pairs.append(pair_data)
+
+            return {
+                "user_vector": self.user_vector,
+                "comparison_pairs": presentation_pairs,
+                "subjects": self.subjects,
+                "user_id": self.user_id,
+                "survey_id": self.external_survey_id,
+                "is_ranking_based": False,
+                "zip": zip,
             }
-            # Add differences if they exist
-            if option1_differences is not None:
-                pair_data["option1_differences"] = option1_differences
-            if option2_differences is not None:
-                pair_data["option2_differences"] = option2_differences
-            presentation_pairs.append(pair_data)
-
-        # Add second awareness question
-        presentation_pairs.append(
-            {
-                "display": (
-                    awareness_questions[1]["option1"],
-                    awareness_questions[1]["option2"],
-                ),
-                "was_swapped": False,
-                "is_awareness": True,
-                "question_number": midpoint + 2,
-            }
-        )
-
-        # Add remaining comparison pairs
-        for i, pair in enumerate(original_pairs[midpoint:]):
-            (
-                option1,
-                option2,
-                was_swapped,
-                option1_strategy,
-                option2_strategy,
-                option1_differences,
-                option2_differences,
-            ) = self._randomize_pair_options(pair)
-            pair_data = {
-                "display": (option1, option2),
-                "was_swapped": was_swapped,
-                "option1_strategy": option1_strategy,
-                "option2_strategy": option2_strategy,
-                "is_awareness": False,
-                "question_number": i + midpoint + 3,
-            }
-            # Add differences if they exist
-            if option1_differences is not None:
-                pair_data["option1_differences"] = option1_differences
-            if option2_differences is not None:
-                pair_data["option2_differences"] = option2_differences
-            presentation_pairs.append(pair_data)
-
-        return {
-            "user_vector": self.user_vector,
-            "comparison_pairs": presentation_pairs,
-            "subjects": self.subjects,
-            "user_id": self.user_id,
-            "survey_id": self.external_survey_id,
-            "zip": zip,
-        }

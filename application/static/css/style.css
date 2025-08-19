@@ -595,12 +595,30 @@ input[type="radio"] {
     flex-direction: row;
 }
 
+/* RTL support for ranking interface */
+.rtl .ranking-layout {
+    direction: rtl;
+}
+
+.rtl .option-card.selected::before {
+    left: auto;
+    right: 0;
+}
+
+.rtl .rank-dropdown {
+    background-position: left 0.7rem center;
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+}
+
+.rtl .budget-item {
+    direction: rtl;
+}
+
 /* ==========================================================================
    9. Responsive Design
-   Purpose: Mobile and tablet adaptations
-   Used by: All components for responsive behavior
    ========================================================================== */
-@media (max-width: 768px) {
+   @media (max-width: 768px) {
     .options-container {
         flex-direction: column;
     }
@@ -629,6 +647,127 @@ input[type="radio"] {
         width: 100%;
         min-width: auto;
     }
+
+    /* FORCE REMOVE GRID ON MOBILE - Use !important to override */
+    .ranking-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+        grid-template-columns: none !important;
+    }
+    
+    /* Force option cards to appear first */
+    .option-cards {
+        order: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Force ranking controls to appear below options */
+    .ranking-controls {
+        order: 2 !important;
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+        width: 100% !important;
+        max-width: none !important;
+        top: auto !important;
+        padding: 1rem 0 !important;
+        align-items: center !important;
+    }
+    
+    .rank-selector {
+        width: auto !important;
+        max-width: 350px !important;
+        min-width: 280px !important;
+        padding: 1rem !important;
+    }
+    
+    .rank-dropdown {
+        width: 100% !important;
+        font-size: 1rem !important;
+        padding: 0.75rem 1rem !important;
+        min-height: 48px !important;
+    }
+    
+    /* Mobile option card styling */
+    .option-card {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .option-header h4 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .budget-breakdown {
+        gap: 0.25rem;
+    }
+    
+    .budget-item {
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .budget-item .subject {
+        font-size: 0.85rem;
+    }
+    
+    .budget-item .value {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    
+    .rank-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    
+    .rank-description {
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+    
+    /* Enhanced visual feedback */
+    .rank-dropdown.completed {
+        font-weight: 600;
+        border-width: 3px;
+        background-color: var(--color-background-info);
+    }
+    
+    .rank-selector.completed {
+        background: linear-gradient(135deg, var(--color-background-info) 0%, var(--color-background-light) 100%);
+        border-color: var(--color-success);
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+    }
+    
+    .rank-selector.completed .rank-label::after {
+        content: " ✓";
+        color: var(--color-success);
+        font-weight: bold;
+    }
+
+    /* RTL Support for mobile */
+    .rtl .rank-dropdown {
+        background-position: left 0.75rem center;
+        padding-left: 2rem;
+        padding-right: 1rem;
+    }
+
+    .rtl .ranking-layout,
+    .rtl .ranking-controls {
+        direction: rtl;
+    }
+
+    .rtl .rank-selector.completed .rank-label::after {
+        content: " ✓ ";
+        margin-right: 0.5rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -650,6 +789,89 @@ input[type="radio"] {
         padding: 10px 20px;
         font-size: 1rem;
     }
+
+    /* Enhanced 480px Compact Side-by-Side Layout */
+    .ranking-question {
+        margin: 0.75rem 0; /* Reduced margin for smaller screens */
+        padding: 1rem; /* Reduced padding */
+    }
+    
+    .question-header h3 {
+        font-size: 1.2rem; /* Slightly smaller for small screens */
+    }
+    
+    .ranking-instructions {
+        font-size: 0.9rem; /* Smaller instructions text */
+        padding: 0.75rem; /* Reduced padding */
+    }
+    
+    /* Maintain flexbox vertical layout but more compact for small screens */
+    .ranking-layout {
+        gap: 1rem; /* Reduced gap for smaller screens */
+    }
+    
+    .ranking-controls {
+        padding: 0.75rem 0; /* Reduced padding for small screens */
+        gap: 0.75rem; /* Tighter spacing between rank selectors */
+    }
+    
+    .rank-selector {
+        min-width: 250px !important;
+        max-width: 300px !important;
+    }
+    
+    .rank-label {
+        font-size: 0.85rem; /* Smaller label for small screens */
+        margin-bottom: 0.4rem;
+    }
+    
+    .rank-dropdown {
+        font-size: 0.95rem; /* Readable text for small screens */
+        padding: 0.6rem 0.8rem; /* Compact padding optimized for small screens */
+        min-height: 44px; /* Maintain touch-friendly size */
+        width: 100%; /* Full width for easier touch interaction */
+    }
+    
+    .option-card {
+        padding: 0.75rem; /* Even more compact */
+    }
+    
+    .option-header h4 {
+        font-size: 0.9rem; /* Smaller option titles */
+    }
+    
+    .budget-item {
+        font-size: 0.8rem; /* Smaller budget text */
+        padding: 0.2rem 0;
+    }
+    
+    .budget-item .value {
+        font-size: 0.9rem; /* Smaller values */
+    }
+
+    /* Additional mobile positioning fix for 480px */
+    .ranking-controls {
+        position: static;
+        top: auto; /* Reset sticky positioning for small mobile */
+    }
+
+    /* RTL Support for 480px breakpoint - Flexbox Vertical Layout */
+    .rtl .rank-dropdown {
+        background-position: left 0.6rem center; /* Adjusted for small screen mobile layout */
+        padding-left: 1.8rem;
+        padding-right: 0.8rem;
+    }
+
+    .rtl .ranking-layout,
+    .rtl .ranking-controls {
+        direction: rtl;
+    }
+
+    .rtl .rank-selector.completed .rank-label::after {
+        content: " ✓ ";
+        margin-right: 0.4rem; /* Appropriate margin for small screen flexbox layout */
+    }
+
 }
 
 /* ==========================================================================
@@ -691,6 +913,18 @@ input[type="radio"] {
     .btn:focus {
         outline: 2px solid #000;
         outline-offset: 2px;
+    }
+
+    .option-card {
+        border-width: 3px;
+    }
+    
+    .option-card.selected {
+        border-width: 4px;
+    }
+    
+    .rank-dropdown {
+        border-width: 3px;
     }
 }
 
@@ -746,4 +980,274 @@ input[type="radio"] {
 /* RTL support for custom alert */
 .rtl .alert-content {
     direction: rtl;
+}
+
+/* ==========================================================================
+   17. Ranking Survey Interface Styles
+   Purpose: Enhanced UX styles for preference ranking surveys
+   Used by: Survey template when is_ranking_based is true
+   ========================================================================== */
+
+/* Main ranking question container */
+.ranking-question {
+    background: var(--color-background-light);
+    border-radius: 12px;
+    border: 1px solid var(--color-border-light);
+    margin: 2rem 0;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease;
+}
+
+.ranking-question:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Question header styles */
+.question-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 1rem;
+}
+
+.question-header h3 {
+    color: var(--color-text-dark);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.ranking-instructions {
+    color: var(--color-text);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0;
+    padding: 1rem;
+    background: var(--color-background-info);
+    border-radius: 8px;
+    border-left: 4px solid var(--color-primary);
+}
+
+/* Main layout container */
+.ranking-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+/* Option cards container */
+.option-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Individual option card */
+.option-card {
+    background: var(--color-background-alt);
+    border: 2px solid var(--color-border-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.option-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.option-card.selected {
+    border-color: var(--color-primary);
+    background: var(--color-background-info);
+    box-shadow: var(--shadow-md);
+}
+
+.option-card.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-primary);
+}
+
+/* Option header */
+.option-header {
+    margin-bottom: 1rem;
+}
+
+.option-header h4 {
+    color: var(--color-text-dark);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Budget breakdown within each option */
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item .subject {
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.budget-item .value {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+}
+
+/* Ranking controls container */
+.ranking-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: sticky;
+    top: 2rem;
+}
+
+/* Individual rank selector */
+.rank-selector {
+    background: var(--color-background-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border-light);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.rank-selector:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.rank-selector.completed {
+    border-color: var(--color-success);
+    background: var(--color-background-info);
+}
+
+/* Rank label styling */
+.rank-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-dark);
+    font-size: 1rem;
+}
+
+.rank-description {
+    font-weight: normal;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Enhanced dropdown styling */
+.rank-dropdown {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 1rem;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1em;
+}
+
+.rank-dropdown:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.rank-dropdown:hover {
+    border-color: var(--color-primary);
+}
+
+.rank-dropdown.completed {
+    border-color: var(--color-success);
+    background-color: var(--color-background-info);
+}
+
+.rank-dropdown.error {
+    border-color: var(--color-error);
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Validation feedback styles */
+.ranking-feedback {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.ranking-feedback.error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+}
+
+.ranking-feedback.success {
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+}
+
+/* Progress indicators */
+.rank-selector[data-rank="1"] .rank-label::before {
+    content: "1️⃣ ";
+}
+
+.rank-selector[data-rank="2"] .rank-label::before {
+    content: "2️⃣ ";
+}
+
+.rank-selector[data-rank="3"] .rank-label::before {
+    content: "3️⃣ ";
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .option-card,
+    .rank-selector,
+    .rank-dropdown,
+    .ranking-question {
+        transition: none;
+    }
+    
+    .option-card:hover {
+        transform: none;
+    }
 }

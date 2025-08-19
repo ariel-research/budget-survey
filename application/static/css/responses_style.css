@@ -52,6 +52,10 @@
    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
    --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+    /* Neutral Preference Colors for Asymmetric Matrix */
+    --color-decrease: #3B82F6; /* Neutral Blue for decrease */
+    --color-increase: #F97316; /* Complementary Orange for increase */
    
    /* Pagination Colors */
    --pagination-background: #ffffff;
@@ -2093,6 +2097,221 @@ th.sortable[data-order="desc"]::after {
 
 
 /* ==========================================================================
+   Asymmetric Loss Distribution Matrix
+   ========================================================================== */
+.asymmetric-matrix-container {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.asymmetric-matrix-title {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.asymmetric-matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: var(--spacing-md) 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.asymmetric-matrix-table th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 12px 16px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.asymmetric-matrix-table th:first-child {
+    text-align: left;
+    min-width: 120px;
+}
+
+.asymmetric-matrix-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: right;
+    vertical-align: middle;
+}
+
+.asymmetric-matrix-table td:first-child {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-background-alt);
+    text-align: left;
+}
+
+.matrix-cell-decrease {
+    background-color: rgba(59, 130, 246, 0.10); /* blue 500 @10% */
+    color: var(--color-decrease);
+}
+
+.matrix-cell-increase {
+    background-color: rgba(249, 115, 22, 0.10); /* orange 500 @10% */
+    color: var(--color-increase);
+}
+
+/* Center choice cells; keep totals aligned separately */
+.asymmetric-matrix-table td.matrix-cell-decrease,
+.asymmetric-matrix-table td.matrix-cell-increase,
+.asymmetric-matrix-table td.matrix-cell-no-data {
+    text-align: center;
+}
+
+/* Minimal choice dot indicator */
+.matrix-choice-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+}
+.matrix-choice-dot.decrease { background-color: var(--color-decrease); }
+.matrix-choice-dot.increase { background-color: var(--color-increase); }
+
+/* Compact legend chip for matrix summary */
+.legend-chip {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.matrix-cell-no-data {
+    color: var(--color-text-light);
+    font-style: italic;
+}
+
+.matrix-totals-row {
+    font-weight: 600;
+    border-top: 2px solid var(--color-primary);
+    background-color: #eef2f7; /* slightly darker than alt for hierarchy */
+}
+
+.matrix-totals-row td:first-child {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.asymmetric-matrix-summary {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--color-background);
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+/* Magnitude/context note above matrix */
+.asymmetric-magnitude-note {
+    color: var(--color-text-light);
+    font-size: var(--font-size-xs);
+    margin-top: -6px;
+}
+
+.asymmetric-matrix-table th:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+.asymmetric-matrix-table td:not(:first-child) {
+    border-left: 1px dashed var(--color-border);
+}
+
+/* Legend for asymmetric matrix */
+.asymmetric-legend {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--spacing-md);
+}
+.asymmetric-legend .legend-section {
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: var(--spacing-md);
+    min-width: 0; /* allow grid children to shrink */
+}
+.asymmetric-legend .legend-title {
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+.asymmetric-legend .legend-items {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: flex-start;
+    flex-wrap: wrap; /* allow long labels to wrap to next line */
+}
+.asymmetric-legend .legend-item {
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    column-gap: var(--spacing-sm);
+    align-items: start;
+}
+.asymmetric-legend .legend-item .legend-square {
+    margin: 0; /* grid handles spacing */
+    align-self: start; /* stick to first line */
+}
+.asymmetric-legend .legend-label {
+    white-space: normal; /* override global nowrap */
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.legend-square.decrease {
+    background-color: var(--color-decrease);
+}
+.legend-square.increase {
+    background-color: var(--color-increase);
+}
+.legend-chip.decrease {
+    background-color: rgba(59, 130, 246, 0.10);
+    color: var(--color-decrease);
+}
+.legend-chip.increase {
+    background-color: rgba(249, 115, 22, 0.10);
+    color: var(--color-increase);
+}
+
+/* Merged legend microcopy and badges */
+.asymmetric-matrix-summary .legend-title {
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+.asymmetric-matrix-summary .legend-microcopy {
+    color: var(--color-text-light);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-sm);
+}
+.asymmetric-matrix-summary .legend-badges {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+.legend-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+}
+
+/* ==========================================================================
   RTL Support
   ========================================================================== */
 /* Header & Content */
@@ -2331,6 +2550,12 @@ th.sortable[data-order="desc"]::after {
    border-left: 2px solid var(--color-border);
 }
 
+/* Asymmetric Support */
+[dir="rtl"] .asymmetric-matrix-table th:first-child,
+[dir="rtl"] .asymmetric-matrix-table td:first-child {
+    text-align: right;
+}
+
 
 /* ==========================================================================
   Responsive Adjustments
@@ -2506,6 +2731,23 @@ th.sortable[data-order="desc"]::after {
       padding: 4px 8px;
       font-size: var(--font-size-xs);
    }
+
+   .asymmetric-matrix-container {
+      padding: var(--spacing-md);
+  }
+  
+  .asymmetric-matrix-table {
+      font-size: var(--font-size-sm);
+  }
+  
+  .asymmetric-matrix-table th,
+  .asymmetric-matrix-table td {
+      padding: 8px 10px;
+  }
+
+  .asymmetric-legend {
+   grid-template-columns: 1fr;
+}
 
 }
 

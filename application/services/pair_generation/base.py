@@ -186,6 +186,15 @@ class PairGenerationStrategy(ABC):
         """Return labels for the two options being compared."""
         pass
 
+    def is_ranking_based(self) -> bool:
+        """
+        Identify if this strategy uses ranking questions instead of pairs.
+
+        Returns:
+            bool: False by default. Override to return True for ranking-based strategies.
+        """
+        return False
+
     def _are_absolute_canonical_identical(
         self,
         v1: Union[np.ndarray, list, tuple],

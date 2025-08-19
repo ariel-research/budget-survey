@@ -284,7 +284,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "התאמה אוטומטית של הערכים באופן יחסי כך שיסתכמו ל-100",
             "en": "Automatically adjust values proportionally to sum to 100",
         },
-        "total": {"he": 'סה"כ:', "en": "Total:"},
+        "total": {"he": "סך הכל", "en": "Total"},
         "consent_title": {"he": "טופס הסכמה", "en": "Consent Form"},
         "consent_text": {
             "he": "לפני התחלת המענה על השאלון, נבקשך להצהיר/ה בזאת כי ניתן לך מידע באשר למחקר ולמטרותיו, וכי מילוי השאלון נעשה מרצונך החופשי, שהנך משתתפ/ת במחקר מתוך הסכמה מלאה, ידוע לך כי אינך חייב/ת להשתתף במחקר וכי בכל שלב את/ה יכול/ה להפסיק לענות על השאלון. השאלון הוא אנונימי ומובטחת לך סודיות באשר לזהותך האישית ולא יעשה כל שימוש בפרטים שמלאת מלבד לצורך מחקר זה. בכל בעיה שקשורה למחקר תוכל/י לפנות אלינו להתייעצות נוספת.",
@@ -346,6 +346,31 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "unsuitable_message": {
             "he": "התקציב האידיאלי שלך אינו מתאים לסוג הסקר הזה.",
             "en": "Your ideal budget is not suitable for this type of survey.",
+        },
+        # Ranking survey interface
+        "question": {"he": "שאלה", "en": "Question"},
+        "ranking_instructions": {
+            "he": "אנא דרגו את שלושת האפשרויות הבאות מהטובה ביותר לגרועה ביותר "
+            "(1 = הטובה ביותר, 3 = הגרועה ביותר)",
+            "en": "Please rank the following three options from best to worst "
+            "(1 = best, 3 = worst)",
+        },
+        "option_a_label": {"he": "אפשרות א", "en": "Option A"},
+        "option_b_label": {"he": "אפשרות ב", "en": "Option B"},
+        "option_c_label": {"he": "אפשרות ג", "en": "Option C"},
+        "rank_1": {"he": "דירוג 1", "en": "Rank 1"},
+        "rank_2": {"he": "דירוג 2", "en": "Rank 2"},
+        "rank_3": {"he": "דירוג 3", "en": "Rank 3"},
+        "most_preferred": {"he": "הטוב ביותר", "en": "Most preferred"},
+        "least_preferred": {"he": "הגרוע ביותר", "en": "Least preferred"},
+        "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
+        "ranking_validation_error": {
+            "he": "אנא דרגו את כל האפשרויות עבור כל שאלה",
+            "en": "Please rank all options for each question",
+        },
+        "duplicate_ranking_error": {
+            "he": "לא ניתן לתת את אותו דירוג לשתי אפשרויות",
+            "en": "Cannot give the same rank to multiple options",
         },
     },
     "dashboard": {  # Dashboard page
@@ -495,6 +520,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "table_option": {"he": "אפשרות", "en": "Option"},
         "table_type": {"he": "סוג", "en": "Type"},
         "option_number": {"he": "אפשרות {number}", "en": "Option {number}"},
+        "option_a_label": {"he": "אפשרות א", "en": "Option A"},
+        "option_b_label": {"he": "אפשרות ב", "en": "Option B"},
         "user_responses_title": {
             "he": "תשובות משתמש {user_id} לסקר {survey_id}",
             "en": "User {user_id} Responses to survey {survey_id}",
@@ -725,6 +752,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "עקביות סדר העדפות (קבוצות טרנזיטיביות)",
             "en": "Order Consistency (Transitive Groups)",
         },
+        "total": {"he": 'סה"כ', "en": "Total"},
         "perfect_logical_consistency": {
             "he": "עקביות לוגית מושלמת",
             "en": "Perfect logical consistency",
@@ -769,6 +797,45 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מטרה: {target_name}",
             "en": "Target: {target_name}",
         },
+        "asymmetric_matrix_title": {
+            "he": "מטריצת התפלגות הפסד אסימטרי",
+            "en": "Asymmetric Loss Distribution Matrix",
+        },
+        "magnitude_levels_note": {
+            "he": "רמות עוצמה (X = יחידת בסיס × מכפיל)",
+            "en": "Magnitude Levels (X = base_unit × multiplier)",
+        },
+        "legend_title": {"he": "מקרא", "en": "Legend"},
+        "legend_note": {
+            "he": "התא מציג בחירה בודדת בעוצמה זו. כחול = הקטנה מרוכזת בפרויקט היעד; כתום = הקטנה מחולקת שווה בשווה בין שני הפרויקטים האחרים (היעד גדל).",
+            "en": "Cell shows a single choice at that magnitude. Blue = concentrated decrease in the target; Orange = decrease split evenly across the other two (target increases).",
+        },
+        "legend_concentrated_desc": {
+            "he": "הקטנה מרוכזת בפרויקט היעד (כל ההקטנה נלקחת ממנו; האחרים גדלים בשווה)",
+            "en": "Concentrated decrease in the target project (entire decrease from target; the other two increase equally)",
+        },
+        "legend_distributed_desc": {
+            "he": "הקטנה מבוזרת על פני שני הפרויקטים האחרים (מחולקת שווה בשווה; היעד גדל)",
+            "en": "Distributed decrease across the other two projects (split evenly; target increases)",
+        },
+        "target_category": {"he": "קטגוריית יעד", "en": "Target Category"},
+        "magnitude_level": {"he": "רמת עוצמה", "en": "Magnitude Level"},
+        "decrease_preference": {"he": "מעדיף הקטנה", "en": "Prefers Decrease"},
+        "increase_preference": {"he": "מעדיף הגדלה", "en": "Prefers Increase"},
+        "color_legend_title": {"he": "מקרא צבעים", "en": "Color Legend"},
+        "data_summary_title": {"he": "סיכום נתונים", "en": "Data Summary"},
+        # Ranking survey translations
+        "question": {"he": "שאלה", "en": "Question"},
+        "ranking_instructions": {
+            "he": "אנא דרגו את האפשרויות לפי העדפתכם (1 = הכי מועדף, 3 = הכי פחות מועדף)",
+            "en": "Please rank the options by your preference (1 = most preferred, 3 = least preferred)",
+        },
+        "rank_1": {"he": "דירוג 1", "en": "Rank 1"},
+        "rank_2": {"he": "דירוג 2", "en": "Rank 2"},
+        "rank_3": {"he": "דירוג 3", "en": "Rank 3"},
+        "most_preferred": {"he": "הכי מועדף", "en": "Most preferred"},
+        "least_preferred": {"he": "הכי פחות מועדף", "en": "Least preferred"},
+        "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},
