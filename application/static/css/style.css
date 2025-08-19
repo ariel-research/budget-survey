@@ -983,18 +983,18 @@ input[type="radio"] {
 }
 
 /* ==========================================================================
-   17. Ranking Survey Interface Styles
-   Purpose: Enhanced UX styles for preference ranking surveys
+   17. Ranking Survey Interface Styles - OPTIMIZED FOR COMPACT LAYOUT
+   Purpose: Enhanced UX styles for preference ranking surveys with viewport optimization
    Used by: Survey template when is_ranking_based is true
    ========================================================================== */
 
-/* Main ranking question container */
+/* Main ranking question container - OPTIMIZED */
 .ranking-question {
     background: var(--color-background-light);
-    border-radius: 12px;
+    border-radius: 8px; /* Reduced from 12px */
     border: 1px solid var(--color-border-light);
-    margin: 2rem 0;
-    padding: 2rem;
+    margin: 1.5rem 0; /* Reduced from 2rem - saves 16px */
+    padding: 1.5rem; /* Reduced from 2rem - saves 16px */
     box-shadow: var(--shadow-md);
     transition: box-shadow 0.3s ease;
 }
@@ -1003,53 +1003,53 @@ input[type="radio"] {
     box-shadow: var(--shadow-lg);
 }
 
-/* Question header styles */
+/* Question header styles - OPTIMIZED */
 .question-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem; /* Reduced from 2rem - saves 12px */
     border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 1rem;
+    padding-bottom: 0.75rem; /* Reduced from 1rem - saves 4px */
 }
 
 .question-header h3 {
     color: var(--color-text-dark);
-    font-size: 1.5rem;
+    font-size: 1.3rem; /* Reduced from 1.5rem */
     font-weight: 600;
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.75rem 0; /* Reduced from 1rem - saves 4px */
 }
 
 .ranking-instructions {
     color: var(--color-text);
-    font-size: 1.1rem;
-    line-height: 1.5;
+    font-size: 1rem; /* Reduced from 1.1rem */
+    line-height: 1.4; /* Reduced from 1.5 */
     margin: 0;
-    padding: 1rem;
+    padding: 0.75rem; /* Reduced from 1rem - saves 4px */
     background: var(--color-background-info);
-    border-radius: 8px;
-    border-left: 4px solid var(--color-primary);
+    border-radius: 6px; /* Reduced from 8px */
+    border-left: 3px solid var(--color-primary); /* Reduced from 4px */
 }
 
-/* Main layout container */
+/* Main layout container - OPTIMIZED */
 .ranking-layout {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 3rem;
+    gap: 2rem; /* Reduced from 3rem - saves 16px */
     align-items: start;
 }
 
-/* Option cards container */
+/* Option cards container - OPTIMIZED */
 .option-cards {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem; /* Reduced from 1rem - saves 8px per gap */
 }
 
-/* Individual option card */
+/* Individual option card - OPTIMIZED */
 .option-card {
     background: var(--color-background-alt);
     border: 2px solid var(--color-border-light);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: 6px; /* Reduced from 8px */
+    padding: 1rem; /* Reduced from 1.5rem - saves 16px per card */
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -1077,14 +1077,14 @@ input[type="radio"] {
     background: var(--color-primary);
 }
 
-/* Option header */
+/* Option header - OPTIMIZED */
 .option-header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem; /* Reduced from 1rem - saves 4px per card */
 }
 
 .option-header h4 {
     color: var(--color-text-dark);
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
     font-weight: 600;
     margin: 0;
     display: flex;
@@ -1092,18 +1092,18 @@ input[type="radio"] {
     gap: 0.5rem;
 }
 
-/* Budget breakdown within each option */
+/* Budget breakdown within each option - OPTIMIZED */
 .budget-breakdown {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem; /* Reduced from 0.5rem - saves 4px per gap */
 }
 
 .budget-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.25rem 0; /* Reduced from 0.5rem - saves 4px per item */
     border-bottom: 1px solid var(--color-border-light);
 }
 
@@ -1122,20 +1122,20 @@ input[type="radio"] {
     font-size: 1.1rem;
 }
 
-/* Ranking controls container */
+/* Ranking controls container - OPTIMIZED */
 .ranking-controls {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem; /* Reduced from 1.5rem - saves 12px */
     position: sticky;
-    top: 2rem;
+    top: 1rem; /* Reduced from 2rem - saves 16px */
 }
 
-/* Individual rank selector */
+/* Individual rank selector - OPTIMIZED */
 .rank-selector {
     background: var(--color-background-light);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: 6px; /* Reduced from 8px */
+    padding: 1rem; /* Reduced from 1.5rem - saves 16px per selector */
     border: 1px solid var(--color-border-light);
     box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
@@ -1150,13 +1150,13 @@ input[type="radio"] {
     background: var(--color-background-info);
 }
 
-/* Rank label styling */
+/* Rank label styling - OPTIMIZED */
 .rank-label {
     display: block;
     font-weight: 600;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem; /* Reduced from 0.75rem - saves 4px per selector */
     color: var(--color-text-dark);
-    font-size: 1rem;
+    font-size: 0.95rem; /* Reduced from 1rem */
 }
 
 .rank-description {
@@ -1166,13 +1166,13 @@ input[type="radio"] {
     font-style: italic;
 }
 
-/* Enhanced dropdown styling */
+/* Enhanced dropdown styling - OPTIMIZED */
 .rank-dropdown {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.8rem; /* Reduced from 0.75rem 1rem - saves 6px */
     border: 2px solid var(--color-border);
-    border-radius: 6px;
-    font-size: 1rem;
+    border-radius: 4px; /* Reduced from 6px */
+    font-size: 0.95rem; /* Reduced from 1rem */
     background: white;
     color: var(--color-text-dark);
     cursor: pointer;
@@ -1180,8 +1180,8 @@ input[type="radio"] {
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 0.7rem center;
-    background-size: 1em;
+    background-position: right 0.6rem center; /* Adjusted for smaller padding */
+    background-size: 0.9em; /* Slightly smaller icon */
 }
 
 .rank-dropdown:focus {
@@ -1204,11 +1204,11 @@ input[type="radio"] {
     background-color: rgba(231, 76, 60, 0.1);
 }
 
-/* Validation feedback styles */
+/* Validation feedback styles - OPTIMIZED */
 .ranking-feedback {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 6px;
+    margin-top: 0.75rem; /* Reduced from 1rem - saves 4px */
+    padding: 0.75rem; /* Reduced from 1rem - saves 4px */
+    border-radius: 4px; /* Reduced from 6px */
     font-weight: 500;
     text-align: center;
 }
@@ -1236,6 +1236,67 @@ input[type="radio"] {
 
 .rank-selector[data-rank="3"] .rank-label::before {
     content: "3️⃣ ";
+}
+
+/* ==========================================================================
+   Height-Based Optimization for Very Small Screens
+   Purpose: Additional space savings for constrained viewports
+   ========================================================================== */
+@media (max-height: 700px) {
+    /* Ultra-compact mode for small laptop screens */
+    .ranking-question {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .question-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    .question-header h3 {
+        font-size: 1.2rem;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .ranking-instructions {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .ranking-layout {
+        gap: 1.5rem;
+    }
+    
+    .option-cards {
+        gap: 0.5rem;
+    }
+    
+    .option-card {
+        padding: 0.75rem;
+    }
+    
+    .budget-item {
+        padding: 0.2rem 0;
+    }
+    
+    .ranking-controls {
+        gap: 0.75rem;
+    }
+    
+    .rank-selector {
+        padding: 0.75rem;
+    }
+    
+    .rank-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .rank-dropdown {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.9rem;
+    }
 }
 
 /* Reduced motion support */
