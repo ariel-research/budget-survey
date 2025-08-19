@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from application.translations import get_translation
 
@@ -63,7 +63,7 @@ class SurveySubmission:
     survey_id: int
     user_vector: List[int] = field(default_factory=list)
     user_comment: Optional[str] = ""
-    awareness_answers: List[int] = field(default_factory=list)
+    awareness_answers: List[Union[int, str]] = field(default_factory=list)
     comparison_pairs: List[ComparisonPair] = field(default_factory=list)
     expected_pairs: int = 10  # Default for backward compatibility
 
@@ -72,7 +72,7 @@ class SurveySubmission:
         Validates the complete survey submission.
 
         Checks in order:
-        1. Awareness checks (first check answer must be 1, second check answer must be 2)
+        1. Awareness checks (traditional: 2 answers [1,2], ranking: 1 'B')
         2. User vector validation (must have values and sum to 100)
         3. Value range validation
         4. Comparison pairs validation
@@ -81,23 +81,46 @@ class SurveySubmission:
             tuple[bool, Optional[str], Optional[str]]: A tuple containing:
                 - is_valid: Whether the submission is valid
                 - error_message: Error message if invalid, None if valid
-                - submission_status: 'attention_failed', 'complete', or None if other error
+                - submission_status: 'attention_failed', 'complete', or None if
+                  other error
         """
         try:
-            # Validate awareness checks
-            if (
-                len(self.awareness_answers) != 2
-                or self.awareness_answers[0] != 1  # First check must be 1
-                or self.awareness_answers[1] != 2
-            ):  # Second check must be 2
-                logger.info(
-                    f"User {self.user_id} failed awareness checks with answers: {self.awareness_answers}"
-                )
-                return (
-                    False,
-                    get_translation("failed_awareness", "messages"),
-                    "attention_failed",
-                )
+            # Determine if ranking survey by checking for ranking data
+            is_ranking_survey = any(
+                hasattr(pair, "option1_strategy")
+                and pair.option1_strategy
+                and "Preference Ranking" in pair.option1_strategy
+                for pair in self.comparison_pairs
+            )
+            # Validate awareness checks based on survey type
+            if is_ranking_survey:
+                # For ranking surveys: expect single answer 'B'
+                if len(self.awareness_answers) != 1 or self.awareness_answers[0] != "B":
+                    logger.info(
+                        f"User {self.user_id} failed ranking awareness check "
+                        f"with answer: {self.awareness_answers}"
+                    )
+                    return (
+                        False,
+                        get_translation("failed_awareness", "messages"),
+                        "attention_failed",
+                    )
+            else:
+                # For traditional surveys: expect two answers [1, 2]
+                if (
+                    len(self.awareness_answers) != 2
+                    or self.awareness_answers[0] != 1  # First check must be 1
+                    or self.awareness_answers[1] != 2
+                ):  # Second check must be 2
+                    logger.info(
+                        f"User {self.user_id} failed awareness checks "
+                        f"with answers: {self.awareness_answers}"
+                    )
+                    return (
+                        False,
+                        get_translation("failed_awareness", "messages"),
+                        "attention_failed",
+                    )
 
             # Validate user_vector exists
             if not self.user_vector:
@@ -259,15 +282,29 @@ class SurveySubmission:
             # Process user vector
             user_vector = list(map(int, form_data.get("user_vector", "").split(",")))
 
-            # Process awareness answers
-            awareness_answers = [
-                int(form_data.get(f"awareness_check_{i}", 0)) for i in range(2)
-            ]
-
             # Check if this is a ranking-based survey
             is_ranking_survey = any(
                 key.startswith("rank_1_q") for key in form_data.keys()
             )
+
+            # Process awareness answers based on survey type
+            if is_ranking_survey:
+                # For ranking surveys: find the awareness question dynamically
+                awareness_answers = []
+                for key in form_data.keys():
+                    if key.startswith("is_awareness_q"):
+                        # Extract question number from is_awareness_q{N}
+                        question_num = key.split("is_awareness_q")[1]
+                        rank_1_key = f"rank_1_q{question_num}"
+                        rank_1_answer = form_data.get(rank_1_key, "")
+                        if rank_1_answer:
+                            awareness_answers = [rank_1_answer]
+                        break
+            else:
+                # For traditional surveys: extract two awareness check answers
+                awareness_answers = [
+                    int(form_data.get(f"awareness_check_{i}", 0)) for i in range(2)
+                ]
 
             # Determine the total questions dynamically if not provided
             if total_questions is None:

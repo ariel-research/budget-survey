@@ -48,7 +48,7 @@ and collects the user's preferences through a form submission.
         {% if is_ranking_based %}
         <!-- Ranking-based survey: Show ranking questions -->
         {% for question in ranking_questions %}
-        <div class="ranking-question" data-question="{{ question.question_number }}">
+        <div class="ranking-question{% if question.get('is_awareness') %} awareness-question{% endif %}" data-question="{{ question.question_number }}">
             <div class="question-header">
                 <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
                 <p class="ranking-instructions">{{ get_translation('ranking_instructions') }}</p>
@@ -161,8 +161,12 @@ and collects the user's preferences through a form submission.
             <input type="hidden" name="question_{{ question.question_number }}_option_a" value="{{ question.option_a|join(',') }}">
             <input type="hidden" name="question_{{ question.question_number }}_option_b" value="{{ question.option_b|join(',') }}">
             <input type="hidden" name="question_{{ question.question_number }}_option_c" value="{{ question.option_c|join(',') }}">
+            {% if question.get('is_awareness') %}
+            <input type="hidden" name="is_awareness_q{{ question.question_number }}" value="true">
+            {% else %}
             <input type="hidden" name="question_{{ question.question_number }}_magnitude" value="{{ question.magnitude }}">
             <input type="hidden" name="question_{{ question.question_number }}_vector_type" value="{{ question.vector_type }}">
+            {% endif %}
         </div>
         {% endfor %}
         

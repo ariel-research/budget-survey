@@ -21,7 +21,10 @@ from database.queries import (
     user_exists,
 )
 
-from .awareness_check import generate_awareness_questions
+from .awareness_check import (
+    generate_awareness_questions,
+    generate_ranking_awareness_question,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -453,14 +456,27 @@ class SurveySessionData:
             ranking_questions = SurveyService.generate_ranking_questions(
                 self.user_vector, len(self.subjects), self.internal_survey_id
             )
-            awareness_questions = generate_awareness_questions(
+
+            # Generate single ranking awareness question
+            ranking_awareness_question = generate_ranking_awareness_question(
                 self.user_vector, len(self.subjects)
             )
 
+            # Insert awareness question at position 3 (after first 2 ranking questions)
+            all_questions = (
+                ranking_questions[:2]  # First 2 ranking questions
+                + [ranking_awareness_question]  # Awareness question at position 3
+                + ranking_questions[2:]  # Remaining 2 ranking questions
+            )
+
+            # Renumber all questions sequentially to avoid duplicates
+            for i, question in enumerate(all_questions, 1):
+                question["question_number"] = i
+
             return {
                 "user_vector": self.user_vector,
-                "ranking_questions": ranking_questions,
-                "awareness_questions": awareness_questions,
+                "ranking_questions": all_questions,
+                "awareness_positions": [2],  # 0-indexed position of awareness question
                 "subjects": self.subjects,
                 "user_id": self.user_id,
                 "survey_id": self.external_survey_id,

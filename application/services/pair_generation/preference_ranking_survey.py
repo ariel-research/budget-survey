@@ -178,7 +178,8 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
             vector_size: Size of each allocation vector (must be 3).
 
         Returns:
-            List of 4 ranking questions, each with options A, B, C to be ranked.
+            List of 4 ranking questions, each with options A, B, C to be
+            ranked.
 
         Raises:
             ValueError: If vector_size is not 3.
@@ -223,10 +224,15 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
             option_c = user_array + self._rotate_vector(base_diff, 2)
 
             # Validate all options
-            for opt_name, option in [("A", option_a), ("B", option_b), ("C", option_c)]:
+            for opt_name, option in [
+                ("A", option_a),
+                ("B", option_b),
+                ("C", option_c),
+            ]:
                 if not all(0 <= val <= 100 for val in option):
                     raise UnsuitableForStrategyError(
-                        f"Option {opt_name} in question {question_num} has invalid values: {option}"
+                        f"Option {opt_name} in question {question_num} has "
+                        f"invalid values: {option}"
                     )
 
             # Convert to tuples

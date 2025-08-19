@@ -432,17 +432,29 @@ function handleRankingSubmission(e) {
     
     const rankingQuestions = document.querySelectorAll('.ranking-question');
     let hasErrors = false;
+    let awarenessError = false;
     
     // Validate all questions one final time
     rankingQuestions.forEach(question => {
         if (!validateSingleQuestion(question)) {
             hasErrors = true;
+            
+            // Check if this is an awareness question that failed
+            if (question.classList.contains('awareness-question')) {
+                awarenessError = true;
+            }
         }
     });
     
     if (hasErrors) {
-        showAlert(state.messages.ranking_validation_error || 
-                 'Please complete all rankings before submitting');
+        // Show specific message for awareness check failure
+        if (awarenessError) {
+            showAlert(state.messages.failed_awareness || 
+                     'Failed awareness check. Please try again and pay attention to the questions.');
+        } else {
+            showAlert(state.messages.ranking_validation_error || 
+                     'Please complete all rankings before submitting');
+        }
         
         // Scroll to first error
         const firstError = document.querySelector('.ranking-feedback.error');
