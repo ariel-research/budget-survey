@@ -648,6 +648,38 @@ input[type="radio"] {
         min-width: auto;
     }
 
+    /* Mobile adjustments for enhancements */
+    .option-header h4[data-option-letter]::before {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        margin-right: 0.25rem;
+    }
+    
+    .rtl .option-header h4[data-option-letter]::before {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+    
+    .rank-selector.completed::after {
+        width: 16px;
+        height: 16px;
+        font-size: 0.7rem;
+        top: 0.25rem;
+        right: 0.25rem;
+    }
+    
+    .rtl .rank-selector.completed::after {
+        right: auto;
+        left: 0.25rem;
+    }
+    
+    .ranking-question[data-progress]::before {
+        position: static;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+
     /* FORCE REMOVE GRID ON MOBILE - Use !important to override */
     .ranking-layout {
         display: flex !important;
@@ -792,27 +824,27 @@ input[type="radio"] {
 
     /* Enhanced 480px Compact Side-by-Side Layout */
     .ranking-question {
-        margin: 0.75rem 0; /* Reduced margin for smaller screens */
-        padding: 1rem; /* Reduced padding */
+        margin: 0.75rem 0;
+        padding: 1rem;
     }
     
     .question-header h3 {
-        font-size: 1.2rem; /* Slightly smaller for small screens */
+        font-size: 1.2rem;
     }
     
     .ranking-instructions {
-        font-size: 0.9rem; /* Smaller instructions text */
-        padding: 0.75rem; /* Reduced padding */
+        font-size: 0.9rem;
+        padding: 0.75rem;
     }
     
     /* Maintain flexbox vertical layout but more compact for small screens */
     .ranking-layout {
-        gap: 1rem; /* Reduced gap for smaller screens */
+        gap: 1rem;
     }
     
     .ranking-controls {
-        padding: 0.75rem 0; /* Reduced padding for small screens */
-        gap: 0.75rem; /* Tighter spacing between rank selectors */
+        padding: 0.75rem 0;
+        gap: 0.75rem;
     }
     
     .rank-selector {
@@ -988,13 +1020,124 @@ input[type="radio"] {
    Used by: Survey template when is_ranking_based is true
    ========================================================================== */
 
-/* Main ranking question container - OPTIMIZED */
+/* Option letter badges for clearer identification */
+.option-header h4[data-option-letter]::before {
+    content: attr(data-option-letter);
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* RTL support for option badges */
+.rtl .option-header h4[data-option-letter]::before {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+/* Highlight option when user focuses on corresponding dropdown */
+.option-card.highlight {
+    border-color: var(--color-primary);
+    background: rgba(52, 152, 219, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Progress indicator for completed rankings */
+.rank-selector.completed {
+    position: relative;
+}
+
+.rank-selector.completed::after {
+    content: "✓";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--color-success);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* RTL support for progress indicator */
+.rtl .rank-selector.completed::after {
+    right: auto;
+    left: 0.5rem;
+}
+
+/* Enhanced visual hierarchy for ranking controls */
+.rank-selector[data-rank="1"] {
+    border-left: 4px solid #FEE101; /* Gold for 1st place */
+}
+
+.rank-selector[data-rank="2"] {
+    border-left: 4px solid #95a5a6; /* Silver for 2nd place */
+}
+
+.rank-selector[data-rank="3"] {
+    border-left: 4px solid #cd7f32; /* Bronze for 3rd place */
+}
+
+/* RTL support for ranking borders */
+.rtl .rank-selector[data-rank="1"],
+.rtl .rank-selector[data-rank="2"],
+.rtl .rank-selector[data-rank="3"] {
+    border-left: none;
+    border-right: 4px solid;
+}
+
+.rtl .rank-selector[data-rank="1"] { border-right-color: #f39c12; }
+.rtl .rank-selector[data-rank="2"] { border-right-color: #95a5a6; }
+.rtl .rank-selector[data-rank="3"] { border-right-color: #cd7f32; }
+
+/* Question progress indicator */
+.ranking-question[data-progress]::before {
+    content: attr(data-progress);
+    position: absolute;
+    top: -0.5rem;
+    right: 1rem;
+    background: var(--color-primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 10;
+}
+
+/* RTL support for progress indicator */
+.rtl .ranking-question[data-progress]::before {
+    right: auto;
+    left: 1rem;
+}
+
+/* Question completion indicator */
+.ranking-question.question-complete {
+    border-color: var(--color-success);
+    background: linear-gradient(135deg, var(--color-background-light) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+/* Main ranking question container */
 .ranking-question {
     background: var(--color-background-light);
-    border-radius: 8px; /* Reduced from 12px */
+    border-radius: 8px;
     border: 1px solid var(--color-border-light);
-    margin: 1.5rem 0; /* Reduced from 2rem - saves 16px */
-    padding: 1.5rem; /* Reduced from 2rem - saves 16px */
+    margin: 1.5rem 0;
+    padding: 1.5rem;
     box-shadow: var(--shadow-md);
     transition: box-shadow 0.3s ease;
 }
@@ -1003,53 +1146,53 @@ input[type="radio"] {
     box-shadow: var(--shadow-lg);
 }
 
-/* Question header styles - OPTIMIZED */
+/* Question header styles */
 .question-header {
     text-align: center;
-    margin-bottom: 1.25rem; /* Reduced from 2rem - saves 12px */
+    margin-bottom: 1.25rem;
     border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 0.75rem; /* Reduced from 1rem - saves 4px */
+    padding-bottom: 0.75rem;
 }
 
 .question-header h3 {
     color: var(--color-text-dark);
-    font-size: 1.3rem; /* Reduced from 1.5rem */
+    font-size: 1.3rem;
     font-weight: 600;
-    margin: 0 0 0.75rem 0; /* Reduced from 1rem - saves 4px */
+    margin: 0 0 0.75rem 0;
 }
 
 .ranking-instructions {
     color: var(--color-text);
-    font-size: 1rem; /* Reduced from 1.1rem */
-    line-height: 1.4; /* Reduced from 1.5 */
+    font-size: 1rem;
+    line-height: 1.4;
     margin: 0;
-    padding: 0.75rem; /* Reduced from 1rem - saves 4px */
+    padding: 0.75rem;
     background: var(--color-background-info);
-    border-radius: 6px; /* Reduced from 8px */
-    border-left: 3px solid var(--color-primary); /* Reduced from 4px */
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
 }
 
-/* Main layout container - OPTIMIZED */
+/* Main layout container */
 .ranking-layout {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 2rem; /* Reduced from 3rem - saves 16px */
+    gap: 2rem;
     align-items: start;
 }
 
-/* Option cards container - OPTIMIZED */
+/* Option cards container */
 .option-cards {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem; /* Reduced from 1rem - saves 8px per gap */
+    gap: 0.75rem;
 }
 
-/* Individual option card - OPTIMIZED */
+/* Individual option card */
 .option-card {
     background: var(--color-background-alt);
     border: 2px solid var(--color-border-light);
-    border-radius: 6px; /* Reduced from 8px */
-    padding: 1rem; /* Reduced from 1.5rem - saves 16px per card */
+    border-radius: 6px;
+    padding: 1rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -1077,14 +1220,14 @@ input[type="radio"] {
     background: var(--color-primary);
 }
 
-/* Option header - OPTIMIZED */
+/* Option header */
 .option-header {
-    margin-bottom: 0.75rem; /* Reduced from 1rem - saves 4px per card */
+    margin-bottom: 0.75rem;
 }
 
 .option-header h4 {
     color: var(--color-text-dark);
-    font-size: 1.1rem; /* Reduced from 1.2rem */
+    font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
     display: flex;
@@ -1092,19 +1235,20 @@ input[type="radio"] {
     gap: 0.5rem;
 }
 
-/* Budget breakdown within each option - OPTIMIZED */
+/* Budget breakdown within each option */
 .budget-breakdown {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem; /* Reduced from 0.5rem - saves 4px per gap */
+    gap: 0.25rem
 }
 
 .budget-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.25rem 0; /* Reduced from 0.5rem - saves 4px per item */
+    padding: 0.25rem 0;
     border-bottom: 1px solid var(--color-border-light);
+    gap: 0.75rem;
 }
 
 .budget-item:last-child {
@@ -1122,20 +1266,20 @@ input[type="radio"] {
     font-size: 1.1rem;
 }
 
-/* Ranking controls container - OPTIMIZED */
+/* Ranking controls container */
 .ranking-controls {
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* Reduced from 1.5rem - saves 12px */
+    gap: 1rem;
     position: sticky;
-    top: 1rem; /* Reduced from 2rem - saves 16px */
+    top: 1rem;
 }
 
-/* Individual rank selector - OPTIMIZED */
+/* Individual rank selector */
 .rank-selector {
     background: var(--color-background-light);
-    border-radius: 6px; /* Reduced from 8px */
-    padding: 1rem; /* Reduced from 1.5rem - saves 16px per selector */
+    border-radius: 6px;
+    padding: 1rem;
     border: 1px solid var(--color-border-light);
     box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
@@ -1150,13 +1294,13 @@ input[type="radio"] {
     background: var(--color-background-info);
 }
 
-/* Rank label styling - OPTIMIZED */
+/* Rank label styling */
 .rank-label {
     display: block;
     font-weight: 600;
-    margin-bottom: 0.5rem; /* Reduced from 0.75rem - saves 4px per selector */
+    margin-bottom: 0.5rem;
     color: var(--color-text-dark);
-    font-size: 0.95rem; /* Reduced from 1rem */
+    font-size: 0.95rem;
 }
 
 .rank-description {
@@ -1166,13 +1310,13 @@ input[type="radio"] {
     font-style: italic;
 }
 
-/* Enhanced dropdown styling - OPTIMIZED */
+/* Enhanced dropdown styling */
 .rank-dropdown {
     width: 100%;
-    padding: 0.6rem 0.8rem; /* Reduced from 0.75rem 1rem - saves 6px */
+    padding: 0.6rem 0.8rem;
     border: 2px solid var(--color-border);
-    border-radius: 4px; /* Reduced from 6px */
-    font-size: 0.95rem; /* Reduced from 1rem */
+    border-radius: 4px;
+    font-size: 0.95rem;
     background: white;
     color: var(--color-text-dark);
     cursor: pointer;
@@ -1204,11 +1348,11 @@ input[type="radio"] {
     background-color: rgba(231, 76, 60, 0.1);
 }
 
-/* Validation feedback styles - OPTIMIZED */
+/* Validation feedback styles */
 .ranking-feedback {
-    margin-top: 0.75rem; /* Reduced from 1rem - saves 4px */
-    padding: 0.75rem; /* Reduced from 1rem - saves 4px */
-    border-radius: 4px; /* Reduced from 6px */
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 4px;
     font-weight: 500;
     text-align: center;
 }
@@ -1227,15 +1371,15 @@ input[type="radio"] {
 
 /* Progress indicators */
 .rank-selector[data-rank="1"] .rank-label::before {
-    content: "1️⃣ ";
+    content: "";
 }
 
 .rank-selector[data-rank="2"] .rank-label::before {
-    content: "2️⃣ ";
+    content: "";
 }
 
 .rank-selector[data-rank="3"] .rank-label::before {
-    content: "3️⃣ ";
+    content: "";
 }
 
 /* ==========================================================================
@@ -1299,7 +1443,7 @@ input[type="radio"] {
     }
 }
 
-/* Reduced motion support */
+/* Motion support */
 @media (prefers-reduced-motion: reduce) {
     .option-card,
     .rank-selector,

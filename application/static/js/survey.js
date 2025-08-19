@@ -1,6 +1,7 @@
 /**
  * survey.js - Budget Survey Application
  * Handles client-side interactions for budget creation and survey forms
+ * Enhanced with UX improvements for ranking interface
  */
 
 // Configuration object for constants and settings
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadMessages();
         initializeForm();
         initializeAlerts();
+        initializeRankingEnhancements(); // NEW: Add UX enhancements
     } catch (error) {
         console.error('Initialization failed:', error);
     }
@@ -270,21 +272,49 @@ function initializeSurveyForm() {
 
 /**
  * Initialize ranking validation for ranking-based surveys
+ * ENHANCED: Now includes UX improvements
  */
 function initializeRankingValidation(form, submitBtn) {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
     console.log(`Detected ${rankingQuestions.length} ranking questions`);
 
     // Set up event listeners for all ranking dropdowns
-    rankingQuestions.forEach(question => {
+    rankingQuestions.forEach((question, questionIndex) => {
         const dropdowns = question.querySelectorAll('.rank-dropdown');
         const optionCards = question.querySelectorAll('.option-card');
+        
+        // ENHANCED: Add question progress indicator
+        question.setAttribute('data-progress', `${questionIndex + 1}/${rankingQuestions.length}`);
         
         dropdowns.forEach(dropdown => {
             dropdown.addEventListener('change', function() {
                 validateSingleQuestion(question);
                 updateVisualFeedback(question);
                 updateRankingSubmitButtonState(submitBtn);
+                updateSelectionFeedback(question); // ENHANCED: Add selection feedback
+            });
+
+            // ENHANCED: Add focus/blur events for highlighting
+            dropdown.addEventListener('focus', function() {
+                highlightOption(question, this.value);
+            });
+            
+            dropdown.addEventListener('blur', function() {
+                clearHighlights(question);
+            });
+
+            // ENHANCED: Add keyboard navigation
+            dropdown.addEventListener('keydown', function(e) {
+                const currentIndex = Array.from(dropdowns).indexOf(this);
+                
+                // Arrow key navigation between dropdowns
+                if (e.key === 'ArrowDown' && currentIndex < dropdowns.length - 1) {
+                    e.preventDefault();
+                    dropdowns[currentIndex + 1].focus();
+                } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+                    e.preventDefault();
+                    dropdowns[currentIndex - 1].focus();
+                }
             });
         });
     });
@@ -294,6 +324,75 @@ function initializeRankingValidation(form, submitBtn) {
     
     // Initial button state update
     updateRankingSubmitButtonState(submitBtn);
+}
+
+/**
+ * ENHANCED: Visual connection between options and rankings
+ */
+function initializeRankingEnhancements() {
+    const rankingQuestions = document.querySelectorAll('.ranking-question');
+    
+    rankingQuestions.forEach(question => {
+        const optionCards = question.querySelectorAll('.option-card');
+        const dropdowns = question.querySelectorAll('.rank-dropdown');
+        
+        // Add option letter attributes for CSS styling
+        optionCards.forEach((card, index) => {
+            const letter = ['A', 'B', 'C'][index];
+            const header = card.querySelector('.option-header h4');
+            if (header) {
+                header.setAttribute('data-option-letter', letter);
+            }
+        });
+        
+        // Add data attributes for rank selectors
+        const rankSelectors = question.querySelectorAll('.rank-selector');
+        rankSelectors.forEach((selector, index) => {
+            selector.setAttribute('data-rank', index + 1);
+        });
+    });
+}
+
+/**
+ * ENHANCED: Highlight option when focused in dropdown
+ */
+function highlightOption(question, optionLetter) {
+    // Clear existing highlights
+    clearHighlights(question);
+    
+    if (optionLetter) {
+        const optionIndex = ['A', 'B', 'C'].indexOf(optionLetter);
+        const optionCard = question.querySelectorAll('.option-card')[optionIndex];
+        if (optionCard) {
+            optionCard.classList.add('highlight');
+        }
+    }
+}
+
+/**
+ * ENHANCED: Clear all option highlights
+ */
+function clearHighlights(question) {
+    question.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('highlight');
+    });
+}
+
+/**
+ * ENHANCED: Update selection feedback with progress indicators
+ */
+function updateSelectionFeedback(question) {
+    const dropdowns = question.querySelectorAll('.rank-dropdown');
+    const rankSelectors = question.querySelectorAll('.rank-selector');
+    
+    dropdowns.forEach((dropdown, index) => {
+        const selector = rankSelectors[index];
+        if (dropdown.value) {
+            selector.classList.add('completed');
+        } else {
+            selector.classList.remove('completed');
+        }
+    });
 }
 
 /**
@@ -389,6 +488,7 @@ function updateVisualFeedback(question) {
 
 /**
  * Update submit button state for ranking surveys
+ * ENHANCED: Better progress feedback
  */
 function updateRankingSubmitButtonState(submitBtn) {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
@@ -400,8 +500,11 @@ function updateRankingSubmitButtonState(submitBtn) {
         const isValid = validateSingleQuestion(question);
         if (isValid) {
             validQuestions++;
+            // ENHANCED: Mark question as complete
+            question.classList.add('question-complete');
         } else {
             allValid = false;
+            question.classList.remove('question-complete');
         }
     });
     
@@ -409,10 +512,10 @@ function updateRankingSubmitButtonState(submitBtn) {
     submitBtn.disabled = !allValid;
     submitBtn.classList.toggle('btn-disabled', !allValid);
     
-    // Update button title with progress
+    // ENHANCED: Better progress feedback
     const progressText = allValid ? 
         'Ready to submit' : 
-        `${validQuestions}/${totalQuestions} questions completed`;
+        `Complete all rankings (${validQuestions}/${totalQuestions})`;
     submitBtn.title = progressText;
     
     // Add pulse animation when all complete

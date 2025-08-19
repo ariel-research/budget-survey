@@ -2,6 +2,7 @@
 This template displays a budget allocation survey to users.
 It shows the user's ideal budget, presents pairs of alternative allocations for comparison,
 and collects the user's preferences through a form submission.
+ENHANCED: Now includes UX improvements for ranking interface
 -->
 
 {% extends "base.html" %}
@@ -48,7 +49,9 @@ and collects the user's preferences through a form submission.
         {% if is_ranking_based %}
         <!-- Ranking-based survey: Show ranking questions -->
         {% for question in ranking_questions %}
-        <div class="ranking-question{% if question.get('is_awareness') %} awareness-question{% endif %}" data-question="{{ question.question_number }}">
+        <div class="ranking-question{% if question.get('is_awareness') %} awareness-question{% endif %}" 
+             data-question="{{ question.question_number }}"
+             data-progress="{{ loop.index }}/{{ ranking_questions|length }}">
             <div class="question-header">
                 <h3>{{ get_translation('question') }} {{ question.question_number }}</h3>
                 <p class="ranking-instructions">{{ get_translation('ranking_instructions') }}</p>
@@ -59,7 +62,7 @@ and collects the user's preferences through a form submission.
                 <div class="option-cards">
                     <div class="option-card" data-option="A">
                         <div class="option-header">
-                            <h4>{{ get_translation('option_a_label') }}</h4>
+                            <h4 data-option-letter="A">{{ get_translation('option_a_label') }}</h4>
                         </div>
                         <div class="budget-breakdown">
                             {% for subject, value in zip(subjects, question.option_a) %}
@@ -73,7 +76,7 @@ and collects the user's preferences through a form submission.
                     
                     <div class="option-card" data-option="B">
                         <div class="option-header">
-                            <h4>{{ get_translation('option_b_label') }}</h4>
+                            <h4 data-option-letter="B">{{ get_translation('option_b_label') }}</h4>
                         </div>
                         <div class="budget-breakdown">
                             {% for subject, value in zip(subjects, question.option_b) %}
@@ -87,7 +90,7 @@ and collects the user's preferences through a form submission.
                     
                     <div class="option-card" data-option="C">
                         <div class="option-header">
-                            <h4>{{ get_translation('option_c_label') }}</h4>
+                            <h4 data-option-letter="C">{{ get_translation('option_c_label') }}</h4>
                         </div>
                         <div class="budget-breakdown">
                             {% for subject, value in zip(subjects, question.option_c) %}
@@ -102,7 +105,7 @@ and collects the user's preferences through a form submission.
                 
                 <!-- Ranking Controls -->
                 <div class="ranking-controls">
-                    <div class="rank-selector">
+                    <div class="rank-selector" data-rank="1">
                         <label class="rank-label">
                             {{ get_translation('rank_1') }} 
                             <span class="rank-description">({{ get_translation('most_preferred') }})</span>
@@ -111,7 +114,8 @@ and collects the user's preferences through a form submission.
                                 class="rank-dropdown" 
                                 data-rank="1" 
                                 data-question="{{ question.question_number }}" 
-                                required>
+                                required
+                                aria-label="Select most preferred option">
                             <option value="">{{ get_translation('select_option') }}</option>
                             <option value="A">{{ get_translation('option_a_label') }}</option>
                             <option value="B">{{ get_translation('option_b_label') }}</option>
@@ -119,7 +123,7 @@ and collects the user's preferences through a form submission.
                         </select>
                     </div>
                     
-                    <div class="rank-selector">
+                    <div class="rank-selector" data-rank="2">
                         <label class="rank-label">
                             {{ get_translation('rank_2') }}
                         </label>
@@ -127,7 +131,8 @@ and collects the user's preferences through a form submission.
                                 class="rank-dropdown" 
                                 data-rank="2" 
                                 data-question="{{ question.question_number }}" 
-                                required>
+                                required
+                                aria-label="Select middle preference option">
                             <option value="">{{ get_translation('select_option') }}</option>
                             <option value="A">{{ get_translation('option_a_label') }}</option>
                             <option value="B">{{ get_translation('option_b_label') }}</option>
@@ -135,7 +140,7 @@ and collects the user's preferences through a form submission.
                         </select>
                     </div>
                     
-                    <div class="rank-selector">
+                    <div class="rank-selector" data-rank="3">
                         <label class="rank-label">
                             {{ get_translation('rank_3') }} 
                             <span class="rank-description">({{ get_translation('least_preferred') }})</span>
@@ -144,7 +149,8 @@ and collects the user's preferences through a form submission.
                                 class="rank-dropdown" 
                                 data-rank="3" 
                                 data-question="{{ question.question_number }}" 
-                                required>
+                                required
+                                aria-label="Select least preferred option">
                             <option value="">{{ get_translation('select_option') }}</option>
                             <option value="A">{{ get_translation('option_a_label') }}</option>
                             <option value="B">{{ get_translation('option_b_label') }}</option>
@@ -155,7 +161,7 @@ and collects the user's preferences through a form submission.
             </div>
             
             <!-- Validation feedback area -->
-            <div class="ranking-feedback" style="display: none;"></div>
+            <div class="ranking-feedback" style="display: none;" role="alert" aria-live="polite"></div>
             
             <!-- Hidden fields for question metadata -->
             <input type="hidden" name="question_{{ question.question_number }}_option_a" value="{{ question.option_a|join(',') }}">
@@ -224,13 +230,14 @@ and collects the user's preferences through a form submission.
 
         <div class="comment-section">
             <h3>{{ get_translation('comments') }}</h3>
-            <textarea name="user_comment" id="user_comment" rows="4" placeholder="{{ get_translation('comments_placeholder') }}"></textarea>
+            <textarea name="user_comment" id="user_comment" rows="4" placeholder="{{ get_translation('comments_placeholder') }}" aria-label="Optional comments about the survey"></textarea>
         </div>
 
-        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="error-message" class="error-message" style="display: none;" role="alert" aria-live="polite"></div>
         <div class="submit-container">
-            <button type="submit" class="btn">{{ get_translation('submit_final') }}</button>
+            <button type="submit" class="btn" aria-label="Submit completed survey">{{ get_translation('submit_final') }}</button>
         </div>
     </form>
 </div>
+
 {% endblock %}
