@@ -57,7 +57,7 @@ ENHANCED: Now includes UX improvements for ranking interface
             </div>
             
             <div class="ranking-layout">
-                <!-- Option Cards -->
+                <!-- Option Cards with Integrated Ranking -->
                 <div class="option-cards">
                     <div class="option-card" data-option="A">
                         <div class="option-header">
@@ -70,6 +70,19 @@ ENHANCED: Now includes UX improvements for ranking interface
                                 <span class="value">{{ value }}</span>
                             </div>
                             {% endfor %}
+                        </div>
+                        <div class="option-ranking">
+                            <label class="ranking-label">{{ get_translation('rank_this_option') }}</label>
+                            <select class="option-rank-dropdown" 
+                                    data-option="A" 
+                                    data-question="{{ question.question_number }}" 
+                                    required
+                                    aria-label="Rank for Option A">
+                                <option value="">{{ get_translation('select_rank') }}</option>
+                                <option value="1">1 - {{ get_translation('most_preferred') }}</option>
+                                <option value="2">2</option>
+                                <option value="3">3 - {{ get_translation('least_preferred') }}</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -85,6 +98,19 @@ ENHANCED: Now includes UX improvements for ranking interface
                             </div>
                             {% endfor %}
                         </div>
+                        <div class="option-ranking">
+                            <label class="ranking-label">{{ get_translation('rank_this_option') }}</label>
+                            <select class="option-rank-dropdown" 
+                                    data-option="B" 
+                                    data-question="{{ question.question_number }}" 
+                                    required
+                                    aria-label="Rank for Option B">
+                                <option value="">{{ get_translation('select_rank') }}</option>
+                                <option value="1">1 - {{ get_translation('most_preferred') }}</option>
+                                <option value="2">2</option>
+                                <option value="3">3 - {{ get_translation('least_preferred') }}</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="option-card" data-option="C">
@@ -99,64 +125,26 @@ ENHANCED: Now includes UX improvements for ranking interface
                             </div>
                             {% endfor %}
                         </div>
+                        <div class="option-ranking">
+                            <label class="ranking-label">{{ get_translation('rank_this_option') }}</label>
+                            <select class="option-rank-dropdown" 
+                                    data-option="C" 
+                                    data-question="{{ question.question_number }}" 
+                                    required
+                                    aria-label="Rank for Option C">
+                                <option value="">{{ get_translation('select_rank') }}</option>
+                                <option value="1">1 - {{ get_translation('most_preferred') }}</option>
+                                <option value="2">2</option>
+                                <option value="3">3 - {{ get_translation('least_preferred') }}</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Ranking Controls -->
-                <div class="ranking-controls">
-                    <div class="rank-selector" data-rank="1">
-                        <label class="rank-label">
-                            {{ get_translation('rank_1') }} 
-                            <span class="rank-description">({{ get_translation('most_preferred') }})</span>
-                        </label>
-                        <select name="rank_1_q{{ question.question_number }}" 
-                                class="rank-dropdown" 
-                                data-rank="1" 
-                                data-question="{{ question.question_number }}" 
-                                required
-                                aria-label="Select most preferred option">
-                            <option value="">{{ get_translation('select_option') }}</option>
-                            <option value="A">{{ get_translation('option_a_label') }}</option>
-                            <option value="B">{{ get_translation('option_b_label') }}</option>
-                            <option value="C">{{ get_translation('option_c_label') }}</option>
-                        </select>
-                    </div>
-                    
-                    <div class="rank-selector" data-rank="2">
-                        <label class="rank-label">
-                            {{ get_translation('rank_2') }}
-                        </label>
-                        <select name="rank_2_q{{ question.question_number }}" 
-                                class="rank-dropdown" 
-                                data-rank="2" 
-                                data-question="{{ question.question_number }}" 
-                                required
-                                aria-label="Select middle preference option">
-                            <option value="">{{ get_translation('select_option') }}</option>
-                            <option value="A">{{ get_translation('option_a_label') }}</option>
-                            <option value="B">{{ get_translation('option_b_label') }}</option>
-                            <option value="C">{{ get_translation('option_c_label') }}</option>
-                        </select>
-                    </div>
-                    
-                    <div class="rank-selector" data-rank="3">
-                        <label class="rank-label">
-                            {{ get_translation('rank_3') }} 
-                            <span class="rank-description">({{ get_translation('least_preferred') }})</span>
-                        </label>
-                        <select name="rank_3_q{{ question.question_number }}" 
-                                class="rank-dropdown" 
-                                data-rank="3" 
-                                data-question="{{ question.question_number }}" 
-                                required
-                                aria-label="Select least preferred option">
-                            <option value="">{{ get_translation('select_option') }}</option>
-                            <option value="A">{{ get_translation('option_a_label') }}</option>
-                            <option value="B">{{ get_translation('option_b_label') }}</option>
-                            <option value="C">{{ get_translation('option_c_label') }}</option>
-                        </select>
-                    </div>
-                </div>
+                <!-- Hidden form fields for backend compatibility -->
+                <input type="hidden" name="rank_1_q{{ question.question_number }}" class="hidden-rank-field" data-rank="1" data-question="{{ question.question_number }}">
+                <input type="hidden" name="rank_2_q{{ question.question_number }}" class="hidden-rank-field" data-rank="2" data-question="{{ question.question_number }}">
+                <input type="hidden" name="rank_3_q{{ question.question_number }}" class="hidden-rank-field" data-rank="3" data-question="{{ question.question_number }}">
             </div>
             
             <!-- Validation feedback area -->
