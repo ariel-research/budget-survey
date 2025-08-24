@@ -1115,6 +1115,10 @@ input[type="radio"] {
     .ranking-layout {
         gap: 1rem;
     }
+
+    .ranking-question {
+        padding: 1rem;
+    }
     
     /*
      * CORRECTED SECTION FOR MOBILE RESPONSIVENESS
@@ -1122,6 +1126,7 @@ input[type="radio"] {
      * on screens 768px wide or smaller, fixing the horizontal overflow.
      */
     .ranking-question .option-cards {
+        display: grid;
         grid-template-columns: 1fr; /* Use a single column for vertical stacking */
         gap: 1rem; /* Adjust gap for vertical layout */
     }
@@ -1136,24 +1141,24 @@ input[type="radio"] {
     }
     
     .ranking-label {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         margin-bottom: 0.4rem;
     }
     
     .option-rank-dropdown {
-        font-size: 0.9rem;
-        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.8rem;
         min-height: 44px; /* Touch-friendly */
     }
     
     /* Mobile option card styling */
     .option-card {
-        padding: 1rem;
-        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 0;
     }
     
     .option-header h4 {
-        font-size: 1rem;
+        font-size: 0.95rem;
         margin-bottom: 0.75rem;
     }
     
@@ -1163,15 +1168,15 @@ input[type="radio"] {
     
     .budget-item {
         padding: 0.25rem 0;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     
     .budget-item .subject {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     
     .budget-item .value {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
     }
     
@@ -1239,16 +1244,19 @@ input[type="radio"] {
     /* RTL Mobile Olympic medal colors - use right border for RTL vertical layout */
     .rtl .option-card.ranked-1 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #FEE101;
     }
     
     .rtl .option-card.ranked-2 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #95a5a6;
     }
     
     .rtl .option-card.ranked-3 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #cd7f32;
     }
 }
@@ -1276,7 +1284,7 @@ input[type="radio"] {
     /* Enhanced 480px Compact Layout for Integrated Ranking */
     .ranking-question {
         margin: 0.75rem 0;
-        padding: 0.75rem;
+        padding: 0.5rem;
     }
     
     .question-header h3 {
@@ -1304,31 +1312,31 @@ input[type="radio"] {
     }
     
     .ranking-label {
-        font-size: 0.8rem; /* Smaller label for small screens */
+        font-size: 0.75rem; /* Smaller label for small screens */
         margin-bottom: 0.3rem;
     }
     
     .option-rank-dropdown {
-        font-size: 0.85rem; /* Readable text for small screens */
-        padding: 0.5rem 0.7rem; /* Compact padding optimized for small screens */
-        min-height: 42px; /* Maintain touch-friendly size */
+        font-size: 0.8rem; /* Readable text for small screens */
+        padding: 0.4rem 0.7rem; /* Compact padding optimized for small screens */
+        min-height: 40px; /* Maintain touch-friendly size */
     }
     
     .option-card {
-        padding: 0.75rem; /* Even more compact */
+        padding: 0.5rem; /* Even more compact */
     }
     
     .option-header h4 {
-        font-size: 0.9rem; /* Smaller option titles */
+        font-size: 0.85rem; /* Smaller option titles */
     }
     
     .budget-item {
-        font-size: 0.8rem; /* Smaller budget text */
+        font-size: 0.75rem; /* Smaller budget text */
         padding: 0.2rem 0;
     }
     
     .budget-item .value {
-        font-size: 0.9rem; /* Smaller values */
+        font-size: 0.85rem; /* Smaller values */
     }
     
     /* 480px Olympic medal colors - use left border for vertical layout */
@@ -1371,16 +1379,19 @@ input[type="radio"] {
     /* RTL 480px Olympic medal colors - use right border for RTL vertical layout */
     .rtl .option-card.ranked-1 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #FEE101;
     }
     
     .rtl .option-card.ranked-2 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #95a5a6;
     }
     
     .rtl .option-card.ranked-3 {
         border-left: none;
+        border-bottom: none;
         border-right: 4px solid #cd7f32;
     }
 
