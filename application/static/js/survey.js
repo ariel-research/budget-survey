@@ -277,22 +277,24 @@ function initializeRankingValidation(form, submitBtn) {
     const rankingQuestions = document.querySelectorAll('.ranking-question');
     console.log(`Detected ${rankingQuestions.length} ranking questions`);
 
-    // Set up event listeners for all ranking dropdowns
+    // Set up event listeners for all option ranking dropdowns
     rankingQuestions.forEach((question, questionIndex) => {
-        const dropdowns = question.querySelectorAll('.rank-dropdown');
+        const dropdowns = question.querySelectorAll('.option-rank-dropdown');
         const optionCards = question.querySelectorAll('.option-card');
         
         dropdowns.forEach(dropdown => {
             dropdown.addEventListener('change', function() {
+                updateHiddenRankFields(question);
                 validateSingleQuestion(question);
                 updateVisualFeedback(question);
                 updateRankingSubmitButtonState(submitBtn);
-                updateSelectionFeedback(question); // Selection feedback
+                updateSelectionFeedback(question);
             });
 
             // Focus/blur events for highlighting
             dropdown.addEventListener('focus', function() {
-                highlightOption(question, this.value);
+                const optionLetter = this.getAttribute('data-option');
+                highlightOption(question, optionLetter);
             });
             
             dropdown.addEventListener('blur', function() {
@@ -323,6 +325,33 @@ function initializeRankingValidation(form, submitBtn) {
 }
 
 /**
+ * Update hidden rank fields based on integrated dropdown selections
+ * Maps from option-based rankings (A=1, B=2, C=3) to rank-based format (rank_1=A, rank_2=B, rank_3=C)
+ */
+function updateHiddenRankFields(question) {
+    const questionNumber = question.getAttribute('data-question');
+    const dropdowns = question.querySelectorAll('.option-rank-dropdown');
+    const hiddenFields = question.querySelectorAll('.hidden-rank-field');
+    
+    // Clear all hidden fields first
+    hiddenFields.forEach(field => field.value = '');
+    
+    // Map from option rankings to rank assignments
+    dropdowns.forEach(dropdown => {
+        const option = dropdown.getAttribute('data-option');
+        const rank = dropdown.value;
+        
+        if (rank) {
+            // Find the corresponding hidden field for this rank
+            const hiddenField = question.querySelector(`.hidden-rank-field[data-rank="${rank}"]`);
+            if (hiddenField) {
+                hiddenField.value = option;
+            }
+        }
+    });
+}
+
+/**
  * Visual connection between options and rankings
  */
 function initializeRankingEnhancements() {
@@ -330,7 +359,6 @@ function initializeRankingEnhancements() {
     
     rankingQuestions.forEach(question => {
         const optionCards = question.querySelectorAll('.option-card');
-        const dropdowns = question.querySelectorAll('.rank-dropdown');
         
         // Add option letter attributes for CSS styling
         optionCards.forEach((card, index) => {
@@ -339,12 +367,9 @@ function initializeRankingEnhancements() {
             if (header) {
                 header.setAttribute('data-option-letter', letter);
             }
-        });
-        
-        // Add data attributes for rank selectors
-        const rankSelectors = question.querySelectorAll('.rank-selector');
-        rankSelectors.forEach((selector, index) => {
-            selector.setAttribute('data-rank', index + 1);
+            
+            // Add data attributes for the card itself
+            card.setAttribute('data-option-letter', letter);
         });
     });
 }
@@ -378,15 +403,20 @@ function clearHighlights(question) {
  * Update selection feedback with progress indicators
  */
 function updateSelectionFeedback(question) {
-    const dropdowns = question.querySelectorAll('.rank-dropdown');
-    const rankSelectors = question.querySelectorAll('.rank-selector');
+    const dropdowns = question.querySelectorAll('.option-rank-dropdown');
+    const optionCards = question.querySelectorAll('.option-card');
     
-    dropdowns.forEach((dropdown, index) => {
-        const selector = rankSelectors[index];
-        if (dropdown.value) {
-            selector.classList.add('completed');
-        } else {
-            selector.classList.remove('completed');
+    // Update individual option card states
+    dropdowns.forEach(dropdown => {
+        const option = dropdown.getAttribute('data-option');
+        const card = question.querySelector(`[data-option="${option}"]`);
+        
+        if (card) {
+            if (dropdown.value) {
+                card.classList.add('option-ranked');
+            } else {
+                card.classList.remove('option-ranked');
+            }
         }
     });
 }
@@ -395,7 +425,7 @@ function updateSelectionFeedback(question) {
  * Validate ranking for a single question
  */
 function validateSingleQuestion(question) {
-    const dropdowns = question.querySelectorAll('.rank-dropdown');
+    const dropdowns = question.querySelectorAll('.option-rank-dropdown');
     const values = Array.from(dropdowns).map(d => d.value).filter(v => v);
     const hasDuplicates = values.length !== new Set(values).size;
     const isComplete = values.length === 3;
@@ -405,6 +435,7 @@ function validateSingleQuestion(question) {
     // Clear previous states
     dropdowns.forEach(dropdown => {
         dropdown.classList.remove('error', 'completed');
+        dropdown.parentElement.parentElement.classList.remove('ranking-error');
     });
     
     if (hasDuplicates) {
@@ -421,6 +452,7 @@ function validateSingleQuestion(question) {
                 valueCounts[dropdown.value] = (valueCounts[dropdown.value] || 0) + 1;
                 if (valueCounts[dropdown.value] > 1) {
                     dropdown.classList.add('error');
+                    dropdown.parentElement.parentElement.classList.add('ranking-error');
                 }
             }
         });
@@ -444,6 +476,7 @@ function validateSingleQuestion(question) {
         dropdowns.forEach(dropdown => {
             if (dropdown.value) {
                 dropdown.classList.add('completed');
+                dropdown.parentElement.parentElement.classList.add('ranking-completed');
             }
         });
         return true;
@@ -454,30 +487,24 @@ function validateSingleQuestion(question) {
  * Update visual feedback for option cards based on selections
  */
 function updateVisualFeedback(question) {
-    const dropdowns = question.querySelectorAll('.rank-dropdown');
+    const dropdowns = question.querySelectorAll('.option-rank-dropdown');
     const optionCards = question.querySelectorAll('.option-card');
     
-    // Clear all selections
-    optionCards.forEach(card => card.classList.remove('selected'));
-    
-    // Highlight selected options
-    dropdowns.forEach(dropdown => {
-        if (dropdown.value) {
-            const card = question.querySelector(`[data-option="${dropdown.value}"]`);
-            if (card) {
-                card.classList.add('selected');
-            }
-        }
+    // Clear all ranking states
+    optionCards.forEach(card => {
+        card.classList.remove('ranked-1', 'ranked-2', 'ranked-3');
+        card.removeAttribute('data-rank');
     });
     
-    // Update rank selector states
-    const rankSelectors = question.querySelectorAll('.rank-selector');
-    rankSelectors.forEach((selector, index) => {
-        const dropdown = selector.querySelector('.rank-dropdown');
-        if (dropdown.value) {
-            selector.classList.add('completed');
-        } else {
-            selector.classList.remove('completed');
+    // Apply ranking states based on selections
+    dropdowns.forEach(dropdown => {
+        const option = dropdown.getAttribute('data-option');
+        const rank = dropdown.value;
+        const card = question.querySelector(`[data-option="${option}"]`);
+        
+        if (card && rank) {
+            card.classList.add(`ranked-${rank}`);
+            card.setAttribute('data-rank', rank);
         }
     });
 }

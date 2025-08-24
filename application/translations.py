@@ -372,6 +372,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "לא ניתן לתת את אותו דירוג לשתי אפשרויות",
             "en": "Cannot give the same rank to multiple options",
         },
+        "rank_this_option": {
+            "he": "דרגו אפשרות זו",
+            "en": "Rank this option",
+        },
+        "select_rank": {
+            "he": "בחרו דירוג",
+            "en": "Select rank",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},

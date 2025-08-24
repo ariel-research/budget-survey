@@ -595,24 +595,461 @@ input[type="radio"] {
     flex-direction: row;
 }
 
-/* RTL support for ranking interface */
+/* RTL support for integrated ranking interface */
 .rtl .ranking-layout {
     direction: rtl;
 }
 
-.rtl .option-card.selected::before {
-    left: auto;
-    right: 0;
+/* RTL support for horizontal grid layout */
+.rtl .option-cards {
+    direction: rtl;
 }
 
-.rtl .rank-dropdown {
-    background-position: left 0.7rem center;
+.rtl .option-rank-dropdown {
+    background-position: left 0.6rem center;
     padding-left: 2.5rem;
-    padding-right: 1rem;
+    padding-right: 0.8rem;
 }
 
 .rtl .budget-item {
     direction: rtl;
+}
+
+/* RTL support for Olympic medal colors */
+.rtl .option-card.ranked-1,
+.rtl .option-card.ranked-2,
+.rtl .option-card.ranked-3 {
+    border-top: none;
+    border-bottom: 4px solid;
+}
+
+.rtl .option-card.ranked-1 { border-bottom-color: #FEE101; }
+.rtl .option-card.ranked-2 { border-bottom-color: #95a5a6; }
+.rtl .option-card.ranked-3 { border-bottom-color: #cd7f32; }
+
+/* ==========================================================================
+   17. Ranking Survey Interface Styles - HORIZONTAL GRID LAYOUT
+   Purpose: Enhanced UX styles for preference ranking surveys with horizontal 3-column grid
+   Used by: Survey template when is_ranking_based is true
+   ========================================================================== */
+
+.option-card {
+    display: block;
+    background: var(--color-background-alt);
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.option-header {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+    gap: 0.75rem;
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item .subject {
+    display: block;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.budget-item .value {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+}
+
+.option-ranking {
+    display: block;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-light);
+}
+
+.ranking-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-dark);
+    font-size: 0.9rem;
+}
+
+.option-rank-dropdown {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+/* Option letter badges for clearer identification */
+.option-header h4[data-option-letter]::before {
+    content: attr(data-option-letter);
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* RTL support for option badges */
+.rtl .option-header h4[data-option-letter]::before {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+/* Highlight option when user focuses on corresponding dropdown */
+.option-card.highlight {
+    border-color: var(--color-primary);
+    background: rgba(52, 152, 219, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Progress indicator for completed rankings */
+.rank-selector.completed {
+    position: relative;
+}
+
+.rank-selector.completed::after {
+    content: "✓";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--color-success);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* RTL support for progress indicator */
+.rtl .rank-selector.completed::after {
+    right: auto;
+    left: 0.5rem;
+}
+
+/* Enhanced visual hierarchy for ranking controls */
+.rank-selector[data-rank="1"] {
+    border-left: 4px solid #FEE101; /* Gold for 1st place */
+}
+
+.rank-selector[data-rank="2"] {
+    border-left: 4px solid #95a5a6; /* Silver for 2nd place */
+}
+
+.rank-selector[data-rank="3"] {
+    border-left: 4px solid #cd7f32; /* Bronze for 3rd place */
+}
+
+/* RTL support for ranking borders */
+.rtl .rank-selector[data-rank="1"],
+.rtl .rank-selector[data-rank="2"],
+.rtl .rank-selector[data-rank="3"] {
+    border-left: none;
+    border-right: 4px solid;
+}
+
+.rtl .rank-selector[data-rank="1"] { border-right-color: #f39c12; }
+.rtl .rank-selector[data-rank="2"] { border-right-color: #95a5a6; }
+.rtl .rank-selector[data-rank="3"] { border-right-color: #cd7f32; }
+
+/* Question completion indicator */
+.ranking-question.question-complete {
+    border-color: var(--color-success);
+    background: linear-gradient(135deg, var(--color-background-light) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+/* Main ranking question container */
+.ranking-question {
+    background: var(--color-background-light);
+    border-radius: 8px;
+    border: 1px solid var(--color-border-light);
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease;
+    min-height: auto;
+    overflow: visible;
+}
+
+.ranking-question:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Question header styles */
+.question-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 0.75rem;
+}
+
+.question-header h3 {
+    color: var(--color-text-dark);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+}
+
+.ranking-instructions {
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0.75rem;
+    background: var(--color-background-info);
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
+}
+
+/* Main layout container - simplified flexbox */
+.ranking-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: auto;
+}
+
+/* Option cards container - HORIZONTAL GRID LAYOUT FOR DESKTOP */
+.ranking-question .option-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+/* Individual option card */
+.option-card {
+    background: var(--color-background-alt);
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.option-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.option-card.selected {
+    border-color: var(--color-primary);
+    background: var(--color-background-info);
+    box-shadow: var(--shadow-md);
+}
+
+.option-card.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-primary);
+}
+
+/* Option header */
+.option-header {
+    margin-bottom: 0.75rem;
+}
+
+.option-header h4 {
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Budget breakdown within each option */
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+    gap: 0.75rem;
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item .subject {
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.budget-item .value {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+}
+
+/* Integrated ranking within option cards */
+.option-ranking {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-light);
+}
+
+.ranking-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-dark);
+    font-size: 0.9rem;
+}
+
+.option-rank-dropdown {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9em;
+}
+
+/* Dropdown focus and interaction states */
+.option-rank-dropdown:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.option-rank-dropdown:hover {
+    border-color: var(--color-primary);
+}
+
+.option-rank-dropdown.completed {
+    border-color: var(--color-success);
+    background-color: var(--color-background-info);
+}
+
+.option-rank-dropdown.error {
+    border-color: var(--color-error);
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Olympic medal colors for ranked option cards */
+.option-card.ranked-1 {
+    border-top: 4px solid #FEE101; /* Gold */
+    background: linear-gradient(135deg, rgba(254, 225, 1, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+.option-card.ranked-2 {
+    border-top: 4px solid #95a5a6; /* Silver */
+    background: linear-gradient(135deg, rgba(149, 165, 166, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+.option-card.ranked-3 {
+    border-top: 4px solid #cd7f32; /* Bronze */
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+/* Error state for option cards */
+.option-card.ranking-error {
+    border-color: var(--color-error);
+    background: rgba(231, 76, 60, 0.05);
+}
+
+/* Completed state for option cards */
+.option-card.ranking-completed {
+    box-shadow: var(--shadow-md);
+}
+
+/* Validation feedback styles */
+.ranking-feedback {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.ranking-feedback.error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+}
+
+.ranking-feedback.success {
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+}
+
+/* Progress indicators */
+.rank-selector[data-rank="1"] .rank-label::before {
+    content: "";
+}
+
+.rank-selector[data-rank="2"] .rank-label::before {
+    content: "";
+}
+
+.rank-selector[data-rank="3"] .rank-label::before {
+    content: "";
 }
 
 /* ==========================================================================
@@ -674,59 +1111,54 @@ input[type="radio"] {
         left: 0.25rem;
     }
     
-    /* FORCE REMOVE GRID ON MOBILE - Use !important to override */
+    /* Mobile optimization for integrated ranking layout */
     .ranking-layout {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1.5rem !important;
-        grid-template-columns: none !important;
+        gap: 1rem;
+    }
+
+    .ranking-question {
+        padding: 1rem;
     }
     
-    /* Force option cards to appear first */
-    .option-cards {
-        order: 1 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        margin-bottom: 1rem !important;
+    /*
+     * CORRECTED SECTION FOR MOBILE RESPONSIVENESS
+     * This rule switches the 3-column grid to a single vertical column
+     * on screens 768px wide or smaller, fixing the horizontal overflow.
+     */
+    .ranking-question .option-cards {
+        display: grid;
+        grid-template-columns: 1fr; /* Use a single column for vertical stacking */
+        gap: 1rem; /* Adjust gap for vertical layout */
     }
     
-    /* Force ranking controls to appear below options */
-    .ranking-controls {
-        order: 2 !important;
-        position: static !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1rem !important;
-        width: 100% !important;
-        max-width: none !important;
-        top: auto !important;
-        padding: 1rem 0 !important;
-        align-items: center !important;
+    .option-card {
+        padding: 0.75rem;
     }
     
-    .rank-selector {
-        width: auto !important;
-        max-width: 350px !important;
-        min-width: 280px !important;
-        padding: 1rem !important;
+    .option-ranking {
+        margin-top: 0.75rem;
+        padding-top: 0.5rem;
     }
     
-    .rank-dropdown {
-        width: 100% !important;
-        font-size: 1rem !important;
-        padding: 0.75rem 1rem !important;
-        min-height: 48px !important;
+    .ranking-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .option-rank-dropdown {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.8rem;
+        min-height: 44px; /* Touch-friendly */
     }
     
     /* Mobile option card styling */
     .option-card {
-        padding: 1rem;
-        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        margin-bottom: 0;
     }
     
     .option-header h4 {
-        font-size: 1rem;
+        font-size: 0.95rem;
         margin-bottom: 0.75rem;
     }
     
@@ -736,15 +1168,15 @@ input[type="radio"] {
     
     .budget-item {
         padding: 0.25rem 0;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     
     .budget-item .subject {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     
     .budget-item .value {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
     }
     
@@ -777,22 +1209,55 @@ input[type="radio"] {
         color: var(--color-success);
         font-weight: bold;
     }
-
-    /* RTL Support for mobile */
-    .rtl .rank-dropdown {
-        background-position: left 0.75rem center;
-        padding-left: 2rem;
-        padding-right: 1rem;
+    
+    /* Mobile Olympic medal colors - use left border for vertical layout */
+    .option-card.ranked-1 {
+        border-top: none;
+        border-left: 4px solid #FEE101;
+    }
+    
+    .option-card.ranked-2 {
+        border-top: none;
+        border-left: 4px solid #95a5a6;
+    }
+    
+    .option-card.ranked-3 {
+        border-top: none;
+        border-left: 4px solid #cd7f32;
     }
 
-    .rtl .ranking-layout,
-    .rtl .ranking-controls {
+    /* RTL Support for mobile integrated ranking */
+    .rtl .option-rank-dropdown {
+        background-position: left 0.6rem center;
+        padding-left: 2rem;
+        padding-right: 0.8rem;
+    }
+
+    .rtl .ranking-layout {
         direction: rtl;
     }
-
-    .rtl .rank-selector.completed .rank-label::after {
-        content: " ✓ ";
-        margin-right: 0.5rem;
+    
+    .rtl .option-cards {
+        direction: rtl;
+    }
+    
+    /* RTL Mobile Olympic medal colors - use right border for RTL vertical layout */
+    .rtl .option-card.ranked-1 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #FEE101;
+    }
+    
+    .rtl .option-card.ranked-2 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #95a5a6;
+    }
+    
+    .rtl .option-card.ranked-3 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #cd7f32;
     }
 }
 
@@ -816,63 +1281,78 @@ input[type="radio"] {
         font-size: 1rem;
     }
 
-    /* Enhanced 480px Compact Side-by-Side Layout */
+    /* Enhanced 480px Compact Layout for Integrated Ranking */
     .ranking-question {
         margin: 0.75rem 0;
-        padding: 1rem;
+        padding: 0.5rem;
     }
     
     .question-header h3 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     .ranking-instructions {
-        font-size: 0.9rem;
-        padding: 0.75rem;
+        font-size: 0.85rem;
+        padding: 0.5rem;
     }
     
-    /* Maintain flexbox vertical layout but more compact for small screens */
     .ranking-layout {
-        gap: 1rem;
-    }
-    
-    .ranking-controls {
-        padding: 0.75rem 0;
         gap: 0.75rem;
     }
     
-    .rank-selector {
-        min-width: 250px !important;
-        max-width: 300px !important;
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        max-height: none;
     }
     
-    .rank-label {
-        font-size: 0.85rem; /* Smaller label for small screens */
-        margin-bottom: 0.4rem;
+    .option-ranking {
+        margin-top: 0.5rem;
+        padding-top: 0.4rem;
     }
     
-    .rank-dropdown {
-        font-size: 0.95rem; /* Readable text for small screens */
-        padding: 0.6rem 0.8rem; /* Compact padding optimized for small screens */
-        min-height: 44px; /* Maintain touch-friendly size */
-        width: 100%; /* Full width for easier touch interaction */
+    .ranking-label {
+        font-size: 0.75rem; /* Smaller label for small screens */
+        margin-bottom: 0.3rem;
+    }
+    
+    .option-rank-dropdown {
+        font-size: 0.8rem; /* Readable text for small screens */
+        padding: 0.4rem 0.7rem; /* Compact padding optimized for small screens */
+        min-height: 40px; /* Maintain touch-friendly size */
     }
     
     .option-card {
-        padding: 0.75rem; /* Even more compact */
+        padding: 0.5rem; /* Even more compact */
     }
     
     .option-header h4 {
-        font-size: 0.9rem; /* Smaller option titles */
+        font-size: 0.85rem; /* Smaller option titles */
     }
     
     .budget-item {
-        font-size: 0.8rem; /* Smaller budget text */
+        font-size: 0.75rem; /* Smaller budget text */
         padding: 0.2rem 0;
     }
     
     .budget-item .value {
-        font-size: 0.9rem; /* Smaller values */
+        font-size: 0.85rem; /* Smaller values */
+    }
+    
+    /* 480px Olympic medal colors - use left border for vertical layout */
+    .option-card.ranked-1 {
+        border-top: none;
+        border-left: 4px solid #FEE101;
+    }
+    
+    .option-card.ranked-2 {
+        border-top: none;
+        border-left: 4px solid #95a5a6;
+    }
+    
+    .option-card.ranked-3 {
+        border-top: none;
+        border-left: 4px solid #cd7f32;
     }
 
     /* Additional mobile positioning fix for 480px */
@@ -881,21 +1361,38 @@ input[type="radio"] {
         top: auto; /* Reset sticky positioning for small mobile */
     }
 
-    /* RTL Support for 480px breakpoint - Flexbox Vertical Layout */
-    .rtl .rank-dropdown {
-        background-position: left 0.6rem center; /* Adjusted for small screen mobile layout */
+    /* RTL Support for 480px breakpoint - Integrated Ranking Layout */
+    .rtl .option-rank-dropdown {
+        background-position: left 0.5rem center; /* Adjusted for small screen mobile layout */
         padding-left: 1.8rem;
-        padding-right: 0.8rem;
+        padding-right: 0.7rem;
     }
 
-    .rtl .ranking-layout,
-    .rtl .ranking-controls {
+    .rtl .ranking-layout {
         direction: rtl;
     }
-
-    .rtl .rank-selector.completed .rank-label::after {
-        content: " ✓ ";
-        margin-right: 0.4rem; /* Appropriate margin for small screen flexbox layout */
+    
+    .rtl .option-cards {
+        direction: rtl;
+    }
+    
+    /* RTL 480px Olympic medal colors - use right border for RTL vertical layout */
+    .rtl .option-card.ranked-1 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #FEE101;
+    }
+    
+    .rtl .option-card.ranked-2 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #95a5a6;
+    }
+    
+    .rtl .option-card.ranked-3 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #cd7f32;
     }
 
 }
@@ -1006,353 +1503,6 @@ input[type="radio"] {
 /* RTL support for custom alert */
 .rtl .alert-content {
     direction: rtl;
-}
-
-/* ==========================================================================
-   17. Ranking Survey Interface Styles - OPTIMIZED FOR COMPACT LAYOUT
-   Purpose: Enhanced UX styles for preference ranking surveys with viewport optimization
-   Used by: Survey template when is_ranking_based is true
-   ========================================================================== */
-
-/* Option letter badges for clearer identification */
-.option-header h4[data-option-letter]::before {
-    content: attr(data-option-letter);
-    background: var(--color-primary);
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-right: 0.5rem;
-    flex-shrink: 0;
-}
-
-/* RTL support for option badges */
-.rtl .option-header h4[data-option-letter]::before {
-    margin-right: 0;
-    margin-left: 0.5rem;
-}
-
-/* Highlight option when user focuses on corresponding dropdown */
-.option-card.highlight {
-    border-color: var(--color-primary);
-    background: rgba(52, 152, 219, 0.05);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-/* Progress indicator for completed rankings */
-.rank-selector.completed {
-    position: relative;
-}
-
-.rank-selector.completed::after {
-    content: "✓";
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: var(--color-success);
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-/* RTL support for progress indicator */
-.rtl .rank-selector.completed::after {
-    right: auto;
-    left: 0.5rem;
-}
-
-/* Enhanced visual hierarchy for ranking controls */
-.rank-selector[data-rank="1"] {
-    border-left: 4px solid #FEE101; /* Gold for 1st place */
-}
-
-.rank-selector[data-rank="2"] {
-    border-left: 4px solid #95a5a6; /* Silver for 2nd place */
-}
-
-.rank-selector[data-rank="3"] {
-    border-left: 4px solid #cd7f32; /* Bronze for 3rd place */
-}
-
-/* RTL support for ranking borders */
-.rtl .rank-selector[data-rank="1"],
-.rtl .rank-selector[data-rank="2"],
-.rtl .rank-selector[data-rank="3"] {
-    border-left: none;
-    border-right: 4px solid;
-}
-
-.rtl .rank-selector[data-rank="1"] { border-right-color: #f39c12; }
-.rtl .rank-selector[data-rank="2"] { border-right-color: #95a5a6; }
-.rtl .rank-selector[data-rank="3"] { border-right-color: #cd7f32; }
-
-/* Question completion indicator */
-.ranking-question.question-complete {
-    border-color: var(--color-success);
-    background: linear-gradient(135deg, var(--color-background-light) 0%, rgba(39, 174, 96, 0.02) 100%);
-}
-
-/* Main ranking question container */
-.ranking-question {
-    background: var(--color-background-light);
-    border-radius: 8px;
-    border: 1px solid var(--color-border-light);
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-md);
-    transition: box-shadow 0.3s ease;
-}
-
-.ranking-question:hover {
-    box-shadow: var(--shadow-lg);
-}
-
-/* Question header styles */
-.question-header {
-    text-align: center;
-    margin-bottom: 1.25rem;
-    border-bottom: 2px solid var(--color-border-light);
-    padding-bottom: 0.75rem;
-}
-
-.question-header h3 {
-    color: var(--color-text-dark);
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 0 0 0.75rem 0;
-}
-
-.ranking-instructions {
-    color: var(--color-text);
-    font-size: 1rem;
-    line-height: 1.4;
-    margin: 0;
-    padding: 0.75rem;
-    background: var(--color-background-info);
-    border-radius: 6px;
-    border-left: 3px solid var(--color-primary);
-}
-
-/* Main layout container */
-.ranking-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-    align-items: start;
-}
-
-/* Option cards container */
-.option-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-/* Individual option card */
-.option-card {
-    background: var(--color-background-alt);
-    border: 2px solid var(--color-border-light);
-    border-radius: 6px;
-    padding: 1rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.option-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
-}
-
-.option-card.selected {
-    border-color: var(--color-primary);
-    background: var(--color-background-info);
-    box-shadow: var(--shadow-md);
-}
-
-.option-card.selected::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--color-primary);
-}
-
-/* Option header */
-.option-header {
-    margin-bottom: 0.75rem;
-}
-
-.option-header h4 {
-    color: var(--color-text-dark);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Budget breakdown within each option */
-.budget-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem
-}
-
-.budget-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.25rem 0;
-    border-bottom: 1px solid var(--color-border-light);
-    gap: 0.75rem;
-}
-
-.budget-item:last-child {
-    border-bottom: none;
-}
-
-.budget-item .subject {
-    font-weight: 500;
-    color: var(--color-text);
-}
-
-.budget-item .value {
-    font-weight: 600;
-    color: var(--color-text-dark);
-    font-size: 1.1rem;
-}
-
-/* Ranking controls container */
-.ranking-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    position: sticky;
-    top: 1rem;
-}
-
-/* Individual rank selector */
-.rank-selector {
-    background: var(--color-background-light);
-    border-radius: 6px;
-    padding: 1rem;
-    border: 1px solid var(--color-border-light);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
-}
-
-.rank-selector:hover {
-    box-shadow: var(--shadow-md);
-}
-
-.rank-selector.completed {
-    border-color: var(--color-success);
-    background: var(--color-background-info);
-}
-
-/* Rank label styling */
-.rank-label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--color-text-dark);
-    font-size: 0.95rem;
-}
-
-.rank-description {
-    font-weight: normal;
-    color: var(--color-text);
-    font-size: 0.9rem;
-    font-style: italic;
-}
-
-/* Enhanced dropdown styling */
-.rank-dropdown {
-    width: 100%;
-    padding: 0.6rem 0.8rem;
-    border: 2px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 0.95rem;
-    background: white;
-    color: var(--color-text-dark);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.6rem center; /* Adjusted for smaller padding */
-    background-size: 0.9em; /* Slightly smaller icon */
-}
-
-.rank-dropdown:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-}
-
-.rank-dropdown:hover {
-    border-color: var(--color-primary);
-}
-
-.rank-dropdown.completed {
-    border-color: var(--color-success);
-    background-color: var(--color-background-info);
-}
-
-.rank-dropdown.error {
-    border-color: var(--color-error);
-    background-color: rgba(231, 76, 60, 0.1);
-}
-
-/* Validation feedback styles */
-.ranking-feedback {
-    margin-top: 0.75rem;
-    padding: 0.75rem;
-    border-radius: 4px;
-    font-weight: 500;
-    text-align: center;
-}
-
-.ranking-feedback.error {
-    background: rgba(231, 76, 60, 0.1);
-    border: 1px solid var(--color-error);
-    color: var(--color-error);
-}
-
-.ranking-feedback.success {
-    background: rgba(39, 174, 96, 0.1);
-    border: 1px solid var(--color-success);
-    color: var(--color-success);
-}
-
-/* Progress indicators */
-.rank-selector[data-rank="1"] .rank-label::before {
-    content: "";
-}
-
-.rank-selector[data-rank="2"] .rank-label::before {
-    content: "";
-}
-
-.rank-selector[data-rank="3"] .rank-label::before {
-    content: "";
 }
 
 /* ==========================================================================
