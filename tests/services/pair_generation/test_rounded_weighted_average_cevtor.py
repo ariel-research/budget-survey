@@ -145,3 +145,65 @@ def test_rounding_consistency(strategy):
     assert all(result == results[0] for result in results)
     # All results should be multiples of 5
     assert all(v % 5 == 0 for result in results for v in result)
+
+
+def test_rounding_adjustment_logic(strategy):
+    """Test the adjustment logic when sum != 100 after rounding."""
+    # Test case 1: Sum > 100 after rounding (should decrease largest element)
+    input_vector = np.array([40, 35, 35])  # Sum = 110 after rounding
+    result = strategy._rounded_vector(input_vector)
+    assert result.tolist() == [30, 35, 35]  # Largest element (40) adjusted to 30
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+    # Test case 2: Sum < 100 after rounding (should increase largest element)
+    input_vector = np.array([25, 30, 30])  # Sum = 85 after rounding
+    result = strategy._rounded_vector(input_vector)
+    assert result.tolist() == [25, 45, 30]  # Largest element (30) adjusted to 45
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+    # Test case 3: Clear largest element (middle position)
+    input_vector = np.array([25, 45, 25])  # Sum = 95 after rounding
+    result = strategy._rounded_vector(input_vector)
+    assert result.tolist() == [25, 50, 25]  # Largest element (45) adjusted to 50
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+
+def test_specific_rounding_examples(strategy):
+    """Test specific rounding examples from documentation."""
+    # Test the docstring example
+    input_vector = np.array([39, 39, 22])
+    result = strategy._rounded_vector(input_vector)
+    assert result.tolist() == [40, 40, 20]  # Exact expected output
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+    # Test another example that requires adjustment
+    input_vector = np.array([37, 37, 26])
+    result = strategy._rounded_vector(input_vector)
+    assert result.tolist() == [40, 35, 25]  # Should round and adjust
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+
+def test_weighted_vector_specific_examples(strategy):
+    """Test specific weighted vector examples with known outputs."""
+    # Test the docstring example from the class
+    user_vector = np.array([60, 25, 15])
+    random_vector = np.array([30, 45, 25])
+    x_weight = 0.3
+
+    result = strategy._calculate_weighted_vector(user_vector, random_vector, x_weight)
+    assert result == (40, 40, 20)  # Exact expected output from docstring
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+
+    # Test another weight to ensure consistency
+    x_weight = 0.7
+    result = strategy._calculate_weighted_vector(user_vector, random_vector, x_weight)
+    assert sum(result) == 100
+    assert all(v % 5 == 0 for v in result)
+    # Should be different from the 0.3 weight result
+    assert result != (40, 40, 20)
