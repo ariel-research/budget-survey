@@ -86,7 +86,7 @@ class RoundedWeightedAverageVectorStrategy(WeightedAverageVectorStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "rounded_weighted_average_vector"
+        return "single_peaked_preference_test_rounded"
 
     def get_option_labels(self) -> Tuple[str, str]:
         return (

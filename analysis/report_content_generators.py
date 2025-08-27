@@ -808,7 +808,7 @@ def _generate_extreme_vector_consistency_summary(
 
     Args:
         choices: List of choices for a single user's survey response using the
-                extreme_vectors strategy.
+                peak_linearity_test strategy.
 
     Returns:
         str: HTML string showing consistency percentages for each group.
@@ -926,20 +926,20 @@ def _generate_survey_choices_html(
         f"{optimal_allocation}</div>",
     ]
 
-    # Special handling for extreme_vectors strategy
-    if strategy_name == "extreme_vectors":
+    # Special handling for peak_linearity_test strategy
+    if strategy_name == "peak_linearity_test":
         consistency_summary = _generate_extreme_vector_consistency_summary(choices)
         if consistency_summary:
             html_parts.append(consistency_summary)
 
-    # Special handling for cyclic_shift strategy
-    elif strategy_name == "cyclic_shift":
+    # Special handling for component_symmetry_test strategy
+    elif strategy_name == "component_symmetry_test":
         consistency_table = _generate_cyclic_shift_consistency_table(choices)
         if consistency_table:
             html_parts.append(consistency_table)
 
-    # Special handling for linear_symmetry strategy
-    elif strategy_name == "linear_symmetry":
+    # Special handling for sign_symmetry_test strategy
+    elif strategy_name == "sign_symmetry_test":
         consistency_table = _generate_linear_symmetry_consistency_table(choices)
         if consistency_table:
             html_parts.append(consistency_table)
@@ -982,7 +982,7 @@ def _generate_extreme_vector_analysis_table(choices: List[Dict]) -> str:
 
     Args:
         choices: List of choices for a single user's survey response using the
-                extreme_vectors strategy.
+                peak_linearity_test strategy.
 
     Returns:
         str: HTML table string, or an empty string if not applicable or error.
@@ -2176,9 +2176,9 @@ def generate_aggregated_percentile_breakdown(
         str: HTML for the aggregated percentile breakdown table, or empty string if not applicable
     """
     # Only generate for extreme vector strategy
-    if strategy_name != "extreme_vectors":
+    if strategy_name != "peak_linearity_test":
         logger.info(
-            f"Skipping percentile breakdown - strategy is {strategy_name} not extreme_vectors"
+            f"Skipping percentile breakdown - strategy is {strategy_name} not peak_linearity_test"
         )
         return ""
 
@@ -2394,7 +2394,7 @@ def generate_detailed_user_choices(
                     survey_strategy_name = choices[0]["strategy_name"]
 
                 # Check if this is the extreme vectors strategy
-                if survey_strategy_name == "extreme_vectors":
+                if survey_strategy_name == "peak_linearity_test":
                     # Generate the specific summary table for this user/survey
                     extreme_table_html = _generate_extreme_vector_analysis_table(
                         choices
@@ -2559,7 +2559,7 @@ def generate_detailed_breakdown_table(
                     or "transitivity_rate" in strategy_columns
                     or "order_consistency" in strategy_columns
                 ) and "choices" in summary:
-                    # Handle extreme_vectors strategy with consistency and transitivity columns
+                    # Handle peak_linearity_test strategy with consistency and transitivity columns
                     choices = summary["choices"]
                     _, processed_pairs, _, consistency_info, _ = (
                         _extract_extreme_vector_preferences(choices)
@@ -2617,13 +2617,13 @@ def generate_detailed_breakdown_table(
                             f'<td class="{highlight_order}">{order_stability:.1f}%</td>'
                         )
                 elif "group_consistency" in strategy_columns and "choices" in summary:
-                    # Handle cyclic_shift strategy with group consistency
+                    # Handle component_symmetry_test strategy with group consistency
                     choices = summary["choices"]
-                    if summary.get("strategy_name") == "cyclic_shift":
+                    if summary.get("strategy_name") == "component_symmetry_test":
                         consistencies = _calculate_cyclic_shift_group_consistency(
                             choices
                         )
-                    elif summary.get("strategy_name") == "linear_symmetry":
+                    elif summary.get("strategy_name") == "sign_symmetry_test":
                         consistencies = _calculate_linear_symmetry_group_consistency(
                             choices
                         )
@@ -2639,7 +2639,7 @@ def generate_detailed_breakdown_table(
                         f'<td class="{highlight}">{overall_consistency}%</td>'
                     )
                 elif "linear_consistency" in strategy_columns and "choices" in summary:
-                    # Handle linear_symmetry strategy with linear consistency
+                    # Handle sign_symmetry_test strategy with linear consistency
                     choices = summary["choices"]
                     consistencies = _calculate_linear_symmetry_group_consistency(
                         choices
@@ -2653,7 +2653,7 @@ def generate_detailed_breakdown_table(
                         f'<td class="{highlight}">{overall_consistency}%</td>'
                     )
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
-                    # Handle optimization_metrics strategy with sum/ratio columns
+                    # Handle l1_vs_leontief_comparison strategy with sum/ratio columns
                     sum_percent = summary["stats"]["sum_percent"]
                     ratio_percent = summary["stats"]["ratio_percent"]
 
@@ -2671,7 +2671,7 @@ def generate_detailed_breakdown_table(
                         f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
                     )
                 elif "rss" in strategy_columns and "sum" in strategy_columns:
-                    # Handle root_sum_squared_sum strategy with rss/sum columns
+                    # Handle l1_vs_l2_comparison strategy with rss/sum columns
                     sum_percent = summary["stats"]["sum_percent"]
                     ratio_percent = summary["stats"]["ratio_percent"]
 
@@ -2688,7 +2688,7 @@ def generate_detailed_breakdown_table(
                         f'<td class="{highlight_sum}">{format(sum_percent, ".1f")}%</td>'
                     )
                 elif "rss" in strategy_columns and "ratio" in strategy_columns:
-                    # Handle root_sum_squared_ratio strategy with rss/ratio columns
+                    # Handle l2_vs_leontief_comparison strategy with rss/ratio columns
                     sum_percent = summary["stats"]["sum_percent"]
                     ratio_percent = summary["stats"]["ratio_percent"]
 
@@ -2888,8 +2888,8 @@ def generate_overall_statistics_table(
     th_avg_perc = get_translation("average_percentage", "answers")
     note = get_translation("based_on_responses", "answers", x=len(summaries))
 
-    # Simplified table for cyclic_shift and linear_symmetry strategies
-    if strategy_name in ["cyclic_shift", "linear_symmetry"]:
+    # Simplified table for component_symmetry_test and sign_symmetry_test strategies
+    if strategy_name in ["component_symmetry_test", "sign_symmetry_test"]:
         # Calculate average consistency rate across all users
         total_consistency = 0
         valid_summaries = 0
@@ -2898,9 +2898,9 @@ def generate_overall_statistics_table(
             if "choices" in summary:
                 choices = summary["choices"]
 
-                if strategy_name == "cyclic_shift":
+                if strategy_name == "component_symmetry_test":
                     consistencies = _calculate_cyclic_shift_group_consistency(choices)
-                elif strategy_name == "linear_symmetry":
+                elif strategy_name == "sign_symmetry_test":
                     consistencies = _calculate_linear_symmetry_group_consistency(
                         choices
                     )
@@ -2944,7 +2944,7 @@ def generate_overall_statistics_table(
         return overall_table
 
     # Different table for extreme vectors strategy
-    elif strategy_name == "extreme_vectors":
+    elif strategy_name == "peak_linearity_test":
         # Initialize counters for all three metrics
         total_consistency = 0
         total_transitivity_rate = 0
@@ -3042,7 +3042,7 @@ def generate_overall_statistics_table(
             <p class="summary-note">{note}</p>
         </div>
         """
-    elif strategy_name in ["root_sum_squared_sum", "root_sum_squared_ratio"]:
+    elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
         # Handle root sum squared strategies
         # Calculate overall averages
         total_responses = len(summaries)
@@ -3061,18 +3061,18 @@ def generate_overall_statistics_table(
         col1_name = get_translation("root_sum_squared", "answers")
         col2_name = (
             get_translation("sum", "answers")
-            if strategy_name == "root_sum_squared_sum"
+            if strategy_name == "l1_vs_l2_comparison"
             else get_translation("ratio", "answers")
         )
 
         # For these strategies, we need to adjust the percentages
-        # sum_percent is actually the sum% for root_sum_squared_sum and rss% for root_sum_squared_ratio
-        # ratio_percent is actually rss% for root_sum_squared_sum and ratio% for root_sum_squared_ratio
-        if strategy_name == "root_sum_squared_sum":
+        # sum_percent is actually the sum% for l1_vs_l2_comparison and rss% for l2_vs_leontief_comparison
+        # ratio_percent is actually rss% for l1_vs_l2_comparison and ratio% for l2_vs_leontief_comparison
+        if strategy_name == "root_sul1_vs_l2_comparisonm_squared_sum":
             avg_rss = 100 - avg_sum  # RSS is the complement of sum
             avg_col1 = avg_rss
             avg_col2 = avg_sum
-        else:  # root_sum_squared_ratio
+        else:  # l2_vs_leontief_comparison
             avg_rss = 100 - avg_ratio  # RSS is the complement of ratio
             avg_col1 = avg_rss
             avg_col2 = avg_ratio
@@ -3595,7 +3595,7 @@ def _calculate_cyclic_shift_group_consistency(choices: List[Dict]) -> Dict[str, 
 
     Args:
         choices: List of choices for a single user's survey response using the
-                cyclic_shift strategy.
+                component_symmetry_test strategy.
 
     Returns:
         Dict containing binary consistency (0% or 100%) for each group (1-4)
@@ -3692,7 +3692,7 @@ def _calculate_linear_symmetry_group_consistency(
 
     Args:
         choices: List of choices for a single user's survey response using the
-                linear_symmetry strategy.
+                sign_symmetry_test strategy.
 
     Returns:
         Dict containing consistency percentages for each group (1-6) and
@@ -3825,7 +3825,7 @@ def _generate_cyclic_shift_consistency_table(choices: List[Dict]) -> str:
 
     Args:
         choices: List of choices for a single user's survey response using the
-                cyclic_shift strategy.
+                component_symmetry_test strategy.
 
     Returns:
         str: HTML table string showing binary group consistency.
@@ -3921,7 +3921,7 @@ def _generate_linear_symmetry_consistency_table(choices: List[Dict]) -> str:
 
     Args:
         choices: List of choices for a single user's survey response using the
-                linear_symmetry strategy.
+                sign_symmetry_test strategy.
 
     Returns:
         str: HTML table string showing group consistency percentages.

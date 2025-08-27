@@ -371,7 +371,7 @@ def get_survey_responses(survey_id: int):
 
         # Generate aggregated percentile breakdown table for extreme vector surveys
         percentile_breakdown = ""
-        if strategy_name == "extreme_vectors":
+        if strategy_name == "peak_linearity_test":
             # Get all choices for this survey for aggregated analysis
             choices = retrieve_user_survey_choices()
             survey_choices = [c for c in choices if c["survey_id"] == survey_id]

@@ -364,7 +364,7 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "linear_symmetry"
+        return "sign_symmetry_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get labels for the two options being compared."""

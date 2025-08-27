@@ -1,4 +1,4 @@
-"""Test suite for optimization metrics strategy with new dictionary format."""
+"""Test suite for L1 vs. Leontief Comparison with new dictionary format."""
 
 import pytest
 

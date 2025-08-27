@@ -12,7 +12,7 @@ def strategy():
 
 def test_strategy_name(strategy):
     """Test if strategy name is correct."""
-    assert strategy.get_strategy_name() == "root_sum_squared_ratio"
+    assert strategy.get_strategy_name() == "l2_vs_leontief_comparison"
 
 
 def test_get_metric_types(strategy):

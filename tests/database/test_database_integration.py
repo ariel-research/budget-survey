@@ -91,13 +91,13 @@ def setup_test_data(app):
 
         # First survey
         pair_gen_config1 = json.dumps(
-            {"strategy": "optimization_metrics", "params": {"num_pairs": 10}}
+            {"strategy": "l1_vs_leontief_comparison", "params": {"num_pairs": 10}}
         )
         execute_query(survey_query, (code1, True, pair_gen_config1))
 
         # Second survey
         pair_gen_config2 = json.dumps(
-            {"strategy": "weighted_average_vector", "params": {"num_pairs": 10}}
+            {"strategy": "single_peaked_preference_test", "params": {"num_pairs": 10}}
         )
         execute_query(survey_query, (code2, True, pair_gen_config2))
 

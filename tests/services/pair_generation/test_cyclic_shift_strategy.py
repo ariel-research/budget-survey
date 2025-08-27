@@ -68,7 +68,7 @@ def strategy():
 
 def test_strategy_name(strategy):
     """Test if strategy name is correct."""
-    assert strategy.get_strategy_name() == "cyclic_shift"
+    assert strategy.get_strategy_name() == "component_symmetry_test"
 
 
 def test_generate_random_differences(strategy):

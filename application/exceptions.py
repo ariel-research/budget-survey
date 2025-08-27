@@ -37,7 +37,7 @@ class StrategyConfigError(SurveyError):
     Raised when there's an error with survey strategy configuration.
 
     Example:
-        raise StrategyConfigError(survey_id=123, strategy="optimization_metrics")
+        raise StrategyConfigError(survey_id=123, strategy="l1_vs_leontief_comparison")
     """
 
     def __init__(self, survey_id: int, strategy: str):

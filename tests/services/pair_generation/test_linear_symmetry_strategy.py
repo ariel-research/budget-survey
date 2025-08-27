@@ -68,7 +68,7 @@ def strategy():
 
 def test_strategy_name(strategy):
     """Test if strategy name is correct."""
-    assert strategy.get_strategy_name() == "linear_symmetry"
+    assert strategy.get_strategy_name() == "sign_symmetry_test"
 
 
 def test_generate_distance_vectors(strategy):

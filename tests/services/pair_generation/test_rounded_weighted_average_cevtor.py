@@ -13,7 +13,7 @@ def strategy():
 
 def test_strategy_name(strategy):
     """Test if strategy name is correct."""
-    assert strategy.get_strategy_name() == "rounded_weighted_average_vector"
+    assert strategy.get_strategy_name() == "single_peaked_preference_test_rounded"
 
 
 def test_generate_different_random_vector(strategy):

@@ -371,28 +371,28 @@
 /* ==========================================================================
    Strategy Badge Colors
    ========================================================================== */
-.strategy-badge[data-strategy="optimization_metrics"] { 
+.strategy-badge[data-strategy="l1_vs_leontief_comparison"] { 
     background: var(--color-primary);
 }
-.strategy-badge[data-strategy="weighted_average_vector"] { 
+.strategy-badge[data-strategy="single_peaked_preference_test"] { 
     background: var(--color-success);
 }
-.strategy-badge[data-strategy="rounded_weighted_average_vector"] { 
+.strategy-badge[data-strategy="single_peaked_preference_test_rounded"] { 
     background: var(--color-purple);
 }
-.strategy-badge[data-strategy="root_sum_squared_sum"] { 
+.strategy-badge[data-strategy="l1_vs_l2_comparison"] { 
     background: var(--color-teal);
 }
-.strategy-badge[data-strategy="root_sum_squared_ratio"] { 
+.strategy-badge[data-strategy="l2_vs_leontief_comparison"] { 
     background: var(--color-rose);
 }
-.strategy-badge[data-strategy="extreme_vectors"] { 
+.strategy-badge[data-strategy="peak_linearity_test"] { 
     background: var(--color-indigo);
 }
-.strategy-badge[data-strategy="cyclic_shift"] { 
+.strategy-badge[data-strategy="component_symmetry_test"] { 
     background: var(--color-amber);
 }
-.strategy-badge[data-strategy="linear_symmetry"] { 
+.strategy-badge[data-strategy="sign_symmetry_test"] { 
     background: var(--color-linear-symmetry);
 }
 .strategy-badge[data-strategy="asymmetric_loss_distribution"] { 

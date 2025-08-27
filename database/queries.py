@@ -1230,7 +1230,7 @@ def get_user_survey_performance_data(
                 strategy_metrics = {}
 
                 if "consistency" in strategy_columns:
-                    # Handle extreme_vectors strategy
+                    # Handle peak_linearity_test strategy
                     from analysis.report_content_generators import (
                         _extract_extreme_vector_preferences,
                     )
@@ -1259,9 +1259,9 @@ def get_user_survey_performance_data(
                     "group_consistency" in strategy_columns
                     or "linear_consistency" in strategy_columns
                 ):
-                    # Handle cyclic_shift and linear_symmetry strategies
+                    # Handle component_symmetry_test and sign_symmetry_test strategies
                     try:
-                        if strategy_name == "cyclic_shift":
+                        if strategy_name == "component_symmetry_test":
                             from analysis.report_content_generators import (
                                 _calculate_cyclic_shift_group_consistency,
                             )
@@ -1269,7 +1269,7 @@ def get_user_survey_performance_data(
                             consistencies = _calculate_cyclic_shift_group_consistency(
                                 choices
                             )
-                        elif strategy_name == "linear_symmetry":
+                        elif strategy_name == "sign_symmetry_test":
                             from analysis.report_content_generators import (
                                 _calculate_linear_symmetry_group_consistency,
                             )
@@ -1286,17 +1286,17 @@ def get_user_survey_performance_data(
                         strategy_metrics["group_consistency"] = 0.0
 
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
-                    # Handle optimization_metrics and similar strategies
+                    # Handle l1_vs_leontief_comparison and similar strategies
                     strategy_metrics["sum_percent"] = basic_stats["sum_percent"]
                     strategy_metrics["ratio_percent"] = basic_stats["ratio_percent"]
 
                 elif "rss" in strategy_columns:
                     # Handle root sum squared strategies
-                    if "sum" in strategy_columns:  # root_sum_squared_sum
+                    if "sum" in strategy_columns:  # l1_vs_l2_comparison
                         rss_percent = 100 - basic_stats["sum_percent"]
                         strategy_metrics["rss_percent"] = rss_percent
                         strategy_metrics["sum_percent"] = basic_stats["sum_percent"]
-                    elif "ratio" in strategy_columns:  # root_sum_squared_ratio
+                    elif "ratio" in strategy_columns:  # l2_vs_leontief_comparison
                         rss_percent = 100 - basic_stats["ratio_percent"]
                         strategy_metrics["rss_percent"] = rss_percent
                         strategy_metrics["ratio_percent"] = basic_stats["ratio_percent"]

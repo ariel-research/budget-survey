@@ -93,7 +93,7 @@ class RootSumSquaredSumStrategy(OptimizationMetricsStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "root_sum_squared_sum"
+        return "l1_vs_l2_comparison"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get the labels for the two types of optimization."""

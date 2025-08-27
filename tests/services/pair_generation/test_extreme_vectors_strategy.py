@@ -78,7 +78,7 @@ class TestExtremeVectorsStrategy(unittest.TestCase):
 
     def test_strategy_name(self):
         """Test strategy name."""
-        self.assertEqual(self.strategy.get_strategy_name(), "extreme_vectors")
+        self.assertEqual(self.strategy.get_strategy_name(), "peak_linearity_test")
 
 
 class TestTransitivityAnalyzer(unittest.TestCase):

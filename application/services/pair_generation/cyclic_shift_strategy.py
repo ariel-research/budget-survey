@@ -396,7 +396,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "cyclic_shift"
+        return "component_symmetry_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get labels for the two options being compared."""

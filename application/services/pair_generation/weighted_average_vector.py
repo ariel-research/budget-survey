@@ -189,7 +189,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "weighted_average_vector"
+        return "single_peaked_preference_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         return (

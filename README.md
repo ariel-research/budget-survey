@@ -224,8 +224,8 @@ The application uses the Strategy pattern to support multiple pair generation al
 
 #### Available Strategies
 
-1. **Optimization Metrics Strategy**
-   - Strategy name: `optimization_metrics`
+1. **L1 vs. Leontief Comparison**
+   - Strategy name: `l1_vs_leontief_comparison`
    - Generates pairs that force users to choose between minimizing sum of differences and maximizing minimal ratio
    - Each pair contains two non-ideal allocations where one is better in terms of sum of differences while the other is better in terms of minimal ratio
    - Parameters:
@@ -237,8 +237,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 2: (70, 15, 15)  Better sum of differences (20) but worse minimal ratio (0.75)
      ```
 
-2. **Weighted Vector Strategy**
-   - Strategy name: `weighted_average_vector`
+2. **Single-Peaked Preference Test**
+   - Strategy name: `single_peaked_preference_test`
    - Generates pairs by combining user's ideal vector with random vectors using weighted averages
    - Each pair contains:
      - A random vector different from user's ideal allocation
@@ -258,8 +258,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - Weighted result: [38, 39, 23] (40*0.9 + 20*0.1, 40*0.9 + 30*0.1, 20*0.9 + 50*0.1)
      ```
 
-3. **Rounded Weighted Vector Strategy**
-   - Strategy name: `rounded_weighted_average_vector`
+3. **Single-Peaked Preference Test (Rounded)**
+   - Strategy name: `single_peaked_preference_test_rounded`
    - Extends the Weighted Vector Strategy to ensure all allocations are multiples of 5
    - Each pair contains:
      - A random vector different from user's ideal allocation (in multiples of 5)
@@ -276,8 +276,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - After rounding to multiples of 5: [40, 40, 20]
      ```
 
-4. **Root Sum Squared Sum Strategy**
-   - Strategy name: `root_sum_squared_sum`
+4. **L1 vs. L2 Comparison**
+   - Strategy name: `l1_vs_l2_comparison`
    - Compares root of sum of squared differences vs regular sum of differences
    - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of regular sum of differences
    - Parameters:
@@ -289,8 +289,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 2: (10, 25, 65)  Better sum differences (80) but worse root sum squared (56.57)
      ```
 
-5. **Root Sum Squared Ratio Strategy**
-   - Strategy name: `root_sum_squared_ratio`
+5. **L2 vs. Leontief Comparison**
+   - Strategy name: `l2_vs_leontief_comparison`
    - Compares root of sum of squared differences vs minimal ratio
    - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of minimal ratio
    - Parameters:
@@ -302,8 +302,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 2: (65, 25, 10)  Better root sum squared (7.07) but worse minimal ratio (0.67)
      ```
 
-6. **Extreme Vectors Strategy**
-   - Strategy name: `extreme_vectors`
+6. **Peak-Linearity Test**
+   - Strategy name: `peak_linearity_test`
    - Tests user preferences between extreme allocations and their weighted combinations with the ideal vector
    - Generates two types of pairs:
      - Extreme vector pairs: Each extreme vector allocates 100% to one department
@@ -334,7 +334,7 @@ The application uses the Strategy pattern to support multiple pair generation al
 
 #### Transitivity Analysis
 
-For extreme_vectors surveys, the system analyzes logical consistency:
+For peak_linearity_test surveys, the system analyzes logical consistency:
 
 - **Groups analyzed**: Core vectors, 25%, 50%, 75% weighted
 - **Transitivity check**: If A>B and B>C, then A>C must hold
@@ -346,8 +346,8 @@ For extreme_vectors surveys, the system analyzes logical consistency:
 
 Note: '>' represents observed choice, which may include cases of user indifference.
 
-7. **Cyclic Shift Strategy**
-   - Strategy name: `cyclic_shift`
+7. **Component Symmetry Test**
+   - Strategy name: `component_symmetry_test`
    - Generates 12 comparison pairs organized into 4 groups using cyclic shifts of difference vectors
    - **Algorithm Overview**:
      - Creates 4 groups of 3 pairs each (total 12 pairs)
@@ -400,8 +400,8 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      # Groups 2-4 repeat this process with different random difference vectors
      ```
 
-8. **Linear Symmetry Strategy**
-   - Strategy name: `linear_symmetry`
+8. **Sign Symmetry Test**
+   - Strategy name: `sign_symmetry_test`
    - Generates 12 comparison pairs organized into 6 groups to test linear symmetry hypothesis
    - **Core Hypothesis**: Tests whether users treat positive and negative distances from their ideal allocation as equivalent
    - **Algorithm Overview**:
@@ -995,7 +995,7 @@ To add new surveys or modify existing ones, follow these steps:
        'budget_2024',
        TRUE,
        JSON_OBJECT(
-           'strategy', 'extreme_vectors',
+           'strategy', 'peak_linearity_test',
            'params', JSON_OBJECT('num_pairs', 10)
        )
    );
@@ -1024,7 +1024,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```sql
    UPDATE surveys
    SET pair_generation_config = JSON_OBJECT(
-       'strategy', 'optimization_metrics',
+       'strategy', 'l1_vs_leontief_comparison',
        'params', JSON_OBJECT('num_pairs', 10)
    )
    WHERE id = 1;
@@ -1087,7 +1087,7 @@ Strategy badge colors are defined in CSS:
 1. Open `application/static/css/dashboard_style.css`
 2. Find the Strategy Badge Colors section:
    ```css
-   .strategy-badge[data-strategy="optimization_metrics"] { 
+   .strategy-badge[data-strategy="l1_vs_leontief_comparison"] { 
        background: var(--color-primary);
    }
    ```
