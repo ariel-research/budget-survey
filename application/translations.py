@@ -897,6 +897,35 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "עוצמה",
             "en": "Magnitude",
         },
+        # Consistency explanation translations
+        "consistency_explanation_title": {
+            "he": "הבנת ציוני העקביות",
+            "en": "Understanding Consistency Scores",
+        },
+        "consistency_explanation_text": {
+            "he": "ניתוח זה מודד עד כמה המשתמש מדרג באופן עקבי את אותם נושאי תקציב במצבים שונים. עקביות מושלמת (✓) פירושה שהמשתמש תמיד מדרג נושאים באותה צורה (3/3). עקביות חלקית (◐) פירושה שהמשתמש מראה עקביות בחלק מהמצבים אך משתנה באחרים (1/3 או 2/3). עקביות נכשלת (✗) פירושה שהדירוגים של המשתמש משתנים משמעותית (0/3).",
+            "en": "This analysis measures how consistently the user ranks the same budget subjects across different scenarios. Perfect consistency (✓) means the user always ranks subjects the same way (3/3). Partial consistency (◐) means the user shows consistency in some scenarios but varies in others (1/3 or 2/3). Failed consistency (✗) means the user's rankings vary significantly (0/3).",
+        },
+        "perfect_consistency_label": {
+            "he": "עקביות מושלמת",
+            "en": "Perfect Consistency",
+        },
+        "partial_consistency_label": {
+            "he": "עקביות חלקית",
+            "en": "Partial Consistency",
+        },
+        "failed_consistency_label": {
+            "he": "לא עקבי",
+            "en": "Inconsistent",
+        },
+        "consistency_tooltip": {
+            "he": "עקביות: ✓ = מושלמת (3/3), ◐ = חלקית (1-2/3), ✗ = לא עקבי (0/3)",
+            "en": "Consistency: ✓ = Perfect (3/3), ◐ = Partial (1-2/3), ✗ = Failed (0/3)",
+        },
+        "final_score_tooltip": {
+            "he": "ניקוד סופי: 1 = הכל עקבי, 0 = חלק לא עקבי",
+            "en": "Final Score: 1 = All Consistent, 0 = Some Inconsistent",
+        },
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},

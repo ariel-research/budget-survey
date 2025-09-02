@@ -437,14 +437,9 @@ def create_preference_ranking_choice(
     pair_number = (question_num - 1) * 3 + pair_type_num
 
     # Calculate ideal allocation that would produce the given magnitudes
-    # If magnitude=3, min_value should be 15 (since X1 = 0.2 * min = 3)
-    # If magnitude=6, min_value should be 15 (since X2 = 0.4 * min = 6)
-    if magnitude == 3:
-        ideal_allocation = [60, 25, 15]  # min=15, X1=3, X2=6
-    elif magnitude == 6:
-        ideal_allocation = [60, 25, 15]  # min=15, X1=3, X2=6
-    else:
-        ideal_allocation = [40, 30, 30]  # min=30, X1=6, X2=12
+    # For consistent testing, we need to use the same ideal allocation for all questions
+    # Using [40, 30, 30] with min=30: X1 = 0.2 * 30 = 6, X2 = 0.4 * 30 = 12
+    ideal_allocation = [40, 30, 30]  # min=30, X1=6, X2=12
 
     # Generate sample option vectors based on the pair type and question
     # This is simplified for testing - in reality these would come from the strategy
@@ -496,52 +491,52 @@ def create_preference_ranking_choice(
 def test_deduce_rankings_perfectly_consistent():
     """Test _deduce_rankings with perfectly consistent user (Example 1)."""
     # Create choices for perfectly consistent user: A > B > C for all questions
-    # Based on ideal vector (60, 25, 15) with X1=3, X2=6
+    # Based on ideal vector (40, 30, 30) with X1=6, X2=12
     choices = [
-        # Question 1 (X1=3, positive): All pairs result in A > B > C
-        create_preference_ranking_choice("Q1", "A vs B", 3, "positive", 1),  # A > B
-        create_preference_ranking_choice("Q1", "A vs C", 3, "positive", 1),  # A > C
-        create_preference_ranking_choice("Q1", "B vs C", 3, "positive", 1),  # B > C
-        # Question 2 (X1=3, negative): All pairs result in A > B > C
-        create_preference_ranking_choice("Q2", "A vs B", 3, "negative", 1),  # A > B
-        create_preference_ranking_choice("Q2", "A vs C", 3, "negative", 1),  # A > C
-        create_preference_ranking_choice("Q2", "B vs C", 3, "negative", 1),  # B > C
-        # Question 3 (X2=6, positive): All pairs result in A > B > C
-        create_preference_ranking_choice("Q3", "A vs B", 6, "positive", 1),  # A > B
-        create_preference_ranking_choice("Q3", "A vs C", 6, "positive", 1),  # A > C
-        create_preference_ranking_choice("Q3", "B vs C", 6, "positive", 1),  # B > C
-        # Question 4 (X2=6, negative): All pairs result in A > B > C
-        create_preference_ranking_choice("Q4", "A vs B", 6, "negative", 1),  # A > B
-        create_preference_ranking_choice("Q4", "A vs C", 6, "negative", 1),  # A > C
-        create_preference_ranking_choice("Q4", "B vs C", 6, "negative", 1),  # B > C
+        # Question 1 (X1=6, positive): All pairs result in A > B > C
+        create_preference_ranking_choice("Q1", "A vs B", 6, "positive", 1),  # A > B
+        create_preference_ranking_choice("Q1", "A vs C", 6, "positive", 1),  # A > C
+        create_preference_ranking_choice("Q1", "B vs C", 6, "positive", 1),  # B > C
+        # Question 2 (X1=6, negative): All pairs result in A > B > C
+        create_preference_ranking_choice("Q2", "A vs B", 6, "negative", 1),  # A > B
+        create_preference_ranking_choice("Q2", "A vs C", 6, "negative", 1),  # A > C
+        create_preference_ranking_choice("Q2", "B vs C", 6, "negative", 1),  # B > C
+        # Question 3 (X2=12, positive): All pairs result in A > B > C
+        create_preference_ranking_choice("Q3", "A vs B", 12, "positive", 1),  # A > B
+        create_preference_ranking_choice("Q3", "A vs C", 12, "positive", 1),  # A > C
+        create_preference_ranking_choice("Q3", "B vs C", 12, "positive", 1),  # B > C
+        # Question 4 (X2=12, negative): All pairs result in A > B > C
+        create_preference_ranking_choice("Q4", "A vs B", 12, "negative", 1),  # A > B
+        create_preference_ranking_choice("Q4", "A vs C", 12, "negative", 1),  # A > C
+        create_preference_ranking_choice("Q4", "B vs C", 12, "negative", 1),  # B > C
     ]
 
     result = _deduce_rankings(choices)
 
     assert result is not None
-    assert result["magnitudes"] == (3, 6)
+    assert result["magnitudes"] == (6, 12)
 
     # All pairwise preferences should be consistent
-    assert result["pairwise"]["A vs B"][3]["+"] == "A > B"
-    assert result["pairwise"]["A vs B"][3]["–"] == "A > B"
     assert result["pairwise"]["A vs B"][6]["+"] == "A > B"
     assert result["pairwise"]["A vs B"][6]["–"] == "A > B"
+    assert result["pairwise"]["A vs B"][12]["+"] == "A > B"
+    assert result["pairwise"]["A vs B"][12]["–"] == "A > B"
 
-    assert result["pairwise"]["A vs C"][3]["+"] == "A > C"
-    assert result["pairwise"]["A vs C"][3]["–"] == "A > C"
     assert result["pairwise"]["A vs C"][6]["+"] == "A > C"
     assert result["pairwise"]["A vs C"][6]["–"] == "A > C"
+    assert result["pairwise"]["A vs C"][12]["+"] == "A > C"
+    assert result["pairwise"]["A vs C"][12]["–"] == "A > C"
 
-    assert result["pairwise"]["B vs C"][3]["+"] == "B > C"
-    assert result["pairwise"]["B vs C"][3]["–"] == "B > C"
     assert result["pairwise"]["B vs C"][6]["+"] == "B > C"
     assert result["pairwise"]["B vs C"][6]["–"] == "B > C"
+    assert result["pairwise"]["B vs C"][12]["+"] == "B > C"
+    assert result["pairwise"]["B vs C"][12]["–"] == "B > C"
 
     # All rankings should be A > B > C
-    assert result["rankings"][3]["+"] == "A > B > C"
-    assert result["rankings"][3]["–"] == "A > B > C"
     assert result["rankings"][6]["+"] == "A > B > C"
     assert result["rankings"][6]["–"] == "A > B > C"
+    assert result["rankings"][12]["+"] == "A > B > C"
+    assert result["rankings"][12]["–"] == "A > B > C"
 
 
 def test_deduce_rankings_partially_consistent():
@@ -608,8 +603,10 @@ def test_generate_pairwise_consistency_table_perfect():
     # Check for expected content
     assert "Table: Preference A vs B" in table_html
     assert "A > B" in table_html
-    assert "2/2" in table_html  # Perfect consistency
-    assert "Final Score: 1" in table_html  # Perfect score
+    assert "✓" in table_html  # Perfect consistency icon
+    assert (
+        "Final Score: 1" in table_html or "ניקוד סופי: 1" in table_html
+    )  # Perfect score
 
 
 def test_generate_pairwise_consistency_table_partial():
@@ -625,9 +622,11 @@ def test_generate_pairwise_consistency_table_partial():
     assert "Table: Preference A vs B" in table_html
     assert "A > B" in table_html
     assert "B > A" in table_html
-    assert "2/2" in table_html  # Row consistency is perfect
-    assert "0/2" in table_html  # Column consistency is inconsistent
-    assert "Final Score: 0" in table_html  # Imperfect score
+    assert "✓" in table_html  # Row consistency icon
+    assert "✗" in table_html  # Column consistency is inconsistent
+    assert (
+        "Final Score: 0" in table_html or "ניקוד סופי: 0" in table_html
+    )  # Imperfect score
 
 
 def test_generate_final_ranking_summary_table_perfect():
@@ -657,11 +656,14 @@ def test_generate_final_ranking_summary_table_perfect():
     table_html = _generate_final_ranking_summary_table(deduced_data)
 
     # Check for expected content
-    assert "Final Ranking Summary Table" in table_html
+    assert (
+        "Final Ranking Summary Table" in table_html
+        or "טבלת סיכום דירוג סופי" in table_html
+    )
     assert "A > B > C" in table_html
     assert "3/3" in table_html  # Perfect consistency scores
-    assert "$X_1=3$" in table_html
-    assert "$X_2=6$" in table_html
+    assert "X₁=3" in table_html or "X<sub>1</sub>=3" in table_html
+    assert "X₂=6" in table_html or "X<sub>2</sub>=6" in table_html
 
 
 def test_generate_preference_ranking_consistency_tables_perfect():

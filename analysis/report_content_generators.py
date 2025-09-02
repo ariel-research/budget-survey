@@ -220,8 +220,7 @@ def generate_overall_stats(
                     <ul>
                         <li>Unique participants: {unique_users}</li>
                         <li>
-                            Participants who took multiple surveys: "
-                            f"{multi_survey_users}"
+                            Participants who took multiple surveys: {multi_survey_users}
                         </li>
                     </ul>
                 </li>
@@ -436,9 +435,7 @@ def choice_explanation_string_version2(
     option_label = get_translation("table_option", "answers")
     sum_diff_label = get_translation("sum_of_differences", "answers")
     min_ratio_label = get_translation("minimum_ratio", "answers")
-    opt_type_trans = get_translation(
-        user_choice_type, "answers", fallback=user_choice_type
-    )
+    opt_type_trans = get_translation(user_choice_type, "answers")
 
     return f"""
             <span class="user-optimizes user-optimizes-{user_choice_type}">
@@ -1601,6 +1598,14 @@ def _generate_preference_ranking_pairwise_table(
     def get_cons_score(p1, p2):
         return "2/2" if p1 == p2 else "0/2"
 
+    def get_consistency_class(cons_score):
+        """Get CSS class for consistency styling."""
+        return "consistency-perfect" if cons_score == "2/2" else "consistency-failed"
+
+    def get_consistency_icon(cons_score):
+        """Get icon for consistency visualization."""
+        return "✓" if cons_score == "2/2" else "✗"
+
     x1_row_cons = get_cons_score(pairwise_data[x1_mag]["+"], pairwise_data[x1_mag]["–"])
     x2_row_cons = get_cons_score(pairwise_data[x2_mag]["+"], pairwise_data[x2_mag]["–"])
     pos_col_cons = get_cons_score(
@@ -1612,6 +1617,10 @@ def _generate_preference_ranking_pairwise_table(
 
     all_cons = [x1_row_cons, x2_row_cons, pos_col_cons, neg_col_cons]
     final_score = 1 if all(c == "2/2" for c in all_cons) else 0
+
+    # Get translations for tooltips
+    consistency_tooltip = get_translation("consistency_tooltip", "answers")
+    final_score_tooltip = get_translation("final_score_tooltip", "answers")
 
     return f"""
     <h5>{title}</h5>
@@ -1629,19 +1638,34 @@ def _generate_preference_ranking_pairwise_table(
                 <td><strong>{get_translation('magnitude_0_2', 'answers')}</strong></td>
                 <td>{pairwise_data[x1_mag]['+']}</td>
                 <td>{pairwise_data[x1_mag]['–']}</td>
-                <td class="consistency-score">{x1_row_cons}</td>
+                <td class="consistency-score {get_consistency_class(x1_row_cons)}" 
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x1_row_cons)}</span>
+                </td>
             </tr>
             <tr>
                 <td><strong>{get_translation('magnitude_0_4', 'answers')}</strong></td>
                 <td>{pairwise_data[x2_mag]['+']}</td>
                 <td>{pairwise_data[x2_mag]['–']}</td>
-                <td class="consistency-score">{x2_row_cons}</td>
+                <td class="consistency-score {get_consistency_class(x2_row_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x2_row_cons)}</span>
+                </td>
             </tr>
             <tr>
                 <td><strong>{get_translation('column_consistency', 'answers')}</strong></td>
-                <td class="consistency-score">{pos_col_cons}</td>
-                <td class="consistency-score">{neg_col_cons}</td>
-                <td class="final-score">{get_translation('final_score', 'answers')}: {final_score}</td>
+                <td class="consistency-score {get_consistency_class(pos_col_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(pos_col_cons)}</span>
+                </td>
+                <td class="consistency-score {get_consistency_class(neg_col_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(neg_col_cons)}</span>
+                </td>
+                <td class="final-score {get_consistency_class('2/2' if final_score == 1 else '0/2')}"
+                    title="{final_score_tooltip}">
+                    {get_translation('final_score', 'answers')}: {final_score} <span class="consistency-icon">{get_consistency_icon('2/2' if final_score == 1 else '0/2')}</span>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -1693,6 +1717,29 @@ def _generate_final_ranking_summary_table(
         if len(set(prefs)) == 1:
             final_cons_score += 1
 
+    # Helper functions for consistency display
+    def get_consistency_class(score, total):
+        """Get CSS class for consistency styling."""
+        if score == total:
+            return "consistency-perfect"
+        elif score >= 1:  # 1/3 or better
+            return "consistency-partial"
+        else:
+            return "consistency-failed"
+
+    def get_consistency_icon(score, total):
+        """Get icon for consistency visualization."""
+        if score == total:
+            return "✓"
+        elif score >= 1:
+            return "◐"
+        else:
+            return "✗"
+
+    # Get translations for tooltips
+    consistency_tooltip = get_translation("consistency_tooltip", "answers")
+    final_score_tooltip = get_translation("final_score_tooltip", "answers")
+
     return f"""
     <h5>{get_translation('final_ranking_summary_table', 'answers')}</h5>
     <table>
@@ -1709,19 +1756,39 @@ def _generate_final_ranking_summary_table(
                 <td><strong>{get_translation('magnitude', 'answers')} X<sub>1</sub>={x1_mag}</strong></td>
                 <td>{rankings[x1_mag]['+']}</td>
                 <td>{rankings[x1_mag]['–']}</td>
-                <td class="consistency-score">{x1_row_cons_score}/3</td>
+                <td class="consistency-score {get_consistency_class(x1_row_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x1_row_cons_score, 3)}</span>
+                    {x1_row_cons_score}/3
+                </td>
             </tr>
             <tr>
                 <td><strong>{get_translation('magnitude', 'answers')} X<sub>2</sub>={x2_mag}</strong></td>
                 <td>{rankings[x2_mag]['+']}</td>
                 <td>{rankings[x2_mag]['–']}</td>
-                <td class="consistency-score">{x2_row_cons_score}/3</td>
+                <td class="consistency-score {get_consistency_class(x2_row_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x2_row_cons_score, 3)}</span>
+                    {x2_row_cons_score}/3
+                </td>
             </tr>
             <tr>
                 <td><strong>{get_translation('column_consistency', 'answers')}</strong></td>
-                <td class="consistency-score">{pos_col_cons_score}/3</td>
-                <td class="consistency-score">{neg_col_cons_score}/3</td>
-                <td class="final-score">{final_cons_score}/3</td>
+                <td class="consistency-score {get_consistency_class(pos_col_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(pos_col_cons_score, 3)}</span>
+                    {pos_col_cons_score}/3
+                </td>
+                <td class="consistency-score {get_consistency_class(neg_col_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(neg_col_cons_score, 3)}</span>
+                    {neg_col_cons_score}/3
+                </td>
+                <td class="final-score {get_consistency_class(final_cons_score, 3)}"
+                    title="{final_score_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(final_cons_score, 3)}</span>
+                    {final_cons_score}/3
+                </td>
             </tr>
         </tbody>
     </table>
@@ -1778,6 +1845,11 @@ def generate_preference_ranking_consistency_tables(choices: List[Dict]) -> str:
     html += '<div class="final-ranking-table-section">'
     html += _generate_final_ranking_summary_table(deduced_data)
     html += "</div>"
+
+    # Add explanation section
+    explanation_html = _generate_consistency_explanation()
+    html += explanation_html
+
     html += "</div>"
 
     return html
@@ -4331,6 +4403,33 @@ def _format_ideal_budget(choices: List[Dict]) -> str:
         return str(optimal_allocation)
     except (json.JSONDecodeError, KeyError, IndexError):
         return "N/A"
+
+
+def _generate_consistency_explanation() -> str:
+    """Generate explanation section for preference ranking consistency."""
+    explanation_title = get_translation("consistency_explanation_title", "answers")
+    explanation_text = get_translation("consistency_explanation_text", "answers")
+
+    return f"""
+    <div class="consistency-explanation">
+        <h5>{explanation_title}</h5>
+        <p>{explanation_text}</p>
+        <div class="consistency-legend">
+            <div class="legend-item">
+                <span class="legend-icon consistency-perfect">✓</span>
+                <span class="legend-text">{get_translation('perfect_consistency_label', 'answers', fallback='Perfect Consistency')}</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon consistency-partial">◐</span>
+                <span class="legend-text">{get_translation('partial_consistency_label', 'answers', fallback='Partial Consistency')}</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon consistency-failed">✗</span>
+                <span class="legend-text">{get_translation('failed_consistency_label', 'answers', fallback='Failed Consistency')}</span>
+            </div>
+        </div>
+    </div>
+    """
 
 
 def _generate_pairwise_consistency_table(

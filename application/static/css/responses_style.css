@@ -39,6 +39,7 @@
    --spacing-md: 1rem;
    --spacing-lg: 1.5rem;
    --spacing-xl: 2rem;
+   --spacing-xxl: 3rem;
    
    /* Typography */
    --font-family-mono: 'Monaco', 'Consolas', monospace;
@@ -56,6 +57,13 @@
     /* Neutral Preference Colors for Asymmetric Matrix */
     --color-decrease: #3B82F6; /* Neutral Blue for decrease */
     --color-increase: #F97316; /* Complementary Orange for increase */
+   
+   /* Consistency Colors */
+   --color-success: #10B981; /* Green for success/perfect */
+   --color-warning: #F59E0B; /* Amber for warning/partial */
+   --color-error: #EF4444;   /* Red for error/failed */
+   --color-orange: #F97316;  /* Orange for partial consistency */
+   --color-danger: #DC2626;  /* Darker red for danger */
    
    /* Pagination Colors */
    --pagination-background: #ffffff;
@@ -1699,6 +1707,26 @@ th.sortable[data-order="desc"]::after {
     font-weight: 600;
 }
 
+.preference-ranking-consistency-container .consistency-icon {
+    margin-right: 0.5em;
+    font-weight: bold;
+}
+
+.preference-ranking-consistency-container .consistency-perfect {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.preference-ranking-consistency-container .consistency-partial {
+    color: var(--color-orange);
+    font-weight: 600;
+}
+
+.preference-ranking-consistency-container .consistency-failed {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
 .preference-ranking-consistency-container .perfect-consistency {
     color: var(--color-success);
     font-weight: 600;
@@ -1724,6 +1752,73 @@ th.sortable[data-order="desc"]::after {
     padding-top: var(--spacing-lg);
     border-top: 2px solid var(--color-border);
 }
+
+/* Consistency Explanation Section */
+.consistency-explanation {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background-color: var(--color-background-alt);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.consistency-explanation h5 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+}
+
+.consistency-explanation p {
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+  .consistency-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  .consistency-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .consistency-legend .legend-icon {
+    font-size: 1.2em;
+    font-weight: bold;
+    width: 1.5em;
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--color-background);
+    border: 2px solid currentColor;
+  }
+  
+  .consistency-legend .legend-text {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  
+  /* Responsive legend */
+  @media (max-width: 768px) {
+    .consistency-legend {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+    
+    .consistency-legend .legend-item {
+      width: 100%;
+    }
+  }
 
 /* ==========================================================================
   Empty Filter Message
