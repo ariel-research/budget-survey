@@ -844,6 +844,59 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "most_preferred": {"he": "הכי מועדף", "en": "Most preferred"},
         "least_preferred": {"he": "הכי פחות מועדף", "en": "Least preferred"},
         "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
+        # Preference Ranking Consistency Analysis
+        "user_preference_consistency_analysis": {
+            "he": "ניתוח עקביות העדפות המשתמש",
+            "en": "User Preference Consistency Analysis",
+        },
+        "table_preference_a_vs_b": {
+            "he": "טבלה: העדפה א לעומת ב",
+            "en": "Table: Preference A vs B",
+        },
+        "table_preference_a_vs_c": {
+            "he": "טבלה: העדפה א לעומת ג",
+            "en": "Table: Preference A vs C",
+        },
+        "table_preference_b_vs_c": {
+            "he": "טבלה: העדפה ב לעומת ג",
+            "en": "Table: Preference B vs C",
+        },
+        "final_ranking_summary_table": {
+            "he": "טבלת סיכום דירוג סופי",
+            "en": "Final Ranking Summary Table",
+        },
+        "positive_question": {
+            "he": "שאלה +",
+            "en": "Question +",
+        },
+        "negative_question": {
+            "he": "שאלה –",
+            "en": "Question –",
+        },
+        "row_consistency": {
+            "he": "עקביות שורה",
+            "en": "Row Consistency",
+        },
+        "column_consistency": {
+            "he": "עקביות עמודה",
+            "en": "Col. Cons.",
+        },
+        "final_score": {
+            "he": "ניקוד סופי",
+            "en": "Final Score",
+        },
+        "magnitude_0_2": {
+            "he": "עוצמה 0.2",
+            "en": "Magnitude 0.2",
+        },
+        "magnitude_0_4": {
+            "he": "עוצמה 0.4",
+            "en": "Magnitude 0.4",
+        },
+        "magnitude": {
+            "he": "עוצמה",
+            "en": "Magnitude",
+        },
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},

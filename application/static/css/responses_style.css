@@ -235,7 +235,10 @@
    background: var(--color-linear-symmetry);
 }
 .strategy-badge[data-strategy="asymmetric_loss_distribution"] { 
-   background: var(--color-asymmetric-loss-distribution);
+  background: var(--color-asymmetric-loss-distribution);
+}
+.strategy-badge[data-strategy="preference_ranking_survey"] { 
+  background: var(--color-rose);
 }
 
 /* ==========================================================================
@@ -1616,6 +1619,113 @@ th.sortable[data-order="desc"]::after {
 }
 
 /* ==========================================================================
+  Preference Ranking Consistency Table Styles
+  ========================================================================== */
+.preference-ranking-consistency-container {
+    margin: var(--spacing-xl) 0;
+    padding: var(--spacing-lg);
+    background: var(--color-background-alt);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+
+.preference-ranking-consistency-container h4 {
+    color: var(--color-primary);
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: var(--spacing-md);
+}
+
+.preference-ranking-consistency-container h5 {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+    margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--spacing-sm);
+}
+
+.preference-ranking-consistency-container table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0 auto var(--spacing-lg) auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    background: var(--color-background);
+}
+
+.preference-ranking-consistency-container th {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+    padding: 14px 16px;
+    text-align: center;
+    border-bottom: 2px solid var(--color-border);
+    font-size: var(--font-size-base);
+}
+
+.preference-ranking-consistency-container td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    text-align: center;
+    transition: background-color 0.2s ease;
+    font-family: var(--font-family-mono);
+}
+
+.preference-ranking-consistency-container tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.preference-ranking-consistency-container td:first-child {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-background-alt);
+    text-align: left;
+    padding-left: 20px;
+    font-family: inherit;
+}
+
+.preference-ranking-consistency-container .final-score {
+    font-weight: 700;
+    color: var(--color-success);
+}
+
+.preference-ranking-consistency-container .consistency-score {
+    font-weight: 600;
+}
+
+.preference-ranking-consistency-container .perfect-consistency {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.preference-ranking-consistency-container .partial-consistency {
+    color: var(--color-orange);
+    font-weight: 600;
+}
+
+.preference-ranking-consistency-container .no-consistency {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+/* Spacing between preference ranking table sections */
+.pairwise-table-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.final-ranking-table-section {
+    margin-top: var(--spacing-xxl);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--color-border);
+}
+
+/* ==========================================================================
   Empty Filter Message
   ========================================================================== */
 .empty-filter-message {
@@ -2508,6 +2618,22 @@ th.sortable[data-order="desc"]::after {
     padding-left: 20px;
 }
 
+[dir="rtl"] .preference-ranking-consistency-container h4,
+[dir="rtl"] .preference-ranking-consistency-container h5 {
+    text-align: right;
+}
+
+[dir="rtl"] .preference-ranking-consistency-container th,
+[dir="rtl"] .preference-ranking-consistency-container td {
+    text-align: right;
+}
+
+[dir="rtl"] .preference-ranking-consistency-container td:first-child {
+    text-align: right;
+    padding-right: 20px;
+    padding-left: 16px;
+}
+
 /* Survey Count Containers */
 [dir="rtl"] .survey-count-container {
    align-items: flex-end;
@@ -2831,6 +2957,41 @@ th.sortable[data-order="desc"]::after {
   .pairwise-consistency-container th,
   .pairwise-consistency-container td {
       padding: 12px 16px;
+  }
+
+  /* Preference Ranking Consistency Responsive */
+  .preference-ranking-consistency-container {
+      padding: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+  }
+  
+  .preference-ranking-consistency-container table {
+      font-size: var(--font-size-sm);
+      max-width: 100%;
+  }
+  
+  .preference-ranking-consistency-container th,
+  .preference-ranking-consistency-container td {
+      padding: 10px 12px;
+  }
+  
+  .preference-ranking-consistency-container h4 {
+      font-size: var(--font-size-lg);
+  }
+  
+  .preference-ranking-consistency-container h5 {
+      font-size: var(--font-size-base);
+      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+  }
+  
+  /* Responsive spacing for preference ranking sections */
+  .pairwise-table-section {
+      margin-bottom: var(--spacing-lg);
+  }
+  
+  .final-ranking-table-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-md);
   }
 
 }
