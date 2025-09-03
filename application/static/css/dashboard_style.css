@@ -15,7 +15,8 @@
     --color-amber: #F59E0B;      /* Amber */
     --color-linear-symmetry: #EF4444;         /* Red */
     --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
-    
+    --color-preference-ranking-survey: #E91E63; /* Pink */
+
     /* Text Colors */
     --color-text-dark: #1f2937;
     --color-text-light: #6b7280;
@@ -398,6 +399,9 @@
 .strategy-badge[data-strategy="asymmetric_loss_distribution"] { 
     background: var(--color-asymmetric-loss-distribution);
 }
+.strategy-badge[data-strategy="preference_ranking_survey"] { 
+    background: var(--color-preference-ranking-survey);
+  }
 .strategy-badge {
     background: var(--color-indigo);
 }
