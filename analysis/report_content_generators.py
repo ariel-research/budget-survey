@@ -1482,6 +1482,14 @@ def _deduce_rankings(choices: List[Dict]) -> Dict:
 
         op1, op2 = pair_type.split(" vs ")
         preference = f"{op1} > {op2}" if user_choice == 1 else f"{op2} > {op1}"
+
+        # For negative questions, swap the preference direction
+        if vector_type == "negative":
+            # Swap the preference: "A > B" becomes "B > A"
+            if " > " in preference:
+                winner, loser = preference.split(" > ")
+                preference = f"{loser} > {winner}"
+
         v_type_symbol = "+" if vector_type == "positive" else "–"
 
         pairwise_preferences[pair_type][magnitude][v_type_symbol] = preference

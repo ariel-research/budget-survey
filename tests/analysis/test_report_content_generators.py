@@ -516,27 +516,33 @@ def test_deduce_rankings_perfectly_consistent():
     assert result is not None
     assert result["magnitudes"] == (6, 12)
 
-    # All pairwise preferences should be consistent
+    # All pairwise preferences should be consistent for positive questions
     assert result["pairwise"]["A vs B"][6]["+"] == "A > B"
-    assert result["pairwise"]["A vs B"][6]["–"] == "A > B"
     assert result["pairwise"]["A vs B"][12]["+"] == "A > B"
-    assert result["pairwise"]["A vs B"][12]["–"] == "A > B"
 
     assert result["pairwise"]["A vs C"][6]["+"] == "A > C"
-    assert result["pairwise"]["A vs C"][6]["–"] == "A > C"
     assert result["pairwise"]["A vs C"][12]["+"] == "A > C"
-    assert result["pairwise"]["A vs C"][12]["–"] == "A > C"
 
     assert result["pairwise"]["B vs C"][6]["+"] == "B > C"
-    assert result["pairwise"]["B vs C"][6]["–"] == "B > C"
     assert result["pairwise"]["B vs C"][12]["+"] == "B > C"
-    assert result["pairwise"]["B vs C"][12]["–"] == "B > C"
 
-    # All rankings should be A > B > C
+    # For negative questions, preferences should be swapped
+    assert result["pairwise"]["A vs B"][6]["–"] == "B > A"  # Swapped from A > B
+    assert result["pairwise"]["A vs B"][12]["–"] == "B > A"  # Swapped from A > B
+
+    assert result["pairwise"]["A vs C"][6]["–"] == "C > A"  # Swapped from A > C
+    assert result["pairwise"]["A vs C"][12]["–"] == "C > A"  # Swapped from A > C
+
+    assert result["pairwise"]["B vs C"][6]["–"] == "C > B"  # Swapped from B > C
+    assert result["pairwise"]["B vs C"][12]["–"] == "C > B"  # Swapped from B > C
+
+    # All rankings should be A > B > C for positive questions
     assert result["rankings"][6]["+"] == "A > B > C"
-    assert result["rankings"][6]["–"] == "A > B > C"
     assert result["rankings"][12]["+"] == "A > B > C"
-    assert result["rankings"][12]["–"] == "A > B > C"
+
+    # For negative questions, rankings should be swapped to C > B > A
+    assert result["rankings"][6]["–"] == "C > B > A"  # Swapped from A > B > C
+    assert result["rankings"][12]["–"] == "C > B > A"  # Swapped from A > B > C
 
 
 def test_deduce_rankings_partially_consistent():
@@ -549,18 +555,30 @@ def test_deduce_rankings_partially_consistent():
         create_preference_ranking_choice("Q1", "A vs B", 6, "positive", 1),  # A > B
         create_preference_ranking_choice("Q1", "A vs C", 6, "positive", 1),  # A > C
         create_preference_ranking_choice("Q1", "B vs C", 6, "positive", 1),  # B > C
-        # Question 2 (X1=6, negative): A > B > C
-        create_preference_ranking_choice("Q2", "A vs B", 6, "negative", 1),  # A > B
-        create_preference_ranking_choice("Q2", "A vs C", 6, "negative", 1),  # A > C
-        create_preference_ranking_choice("Q2", "B vs C", 6, "negative", 1),  # B > C
+        # Question 2 (X1=6, negative): A > B > C (will be swapped to C > B > A)
+        create_preference_ranking_choice(
+            "Q2", "A vs B", 6, "negative", 1
+        ),  # A > B becomes B > A
+        create_preference_ranking_choice(
+            "Q2", "A vs C", 6, "negative", 1
+        ),  # A > C becomes C > A
+        create_preference_ranking_choice(
+            "Q2", "B vs C", 6, "negative", 1
+        ),  # B > C becomes C > B
         # Question 3 (X2=12, positive): B > A > C
         create_preference_ranking_choice("Q3", "A vs B", 12, "positive", 2),  # B > A
         create_preference_ranking_choice("Q3", "A vs C", 12, "positive", 1),  # A > C
         create_preference_ranking_choice("Q3", "B vs C", 12, "positive", 1),  # B > C
-        # Question 4 (X2=12, negative): B > C > A
-        create_preference_ranking_choice("Q4", "A vs B", 12, "negative", 2),  # B > A
-        create_preference_ranking_choice("Q4", "A vs C", 12, "negative", 2),  # C > A
-        create_preference_ranking_choice("Q4", "B vs C", 12, "negative", 1),  # B > C
+        # Question 4 (X2=12, negative): B > C > A (will be swapped to A > C > B)
+        create_preference_ranking_choice(
+            "Q4", "A vs B", 12, "negative", 2
+        ),  # B > A becomes A > B
+        create_preference_ranking_choice(
+            "Q4", "A vs C", 12, "negative", 2
+        ),  # C > A becomes A > C
+        create_preference_ranking_choice(
+            "Q4", "B vs C", 12, "negative", 1
+        ),  # B > C becomes C > B
     ]
 
     result = _deduce_rankings(choices)
@@ -570,25 +588,154 @@ def test_deduce_rankings_partially_consistent():
 
     # Check specific pairwise preferences
     assert result["pairwise"]["A vs B"][6]["+"] == "A > B"
-    assert result["pairwise"]["A vs B"][6]["–"] == "A > B"
+    assert result["pairwise"]["A vs B"][6]["–"] == "B > A"  # Swapped from A > B
     assert result["pairwise"]["A vs B"][12]["+"] == "B > A"
-    assert result["pairwise"]["A vs B"][12]["–"] == "B > A"
+    assert result["pairwise"]["A vs B"][12]["–"] == "A > B"  # Swapped from B > A
 
     assert result["pairwise"]["A vs C"][6]["+"] == "A > C"
-    assert result["pairwise"]["A vs C"][6]["–"] == "A > C"
+    assert result["pairwise"]["A vs C"][6]["–"] == "C > A"  # Swapped from A > C
     assert result["pairwise"]["A vs C"][12]["+"] == "A > C"
-    assert result["pairwise"]["A vs C"][12]["–"] == "C > A"
+    assert result["pairwise"]["A vs C"][12]["–"] == "A > C"  # Swapped from C > A
 
     assert result["pairwise"]["B vs C"][6]["+"] == "B > C"
-    assert result["pairwise"]["B vs C"][6]["–"] == "B > C"
+    assert result["pairwise"]["B vs C"][6]["–"] == "C > B"  # Swapped from B > C
     assert result["pairwise"]["B vs C"][12]["+"] == "B > C"
-    assert result["pairwise"]["B vs C"][12]["–"] == "B > C"
+    assert result["pairwise"]["B vs C"][12]["–"] == "C > B"  # Swapped from B > C
 
     # Check rankings
     assert result["rankings"][6]["+"] == "A > B > C"
-    assert result["rankings"][6]["–"] == "A > B > C"
+    assert result["rankings"][6]["–"] == "C > B > A"  # Swapped from A > B > C
     assert result["rankings"][12]["+"] == "B > A > C"
-    assert result["rankings"][12]["–"] == "B > C > A"
+    assert result["rankings"][12]["–"] == "A > C > B"  # Swapped from B > C > A
+
+
+def test_deduce_rankings_negative_question_preference_swapping():
+    """Test that negative questions correctly swap preference directions."""
+    # Create choices for a user where negative questions should swap preferences
+    # Based on ideal vector (40, 30, 30) with X1=6, X2=12
+    choices = [
+        # Question 1 (X1=6, positive): A > B > C (no swapping needed)
+        create_preference_ranking_choice("Q1", "A vs B", 6, "positive", 1),  # A > B
+        create_preference_ranking_choice("Q1", "A vs C", 6, "positive", 1),  # A > C
+        create_preference_ranking_choice("Q1", "B vs C", 6, "positive", 1),  # B > C
+        # Question 2 (X1=6, negative): Should swap preferences
+        create_preference_ranking_choice(
+            "Q2", "A vs B", 6, "negative", 1
+        ),  # A > B becomes B > A
+        create_preference_ranking_choice(
+            "Q2", "A vs C", 6, "negative", 1
+        ),  # A > C becomes C > A
+        create_preference_ranking_choice(
+            "Q2", "B vs C", 6, "negative", 1
+        ),  # B > C becomes C > B
+        # Question 3 (X2=12, positive): A > B > C (no swapping needed)
+        create_preference_ranking_choice("Q3", "A vs B", 12, "positive", 1),  # A > B
+        create_preference_ranking_choice("Q3", "A vs C", 12, "positive", 1),  # A > C
+        create_preference_ranking_choice("Q3", "B vs C", 12, "positive", 1),  # B > C
+        # Question 4 (X2=12, negative): Should swap preferences
+        create_preference_ranking_choice(
+            "Q4", "A vs B", 12, "negative", 1
+        ),  # A > B becomes B > A
+        create_preference_ranking_choice(
+            "Q4", "A vs C", 12, "negative", 1
+        ),  # A > C becomes C > A
+        create_preference_ranking_choice(
+            "Q4", "B vs C", 12, "negative", 1
+        ),  # B > C becomes C > B
+    ]
+
+    result = _deduce_rankings(choices)
+
+    assert result is not None
+    assert result["magnitudes"] == (6, 12)
+
+    # Check that positive questions (Q1, Q3) maintain original preferences
+    assert result["pairwise"]["A vs B"][6]["+"] == "A > B"  # Q1: no swap
+    assert result["pairwise"]["A vs B"][12]["+"] == "A > B"  # Q3: no swap
+
+    # Check that negative questions (Q2, Q4) have swapped preferences
+    assert result["pairwise"]["A vs B"][6]["–"] == "B > A"  # Q2: swapped from A > B
+    assert result["pairwise"]["A vs B"][12]["–"] == "B > A"  # Q4: swapped from A > B
+
+    assert result["pairwise"]["A vs C"][6]["–"] == "C > A"  # Q2: swapped from A > C
+    assert result["pairwise"]["A vs C"][12]["–"] == "C > A"  # Q4: swapped from A > C
+
+    assert result["pairwise"]["B vs C"][6]["–"] == "C > B"  # Q2: swapped from B > C
+    assert result["pairwise"]["B vs C"][12]["–"] == "C > B"  # Q4: swapped from B > C
+
+    # Check rankings reflect the swapped preferences
+    assert result["rankings"][6]["+"] == "A > B > C"  # Q1: original order
+    assert result["rankings"][6]["–"] == "C > B > A"  # Q2: swapped order
+    assert result["rankings"][12]["+"] == "A > B > C"  # Q3: original order
+    assert result["rankings"][12]["–"] == "C > B > A"  # Q4: swapped order
+
+
+def test_deduce_rankings_mixed_choices_with_swapping():
+    """Test preference swapping with mixed user choices (not all 1s)."""
+    # Create a simple test with just 6 choices to test the core swapping logic
+    choices = [
+        # Question 1 (X1=6, positive): A > B
+        create_preference_ranking_choice("Q1", "A vs B", 6, "positive", 1),  # A > B
+        # Question 2 (X1=6, negative): A > B (should be swapped to B > A)
+        create_preference_ranking_choice(
+            "Q2", "A vs B", 6, "negative", 1
+        ),  # A > B becomes B > A
+        # Question 3 (X2=12, positive): B > A
+        create_preference_ranking_choice("Q3", "A vs B", 12, "positive", 2),  # B > A
+        # Question 4 (X2=12, negative): B > A (should be swapped to A > B)
+        create_preference_ranking_choice(
+            "Q4", "A vs B", 12, "negative", 2
+        ),  # B > A becomes A > B
+        # Question 1 (X1=6, positive): A > C
+        create_preference_ranking_choice("Q1", "A vs C", 6, "positive", 1),  # A > C
+        # Question 2 (X1=6, negative): A > C (should be swapped to C > A)
+        create_preference_ranking_choice(
+            "Q2", "A vs C", 6, "negative", 1
+        ),  # A > C becomes C > A
+        # Question 3 (X2=12, positive): C > A
+        create_preference_ranking_choice("Q3", "A vs C", 12, "positive", 2),  # C > A
+        # Question 4 (X2=12, negative): C > A (should be swapped to A > C)
+        create_preference_ranking_choice(
+            "Q4", "A vs C", 12, "negative", 2
+        ),  # C > A becomes A > C
+        # Question 1 (X1=6, positive): B > C
+        create_preference_ranking_choice("Q1", "B vs C", 6, "positive", 1),  # B > C
+        # Question 2 (X1=6, negative): B > C (should be swapped to C > B)
+        create_preference_ranking_choice(
+            "Q2", "B vs C", 6, "negative", 1
+        ),  # B > C becomes C > B
+        # Question 3 (X2=12, positive): C > B
+        create_preference_ranking_choice("Q3", "B vs C", 12, "positive", 2),  # C > B
+        # Question 4 (X2=12, negative): C > B (should be swapped to B > C)
+        create_preference_ranking_choice(
+            "Q4", "B vs C", 12, "negative", 2
+        ),  # C > B becomes B > C
+    ]
+
+    result = _deduce_rankings(choices)
+
+    assert result is not None
+    assert result["magnitudes"] == (6, 12)
+
+    # Check positive question preferences (no swapping)
+    assert result["pairwise"]["A vs B"][6]["+"] == "A > B"
+    assert result["pairwise"]["A vs C"][6]["+"] == "A > C"
+    assert result["pairwise"]["B vs C"][6]["+"] == "B > C"
+
+    # Check negative question preferences (with swapping)
+    assert result["pairwise"]["A vs B"][6]["–"] == "B > A"  # A > B was swapped
+    assert result["pairwise"]["A vs C"][6]["–"] == "C > A"  # A > C was swapped
+    assert result["pairwise"]["B vs C"][6]["–"] == "C > B"  # B > C was swapped
+
+    # Check X2 preferences
+    assert result["pairwise"]["A vs B"][12]["+"] == "B > A"
+    assert result["pairwise"]["A vs C"][12]["+"] == "C > A"
+    assert result["pairwise"]["B vs C"][12]["+"] == "C > B"
+
+    # Check X2 negative preferences (with swapping)
+    assert result["pairwise"]["A vs B"][12]["–"] == "A > B"  # B > A was swapped
+    assert result["pairwise"]["A vs C"][12]["–"] == "A > C"  # C > A was swapped
+    assert result["pairwise"]["B vs C"][12]["–"] == "B > C"  # C > B was swapped
 
 
 def test_generate_pairwise_consistency_table_perfect():
