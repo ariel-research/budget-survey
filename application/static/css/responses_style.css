@@ -32,6 +32,7 @@
    --color-cyclic-shift: #F59E0B;            /* Amber */
    --color-linear-symmetry: #EF4444;         /* Red */
    --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
+   --color-preference-ranking-survey: #E91E63; /* Pink */
    
    /* Spacing */
    --spacing-xs: 0.25rem;
@@ -246,7 +247,7 @@
   background: var(--color-asymmetric-loss-distribution);
 }
 .strategy-badge[data-strategy="preference_ranking_survey"] { 
-  background: var(--color-rose);
+  background: var(--color-preference-ranking-survey);
 }
 
 /* ==========================================================================
