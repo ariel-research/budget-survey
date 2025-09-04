@@ -3470,72 +3470,24 @@ def generate_overall_statistics_table(
         </div>
         """
     elif strategy_name == "temporal_preference_test":
-        # Handle temporal preference strategy
-        total_ideal_this_year = 0
-        total_ideal_next_year = 0
-        total_consistency = 0
-        valid_summaries = 0
-
+        # Handle temporal preference strategy using consistency breakdown table
+        # Extract all user choices from summaries
+        all_user_choices = []
         for summary in summaries:
             if "choices" in summary:
-                choices = summary["choices"]
-                metrics = _calculate_temporal_preference_metrics(choices)
+                all_user_choices.extend(summary["choices"])
 
-                total_ideal_this_year += metrics["ideal_this_year_percent"]
-                total_ideal_next_year += metrics["ideal_next_year_percent"]
-                total_consistency += metrics["consistency_percent"]
-                valid_summaries += 1
-
-        # Calculate averages
-        if valid_summaries > 0:
-            avg_ideal_this_year = total_ideal_this_year / valid_summaries
-            avg_ideal_next_year = total_ideal_next_year / valid_summaries
-            avg_consistency = total_consistency / valid_summaries
+        # Use the consistency breakdown table for distribution by consistency level
+        if all_user_choices:
+            overall_table = generate_consistency_breakdown_table(all_user_choices)
         else:
-            avg_ideal_this_year = avg_ideal_next_year = avg_consistency = 0
-
-        # Get translations
-        ideal_this_year_label = get_translation("ideal_this_year", "answers")
-        ideal_next_year_label = get_translation("ideal_next_year", "answers")
-        consistency_label = get_translation("avg_consistency", "answers")
-
-        highlight1 = (
-            "highlight-row" if avg_ideal_this_year > avg_ideal_next_year else ""
-        )
-        highlight2 = (
-            "highlight-row" if avg_ideal_next_year > avg_ideal_this_year else ""
-        )
-
-        overall_table = f"""
-        <div class="summary-table-container">
-            <h2>{title}</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{th_metric}</th>
-                            <th>{th_avg_perc}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="{highlight1}">
-                            <td>{ideal_this_year_label}</td>
-                            <td>{avg_ideal_this_year:.1f}%</td>
-                        </tr>
-                        <tr class="{highlight2}">
-                            <td>{ideal_next_year_label}</td>
-                            <td>{avg_ideal_next_year:.1f}%</td>
-                        </tr>
-                        <tr class="consistency-summary">
-                            <td>{consistency_label}</td>
-                            <td>{avg_consistency:.1f}%</td>
-                        </tr>
-                    </tbody>
-                </table>
+            # Fallback if no choices available
+            overall_table = f"""
+            <div class="summary-table-container">
+                <h2>{title}</h2>
+                <p class="summary-note">No data available for consistency analysis.</p>
             </div>
-            <p class="summary-note">{note}</p>
-        </div>
-        """
+            """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
         # Handle root sum squared strategies
         # Calculate overall averages
@@ -4709,13 +4661,14 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
     """
     Generate consistency breakdown table for temporal preference survey.
 
-    Groups users by consistency level and shows average preferences for each group.
+    Groups users by consistency level and shows the distribution of choices
+    (Ideal This Year vs Ideal Next Year) for each consistency level.
 
     Args:
         user_choices: List of all user choices for the temporal preference survey
 
     Returns:
-        str: HTML table showing consistency breakdown across all users
+        str: HTML table showing choice distribution by consistency level
     """
     if not user_choices:
         no_data_msg = get_translation("no_answers", "answers")
@@ -4739,41 +4692,57 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
         # Round down to nearest 10 to get consistency level
         consistency_level = max(50, int(consistency // 10) * 10)
         if consistency_level in consistency_groups:
-            consistency_groups[consistency_level].append(metrics)
+            # Store both metrics and user's actual choice percentages
+            user_data = {
+                "metrics": metrics,
+                "ideal_this_year_percent": metrics["ideal_this_year_percent"],
+                "ideal_next_year_percent": metrics["ideal_next_year_percent"],
+            }
+            consistency_groups[consistency_level].append(user_data)
 
     # Get translations
     title = get_translation("consistency_breakdown_title", "answers")
     consistency_level_label = get_translation("consistency_level", "answers")
     num_users_label = get_translation("num_of_users", "answers")
-    avg_ideal_this_year_label = get_translation("avg_ideal_this_year", "answers")
-    avg_ideal_next_year_label = get_translation("avg_ideal_next_year", "answers")
+    ideal_this_year_label = get_translation("ideal_this_year", "answers")
+    ideal_next_year_label = get_translation("ideal_next_year", "answers")
 
     # Generate table rows
     rows = []
     total_users = 0
+    total_this_year_count = 0
+    total_next_year_count = 0
+
     for consistency_level in sorted(consistency_groups.keys()):
-        user_metrics = consistency_groups[consistency_level]
-        num_users = len(user_metrics)
-        total_users += num_users
+        user_data_list = consistency_groups[consistency_level]
+        num_users = len(user_data_list)
 
         if num_users == 0:
             continue
 
-        # Calculate averages for this consistency group
-        avg_this_year = (
-            sum(m["ideal_this_year_percent"] for m in user_metrics) / num_users
+        total_users += num_users
+
+        # Calculate average percentages across users at this consistency level
+        this_year_percent = (
+            sum(user_data["ideal_this_year_percent"] for user_data in user_data_list)
+            / num_users
         )
-        avg_next_year = (
-            sum(m["ideal_next_year_percent"] for m in user_metrics) / num_users
+        next_year_percent = (
+            sum(user_data["ideal_next_year_percent"] for user_data in user_data_list)
+            / num_users
         )
+
+        # Update totals for overall calculation
+        total_this_year_count += this_year_percent * num_users
+        total_next_year_count += next_year_percent * num_users
 
         rows.append(
             f"""
             <tr>
                 <td>{consistency_level}%</td>
                 <td>{num_users}</td>
-                <td>{avg_this_year:.1f}%</td>
-                <td>{avg_next_year:.1f}%</td>
+                <td>{this_year_percent:.1f}%</td>
+                <td>{next_year_percent:.1f}%</td>
             </tr>
             """
         )
@@ -4783,18 +4752,9 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
         return f'<div class="no-data">{no_data_msg}</div>'
 
     # Add total row
-    all_metrics = [
-        metrics
-        for user_metrics in consistency_groups.values()
-        for metrics in user_metrics
-    ]
-    if all_metrics:
-        overall_avg_this_year = sum(
-            m["ideal_this_year_percent"] for m in all_metrics
-        ) / len(all_metrics)
-        overall_avg_next_year = sum(
-            m["ideal_next_year_percent"] for m in all_metrics
-        ) / len(all_metrics)
+    if total_users > 0:
+        overall_this_year_percent = total_this_year_count / total_users
+        overall_next_year_percent = total_next_year_count / total_users
 
         total_label = get_translation("total", "answers")
         rows.append(
@@ -4802,8 +4762,8 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
             <tr class="total-row">
                 <td><strong>{total_label}</strong></td>
                 <td><strong>{total_users}</strong></td>
-                <td><strong>{overall_avg_this_year:.1f}%</strong></td>
-                <td><strong>{overall_avg_next_year:.1f}%</strong></td>
+                <td><strong>{overall_this_year_percent:.1f}%</strong></td>
+                <td><strong>{overall_next_year_percent:.1f}%</strong></td>
             </tr>
             """
         )
@@ -4812,13 +4772,13 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
     <div class="summary-table-container consistency-breakdown-container">
         <h2>{title}</h2>
         <div class="table-container">
-            <table>
+                            <table>
                 <thead>
                     <tr>
                         <th>{consistency_level_label}</th>
                         <th>{num_users_label}</th>
-                        <th>{avg_ideal_this_year_label}</th>
-                        <th>{avg_ideal_next_year_label}</th>
+                        <th>{ideal_this_year_label}</th>
+                        <th>{ideal_next_year_label}</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -739,16 +739,20 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Temporal Preference Summary",
         },
         "ideal_this_year": {
-            "he": "אידיאל השנה",
+            "he": "אידיאלי השנה",
             "en": "Ideal This Year",
         },
         "ideal_next_year": {
-            "he": "אידיאל בשנה הבאה",
+            "he": "אידיאלי בשנה הבאה",
             "en": "Ideal Next Year",
         },
         "consistency_breakdown_title": {
             "he": "פילוח רמות עקביות",
             "en": "Consistency Breakdown",
+        },
+        "consistency_level": {
+            "he": "רמת עקביות",
+            "en": "Consistency Level",
         },
         "num_of_users": {
             "he": "מספר משתמשים",
