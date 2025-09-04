@@ -844,6 +844,113 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "most_preferred": {"he": "הכי מועדף", "en": "Most preferred"},
         "least_preferred": {"he": "הכי פחות מועדף", "en": "Least preferred"},
         "select_option": {"he": "בחרו אפשרות", "en": "Select option"},
+        # Preference Ranking Consistency Analysis
+        "user_preference_consistency_analysis": {
+            "he": "ניתוח עקביות העדפות המשתמש",
+            "en": "User Preference Consistency Analysis",
+        },
+        "table_preference_a_vs_b": {
+            "he": "טבלה: העדפה א לעומת ב",
+            "en": "Table: Preference A vs B",
+        },
+        "table_preference_a_vs_c": {
+            "he": "טבלה: העדפה א לעומת ג",
+            "en": "Table: Preference A vs C",
+        },
+        "table_preference_b_vs_c": {
+            "he": "טבלה: העדפה ב לעומת ג",
+            "en": "Table: Preference B vs C",
+        },
+        "final_ranking_summary_table": {
+            "he": "טבלת סיכום דירוג סופי",
+            "en": "Final Ranking Summary Table",
+        },
+        "positive_question": {
+            "he": "שאלה +",
+            "en": "Question +",
+        },
+        "positive_question_tooltip": {
+            "he": "שאלות עם עוצמה חיובית - העדפות מוצגות כפי שהמשתמש בחר",
+            "en": "Questions with positive magnitude - preferences shown as user chose them",
+        },
+        "negative_question": {
+            "he": "שאלה –",
+            "en": "Question –",
+        },
+        "negative_question_tooltip": {
+            "he": "שאלות עם עוצמה שלילית - העדפות מוחלפות כדי לשקף משמעות אמיתית",
+            "en": "Questions with negative magnitude - preferences swapped to reflect true meaning",
+        },
+        "row_consistency": {
+            "he": "עקביות שורה",
+            "en": "Row Consistency",
+        },
+        "column_consistency": {
+            "he": "עקביות עמודה",
+            "en": "Col. Cons.",
+        },
+        "final_score": {
+            "he": "ניקוד סופי",
+            "en": "Final Score",
+        },
+        "magnitude_0_2": {
+            "he": "עוצמה 0.2",
+            "en": "Magnitude 0.2",
+        },
+        "magnitude_0_4": {
+            "he": "עוצמה 0.4",
+            "en": "Magnitude 0.4",
+        },
+        "magnitude": {
+            "he": "עוצמה",
+            "en": "Magnitude",
+        },
+        # Consistency explanation translations
+        "consistency_explanation_title": {
+            "he": "הבנת ציוני העקביות",
+            "en": "Understanding Consistency Scores",
+        },
+        "consistency_explanation_text": {
+            "he": "ניתוח זה מודד עד כמה המשתמש מדרג באופן עקבי את אותם נושאי תקציב במצבים שונים. עקביות מושלמת (✓) פירושה שהמשתמש תמיד מדרג נושאים באותה צורה (3/3). עקביות חלקית (◐) פירושה שהמשתמש מראה עקביות בחלק מהמצבים אך משתנה באחרים (1/3 או 2/3). עקביות נכשלת (✗) פירושה שהדירוגים של המשתמש משתנים משמעותית (0/3). הערה: בשאלות עם עוצמה שלילית (שאלה –), העדפות המשתמש מוחלפות כדי לשקף את המשמעות האמיתית של בחירותיו.",
+            "en": "This analysis measures how consistently the user ranks the same budget subjects across different scenarios. Perfect consistency (✓) means the user always ranks subjects the same way (3/3). Partial consistency (◐) means the user shows consistency in some scenarios but varies in others (1/3 or 2/3). Failed consistency (✗) means the user's rankings vary significantly (0/3). Note: In questions with negative magnitude (Question –), user preferences are swapped to reflect the true meaning of their choices.",
+        },
+        "perfect_consistency_label": {
+            "he": "עקביות מושלמת",
+            "en": "Perfect Consistency",
+        },
+        "partial_consistency_label": {
+            "he": "עקביות חלקית",
+            "en": "Partial Consistency",
+        },
+        "failed_consistency_label": {
+            "he": "לא עקבי",
+            "en": "Inconsistent",
+        },
+        "consistency_tooltip": {
+            "he": "עקביות: ✓ = מושלמת (3/3), ◐ = חלקית (1-2/3), ✗ = לא עקבי (0/3)",
+            "en": "Consistency: ✓ = Perfect (3/3), ◐ = Partial (1-2/3), ✗ = Failed (0/3)",
+        },
+        "final_score_tooltip": {
+            "he": "ניקוד סופי: 1 = הכל עקבי, 0 = חלק לא עקבי",
+            "en": "Final Score: 1 = All Consistent, 0 = Some Inconsistent",
+        },
+        # Preference swapping explanation
+        "preference_swapping_explanation_title": {
+            "he": "הסבר על החלפת העדפות בשאלות שליליות",
+            "en": "Understanding Preference Swapping in Negative Questions",
+        },
+        "preference_swapping_explanation_text": {
+            "he": "בשאלות עם עוצמה שלילית (שאלה –), העדפות המשתמש מוחלפות כדי לשקף את המשמעות האמיתית של בחירותיו. כאשר משתמש בוחר אפשרות א' על פני ב' בשאלה שלילית, זה אומר שהוא מעדיף להקטין את תקציב א' ולהגדיל את תקציב ב', ולכן הוא למעשה מעדיף ב' על א' מבחינת העדפות התקציב הבסיסיות שלו.",
+            "en": "In questions with negative magnitude (Question –), user preferences are swapped to reflect the true meaning of their choices. When a user chooses option A over B in a negative question, it means they prefer to decrease A's budget and increase B's budget, so they actually prefer B over A in terms of their underlying budget allocation preferences.",
+        },
+        "positive_question_explanation": {
+            "he": "שאלה +: העדפות מוצגות כפי שהמשתמש בחר",
+            "en": "Question +: Preferences shown as user chose them",
+        },
+        "negative_question_explanation": {
+            "he": "שאלה –: העדפות מוחלפות כדי לשקף משמעות אמיתית",
+            "en": "Question –: Preferences swapped to reflect true meaning",
+        },
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},

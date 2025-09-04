@@ -195,7 +195,7 @@ def generate_overall_stats(
     total_survey_responses = summary_stats.iloc[-1][
         "total_survey_responses"
     ]  # Total participant entries
-    unique_users = optimization_stats["user_id"].nunique()  # Actual unique participants
+    unique_users = optimization_stats["user_id"].nunique()  # Actual unique
     total_answers = summary_stats.iloc[-1]["total_answers"]
 
     # Handle potential division by zero if no responses
@@ -435,9 +435,7 @@ def choice_explanation_string_version2(
     option_label = get_translation("table_option", "answers")
     sum_diff_label = get_translation("sum_of_differences", "answers")
     min_ratio_label = get_translation("minimum_ratio", "answers")
-    opt_type_trans = get_translation(
-        user_choice_type, "answers", fallback=user_choice_type
-    )
+    opt_type_trans = get_translation(user_choice_type, "answers")
 
     return f"""
             <span class="user-optimizes user-optimizes-{user_choice_type}">
@@ -1443,6 +1441,368 @@ def _get_stability_interpretation(score: float) -> str:
         return get_translation("highly_variable_preferences", "answers")
 
 
+def _deduce_rankings(choices: List[Dict]) -> Dict:
+    """
+    Processes 12 pairwise choices into a structured format of 4 ranked questions.
+
+    Args:
+        choices: A list of 12 choice dictionaries from a preference ranking survey.
+
+    Returns:
+        A dictionary containing deduced pairwise preferences, full rankings,
+        and magnitude values.
+    """
+    # Extract metadata from strategy strings and choice data
+    magnitudes_set = set()
+    parsed_choices = []
+
+    for choice in choices:
+        # Extract magnitude, vector_type, and pair_type from the data structure
+        # Since the preference ranking strategy encodes this information
+        parsed_choice = _parse_preference_ranking_choice(choice)
+        if parsed_choice:
+            parsed_choices.append(parsed_choice)
+            magnitudes_set.add(parsed_choice["magnitude"])
+
+    if len(magnitudes_set) != 2 or not parsed_choices:
+        return None  # Invalid data
+
+    magnitudes = sorted(list(magnitudes_set))
+    x1_mag, x2_mag = magnitudes
+
+    pairwise_preferences = {"A vs B": {}, "A vs C": {}, "B vs C": {}}
+    for pair_type in pairwise_preferences:
+        pairwise_preferences[pair_type] = {x1_mag: {}, x2_mag: {}}
+
+    for parsed_choice in parsed_choices:
+        pair_type = parsed_choice["pair_type"]
+        magnitude = parsed_choice["magnitude"]
+        vector_type = parsed_choice["vector_type"]
+        user_choice = parsed_choice["user_choice"]
+
+        op1, op2 = pair_type.split(" vs ")
+        preference = f"{op1} > {op2}" if user_choice == 1 else f"{op2} > {op1}"
+
+        # For negative questions, swap the preference direction
+        if vector_type == "negative":
+            # Swap the preference: "A > B" becomes "B > A"
+            if " > " in preference:
+                winner, loser = preference.split(" > ")
+                preference = f"{loser} > {winner}"
+
+        v_type_symbol = "+" if vector_type == "positive" else "–"
+
+        pairwise_preferences[pair_type][magnitude][v_type_symbol] = preference
+
+    rankings = {x1_mag: {}, x2_mag: {}}
+    for mag in [x1_mag, x2_mag]:
+        for v_type in ["+", "–"]:
+            try:
+                prefs = {
+                    pt: pairwise_preferences[pt][mag][v_type]
+                    for pt in ["A vs B", "A vs C", "B vs C"]
+                }
+                wins = {"A": 0, "B": 0, "C": 0}
+                for p_str in prefs.values():
+                    winner = p_str.split(" > ")[0]
+                    wins[winner] += 1
+
+                sorted_ranking = sorted(
+                    wins.keys(), key=lambda k: wins[k], reverse=True
+                )
+                rankings[mag][v_type] = " > ".join(sorted_ranking)
+            except KeyError:
+                rankings[mag][v_type] = "Error"
+
+    return {
+        "magnitudes": (x1_mag, x2_mag),
+        "pairwise": pairwise_preferences,
+        "rankings": rankings,
+    }
+
+
+def _parse_preference_ranking_choice(choice: Dict) -> Optional[Dict]:
+    """
+    Parse a preference ranking choice to extract metadata.
+
+    Args:
+        choice: Choice dictionary from database
+
+    Returns:
+        Dictionary with parsed metadata or None if parsing fails
+    """
+    try:
+        # Get pair number - this tells us which question and pair type
+        pair_number = choice.get("pair_number")
+        if not isinstance(pair_number, int) or pair_number < 1 or pair_number > 12:
+            return None
+
+        # Get user choice
+        user_choice = choice.get("user_choice")
+        if user_choice not in (1, 2):
+            return None
+
+        # Load the ideal allocation
+        try:
+            ideal_allocation = (
+                json.loads(choice["optimal_allocation"])
+                if isinstance(choice["optimal_allocation"], str)
+                else choice["optimal_allocation"]
+            )
+        except (json.JSONDecodeError, KeyError):
+            return None
+
+        # Determine question number (1-4) and pair type within question
+        # Questions are organized as: Q1 (pairs 1-3), Q2 (pairs 4-6), Q3 (pairs 7-9), Q4 (pairs 10-12)
+        question_number = ((pair_number - 1) // 3) + 1
+        pair_index_in_question = ((pair_number - 1) % 3) + 1
+
+        # Determine pair type based on position in question
+        if pair_index_in_question == 1:
+            pair_type = "A vs B"
+        elif pair_index_in_question == 2:
+            pair_type = "A vs C"
+        else:  # pair_index_in_question == 3
+            pair_type = "B vs C"
+
+        # Determine magnitude and vector type from question number
+        # Q1: X1 positive, Q2: X1 negative, Q3: X2 positive, Q4: X2 negative
+        min_value = min(ideal_allocation)
+        x1 = max(1, round(0.2 * min_value))
+        x2 = max(1, round(0.4 * min_value))
+
+        if question_number == 1:
+            magnitude = x1
+            vector_type = "positive"
+        elif question_number == 2:
+            magnitude = x1
+            vector_type = "negative"
+        elif question_number == 3:
+            magnitude = x2
+            vector_type = "positive"
+        else:  # question_number == 4
+            magnitude = x2
+            vector_type = "negative"
+
+        return {
+            "pair_type": pair_type,
+            "magnitude": magnitude,
+            "vector_type": vector_type,
+            "user_choice": user_choice,
+            "question_number": question_number,
+        }
+
+    except Exception as e:
+        logger.warning(f"Failed to parse preference ranking choice: {e}")
+        return None
+
+
+def _generate_preference_ranking_pairwise_table(
+    title: str, pairwise_data: Dict, magnitudes: Tuple[int, int]
+) -> str:
+    """Generates an HTML table for a single pairwise consistency analysis."""
+    x1_mag, x2_mag = magnitudes
+
+    def get_cons_score(p1, p2):
+        return "2/2" if p1 == p2 else "0/2"
+
+    def get_consistency_class(cons_score):
+        """Get CSS class for consistency styling."""
+        return "consistency-perfect" if cons_score == "2/2" else "consistency-failed"
+
+    def get_consistency_icon(cons_score):
+        """Get icon for consistency visualization."""
+        return "✓" if cons_score == "2/2" else "✗"
+
+    x1_row_cons = get_cons_score(pairwise_data[x1_mag]["+"], pairwise_data[x1_mag]["–"])
+    x2_row_cons = get_cons_score(pairwise_data[x2_mag]["+"], pairwise_data[x2_mag]["–"])
+    pos_col_cons = get_cons_score(
+        pairwise_data[x1_mag]["+"], pairwise_data[x2_mag]["+"]
+    )
+    neg_col_cons = get_cons_score(
+        pairwise_data[x1_mag]["–"], pairwise_data[x2_mag]["–"]
+    )
+
+    all_cons = [x1_row_cons, x2_row_cons, pos_col_cons, neg_col_cons]
+    final_score = 1 if all(c == "2/2" for c in all_cons) else 0
+
+    # Get translations for tooltips
+    consistency_tooltip = get_translation("consistency_tooltip", "answers")
+    final_score_tooltip = get_translation("final_score_tooltip", "answers")
+
+    return f"""
+    <h5>{title}</h5>
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th>{get_translation('positive_question', 'answers')}</th>
+                <th>{get_translation('negative_question', 'answers')}</th>
+                <th>{get_translation('row_consistency', 'answers')}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>{get_translation('magnitude_0_2', 'answers')}</strong></td>
+                <td>{pairwise_data[x1_mag]['+']}</td>
+                <td>{pairwise_data[x1_mag]['–']}</td>
+                <td class="consistency-score {get_consistency_class(x1_row_cons)}" 
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x1_row_cons)}</span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{get_translation('magnitude_0_4', 'answers')}</strong></td>
+                <td>{pairwise_data[x2_mag]['+']}</td>
+                <td>{pairwise_data[x2_mag]['–']}</td>
+                <td class="consistency-score {get_consistency_class(x2_row_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x2_row_cons)}</span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{get_translation('column_consistency', 'answers')}</strong></td>
+                <td class="consistency-score {get_consistency_class(pos_col_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(pos_col_cons)}</span>
+                </td>
+                <td class="consistency-score {get_consistency_class(neg_col_cons)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(neg_col_cons)}</span>
+                </td>
+                <td class="final-score {get_consistency_class('2/2' if final_score == 1 else '0/2')}"
+                    title="{final_score_tooltip}">
+                    {get_translation('final_score', 'answers')}: {final_score} <span class="consistency-icon">{get_consistency_icon('2/2' if final_score == 1 else '0/2')}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    """
+
+
+def _generate_final_ranking_summary_table(
+    deduced_data: Dict,
+) -> str:
+    """Generates the final ranking summary table."""
+    magnitudes = deduced_data["magnitudes"]
+    x1_mag, x2_mag = magnitudes
+    pairwise_prefs = deduced_data["pairwise"]
+    rankings = deduced_data["rankings"]
+
+    # Row Consistency
+    x1_row_cons_score = sum(
+        1
+        for pt in pairwise_prefs
+        if pairwise_prefs[pt][x1_mag]["+"] == pairwise_prefs[pt][x1_mag]["–"]
+    )
+    x2_row_cons_score = sum(
+        1
+        for pt in pairwise_prefs
+        if pairwise_prefs[pt][x2_mag]["+"] == pairwise_prefs[pt][x2_mag]["–"]
+    )
+
+    # Column Consistency
+    pos_col_cons_score = sum(
+        1
+        for pt in pairwise_prefs
+        if pairwise_prefs[pt][x1_mag]["+"] == pairwise_prefs[pt][x2_mag]["+"]
+    )
+    neg_col_cons_score = sum(
+        1
+        for pt in pairwise_prefs
+        if pairwise_prefs[pt][x1_mag]["–"] == pairwise_prefs[pt][x2_mag]["–"]
+    )
+
+    # Final Consistency Rate
+    final_cons_score = 0
+    for pt in pairwise_prefs:
+        prefs = [
+            pairwise_prefs[pt][x1_mag]["+"],
+            pairwise_prefs[pt][x1_mag]["–"],
+            pairwise_prefs[pt][x2_mag]["+"],
+            pairwise_prefs[pt][x2_mag]["–"],
+        ]
+        if len(set(prefs)) == 1:
+            final_cons_score += 1
+
+    # Helper functions for consistency display
+    def get_consistency_class(score, total):
+        """Get CSS class for consistency styling."""
+        if score == total:
+            return "consistency-perfect"
+        elif score >= 1:  # 1/3 or better
+            return "consistency-partial"
+        else:
+            return "consistency-failed"
+
+    def get_consistency_icon(score, total):
+        """Get icon for consistency visualization."""
+        if score == total:
+            return "✓"
+        elif score >= 1:
+            return "◐"
+        else:
+            return "✗"
+
+    # Get translations for tooltips
+    consistency_tooltip = get_translation("consistency_tooltip", "answers")
+    final_score_tooltip = get_translation("final_score_tooltip", "answers")
+
+    return f"""
+    <h5>{get_translation('final_ranking_summary_table', 'answers')}</h5>
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th>{get_translation('positive_question', 'answers')}</th>
+                <th>{get_translation('negative_question', 'answers')}</th>
+                <th>{get_translation('row_consistency', 'answers')}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>{get_translation('magnitude', 'answers')} X<sub>1</sub>={x1_mag}</strong></td>
+                <td>{rankings[x1_mag]['+']}</td>
+                <td>{rankings[x1_mag]['–']}</td>
+                <td class="consistency-score {get_consistency_class(x1_row_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x1_row_cons_score, 3)}</span>
+                    {x1_row_cons_score}/3
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{get_translation('magnitude', 'answers')} X<sub>2</sub>={x2_mag}</strong></td>
+                <td>{rankings[x2_mag]['+']}</td>
+                <td>{rankings[x2_mag]['–']}</td>
+                <td class="consistency-score {get_consistency_class(x2_row_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(x2_row_cons_score, 3)}</span>
+                    {x2_row_cons_score}/3
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{get_translation('column_consistency', 'answers')}</strong></td>
+                <td class="consistency-score {get_consistency_class(pos_col_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(pos_col_cons_score, 3)}</span>
+                    {pos_col_cons_score}/3
+                </td>
+                <td class="consistency-score {get_consistency_class(neg_col_cons_score, 3)}"
+                    title="{consistency_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(neg_col_cons_score, 3)}</span>
+                    {neg_col_cons_score}/3
+                </td>
+                <td class="final-score {get_consistency_class(final_cons_score, 3)}"
+                    title="{final_score_tooltip}">
+                    <span class="consistency-icon">{get_consistency_icon(final_cons_score, 3)}</span>
+                    {final_cons_score}/3
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    """
+
+
 def generate_preference_ranking_consistency_tables(choices: List[Dict]) -> str:
     """
     Generate consistency analysis tables for preference ranking survey strategy.
@@ -1461,32 +1821,46 @@ def generate_preference_ranking_consistency_tables(choices: List[Dict]) -> str:
     """
     logger.debug("Generating preference ranking consistency tables")
 
-    if not choices:
-        return ""
+    if not choices or len(choices) != 12:
+        return "<p>Preference ranking analysis requires exactly 12 choices.</p>"
 
-    # TODO: Implement full analysis when survey data is available
-    # For now, return a placeholder that shows the expected structure
+    deduced_data = _deduce_rankings(choices)
+    if not deduced_data:
+        return "<p>Could not analyze preference ranking data due to invalid input.</p>"
 
-    # Get translations
-    title = get_translation("preference_consistency", "answers")
+    html = '<div class="preference-ranking-consistency-container">'
+    html += (
+        f"<h4>{get_translation('user_preference_consistency_analysis', 'answers')}</h4>"
+    )
 
-    placeholder_html = f"""
-    <div class="preference-ranking-analysis">
-        <h3>{title}</h3>
-        <p>Preference ranking consistency analysis will be available when 
-        survey data is collected.</p>
-        <p>Expected tables:</p>
-        <ul>
-            <li>Table 1: Preference A vs B consistency</li>
-            <li>Table 2: Preference A vs C consistency</li>
-            <li>Table 3: Preference B vs C consistency</li>
-            <li>Table 4: Final Ranking Summary with overall consistency 
-            rate</li>
-        </ul>
-    </div>
-    """
+    # Tables 1-3: Pairwise Consistency
+    table_translations = {
+        "A vs B": "table_preference_a_vs_b",
+        "A vs C": "table_preference_a_vs_c",
+        "B vs C": "table_preference_b_vs_c",
+    }
 
-    return placeholder_html
+    for pair_type in ["A vs B", "A vs C", "B vs C"]:
+        html += '<div class="pairwise-table-section">'
+        html += _generate_preference_ranking_pairwise_table(
+            title=get_translation(table_translations[pair_type], "answers"),
+            pairwise_data=deduced_data["pairwise"][pair_type],
+            magnitudes=deduced_data["magnitudes"],
+        )
+        html += "</div>"
+
+    # Table 4: Final Ranking Summary
+    html += '<div class="final-ranking-table-section">'
+    html += _generate_final_ranking_summary_table(deduced_data)
+    html += "</div>"
+
+    # Add explanation section
+    explanation_html = _generate_consistency_explanation()
+    html += explanation_html
+
+    html += "</div>"
+
+    return html
 
 
 def generate_transitivity_analysis_table(choices: List[Dict]) -> str:
@@ -2401,6 +2775,15 @@ def generate_detailed_user_choices(
                     )
                     if extreme_table_html:
                         user_details.append(extreme_table_html)
+
+                # Check if this is the preference ranking survey strategy
+                if survey_strategy_name == "preference_ranking_survey":
+                    # Generate the specific consistency analysis for this user/survey
+                    ranking_table_html = generate_preference_ranking_consistency_tables(
+                        choices
+                    )
+                    if ranking_table_html:
+                        user_details.append(ranking_table_html)
 
                 # Generate the standard survey choices HTML
                 # Pass the strategy_name to _generate_survey_choices_html for specialized summary
@@ -4028,6 +4411,33 @@ def _format_ideal_budget(choices: List[Dict]) -> str:
         return str(optimal_allocation)
     except (json.JSONDecodeError, KeyError, IndexError):
         return "N/A"
+
+
+def _generate_consistency_explanation() -> str:
+    """Generate explanation section for preference ranking consistency."""
+    explanation_title = get_translation("consistency_explanation_title", "answers")
+    explanation_text = get_translation("consistency_explanation_text", "answers")
+
+    return f"""
+    <div class="consistency-explanation">
+        <h5>{explanation_title}</h5>
+        <p>{explanation_text}</p>
+        <div class="consistency-legend">
+            <div class="legend-item">
+                <span class="legend-icon consistency-perfect">✓</span>
+                <span class="legend-text">{get_translation('perfect_consistency_label', 'answers', fallback='Perfect Consistency')}</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon consistency-partial">◐</span>
+                <span class="legend-text">{get_translation('partial_consistency_label', 'answers', fallback='Partial Consistency')}</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon consistency-failed">✗</span>
+                <span class="legend-text">{get_translation('failed_consistency_label', 'answers', fallback='Failed Consistency')}</span>
+            </div>
+        </div>
+    </div>
+    """
 
 
 def _generate_pairwise_consistency_table(
