@@ -2699,6 +2699,15 @@ def generate_detailed_user_choices(
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
 
+            # For temporal preference, calculate specific metrics
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"] == "temporal_preference_test"
+            ):
+                temporal_metrics = _calculate_temporal_preference_metrics(choices)
+                stats.update(temporal_metrics)
+
             # Get strategy-specific metrics for enhanced stats
             try:
                 from database.queries import get_user_survey_performance_data
@@ -3131,43 +3140,32 @@ def generate_detailed_breakdown_table(
                 elif (
                     "ideal_this_year" in strategy_columns
                     and "ideal_next_year" in strategy_columns
-                    and "consistency" in strategy_columns
                 ):
-                    # Handle temporal_preference_test strategy
-                    if "choices" in summary:
-                        choices = summary["choices"]
-                        temporal_metrics = _calculate_temporal_preference_metrics(
-                            choices
-                        )
+                    # Use pre-calculated metrics from summary
+                    ideal_this_year_percent = summary["stats"].get(
+                        "ideal_this_year_percent", 0
+                    )
+                    ideal_next_year_percent = summary["stats"].get(
+                        "ideal_next_year_percent", 0
+                    )
 
-                        ideal_this_year_percent = temporal_metrics[
-                            "ideal_this_year_percent"
-                        ]
-                        ideal_next_year_percent = temporal_metrics[
-                            "ideal_next_year_percent"
-                        ]
-                        highlight_this_year = (
-                            "highlight-row"
-                            if ideal_this_year_percent > ideal_next_year_percent
-                            else ""
-                        )
-                        highlight_next_year = (
-                            "highlight-row"
-                            if ideal_next_year_percent > ideal_this_year_percent
-                            else ""
-                        )
+                    highlight_this_year = (
+                        "highlight-row"
+                        if ideal_this_year_percent > ideal_next_year_percent
+                        else ""
+                    )
+                    highlight_next_year = (
+                        "highlight-row"
+                        if ideal_next_year_percent > ideal_this_year_percent
+                        else ""
+                    )
 
-                        data_cells.append(
-                            f'<td class="{highlight_this_year}">'
-                            f'{format(ideal_this_year_percent, ".1f")}%</td>'
-                        )
-                        data_cells.append(
-                            f'<td class="{highlight_next_year}">'
-                            f'{format(ideal_next_year_percent, ".1f")}%</td>'
-                        )
-                    else:
-                        # Fallback if no choices available
-                        data_cells.extend(["<td>N/A</td>", "<td>N/A</td>"])
+                    data_cells.append(
+                        f'<td class="{highlight_this_year}">{ideal_this_year_percent:.0f}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_next_year}">{ideal_next_year_percent:.0f}%</td>'
+                    )
                 elif "option1" in strategy_columns and "option2" in strategy_columns:
                     # Default case with option1/option2 columns
                     opt1_percent = summary["stats"]["option1_percent"]
