@@ -33,6 +33,7 @@
    --color-linear-symmetry: #EF4444;         /* Red */
    --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
    --color-preference-ranking-survey: #E91E63; /* Pink */
+   --color-temporal-preference-test: #FF7F50;  /* Coral */
    
    /* Spacing */
    --spacing-xs: 0.25rem;
@@ -249,6 +250,9 @@
 .strategy-badge[data-strategy="preference_ranking_survey"] { 
   background: var(--color-preference-ranking-survey);
 }
+.strategy-badge[data-strategy="temporal_preference_test"] { 
+   background: var(--color-temporal-preference-test);
+ }
 
 /* ==========================================================================
   View Filter Styles

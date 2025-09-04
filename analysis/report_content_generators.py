@@ -948,6 +948,12 @@ def _generate_survey_choices_html(
         if matrix_html:
             html_parts.append(matrix_html)
 
+    # Special handling for temporal_preference_test strategy
+    elif strategy_name == "temporal_preference_test":
+        temporal_table_html = _generate_temporal_preference_table(choices)
+        if temporal_table_html:
+            html_parts.append(temporal_table_html)
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -2693,6 +2699,15 @@ def generate_detailed_user_choices(
         for survey_id, choices in surveys.items():
             stats = calculate_choice_statistics(choices)
 
+            # For temporal preference, calculate specific metrics
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"] == "temporal_preference_test"
+            ):
+                temporal_metrics = _calculate_temporal_preference_metrics(choices)
+                stats.update(temporal_metrics)
+
             # Get strategy-specific metrics for enhanced stats
             try:
                 from database.queries import get_user_survey_performance_data
@@ -3122,6 +3137,35 @@ def generate_detailed_breakdown_table(
                         f'<td class="{highlight_distributed}">'
                         f'{format(distributed_percent, ".1f")}%</td>'
                     )
+                elif (
+                    "ideal_this_year" in strategy_columns
+                    and "ideal_next_year" in strategy_columns
+                ):
+                    # Use pre-calculated metrics from summary
+                    ideal_this_year_percent = summary["stats"].get(
+                        "ideal_this_year_percent", 0
+                    )
+                    ideal_next_year_percent = summary["stats"].get(
+                        "ideal_next_year_percent", 0
+                    )
+
+                    highlight_this_year = (
+                        "highlight-row"
+                        if ideal_this_year_percent > ideal_next_year_percent
+                        else ""
+                    )
+                    highlight_next_year = (
+                        "highlight-row"
+                        if ideal_next_year_percent > ideal_this_year_percent
+                        else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_this_year}">{ideal_this_year_percent:.0f}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_next_year}">{ideal_next_year_percent:.0f}%</td>'
+                    )
                 elif "option1" in strategy_columns and "option2" in strategy_columns:
                     # Default case with option1/option2 columns
                     opt1_percent = summary["stats"]["option1_percent"]
@@ -3425,6 +3469,25 @@ def generate_overall_statistics_table(
             <p class="summary-note">{note}</p>
         </div>
         """
+    elif strategy_name == "temporal_preference_test":
+        # Handle temporal preference strategy using consistency breakdown table
+        # Extract all user choices from summaries
+        all_user_choices = []
+        for summary in summaries:
+            if "choices" in summary:
+                all_user_choices.extend(summary["choices"])
+
+        # Use the consistency breakdown table for distribution by consistency level
+        if all_user_choices:
+            overall_table = generate_consistency_breakdown_table(all_user_choices)
+        else:
+            # Fallback if no choices available
+            overall_table = f"""
+            <div class="summary-table-container">
+                <h2>{title}</h2>
+                <p class="summary-note">No data available for consistency analysis.</p>
+            </div>
+            """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
         # Handle root sum squared strategies
         # Calculate overall averages
@@ -4486,6 +4549,243 @@ def _generate_pairwise_consistency_table(
                 {''.join(rows)}
             </tbody>
         </table>
+    </div>
+    """
+
+
+def _calculate_temporal_preference_metrics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate temporal preference metrics for a single user's response.
+
+    Args:
+        choices: List of choices for a single user's temporal preference survey
+
+    Returns:
+        Dict containing calculated metrics:
+        - ideal_this_year_percent: Percentage choosing "Ideal This Year" (Option 1)
+        - ideal_next_year_percent: Percentage choosing "Ideal Next Year" (Option 2)
+        - consistency_percent: Max(ideal_this_year_count, ideal_next_year_count) * 10
+    """
+    if not choices:
+        return {
+            "ideal_this_year_percent": 0.0,
+            "ideal_next_year_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    total_choices = len(choices)
+    ideal_this_year_count = 0
+
+    for choice in choices:
+        user_choice = choice.get("user_choice")
+        if user_choice == 1:  # Option 1 is "Ideal This Year"
+            ideal_this_year_count += 1
+
+    ideal_next_year_count = total_choices - ideal_this_year_count
+
+    # Calculate percentages
+    ideal_this_year_percent = (ideal_this_year_count / total_choices) * 100
+    ideal_next_year_percent = (ideal_next_year_count / total_choices) * 100
+
+    # Consistency is max(X, Y) * 10 where X+Y=10
+    consistency_percent = max(ideal_this_year_count, ideal_next_year_count) * 10
+
+    return {
+        "ideal_this_year_percent": ideal_this_year_percent,
+        "ideal_next_year_percent": ideal_next_year_percent,
+        "consistency_percent": consistency_percent,
+    }
+
+
+def _generate_temporal_preference_table(choices: List[Dict]) -> str:
+    """
+    Generate HTML table for individual user's temporal preference results.
+
+    Args:
+        choices: List of choices for a single user's temporal preference survey
+
+    Returns:
+        str: HTML table showing user's temporal preference summary
+    """
+    if not choices:
+        return ""
+
+    metrics = _calculate_temporal_preference_metrics(choices)
+
+    # Get translations
+    title = get_translation("temporal_preference_summary", "answers")
+    ideal_this_year_label = get_translation("ideal_this_year", "answers")
+    ideal_next_year_label = get_translation("ideal_next_year", "answers")
+    choice_label = get_translation("choice", "answers")
+    percentage_label = get_translation("percentage", "answers")
+
+    # Determine which choice is dominant for highlighting
+    ideal_this_year_percent = metrics["ideal_this_year_percent"]
+    ideal_next_year_percent = metrics["ideal_next_year_percent"]
+
+    highlight_this_year = (
+        "highlight-row" if ideal_this_year_percent > ideal_next_year_percent else ""
+    )
+    highlight_next_year = (
+        "highlight-row" if ideal_next_year_percent > ideal_this_year_percent else ""
+    )
+
+    return f"""
+    <div class="temporal-preference-summary">
+        <h4 class="temporal-summary-title">{title}</h4>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{choice_label}</th>
+                        <th>{percentage_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="{highlight_this_year}">
+                        <td>{ideal_this_year_label}</td>
+                        <td>{ideal_this_year_percent:.1f}%</td>
+                    </tr>
+                    <tr class="{highlight_next_year}">
+                        <td>{ideal_next_year_label}</td>
+                        <td>{ideal_next_year_percent:.1f}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+
+
+def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
+    """
+    Generate consistency breakdown table for temporal preference survey.
+
+    Groups users by consistency level and shows the distribution of choices
+    (Ideal This Year vs Ideal Next Year) for each consistency level.
+
+    Args:
+        user_choices: List of all user choices for the temporal preference survey
+
+    Returns:
+        str: HTML table showing choice distribution by consistency level
+    """
+    if not user_choices:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Group choices by user
+    choices_by_user = {}
+    for choice in user_choices:
+        user_id = choice["user_id"]
+        if user_id not in choices_by_user:
+            choices_by_user[user_id] = []
+        choices_by_user[user_id].append(choice)
+
+    # Calculate metrics for each user and group by consistency level
+    consistency_groups = {50: [], 60: [], 70: [], 80: [], 90: [], 100: []}
+
+    for user_id, choices in choices_by_user.items():
+        metrics = _calculate_temporal_preference_metrics(choices)
+        consistency = metrics["consistency_percent"]
+
+        # Round down to nearest 10 to get consistency level
+        consistency_level = max(50, int(consistency // 10) * 10)
+        if consistency_level in consistency_groups:
+            # Store both metrics and user's actual choice percentages
+            user_data = {
+                "metrics": metrics,
+                "ideal_this_year_percent": metrics["ideal_this_year_percent"],
+                "ideal_next_year_percent": metrics["ideal_next_year_percent"],
+            }
+            consistency_groups[consistency_level].append(user_data)
+
+    # Get translations
+    title = get_translation("consistency_breakdown_title", "answers")
+    consistency_level_label = get_translation("consistency_level", "answers")
+    num_users_label = get_translation("num_of_users", "answers")
+    ideal_this_year_label = get_translation("ideal_this_year", "answers")
+    ideal_next_year_label = get_translation("ideal_next_year", "answers")
+
+    # Generate table rows
+    rows = []
+    total_users = 0
+    total_this_year_count = 0
+    total_next_year_count = 0
+
+    for consistency_level in sorted(consistency_groups.keys()):
+        user_data_list = consistency_groups[consistency_level]
+        num_users = len(user_data_list)
+
+        if num_users == 0:
+            continue
+
+        total_users += num_users
+
+        # Calculate average percentages across users at this consistency level
+        this_year_percent = (
+            sum(user_data["ideal_this_year_percent"] for user_data in user_data_list)
+            / num_users
+        )
+        next_year_percent = (
+            sum(user_data["ideal_next_year_percent"] for user_data in user_data_list)
+            / num_users
+        )
+
+        # Update totals for overall calculation
+        total_this_year_count += this_year_percent * num_users
+        total_next_year_count += next_year_percent * num_users
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{consistency_level}%</td>
+                <td>{num_users}</td>
+                <td>{this_year_percent:.1f}%</td>
+                <td>{next_year_percent:.1f}%</td>
+            </tr>
+            """
+        )
+
+    if not rows:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Add total row
+    if total_users > 0:
+        overall_this_year_percent = total_this_year_count / total_users
+        overall_next_year_percent = total_next_year_count / total_users
+
+        total_label = get_translation("total", "answers")
+        rows.append(
+            f"""
+            <tr class="total-row">
+                <td><strong>{total_label}</strong></td>
+                <td><strong>{total_users}</strong></td>
+                <td><strong>{overall_this_year_percent:.1f}%</strong></td>
+                <td><strong>{overall_next_year_percent:.1f}%</strong></td>
+            </tr>
+            """
+        )
+
+    return f"""
+    <div class="summary-table-container consistency-breakdown-container">
+        <h2>{title}</h2>
+        <div class="table-container">
+                            <table>
+                <thead>
+                    <tr>
+                        <th>{consistency_level_label}</th>
+                        <th>{num_users_label}</th>
+                        <th>{ideal_this_year_label}</th>
+                        <th>{ideal_next_year_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
     </div>
     """
 

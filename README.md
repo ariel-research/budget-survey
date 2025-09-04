@@ -62,12 +62,12 @@ This is a **research application** for studying budget allocation preferences. I
 
 **The Process:**
 1. 📝 **Budget Creation**: Users allocate 100 units across subjects (e.g., government ministries)
-2. 🔄 **Pair Generation**: System creates comparison pairs using one of 8 research strategies
+2. 🔄 **Pair Generation**: System creates comparison pairs using one of 9 research strategies
 3. 🎯 **Preference Collection**: Users choose between alternatives in each pair
 4. 📊 **Analysis**: Data reveals patterns in decision-making and strategy effectiveness
 
 **Key Features:**
-- 8 research-validated pair generation strategies
+- 9 research-validated pair generation strategies
 - Hebrew/English bilingual support with RTL/LTR layouts  
 - Quality control via attention checks and user blacklisting
 - Comprehensive analysis and PDF report generation
@@ -497,6 +497,26 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       ```
     - **Core Hypothesis**: User's underlying preference order will be consistently revealed across all ranking questions, providing insights into stable budget allocation priorities
 
+11. **Temporal Preference Test**
+    - Strategy name: `temporal_preference_test`
+    - Tests temporal discounting hypothesis: users prefer receiving their ideal budget allocation this year over receiving it next year
+    - **Algorithm Overview**:
+      - Generates 10 pairs comparing user's ideal vector against random vectors
+    - **Core Hypothesis**: Users exhibit temporal discounting by preferring their ideal allocation sooner rather than later
+    - **Analysis Features**:
+      - Temporal Preference Summary: Shows percentage of "Ideal This Year" vs "Ideal Next Year" choices
+      - Consistency Analysis: Measures how consistently users choose immediate vs delayed preferences
+    - Parameters:
+      - `num_pairs`: Number of pairs to generate (default: 10)
+    - Example:
+      ```python
+      # For user_vector = [60, 30, 10]:
+      # Pair 1: [60, 30, 10] vs [45, 25, 30]  (ideal vs random)
+      # Pair 2: [60, 30, 10] vs [20, 50, 30]  (ideal vs random)
+      # ...10 pairs total
+      # User choosing Option 1 implies preference for (ideal_now, random_later)
+      # User choosing Option 2 implies preference for (random_now, ideal_later)
+      ```
 
 #### Adding New Strategies
 

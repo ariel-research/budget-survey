@@ -12,6 +12,7 @@ from .root_sum_squared_sum_vector import RootSumSquaredSumStrategy
 from .rounded_weighted_average_vector import (
     RoundedWeightedAverageVectorStrategy,
 )
+from .temporal_preference_strategy import TemporalPreferenceStrategy
 from .weighted_average_vector import WeightedAverageVectorStrategy
 
 # Register strategies
@@ -25,6 +26,7 @@ StrategyRegistry.register(CyclicShiftStrategy)
 StrategyRegistry.register(LinearSymmetryStrategy)
 StrategyRegistry.register(AsymmetricLossDistributionStrategy)
 StrategyRegistry.register(PreferenceRankingSurveyStrategy)
+StrategyRegistry.register(TemporalPreferenceStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -39,4 +41,5 @@ __all__ = [
     "LinearSymmetryStrategy",
     "AsymmetricLossDistributionStrategy",
     "PreferenceRankingSurveyStrategy",
+    "TemporalPreferenceStrategy",
 ]

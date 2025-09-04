@@ -1,6 +1,8 @@
 import json
 from unittest.mock import patch
 
+import pytest
+
 from analysis.report_content_generators import (
     _calculate_cyclic_shift_group_consistency,
     _deduce_rankings,
@@ -929,3 +931,228 @@ def test_generate_preference_ranking_consistency_tables_invalid_input():
     choices = [create_preference_ranking_choice("Q1", "A vs B", 3, "positive", 1)]
     result_html = generate_preference_ranking_consistency_tables(choices)
     assert "exactly 12 choices" in result_html
+
+
+class TestTemporalPreferenceAnalysis:
+    """Test temporal preference analysis functions."""
+
+    @pytest.fixture
+    def mock_translations(self):
+        """Mock translations for temporal preference tests."""
+
+        def mock_get_translation(key, section=None, **kwargs):
+            translations = {
+                "temporal_preference_summary": "Temporal Preference Summary",
+                "ideal_this_year": "Ideal This Year",
+                "ideal_next_year": "Ideal Next Year",
+                "consistency_level": "Consistency Level",
+                "choice": "Choice",
+                "percentage": "Percentage",
+                "consistency_breakdown_title": "Consistency Breakdown",
+                "num_of_users": "# of Users",
+                "avg_ideal_this_year": "Avg. 'Ideal This Year' Choice",
+                "avg_ideal_next_year": "Avg. 'Ideal Next Year' Choice",
+                "total": "Total",
+                "avg_consistency": "Average Consistency",
+                "no_answers": "No answers available",
+            }
+            return translations.get(key, key)
+
+        with patch(
+            "analysis.report_content_generators.get_translation",
+            side_effect=mock_get_translation,
+        ):
+            yield
+
+    def create_temporal_choice(self, user_choice):
+        """Create a mock temporal preference choice."""
+        return {
+            "user_choice": user_choice,
+            "user_id": "test_user",
+        }
+
+    def test_calculate_temporal_preference_metrics_empty_choices(self):
+        """Test metric calculation with empty choices."""
+        from analysis.report_content_generators import (
+            _calculate_temporal_preference_metrics,
+        )
+
+        result = _calculate_temporal_preference_metrics([])
+
+        assert result["ideal_this_year_percent"] == 0.0
+        assert result["ideal_next_year_percent"] == 0.0
+        assert result["consistency_percent"] == 0.0
+
+    def test_calculate_temporal_preference_metrics_7_3_split(self):
+        """Test metric calculation with 7/3 split (7 ideal this year, 3 ideal next year)."""
+        from analysis.report_content_generators import (
+            _calculate_temporal_preference_metrics,
+        )
+
+        choices = []
+        # 7 choices for "Ideal This Year" (option 1)
+        for _ in range(7):
+            choices.append(self.create_temporal_choice(1))
+        # 3 choices for "Ideal Next Year" (option 2)
+        for _ in range(3):
+            choices.append(self.create_temporal_choice(2))
+
+        result = _calculate_temporal_preference_metrics(choices)
+
+        assert result["ideal_this_year_percent"] == 70.0
+        assert result["ideal_next_year_percent"] == 30.0
+        assert result["consistency_percent"] == 70.0  # max(7, 3) * 10 = 70
+
+    def test_calculate_temporal_preference_metrics_6_4_split(self):
+        """Test metric calculation with 6/4 split."""
+        from analysis.report_content_generators import (
+            _calculate_temporal_preference_metrics,
+        )
+
+        choices = []
+        # 6 choices for "Ideal This Year" (option 1)
+        for _ in range(6):
+            choices.append(self.create_temporal_choice(1))
+        # 4 choices for "Ideal Next Year" (option 2)
+        for _ in range(4):
+            choices.append(self.create_temporal_choice(2))
+
+        result = _calculate_temporal_preference_metrics(choices)
+
+        assert result["ideal_this_year_percent"] == 60.0
+        assert result["ideal_next_year_percent"] == 40.0
+        assert result["consistency_percent"] == 60.0  # max(6, 4) * 10 = 60
+
+    def test_calculate_temporal_preference_metrics_perfect_consistency(self):
+        """Test metric calculation with perfect consistency (10/0 split)."""
+        from analysis.report_content_generators import (
+            _calculate_temporal_preference_metrics,
+        )
+
+        choices = []
+        # 10 choices for "Ideal This Year" (option 1)
+        for _ in range(10):
+            choices.append(self.create_temporal_choice(1))
+
+        result = _calculate_temporal_preference_metrics(choices)
+
+        assert result["ideal_this_year_percent"] == 100.0
+        assert result["ideal_next_year_percent"] == 0.0
+        assert result["consistency_percent"] == 100.0  # max(10, 0) * 10 = 100
+
+    def test_generate_temporal_preference_table_empty(self):
+        """Test temporal preference table generation with empty choices."""
+        from analysis.report_content_generators import (
+            _generate_temporal_preference_table,
+        )
+
+        result = _generate_temporal_preference_table([])
+        assert result == ""
+
+    def test_generate_temporal_preference_table_with_data(self, mock_translations):
+        """Test temporal preference table generation with data."""
+        from analysis.report_content_generators import (
+            _generate_temporal_preference_table,
+        )
+
+        choices = []
+        # Create 7/3 split
+        for _ in range(7):
+            choices.append(self.create_temporal_choice(1))
+        for _ in range(3):
+            choices.append(self.create_temporal_choice(2))
+
+        result = _generate_temporal_preference_table(choices)
+
+        assert "Temporal Preference Summary" in result
+        assert "70.0%" in result  # Ideal This Year percentage
+        assert "30.0%" in result  # Ideal Next Year percentage
+        assert "highlight-row" in result  # Should highlight dominant choice
+
+    def test_generate_consistency_breakdown_table_empty(self, mock_translations):
+        """Test consistency breakdown table with empty data."""
+        from analysis.report_content_generators import (
+            generate_consistency_breakdown_table,
+        )
+
+        result = generate_consistency_breakdown_table([])
+        assert "No answers available" in result
+
+    def test_generate_consistency_breakdown_table_single_user(self, mock_translations):
+        """Test consistency breakdown table with single user."""
+        from analysis.report_content_generators import (
+            generate_consistency_breakdown_table,
+        )
+
+        user_choices = []
+        # User 1: 8/2 split (80% consistency)
+        for _ in range(8):
+            user_choices.append({"user_id": "user1", "user_choice": 1})
+        for _ in range(2):
+            user_choices.append({"user_id": "user1", "user_choice": 2})
+
+        result = generate_consistency_breakdown_table(user_choices)
+
+        assert "Consistency Breakdown" in result
+        assert "80%" in result  # Consistency level
+        assert "1" in result  # Number of users
+        assert "80.0%" in result  # Average ideal this year
+
+    def test_generate_consistency_breakdown_table_multiple_users(
+        self, mock_translations
+    ):
+        """Test consistency breakdown table with multiple users at different consistency levels."""
+        from analysis.report_content_generators import (
+            generate_consistency_breakdown_table,
+        )
+
+        user_choices = []
+
+        # User 1: 10/0 split (100% consistency, 100% ideal this year)
+        for _ in range(10):
+            user_choices.append({"user_id": "user1", "user_choice": 1})
+
+        # User 2: 7/3 split (70% consistency, 70% ideal this year)
+        for _ in range(7):
+            user_choices.append({"user_id": "user2", "user_choice": 1})
+        for _ in range(3):
+            user_choices.append({"user_id": "user2", "user_choice": 2})
+
+        # User 3: 6/4 split (60% consistency, 60% ideal this year)
+        for _ in range(6):
+            user_choices.append({"user_id": "user3", "user_choice": 1})
+        for _ in range(4):
+            user_choices.append({"user_id": "user3", "user_choice": 2})
+
+        result = generate_consistency_breakdown_table(user_choices)
+
+        # Should have users in 60%, 70%, and 100% consistency groups
+        assert "60%" in result
+        assert "70%" in result
+        assert "100%" in result
+        assert "Total" in result
+
+        # Check that totals are calculated correctly
+        assert "3" in result  # Total users
+
+    def test_generate_consistency_breakdown_table_consistency_calculation(
+        self, mock_translations
+    ):
+        """Test that consistency levels are calculated correctly."""
+        from analysis.report_content_generators import (
+            generate_consistency_breakdown_table,
+        )
+
+        user_choices = []
+
+        # User with 5/5 split should be 50% consistent (max(5,5) * 10 = 50)
+        for _ in range(5):
+            user_choices.append({"user_id": "user_even", "user_choice": 1})
+        for _ in range(5):
+            user_choices.append({"user_id": "user_even", "user_choice": 2})
+
+        result = generate_consistency_breakdown_table(user_choices)
+
+        # Should place user in 50% consistency group
+        assert "50%" in result
+        assert "1" in result  # One user in that group
