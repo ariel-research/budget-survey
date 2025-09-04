@@ -479,8 +479,9 @@ class SurveySessionData:
                 "awareness_positions": [2],  # 0-indexed position of awareness question
                 "subjects": self.subjects,
                 "user_id": self.user_id,
-                "survey_id": self.external_survey_id,
+                "external_survey_id": self.external_survey_id,
                 "is_ranking_based": True,
+                "strategy_name": strategy_name,
                 "zip": zip,
             }
         else:
@@ -576,7 +577,8 @@ class SurveySessionData:
                 "comparison_pairs": presentation_pairs,
                 "subjects": self.subjects,
                 "user_id": self.user_id,
-                "survey_id": self.external_survey_id,
+                "external_survey_id": self.external_survey_id,
                 "is_ranking_based": False,
+                "strategy_name": strategy_name,
                 "zip": zip,
             }

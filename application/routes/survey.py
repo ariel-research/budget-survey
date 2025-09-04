@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Optional, Tuple
 from urllib.parse import urlencode
 
 from flask import (
@@ -231,6 +231,7 @@ def survey():
             internal_survey_id,
             survey_data["subjects"],
             is_demo,
+            external_q_argument,
         )
     elif request.method == "POST":
         return handle_survey_post(
@@ -250,6 +251,7 @@ def handle_survey_get(
     internal_survey_id: int,
     subjects: list[str],
     is_demo: bool,
+    external_q_argument: Optional[str] = None,
 ) -> str:
     """Handle GET request for survey page."""
     try:
@@ -279,6 +281,7 @@ def handle_survey_get(
         template_data = session_data.to_template_data()
         template_data["internal_survey_id"] = internal_survey_id
         template_data["is_demo"] = is_demo
+        template_data["external_q_argument"] = external_q_argument
 
         return render_template("survey.html", **template_data)
 

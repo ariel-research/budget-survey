@@ -380,6 +380,15 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "בחרו דירוג",
             "en": "Select rank",
         },
+        # Temporal preference analysis
+        "temporal_pair_instruction": {
+            "he": "בחרו את התקציב לשנה הנוכחית. התקציב שלא תבחרו יהיה התקציב בשנה הבאה.",
+            "en": "Choose the budget for THIS year. The one you don't choose will be the budget for NEXT year.",
+        },
+        "temporal_awareness_instruction": {
+            "he": "זוהי בדיקת ערנות. אנא בחר את התקציב האידיאלי שלך.",
+            "en": "This is an awareness check. Please select your ideal budget.",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
@@ -723,6 +732,39 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "distributed_changes": {
             "he": "מבוזר (הגדלת יעד)",
             "en": "Distributed (Target Increases)",
+        },
+        # Temporal preference analysis
+        "temporal_preference_summary": {
+            "he": "סיכום העדפות זמניות",
+            "en": "Temporal Preference Summary",
+        },
+        "ideal_this_year": {
+            "he": "אידיאל השנה",
+            "en": "Ideal This Year",
+        },
+        "ideal_next_year": {
+            "he": "אידיאל בשנה הבאה",
+            "en": "Ideal Next Year",
+        },
+        "consistency_breakdown_title": {
+            "he": "פילוח רמות עקביות",
+            "en": "Consistency Breakdown",
+        },
+        "num_of_users": {
+            "he": "מספר משתמשים",
+            "en": "# of Users",
+        },
+        "avg_ideal_this_year": {
+            "he": "ממוצע 'אידיאל השנה'",
+            "en": "Avg. 'Ideal This Year' Choice",
+        },
+        "avg_ideal_next_year": {
+            "he": "ממוצע 'אידיאל בשנה הבאה'",
+            "en": "Avg. 'Ideal Next Year' Choice",
+        },
+        "avg_consistency": {
+            "he": "ממוצע עקביות",
+            "en": "Average Consistency",
         },
         "preference_consistency": {
             "he": "עקביות העדפות",
