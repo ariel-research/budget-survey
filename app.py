@@ -6,6 +6,7 @@ from flask import Flask, render_template
 from application.translations import get_current_language, get_translation
 from config import Config, get_config
 from database import db
+from database.queries import get_survey_instructions
 from logging_config import setup_logging
 
 load_dotenv()
@@ -45,6 +46,7 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
         return {
             "get_current_language": get_current_language,
             "get_translation": get_translation,
+            "get_survey_instructions": get_survey_instructions,
         }
 
     # Register error handlers
