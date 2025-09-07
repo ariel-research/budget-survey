@@ -382,8 +382,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         # Temporal preference analysis
         "temporal_awareness_instruction": {
-            "he": "זוהי בדיקת ערנות. אנא בחר את התקציב האידיאלי שלך.",
-            "en": "This is an awareness check. Please select your ideal budget.",
+            "he": "זוהי <strong>בדיקת ערנות</strong>. אנא בחר את <em>התקציב האידיאלי</em> שלך.",
+            "en": "This is an <strong>awareness check</strong>. Please select your <em>ideal budget</em>.",
         },
     },
     "dashboard": {  # Dashboard page

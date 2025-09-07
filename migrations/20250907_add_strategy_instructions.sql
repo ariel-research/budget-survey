@@ -8,8 +8,8 @@ SET `pair_generation_config` = JSON_SET(
     `pair_generation_config`,
     '$.pair_instructions',
     JSON_OBJECT(
-        'he', 'עליכם לקבוע את התקציב עבור שתי שנים עוקבות: השנה הנוכחית, והשנה הבאה. איזה מבין שני התקציבים הבאים תעדיפו שיהיה התקציב בשנה הנוכחית? התקציב שלא תבחרו יהיה התקציב בשנה הבאה.',
-        'en', 'You need to set the budget for two consecutive years: the current year and next year. Which of the following two budgets would you prefer to be the current year''s budget? The budget you don''t choose will be next year''s budget.'
+        'he', 'עליכם לקבוע את התקציב עבור <strong>שתי שנים עוקבות</strong>: השנה הנוכחית, והשנה הבאה. איזה מבין שני התקציבים הבאים תעדיפו שיהיה התקציב <strong>בשנה הנוכחית</strong>? התקציב שלא תבחרו יהיה התקציב <strong>בשנה הבאה</strong>.',
+        'en', 'You need to set the budget for <strong>two consecutive years</strong>: <strong>the current year</strong> and <strong>next year</strong>. Which of the following two budgets would you prefer to be <strong>the current year''s budget</strong>? The budget you don''t choose will be <strong>next year''s budget</strong>.'
     )
 )
 WHERE JSON_EXTRACT(`pair_generation_config`, '$.strategy') = 'temporal_preference_test';
