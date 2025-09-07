@@ -85,3 +85,4 @@ In chronological order:
 - `20250514_add_weighted_vector_views.sql` - Creates SQL views for analyzing user preferences for weighted vector strategies
 - `20250616_add_option_differences.sql` - Adds option1_differences and option2_differences columns to comparison_pairs table for storing vector differences (used by cyclic shift strategy)
 - `20250806_add_transitivity_analysis.sql` - Adds transitivity_analysis JSON column to survey_responses table for storing transitivity metrics from extreme vectors strategy analysis
+- `20250907_add_strategy_instructions.sql` - Adds pair_instructions JSON column to surveys table for storing custom strategy instructions in Hebrew and English

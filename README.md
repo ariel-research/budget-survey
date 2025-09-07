@@ -1015,8 +1015,12 @@ To add new surveys or modify existing ones, follow these steps:
        'budget_2024',
        TRUE,
        JSON_OBJECT(
-           'strategy', 'peak_linearity_test',
-           'params', JSON_OBJECT('num_pairs', 10)
+           'strategy', 'temporal_preference_test',
+           'params', JSON_OBJECT('num_pairs', 10),
+           'pair_instructions', JSON_OBJECT(
+               'he', 'עליכם לקבוע את התקציב עבור שתי שנים עוקבות: השנה הנוכחית, והשנה הבאה. איזה מבין שני התקציבים הבאים תעדיפו שיהיה התקציב בשנה הנוכחית? התקציב שלא תבחרו יהיה התקציב בשנה הבאה.',
+               'en', 'You need to set the budget for two consecutive years: the current year and next year. Which of the following two budgets would you prefer to be the current year''s budget? The budget you don''t choose will be next year''s budget.'
+           )
        )
    );
    ```
@@ -1062,6 +1066,62 @@ Remember to:
 - Include all required parameters for the chosen strategy
 - Update the `SURVEY_ID` in `config.py` after adding or modifying surveys
 - Ensure that story codes are unique across the stories table
+
+### Customizing Pair Instructions
+
+Surveys can include custom instructions for specific strategies. These instructions are stored in the `pair_instructions` field within the `pair_generation_config` JSON object and support both Hebrew and English languages. If no custom instructions are provided, the system will not display any instructions for that survey.
+
+#### Adding Custom Instructions to a New Survey
+
+```sql
+INSERT INTO surveys (
+    story_code,
+    active,
+    pair_generation_config
+)
+VALUES (
+    'my_custom_survey',
+    TRUE,
+    JSON_OBJECT(
+        'strategy', 'temporal_preference_test',
+        'params', JSON_OBJECT('num_pairs', 10),
+        'pair_instructions', JSON_OBJECT(
+            'he', 'הוראות מותאמות אישית בעברית',
+            'en', 'Custom personalized instructions in English'
+        )
+    )
+);
+```
+
+#### Updating Instructions for Existing Surveys
+
+```sql
+UPDATE surveys
+SET pair_generation_config = JSON_SET(
+    pair_generation_config,
+    '$.pair_instructions',
+    JSON_OBJECT(
+        'he', 'הוראות מעודכנות בעברית',
+        'en', 'Updated instructions in English'
+    )
+)
+WHERE id = 1;
+```
+
+#### Removing Custom Instructions
+
+To fall back to no instructions being displayed:
+
+```sql
+UPDATE surveys
+SET pair_generation_config = JSON_REMOVE(
+    pair_generation_config,
+    '$.pair_instructions'
+)
+WHERE id = 1;
+```
+
+**Note**: The `pair_instructions` field is optional. If omitted or set to `NULL`, no instructions will be displayed for that survey. This allows for flexible customization of the user experience.
 
 ### Changing Strategy Names and Colors
 

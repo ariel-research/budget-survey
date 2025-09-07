@@ -649,6 +649,69 @@ def get_active_surveys() -> List[Dict]:
         return []
 
 
+def get_survey_instructions(survey_id: int) -> Optional[str]:
+    """
+    Get custom pair instructions for a survey from pair_generation_config.
+
+    Args:
+        survey_id: ID of the survey
+
+    Returns:
+        Custom instructions text in current language, or None if not found
+    """
+    from application.translations import get_current_language
+
+    query = "SELECT pair_generation_config FROM surveys WHERE id = %s AND active = TRUE"
+    logger.debug(f"Retrieving pair instructions for survey: {survey_id}")
+
+    try:
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result or not result.get("pair_generation_config"):
+            logger.debug(f"No pair generation config found for survey: {survey_id}")
+            return None
+
+        config_json = result.get("pair_generation_config")
+        if not config_json:
+            return None
+
+        # Parse JSON config and extract pair_instructions
+        try:
+            config = json.loads(config_json)
+            instructions = config.get("pair_instructions")
+
+            if not instructions:
+                logger.debug(
+                    f"No pair_instructions found in config for survey {survey_id}"
+                )
+                return None
+
+            current_lang = get_current_language()
+            custom_instruction = instructions.get(current_lang)
+
+            if custom_instruction:
+                logger.debug(
+                    f"Found custom instruction for survey {survey_id} in {current_lang}"
+                )
+                return custom_instruction
+            else:
+                logger.debug(
+                    f"No instruction found for language {current_lang} in survey {survey_id}"
+                )
+                return None
+
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Error parsing pair generation config JSON for survey {survey_id}: {str(e)}"
+            )
+            return None
+
+    except Exception as e:
+        logger.error(
+            f"Error retrieving pair instructions for survey {survey_id}: {str(e)}"
+        )
+        return None
+
+
 def get_story(code: str) -> Optional[Dict]:
     """
     Retrieves a story by its code.

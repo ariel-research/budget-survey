@@ -381,10 +381,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Select rank",
         },
         # Temporal preference analysis
-        "temporal_pair_instruction": {
-            "he": "בחרו את התקציב לשנה הנוכחית. התקציב שלא תבחרו יהיה התקציב בשנה הבאה.",
-            "en": "Choose the budget for THIS year. The one you don't choose will be the budget for NEXT year.",
-        },
         "temporal_awareness_instruction": {
             "he": "זוהי בדיקת ערנות. אנא בחר את התקציב האידיאלי שלך.",
             "en": "This is an awareness check. Please select your ideal budget.",

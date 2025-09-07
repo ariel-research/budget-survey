@@ -172,7 +172,10 @@ ENHANCED: Now includes UX improvements for ranking interface
                 {% if pair.is_awareness %}
                     <p class="temporal-instruction">{{ get_translation('temporal_awareness_instruction', 'survey') }}</p>
                 {% else %}
-                    <p class="temporal-instruction">{{ get_translation('temporal_pair_instruction', 'survey') }}</p>
+                    {% set custom_instruction = get_survey_instructions(internal_survey_id) %}
+                    {% if custom_instruction %}
+                        <p class="temporal-instruction">{{ custom_instruction }}</p>
+                    {% endif %}
                 {% endif %}
             {% endif %}
 
