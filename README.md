@@ -1123,6 +1123,46 @@ WHERE id = 1;
 
 **Note**: The `pair_instructions` field is optional. If omitted or set to `NULL`, no instructions will be displayed for that survey. This allows for flexible customization of the user experience.
 
+#### Text Highlighting in Instructions
+
+You can highlight specific words or phrases in your custom instructions using HTML tags for better visual emphasis:
+
+```sql
+INSERT INTO surveys (
+    story_code,
+    active,
+    pair_generation_config
+)
+VALUES (
+    'highlighted_instructions_survey',
+    TRUE,
+    JSON_OBJECT(
+        'strategy', 'temporal_preference_test',
+        'params', JSON_OBJECT('num_pairs', 10),
+        'pair_instructions', JSON_OBJECT(
+            'he', 'עליכם לקבוע את התקציב עבור <mark>שתי שנים עוקבות</mark>: <strong>השנה הנוכחית</strong>, והשנה הבאה.',
+            'en', 'You need to set the budget for <mark>two consecutive years</mark>: <strong>the current year</strong> and next year.'
+        )
+    )
+);
+```
+
+**Supported HTML Tags:**
+- `<strong>` - **Bold text** (emphasized text)
+- `<em>` - *Italic text* (emphasized text)
+- `<mark>` - <mark>Highlighted text</mark> (yellow background)
+- `<u>` - <u>Underlined text</u> (underlined with primary color)
+
+**Example with multiple highlighting styles:**
+```sql
+'pair_instructions', JSON_OBJECT(
+    'he', 'עליכם לקבוע את התקציב עבור <strong><mark>שתי שנים עוקבות</mark></strong>: <u>השנה הנוכחית</u>, והשנה הבאה.',
+    'en', 'You need to set the budget for <strong><mark>two consecutive years</mark></strong>: <u>the current year</u> and next year.'
+)
+```
+
+**Security Note**: Only these basic HTML tags are supported. Any other HTML/JavaScript content will be automatically escaped for security.
+
 ### Changing Strategy Names and Colors
 
 To change a strategy's name or color, you'll need to update both code and database references.

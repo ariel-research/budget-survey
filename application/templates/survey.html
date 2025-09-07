@@ -170,11 +170,11 @@ ENHANCED: Now includes UX improvements for ranking interface
             <h3>{{ get_translation('pair') }} {{ pair.question_number }}</h3>
             {% if strategy_name == 'temporal_preference_test' %}
                 {% if pair.is_awareness %}
-                    <p class="temporal-instruction">{{ get_translation('temporal_awareness_instruction', 'survey') }}</p>
+                    <p class="temporal-instruction">{{ get_translation('temporal_awareness_instruction', 'survey')|safe }}</p>
                 {% else %}
                     {% set custom_instruction = get_survey_instructions(internal_survey_id) %}
                     {% if custom_instruction %}
-                        <p class="temporal-instruction">{{ custom_instruction }}</p>
+                        <p class="temporal-instruction">{{ custom_instruction|safe }}</p>
                     {% endif %}
                 {% endif %}
             {% endif %}
