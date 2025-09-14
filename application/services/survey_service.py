@@ -330,7 +330,7 @@ class SurveySessionData:
 
     def _randomize_pair_options(
         self, pair: Dict[str, tuple]
-    ) -> Tuple[tuple, tuple, bool, str, str, list, list]:
+    ) -> Tuple[tuple, tuple, bool, str, str, list, list, dict]:
         """
         Randomly reorder options within a pair.
 
@@ -346,6 +346,7 @@ class SurveySessionData:
             - option2_strategy: Strategy description for second option
             - option1_differences: Differences for option 1 (if available)
             - option2_differences: Differences for option 2 (if available)
+            - instruction_context: Context for generating sub-survey specific instructions
         """
         # Identify the two vector entries robustly (ignore metadata keys)
         vector_items = [
@@ -353,6 +354,9 @@ class SurveySessionData:
             for k, v in pair.items()
             if isinstance(v, (list, tuple)) and len(v) == 3 and sum(v) == 100
         ]
+
+        # Extract instruction context if available
+        instruction_context = pair.get("instruction_context", {})
 
         if len(vector_items) < 2:
             # Fallback to previous behavior (assume first two values are vectors)
@@ -369,6 +373,7 @@ class SurveySessionData:
                     strategy_descriptions[0],
                     option2_diffs,
                     option1_diffs,
+                    instruction_context,
                 )
             return (
                 vectors[0],
@@ -378,6 +383,7 @@ class SurveySessionData:
                 strategy_descriptions[1],
                 option1_diffs,
                 option2_diffs,
+                instruction_context,
             )
 
         # Map vector labels to their strategy text if available
@@ -422,6 +428,7 @@ class SurveySessionData:
                 opt1_text,
                 option2_diffs,
                 option1_diffs,
+                instruction_context,
             )
 
         return (
@@ -432,6 +439,7 @@ class SurveySessionData:
             opt2_text,
             option1_diffs,
             option2_diffs,
+            instruction_context,
         )
 
     def to_template_data(self) -> Dict:
@@ -517,6 +525,7 @@ class SurveySessionData:
                     option2_strategy,
                     option1_differences,
                     option2_differences,
+                    instruction_context,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -525,6 +534,7 @@ class SurveySessionData:
                     "option2_strategy": option2_strategy,
                     "is_awareness": False,
                     "question_number": i + 2,
+                    "instruction_context": instruction_context,
                 }
                 # Add differences if they exist
                 if option1_differences is not None:
@@ -556,6 +566,7 @@ class SurveySessionData:
                     option2_strategy,
                     option1_differences,
                     option2_differences,
+                    instruction_context,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -564,6 +575,7 @@ class SurveySessionData:
                     "option2_strategy": option2_strategy,
                     "is_awareness": False,
                     "question_number": i + midpoint + 3,
+                    "instruction_context": instruction_context,
                 }
                 # Add differences if they exist
                 if option1_differences is not None:

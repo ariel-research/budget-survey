@@ -954,6 +954,14 @@ def _generate_survey_choices_html(
         if temporal_table_html:
             html_parts.append(temporal_table_html)
 
+    # Special handling for temporal_preference_test strategy
+    elif strategy_name == "temporal_preference_test":
+        dynamic_temporal_table_html = _generate_dynamic_temporal_preference_table(
+            choices
+        )
+        if dynamic_temporal_table_html:
+            html_parts.append(dynamic_temporal_table_html)
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -2707,6 +2715,14 @@ def generate_detailed_user_choices(
             ):
                 temporal_metrics = _calculate_temporal_preference_metrics(choices)
                 stats.update(temporal_metrics)
+            # For dynamic temporal preference, calculate specific metrics
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"] == "temporal_preference_test"
+            ):
+                dynamic_temporal_metrics = _calculate_dynamic_temporal_metrics(choices)
+                stats.update(dynamic_temporal_metrics)
 
             # Get strategy-specific metrics for enhanced stats
             try:
@@ -3486,6 +3502,61 @@ def generate_overall_statistics_table(
             <div class="summary-table-container">
                 <h2>{title}</h2>
                 <p class="summary-note">No data available for consistency analysis.</p>
+            </div>
+            """
+    elif strategy_name == "temporal_preference_test":
+        # Handle dynamic temporal test strategy
+        total_responses = len(summaries)
+
+        if total_responses == 0:
+            overall_table = f"""
+            <div class="summary-table-container">
+                <h2>{title}</h2>
+                <p class="summary-note">No data available for analysis.</p>
+            </div>
+            """
+        else:
+            # Calculate averages across all users
+            avg_sub1_ideal_y1 = (
+                sum(s["stats"]["sub1_ideal_y1"] for s in summaries) / total_responses
+            )
+            avg_sub2_ideal_y2 = (
+                sum(s["stats"]["sub2_ideal_y2"] for s in summaries) / total_responses
+            )
+            avg_sub3_ideal_y1 = (
+                sum(s["stats"]["sub3_ideal_y1"] for s in summaries) / total_responses
+            )
+
+            note = get_translation("based_on_responses", "answers").format(
+                x=total_responses
+            )
+
+            overall_table = f"""
+            <div class="summary-table-container">
+                <h2>{title}</h2>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Sub-Survey</th>
+                            <th>Average %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>S1: Simple Discounting - Ideal Year 1</td>
+                            <td>{avg_sub1_ideal_y1:.1f}%</td>
+                        </tr>
+                        <tr>
+                            <td>S2: Second-Year Choice - Ideal Year 2</td>
+                            <td>{avg_sub2_ideal_y2:.1f}%</td>
+                        </tr>
+                        <tr>
+                            <td>S3: First-Year Choice - Ideal Year 1</td>
+                            <td>{avg_sub3_ideal_y1:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="summary-note">{note}</p>
             </div>
             """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
@@ -4597,6 +4668,66 @@ def _calculate_temporal_preference_metrics(choices: List[Dict]) -> Dict[str, flo
     }
 
 
+def _calculate_dynamic_temporal_metrics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate dynamic temporal preference metrics for a single user's response.
+
+    Args:
+        choices: List of choices for a single user's dynamic temporal survey (12 choices)
+
+    Returns:
+        Dict containing calculated metrics for each sub-survey:
+        - sub1_ideal_y1_percent: % choosing Ideal Year 1 in Sub-Survey 1 (Simple Discounting)
+        - sub2_ideal_y2_percent: % choosing Ideal Year 2 in Sub-Survey 2 (Second-Year Choice)
+        - sub3_ideal_y1_percent: % choosing Ideal Year 1 in Sub-Survey 3 (First-Year Choice)
+    """
+    if not choices or len(choices) != 12:
+        return {
+            "sub1_ideal_y1_percent": 0.0,
+            "sub2_ideal_y2_percent": 0.0,
+            "sub3_ideal_y1_percent": 0.0,
+        }
+
+    # Initialize counters for each sub-survey
+    sub1_ideal_count = 0  # Sub-Survey 1: Simple Discounting (pairs 1-4)
+    sub2_ideal_count = 0  # Sub-Survey 2: Second-Year Choice (pairs 5-8)
+    sub3_ideal_count = 0  # Sub-Survey 3: First-Year Choice (pairs 9-12)
+
+    for choice in choices:
+        pair_number = choice.get("pair_number", 0)
+        user_choice = choice.get("user_choice")
+
+        if 1 <= pair_number <= 4:
+            # Sub-Survey 1: Simple Discounting
+            # Option 1 = (Ideal, Random), Option 2 = (Random, Ideal)
+            # Choosing Option 1 means preferring Ideal Year 1
+            if user_choice == 1:
+                sub1_ideal_count += 1
+        elif 5 <= pair_number <= 8:
+            # Sub-Survey 2: Second-Year Choice
+            # Option 1 = (B, Ideal), Option 2 = (B, C)
+            # Choosing Option 1 means preferring Ideal Year 2
+            if user_choice == 1:
+                sub2_ideal_count += 1
+        elif 9 <= pair_number <= 12:
+            # Sub-Survey 3: First-Year Choice
+            # Option 1 = (Ideal, B), Option 2 = (C, B)
+            # Choosing Option 1 means preferring Ideal Year 1
+            if user_choice == 1:
+                sub3_ideal_count += 1
+
+    # Calculate percentages (4 questions per sub-survey)
+    sub1_ideal_y1_percent = (sub1_ideal_count / 4) * 100
+    sub2_ideal_y2_percent = (sub2_ideal_count / 4) * 100
+    sub3_ideal_y1_percent = (sub3_ideal_count / 4) * 100
+
+    return {
+        "sub1_ideal_y1_percent": sub1_ideal_y1_percent,
+        "sub2_ideal_y2_percent": sub2_ideal_y2_percent,
+        "sub3_ideal_y1_percent": sub3_ideal_y1_percent,
+    }
+
+
 def _generate_temporal_preference_table(choices: List[Dict]) -> str:
     """
     Generate HTML table for individual user's temporal preference results.
@@ -4649,6 +4780,76 @@ def _generate_temporal_preference_table(choices: List[Dict]) -> str:
                     <tr class="{highlight_next_year}">
                         <td>{ideal_next_year_label}</td>
                         <td>{ideal_next_year_percent:.1f}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+
+
+def _generate_dynamic_temporal_preference_table(choices: List[Dict]) -> str:
+    """
+    Generate HTML table for individual user's dynamic temporal preference results.
+
+    Args:
+        choices: List of choices for a single user's dynamic temporal survey (12 choices)
+
+    Returns:
+        str: HTML table showing user's dynamic temporal preference summary
+    """
+    if not choices:
+        return ""
+
+    metrics = _calculate_dynamic_temporal_metrics(choices)
+
+    # Get translations
+    title = get_translation(
+        "dynamic_temporal_preference_summary",
+        "answers",
+        default="Dynamic Temporal Preference Summary",
+    )
+    choice_label = get_translation("choice", "answers")
+    percentage_label = get_translation("percentage", "answers")
+
+    # Sub-survey labels
+    sub1_label = "S1: Simple Discounting - Ideal Year 1"
+    sub2_label = "S2: Second-Year Choice - Ideal Year 2"
+    sub3_label = "S3: First-Year Choice - Ideal Year 1"
+
+    # Get percentages for highlighting
+    sub1_percent = metrics["sub1_ideal_y1_percent"]
+    sub2_percent = metrics["sub2_ideal_y2_percent"]
+    sub3_percent = metrics["sub3_ideal_y1_percent"]
+
+    # Determine highlighting (highlight if > 50%)
+    highlight_sub1 = "highlight-row" if sub1_percent > 50 else ""
+    highlight_sub2 = "highlight-row" if sub2_percent > 50 else ""
+    highlight_sub3 = "highlight-row" if sub3_percent > 50 else ""
+
+    return f"""
+    <div class="dynamic-temporal-preference-summary">
+        <h4 class="dynamic-temporal-summary-title">{title}</h4>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{choice_label}</th>
+                        <th>{percentage_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="{highlight_sub1}">
+                        <td>{sub1_label}</td>
+                        <td>{sub1_percent:.1f}%</td>
+                    </tr>
+                    <tr class="{highlight_sub2}">
+                        <td>{sub2_label}</td>
+                        <td>{sub2_percent:.1f}%</td>
+                    </tr>
+                    <tr class="{highlight_sub3}">
+                        <td>{sub3_label}</td>
+                        <td>{sub3_percent:.1f}%</td>
                     </tr>
                 </tbody>
             </table>
