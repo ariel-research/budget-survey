@@ -780,6 +780,35 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אידיאלי בשנה הבאה",
             "en": "Ideal Next Year",
         },
+        # Dynamic temporal preference sub-surveys
+        "sub_survey_1_title": {
+            "he": "תת-סקר 1: הנחה זמנית פשוטה",
+            "en": "Sub-Survey 1: Simple Discounting",
+        },
+        "sub_survey_2_title": {
+            "he": "תת-סקר 2: בחירת שנה ב'",
+            "en": "Sub-Survey 2: Second-Year Choice",
+        },
+        "sub_survey_3_title": {
+            "he": "תת-סקר 3: בחירת שנה א'",
+            "en": "Sub-Survey 3: First-Year Choice",
+        },
+        "ideal_year_1": {
+            "he": "אידיאלי שנה א'",
+            "en": "Ideal Year 1",
+        },
+        "ideal_year_2": {
+            "he": "אידיאלי שנה ב'",
+            "en": "Ideal Year 2",
+        },
+        "balanced_year_1": {
+            "he": "מאוזן שנה א'",
+            "en": "Balanced Year 1",
+        },
+        "balanced_year_2": {
+            "he": "מאוזן שנה ב'",
+            "en": "Balanced Year 2",
+        },
         "consistency_breakdown_title": {
             "he": "פילוח רמות עקביות",
             "en": "Consistency Breakdown",

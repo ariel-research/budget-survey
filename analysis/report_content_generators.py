@@ -948,19 +948,11 @@ def _generate_survey_choices_html(
         if matrix_html:
             html_parts.append(matrix_html)
 
-    # Special handling for temporal_preference_test strategy
+    # Special handling for temporal_preference_test strategy - three separate tables
     elif strategy_name == "temporal_preference_test":
-        temporal_table_html = _generate_temporal_preference_table(choices)
-        if temporal_table_html:
-            html_parts.append(temporal_table_html)
-
-    # Special handling for temporal_preference_test strategy
-    elif strategy_name == "temporal_preference_test":
-        dynamic_temporal_table_html = _generate_dynamic_temporal_preference_table(
-            choices
-        )
-        if dynamic_temporal_table_html:
-            html_parts.append(dynamic_temporal_table_html)
+        temporal_sub_tables_html = _generate_temporal_sub_survey_tables(choices)
+        if temporal_sub_tables_html:
+            html_parts.append(temporal_sub_tables_html)
 
     # Standard summary for other strategies
     else:
@@ -4856,6 +4848,153 @@ def _generate_dynamic_temporal_preference_table(choices: List[Dict]) -> str:
         </div>
     </div>
     """
+
+
+def _generate_temporal_sub_survey_tables(choices: List[Dict]) -> str:
+    """
+    Generate three separate styled HTML tables showing vote percentages for each
+    temporal preference sub-survey.
+
+    Args:
+        choices: List of choices for a single user's temporal survey (12 choices)
+
+    Returns:
+        str: HTML containing three properly styled tables for each sub-survey
+    """
+    if not choices:
+        return ""
+
+    # Get translations
+    sub1_title = get_translation("sub_survey_1_title", "answers")
+    sub2_title = get_translation("sub_survey_2_title", "answers")
+    sub3_title = get_translation("sub_survey_3_title", "answers")
+
+    ideal_year_1_label = get_translation("ideal_year_1", "answers")
+    ideal_year_2_label = get_translation("ideal_year_2", "answers")
+    balanced_year_1_label = get_translation("balanced_year_1", "answers")
+    balanced_year_2_label = get_translation("balanced_year_2", "answers")
+
+    choice_label = get_translation("choice", "answers")
+    percentage_label = get_translation("percentage", "answers")
+
+    # Filter choices by sub-survey and count votes
+    sub1_choices = [c for c in choices if 1 <= c.get("pair_number", 0) <= 4]
+    sub2_choices = [c for c in choices if 5 <= c.get("pair_number", 0) <= 8]
+    sub3_choices = [c for c in choices if 9 <= c.get("pair_number", 0) <= 12]
+
+    html_parts = []
+
+    # Sub-Survey 1: Simple Discounting
+    if sub1_choices:
+        total = len(sub1_choices)
+        ideal_this_year_count = sum(
+            1 for c in sub1_choices if c.get("user_choice") == 1
+        )
+        ideal_next_year_count = total - ideal_this_year_count
+
+        ideal_this_year_pct = (ideal_this_year_count / total) * 100 if total > 0 else 0
+        ideal_next_year_pct = (ideal_next_year_count / total) * 100 if total > 0 else 0
+
+        html_parts.append(
+            f"""
+        <div class="summary-table-container">
+            <h5>{sub1_title}</h5>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{choice_label}</th>
+                            <th>{percentage_label}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{ideal_year_1_label}</td>
+                            <td>{ideal_this_year_pct:.1f}%</td>
+                        </tr>
+                        <tr>
+                            <td>{ideal_year_2_label}</td>
+                            <td>{ideal_next_year_pct:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>"""
+        )
+
+    # Sub-Survey 2: Second-Year Choice
+    if sub2_choices:
+        total = len(sub2_choices)
+        ideal_year2_count = sum(1 for c in sub2_choices if c.get("user_choice") == 1)
+        balanced_year2_count = total - ideal_year2_count
+
+        ideal_year2_pct = (ideal_year2_count / total) * 100 if total > 0 else 0
+        balanced_year2_pct = (balanced_year2_count / total) * 100 if total > 0 else 0
+
+        html_parts.append(
+            f"""
+        <div class="summary-table-container">
+            <h5>{sub2_title}</h5>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{choice_label}</th>
+                            <th>{percentage_label}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{ideal_year_2_label}</td>
+                            <td>{ideal_year2_pct:.1f}%</td>
+                        </tr>
+                        <tr>
+                            <td>{balanced_year_2_label}</td>
+                            <td>{balanced_year2_pct:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>"""
+        )
+
+    # Sub-Survey 3: First-Year Choice
+    if sub3_choices:
+        total = len(sub3_choices)
+        ideal_year1_count = sum(1 for c in sub3_choices if c.get("user_choice") == 1)
+        balanced_year1_count = total - ideal_year1_count
+
+        ideal_year1_pct = (ideal_year1_count / total) * 100 if total > 0 else 0
+        balanced_year1_pct = (balanced_year1_count / total) * 100 if total > 0 else 0
+
+        html_parts.append(
+            f"""
+        <div class="summary-table-container">
+            <h5>{sub3_title}</h5>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{choice_label}</th>
+                            <th>{percentage_label}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{ideal_year_1_label}</td>
+                            <td>{ideal_year1_pct:.1f}%</td>
+                        </tr>
+                        <tr>
+                            <td>{balanced_year_1_label}</td>
+                            <td>{balanced_year1_pct:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>"""
+        )
+
+    return "\n".join(html_parts)
 
 
 def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
