@@ -3478,77 +3478,24 @@ def generate_overall_statistics_table(
         </div>
         """
     elif strategy_name == "temporal_preference_test":
-        # Handle temporal preference strategy using consistency breakdown table
+        # Handle dynamic temporal preference strategy using three consistency breakdown tables
         # Extract all user choices from summaries
         all_user_choices = []
         for summary in summaries:
             if "choices" in summary:
                 all_user_choices.extend(summary["choices"])
 
-        # Use the consistency breakdown table for distribution by consistency level
+        # Use the three-table consistency breakdown for distribution by consistency level
         if all_user_choices:
-            overall_table = generate_consistency_breakdown_table(all_user_choices)
+            overall_table = generate_dynamic_temporal_consistency_breakdown_tables(
+                all_user_choices
+            )
         else:
             # Fallback if no choices available
             overall_table = f"""
             <div class="summary-table-container">
                 <h2>{title}</h2>
                 <p class="summary-note">No data available for consistency analysis.</p>
-            </div>
-            """
-    elif strategy_name == "temporal_preference_test":
-        # Handle dynamic temporal test strategy
-        total_responses = len(summaries)
-
-        if total_responses == 0:
-            overall_table = f"""
-            <div class="summary-table-container">
-                <h2>{title}</h2>
-                <p class="summary-note">No data available for analysis.</p>
-            </div>
-            """
-        else:
-            # Calculate averages across all users
-            avg_sub1_ideal_y1 = (
-                sum(s["stats"]["sub1_ideal_y1"] for s in summaries) / total_responses
-            )
-            avg_sub2_ideal_y2 = (
-                sum(s["stats"]["sub2_ideal_y2"] for s in summaries) / total_responses
-            )
-            avg_sub3_ideal_y1 = (
-                sum(s["stats"]["sub3_ideal_y1"] for s in summaries) / total_responses
-            )
-
-            note = get_translation("based_on_responses", "answers").format(
-                x=total_responses
-            )
-
-            overall_table = f"""
-            <div class="summary-table-container">
-                <h2>{title}</h2>
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <th>Sub-Survey</th>
-                            <th>Average %</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>S1: Simple Discounting - Ideal Year 1</td>
-                            <td>{avg_sub1_ideal_y1:.1f}%</td>
-                        </tr>
-                        <tr>
-                            <td>S2: Second-Year Choice - Ideal Year 2</td>
-                            <td>{avg_sub2_ideal_y2:.1f}%</td>
-                        </tr>
-                        <tr>
-                            <td>S3: First-Year Choice - Ideal Year 1</td>
-                            <td>{avg_sub3_ideal_y1:.1f}%</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="summary-note">{note}</p>
             </div>
             """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
@@ -4720,6 +4667,71 @@ def _calculate_dynamic_temporal_metrics(choices: List[Dict]) -> Dict[str, float]
     }
 
 
+def _calculate_sub_survey_consistency_metrics(
+    choices: List[Dict], sub_survey_num: int
+) -> Dict[str, float]:
+    """
+    Calculate consistency metrics for a specific sub-survey of the dynamic temporal preference test.
+
+    Args:
+        choices: List of choices for a single user's dynamic temporal survey (12 choices)
+        sub_survey_num: Sub-survey number (1, 2, or 3)
+
+    Returns:
+        Dict containing calculated metrics for the specific sub-survey:
+        - ideal_percent: Percentage choosing the ideal option
+        - alternative_percent: Percentage choosing the alternative option
+        - consistency_percent: Max(ideal_count, alternative_count) * 25 (since 4 questions per sub-survey)
+    """
+    if not choices or len(choices) != 12:
+        return {
+            "ideal_percent": 0.0,
+            "alternative_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    # Filter choices for the specific sub-survey
+    if sub_survey_num == 1:
+        # Sub-Survey 1: Simple Discounting (pairs 1-4)
+        sub_choices = [c for c in choices if 1 <= c.get("pair_number", 0) <= 4]
+    elif sub_survey_num == 2:
+        # Sub-Survey 2: Second-Year Choice (pairs 5-8)
+        sub_choices = [c for c in choices if 5 <= c.get("pair_number", 0) <= 8]
+    elif sub_survey_num == 3:
+        # Sub-Survey 3: First-Year Choice (pairs 9-12)
+        sub_choices = [c for c in choices if 9 <= c.get("pair_number", 0) <= 12]
+    else:
+        return {
+            "ideal_percent": 0.0,
+            "alternative_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    if len(sub_choices) != 4:
+        return {
+            "ideal_percent": 0.0,
+            "alternative_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    # Count ideal choices (Option 1 in all sub-surveys represents the ideal choice)
+    ideal_count = sum(1 for choice in sub_choices if choice.get("user_choice") == 1)
+    alternative_count = 4 - ideal_count
+
+    # Calculate percentages
+    ideal_percent = (ideal_count / 4) * 100
+    alternative_percent = (alternative_count / 4) * 100
+
+    # Consistency is max(ideal_count, alternative_count) * 25 (since max is 4, and 4*25=100)
+    consistency_percent = max(ideal_count, alternative_count) * 25
+
+    return {
+        "ideal_percent": ideal_percent,
+        "alternative_percent": alternative_percent,
+        "consistency_percent": consistency_percent,
+    }
+
+
 def _generate_temporal_preference_table(choices: List[Dict]) -> str:
     """
     Generate HTML table for individual user's temporal preference results.
@@ -5126,6 +5138,201 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
                 </tbody>
             </table>
         </div>
+    </div>
+    """
+
+
+def _generate_sub_survey_consistency_breakdown_table(
+    user_choices: List[Dict],
+    sub_survey_num: int,
+    title: str,
+    ideal_label: str,
+    alternative_label: str,
+) -> str:
+    """
+    Generate consistency breakdown table for a specific sub-survey of the dynamic temporal preference test.
+
+    Args:
+        user_choices: List of all user choices for the dynamic temporal preference survey
+        sub_survey_num: Sub-survey number (1, 2, or 3)
+        title: Title for the table
+        ideal_label: Label for the ideal choice column
+        alternative_label: Label for the alternative choice column
+
+    Returns:
+        str: HTML table showing choice distribution by consistency level for the sub-survey
+    """
+    if not user_choices:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Group choices by user
+    choices_by_user = {}
+    for choice in user_choices:
+        user_id = choice["user_id"]
+        if user_id not in choices_by_user:
+            choices_by_user[user_id] = []
+        choices_by_user[user_id].append(choice)
+
+    # Calculate metrics for each user and group by consistency level
+    consistency_groups = {50: [], 75: [], 100: []}
+
+    for user_id, choices in choices_by_user.items():
+        if len(choices) != 12:  # Skip users without complete responses
+            continue
+
+        metrics = _calculate_sub_survey_consistency_metrics(choices, sub_survey_num)
+        consistency = metrics["consistency_percent"]
+
+        # Round down to nearest 25 to get consistency level (since we have 4 questions: 25%, 50%, 75%, 100%)
+        if consistency >= 100:
+            consistency_level = 100
+        elif consistency >= 75:
+            consistency_level = 75
+        else:
+            consistency_level = 50
+
+        if consistency_level in consistency_groups:
+            # Store both metrics and user's actual choice percentages
+            user_data = {
+                "metrics": metrics,
+                "ideal_percent": metrics["ideal_percent"],
+                "alternative_percent": metrics["alternative_percent"],
+            }
+            consistency_groups[consistency_level].append(user_data)
+
+    # Get translations
+    consistency_level_label = get_translation("consistency_level", "answers")
+    num_users_label = get_translation("num_of_users", "answers")
+
+    # Generate table rows
+    rows = []
+    total_users = 0
+    total_ideal_count = 0
+    total_alternative_count = 0
+
+    for consistency_level in sorted(consistency_groups.keys()):
+        user_data_list = consistency_groups[consistency_level]
+        num_users = len(user_data_list)
+
+        if num_users == 0:
+            continue
+
+        total_users += num_users
+
+        # Calculate average percentages across users at this consistency level
+        ideal_percent = (
+            sum(user_data["ideal_percent"] for user_data in user_data_list) / num_users
+        )
+        alternative_percent = (
+            sum(user_data["alternative_percent"] for user_data in user_data_list)
+            / num_users
+        )
+
+        # Update totals for overall calculation
+        total_ideal_count += ideal_percent * num_users
+        total_alternative_count += alternative_percent * num_users
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{consistency_level}%</td>
+                <td>{num_users}</td>
+                <td>{ideal_percent:.1f}%</td>
+                <td>{alternative_percent:.1f}%</td>
+            </tr>
+            """
+        )
+
+    if not rows:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Add total row
+    if total_users > 0:
+        overall_ideal_percent = total_ideal_count / total_users
+        overall_alternative_percent = total_alternative_count / total_users
+
+        total_label = get_translation("total", "answers")
+        rows.append(
+            f"""
+            <tr class="total-row">
+                <td><strong>{total_label}</strong></td>
+                <td><strong>{total_users}</strong></td>
+                <td><strong>{overall_ideal_percent:.1f}%</strong></td>
+                <td><strong>{overall_alternative_percent:.1f}%</strong></td>
+            </tr>
+            """
+        )
+
+    return f"""
+    <div class="summary-table-container consistency-breakdown-container">
+        <h2>{title}</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{consistency_level_label}</th>
+                        <th>{num_users_label}</th>
+                        <th>{ideal_label}</th>
+                        <th>{alternative_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+
+
+def generate_dynamic_temporal_consistency_breakdown_tables(
+    user_choices: List[Dict],
+) -> str:
+    """
+    Generate three consistency breakdown tables for the dynamic temporal preference survey.
+
+    Args:
+        user_choices: List of all user choices for the dynamic temporal preference survey
+
+    Returns:
+        str: HTML containing three consistency breakdown tables for each sub-survey
+    """
+    if not user_choices:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f'<div class="no-data">{no_data_msg}</div>'
+
+    # Get translations for sub-survey titles and labels
+    sub1_title = get_translation("sub_survey_1_title", "answers")
+    sub2_title = get_translation("sub_survey_2_title", "answers")
+    sub3_title = get_translation("sub_survey_3_title", "answers")
+
+    # Labels for each sub-survey
+    ideal_year_1_label = get_translation("ideal_year_1", "answers")
+    ideal_year_2_label = get_translation("ideal_year_2", "answers")
+    balanced_year_1_label = get_translation("balanced_year_1", "answers")
+    balanced_year_2_label = get_translation("balanced_year_2", "answers")
+    random_label = get_translation("random", "answers")
+
+    # Generate the three tables
+    sub1_table = _generate_sub_survey_consistency_breakdown_table(
+        user_choices, 1, sub1_title, ideal_year_1_label, random_label
+    )
+
+    sub2_table = _generate_sub_survey_consistency_breakdown_table(
+        user_choices, 2, sub2_title, ideal_year_2_label, balanced_year_2_label
+    )
+
+    sub3_table = _generate_sub_survey_consistency_breakdown_table(
+        user_choices, 3, sub3_title, ideal_year_1_label, balanced_year_1_label
+    )
+
+    return f"""
+    <div class="dynamic-temporal-consistency-breakdown">
+        {sub1_table}
+        {sub2_table}
+        {sub3_table}
     </div>
     """
 
