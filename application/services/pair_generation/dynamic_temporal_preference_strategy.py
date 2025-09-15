@@ -398,17 +398,17 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
         """
         return {
             "sub1_ideal_y1": {
-                "name": "S1: Ideal in Year 1 (%)",
+                "name": "S1: Ideal in Year 1",
                 "type": "percentage",
                 "highlight": True,
             },
             "sub2_ideal_y2": {
-                "name": "S2: Ideal in Year 2 (%)",
+                "name": "S2: Ideal in Year 2",
                 "type": "percentage",
                 "highlight": True,
             },
             "sub3_ideal_y1": {
-                "name": "S3: Ideal in Year 1 (%)",
+                "name": "S3: Ideal in Year 1",
                 "type": "percentage",
                 "highlight": True,
             },

@@ -3174,6 +3174,30 @@ def generate_detailed_breakdown_table(
                     data_cells.append(
                         f'<td class="{highlight_next_year}">{ideal_next_year_percent:.0f}%</td>'
                     )
+                elif (
+                    "sub1_ideal_y1" in strategy_columns
+                    and "sub2_ideal_y2" in strategy_columns
+                    and "sub3_ideal_y1" in strategy_columns
+                ):
+                    # Handle temporal_preference_test strategy with three sub-survey columns
+                    sub1_percent = summary["stats"].get("sub1_ideal_y1_percent", 0)
+                    sub2_percent = summary["stats"].get("sub2_ideal_y2_percent", 0)
+                    sub3_percent = summary["stats"].get("sub3_ideal_y1_percent", 0)
+
+                    # Highlight if > 50% (preferring ideal option)
+                    highlight_sub1 = "highlight-row" if sub1_percent > 50 else ""
+                    highlight_sub2 = "highlight-row" if sub2_percent > 50 else ""
+                    highlight_sub3 = "highlight-row" if sub3_percent > 50 else ""
+
+                    data_cells.append(
+                        f'<td class="{highlight_sub1}">{sub1_percent:.0f}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_sub2}">{sub2_percent:.0f}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_sub3}">{sub3_percent:.0f}%</td>'
+                    )
                 elif "option1" in strategy_columns and "option2" in strategy_columns:
                     # Default case with option1/option2 columns
                     opt1_percent = summary["stats"]["option1_percent"]
