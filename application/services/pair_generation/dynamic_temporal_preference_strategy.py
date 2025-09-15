@@ -65,6 +65,16 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
         """
         # Validate inputs
         self._validate_vector(user_vector, vector_size)
+
+        if 0 in user_vector:
+            logger.info(
+                f"User vector {user_vector} contains zero values, "
+                "unsuitable for DynamicTemporalPreferenceStrategy."
+            )
+            raise UnsuitableForStrategyError(
+                "User vector contains zero values and is unsuitable for this strategy."
+            )
+
         if n != 12:
             logger.warning(f"Strategy designed for 12 pairs but got n={n}, using 12")
             n = 12  # Override to always generate 12 pairs
