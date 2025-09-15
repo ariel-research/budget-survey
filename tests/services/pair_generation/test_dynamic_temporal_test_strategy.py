@@ -15,6 +15,16 @@ from application.services.pair_generation.dynamic_temporal_preference_strategy i
 )
 
 
+def _generate_all_possible_vectors():
+    """Generates all possible 3-element vectors that sum to 100 with multiples of 5."""
+    vectors = []
+    for i in range(0, 101, 5):
+        for j in range(0, 101 - i, 5):
+            k = 100 - i - j
+            vectors.append((i, j, k))
+    return vectors
+
+
 class TestDynamicTemporalPreferenceStrategy:
     """Test suite for DynamicTemporalPreferenceStrategy class."""
 
@@ -23,8 +33,6 @@ class TestDynamicTemporalPreferenceStrategy:
         self.strategy = DynamicTemporalPreferenceStrategy()
         # Standard test vector
         self.test_vector = (60, 25, 15)
-        # Extreme test vector for fallback testing
-        self.extreme_vector = (95, 5, 0)
 
     def test_strategy_name(self):
         """Test that strategy returns correct name."""
@@ -137,17 +145,46 @@ class TestDynamicTemporalPreferenceStrategy:
                     f"expected {self.test_vector[j]}"
                 )
 
-    def test_fallback_mechanism_for_extreme_vectors(self):
-        """Test that extreme vectors either succeed or fail gracefully."""
-        # Extreme vectors like (95, 5, 0) are mathematically constrained
-        # Should either succeed completely or raise UnsuitableForStrategyError
-        try:
-            pairs = self.strategy.generate_pairs(self.extreme_vector, n=12)
-            # If it succeeds, it must generate exactly 12 pairs
-            assert len(pairs) == 12
-        except UnsuitableForStrategyError:
-            # This is acceptable for extreme vectors
-            pass
+    def test_raises_error_for_vector_with_zero(self):
+        """Test UnsuitableForStrategyError is raised for vectors with zero."""
+        # This strategy does not support vectors with zero values.
+        vector_with_zero = (80, 20, 0)
+        with pytest.raises(
+            UnsuitableForStrategyError,
+            match="User vector contains zero values and is unsuitable for this strategy.",
+        ):
+            self.strategy.generate_pairs(vector_with_zero)
+
+    def test_all_possible_vectors_are_handled_correctly(self):
+        """
+        Exhaustively tests all possible valid user vectors.
+
+        - For vectors without zeros, ensures pair generation succeeds.
+        - For vectors with zeros, ensures the correct error is raised.
+        """
+        all_vectors = _generate_all_possible_vectors()
+
+        # There are 231 unique ways to partition 100 into 3 parts with multiples of 5.
+        assert len(all_vectors) == 231
+
+        for vector in all_vectors:
+            if 0 in vector:
+                # Test that vectors with zero are correctly rejected
+                with pytest.raises(
+                    UnsuitableForStrategyError,
+                    match="User vector contains zero values",
+                ):
+                    self.strategy.generate_pairs(vector)
+            else:
+                # Test that valid vectors (no zeros) generate pairs successfully
+                try:
+                    pairs = self.strategy.generate_pairs(vector)
+                    assert len(pairs) == 12
+                except UnsuitableForStrategyError as e:
+                    pytest.fail(
+                        f"Strategy unexpectedly failed for valid vector {vector}. "
+                        f"Error: {e}"
+                    )
 
     @patch("numpy.random.randint")
     def test_error_handling_when_generation_fails(self, mock_randint):

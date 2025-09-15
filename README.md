@@ -517,6 +517,8 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       - Primary attempt: Generate balanced pairs where all values are multiples of 5
       - Fallback attempt: Generate pairs without multiples-of-5 constraint for extreme vectors
       - Error handling: Raises `UnsuitableForStrategyError` if unable to generate sufficient pairs
+    - **Special Handling**:
+      - Throws `UnsuitableForStrategyError` if the user's ideal budget contains any zero values, as this can prevent the generation of a sufficient number of valid balanced vector pairs.
     - Parameters:
       - `num_pairs`: Number of pairs to generate (must be 12)
     - Example:
