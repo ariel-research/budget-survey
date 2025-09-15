@@ -172,9 +172,33 @@ ENHANCED: Now includes UX improvements for ranking interface
                 {% if pair.is_awareness %}
                     <p class="temporal-instruction">{{ get_translation('temporal_awareness_instruction', 'survey')|safe }}</p>
                 {% else %}
-                    {% set custom_instruction = get_survey_instructions(internal_survey_id) %}
-                    {% if custom_instruction %}
-                        <p class="temporal-instruction">{{ custom_instruction|safe }}</p>
+                    {% set sub_survey_type = None %}
+                    
+                    {# Detect sub-survey type from strategy names #}
+                    {% if pair.option1_strategy and 'Simple Discounting' in pair.option1_strategy %}
+                        {% set sub_survey_type = 'simple_discounting' %}
+                    {% elif pair.option1_strategy and 'Second-Year Choice' in pair.option1_strategy %}
+                        {% set sub_survey_type = 'second_year_choice' %}
+                    {% elif pair.option1_strategy and 'First-Year Choice' in pair.option1_strategy %}
+                        {% set sub_survey_type = 'first_year_choice' %}
+                    {% endif %}
+                    
+                    {% if sub_survey_type %}
+                        {% if sub_survey_type == 'simple_discounting' %}
+                            <p class="temporal-instruction">{{ get_translation('temporal_simple_discounting_instruction', 'survey')|safe }}</p>
+                        {% elif sub_survey_type == 'second_year_choice' and pair.instruction_context and pair.instruction_context.fixed_vector %}
+                            {% set fixed_vector_str = pair.instruction_context.fixed_vector|join(', ') %}
+                            <p class="temporal-instruction">{{ get_translation('temporal_second_year_choice_instruction', 'survey', vector_b=fixed_vector_str)|safe }}</p>
+                        {% elif sub_survey_type == 'first_year_choice' and pair.instruction_context and pair.instruction_context.fixed_vector %}
+                            {% set fixed_vector_str = pair.instruction_context.fixed_vector|join(', ') %}
+                            <p class="temporal-instruction">{{ get_translation('temporal_first_year_choice_instruction', 'survey', vector_b=fixed_vector_str)|safe }}</p>
+                        {% endif %}
+                    {% else %}
+                        {# Fallback to database instructions if no sub-survey type detected #}
+                        {% set custom_instruction = get_survey_instructions(internal_survey_id) %}
+                        {% if custom_instruction %}
+                            <p class="temporal-instruction">{{ custom_instruction|safe }}</p>
+                        {% endif %}
                     {% endif %}
                 {% endif %}
             {% endif %}

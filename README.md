@@ -497,25 +497,44 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       ```
     - **Core Hypothesis**: User's underlying preference order will be consistently revealed across all ranking questions, providing insights into stable budget allocation priorities
 
-11. **Temporal Preference Test**
+11. **Dynamic Temporal Preference Test**
     - Strategy name: `temporal_preference_test`
-    - Tests temporal discounting hypothesis: users prefer receiving their ideal budget allocation this year over receiving it next year
+    - Tests comprehensive temporal discounting and preference for achieving exact ideal states versus mathematically balanced two-year plans
     - **Algorithm Overview**:
-      - Generates 10 pairs comparing user's ideal vector against random vectors
-    - **Core Hypothesis**: Users exhibit temporal discounting by preferring their ideal allocation sooner rather than later
+      - Generates 12 pairs across three 4-question sub-surveys
+      - Uses balanced vector pairs (B, C) where (B+C)/2 = user's ideal vector
+      - Implements two-tiered vector generation with fallback mechanism
+    - **Sub-Surveys**:
+      1. **Simple Discounting (4 questions)**: (Ideal, Random) vs (Random, Ideal) - tests basic temporal discounting
+      2. **Second-Year Choice (4 questions)**: (B, Ideal) vs (B, C) - Year 1 budget fixed as B, user chooses Year 2 budget
+      3. **First-Year Choice (4 questions)**: (Ideal, B) vs (C, B) - Year 2 budget fixed as B, user chooses Year 1 budget
+    - **Core Hypothesis**: Users exhibit temporal discounting while also preferring exact ideal states over balanced mathematical plans
     - **Analysis Features**:
-      - Temporal Preference Summary: Shows percentage of "Ideal This Year" vs "Ideal Next Year" choices
-      - Consistency Analysis: Measures how consistently users choose immediate vs delayed preferences
+      - Dynamic Temporal Preference Summary: Shows percentage breakdown for all three sub-surveys
+      - Sub-survey specific analysis: S1 (Ideal Year 1), S2 (Ideal Year 2), S3 (Ideal Year 1)
+      - Robust vector generation with multiples-of-5 constraint and fallback mechanism
+    - **Vector Generation**:
+      - Primary attempt: Generate balanced pairs where all values are multiples of 5
+      - Fallback attempt: Generate pairs without multiples-of-5 constraint for extreme vectors
+      - Error handling: Raises `UnsuitableForStrategyError` if unable to generate sufficient pairs
+    - **Special Handling**:
+      - Throws `UnsuitableForStrategyError` if the user's ideal budget contains any zero values, as this can prevent the generation of a sufficient number of valid balanced vector pairs.
     - Parameters:
-      - `num_pairs`: Number of pairs to generate (default: 10)
+      - `num_pairs`: Number of pairs to generate (must be 12)
     - Example:
       ```python
       # For user_vector = [60, 30, 10]:
-      # Pair 1: [60, 30, 10] vs [45, 25, 30]  (ideal vs random)
-      # Pair 2: [60, 30, 10] vs [20, 50, 30]  (ideal vs random)
-      # ...10 pairs total
-      # User choosing Option 1 implies preference for (ideal_now, random_later)
-      # User choosing Option 2 implies preference for (random_now, ideal_later)
+      # Sub-Survey 1: Simple Discounting
+      # Pair 1: ((60,30,10), (45,25,30)) vs ((45,25,30), (60,30,10))
+      #         Ideal Year 1 vs Ideal Year 2
+      
+      # Sub-Survey 2: Second-Year Choice (B=[50,35,15], C=[70,25,5])  
+      # Pair 5: ((50,35,15), (60,30,10)) vs ((50,35,15), (70,25,5))
+      #         B,Ideal vs B,C (Year 1 fixed as B)
+      
+      # Sub-Survey 3: First-Year Choice
+      # Pair 9: ((60,30,10), (50,35,15)) vs ((70,25,5), (50,35,15))
+      #         Ideal,B vs C,B (Year 2 fixed as B)
       ```
 
 #### Adding New Strategies

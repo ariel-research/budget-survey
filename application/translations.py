@@ -385,6 +385,44 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "זוהי <strong>בדיקת ערנות</strong>. אנא בחר את <em>התקציב האידיאלי</em> שלך.",
             "en": "This is an <strong>awareness check</strong>. Please select your <em>ideal budget</em>.",
         },
+        "temporal_simple_discounting_instruction": {
+            "he": (
+                "עליכם לקבוע את התקציב עבור <strong>שתי שנים עוקבות</strong>: "
+                "השנה הנוכחית, והשנה הבאה. איזה מבין שני התקציבים הבאים תעדיפו "
+                "שיהיה התקציב <strong>בשנה הנוכחית</strong>? התקציב שלא תבחרו יהיה "
+                "התקציב <strong>בשנה הבאה</strong>."
+            ),
+            "en": (
+                "You need to set the budget for <strong>two consecutive "
+                "years</strong>: <strong>the current year</strong> and "
+                "<strong>next year</strong>. Which of the following two "
+                "budgets would you prefer to be <strong>the current year's "
+                "budget</strong>? The budget you don't choose will be "
+                "<strong>next year's budget</strong>."
+            ),
+        },
+        "temporal_second_year_choice_instruction": {
+            "he": (
+                "התקציב לשנה הנוכחית קבוע: <strong>{vector_b}</strong>. "
+                "אנא בחרו את התקציב המועדף עליכם לשנה הבאה."
+            ),
+            "en": (
+                "The budget for the current year is fixed at: "
+                "<strong>{vector_b}</strong>. Please choose your "
+                "preferred budget for the next year."
+            ),
+        },
+        "temporal_first_year_choice_instruction": {
+            "he": (
+                "התקציב לשנה הבאה קבוע: <strong>{vector_b}</strong>. "
+                "אנא בחרו את התקציב המועדף עליכם לשנה הנוכחית."
+            ),
+            "en": (
+                "The budget for the next year is fixed at: "
+                "<strong>{vector_b}</strong>. Please choose your "
+                "preferred budget for the current year."
+            ),
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
@@ -741,6 +779,35 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "ideal_next_year": {
             "he": "אידיאלי בשנה הבאה",
             "en": "Ideal Next Year",
+        },
+        # Dynamic temporal preference sub-surveys
+        "sub_survey_1_title": {
+            "he": "תת-סקר 1: הנחה זמנית פשוטה",
+            "en": "Sub-Survey 1: Simple Discounting",
+        },
+        "sub_survey_2_title": {
+            "he": "תת-סקר 2: בחירת שנה ב'",
+            "en": "Sub-Survey 2: Second-Year Choice",
+        },
+        "sub_survey_3_title": {
+            "he": "תת-סקר 3: בחירת שנה א'",
+            "en": "Sub-Survey 3: First-Year Choice",
+        },
+        "ideal_year_1": {
+            "he": "אידיאלי שנה א'",
+            "en": "Ideal Year 1",
+        },
+        "ideal_year_2": {
+            "he": "אידיאלי שנה ב'",
+            "en": "Ideal Year 2",
+        },
+        "balanced_year_1": {
+            "he": "מאוזן שנה א'",
+            "en": "Balanced Year 1",
+        },
+        "balanced_year_2": {
+            "he": "מאוזן שנה ב'",
+            "en": "Balanced Year 2",
         },
         "consistency_breakdown_title": {
             "he": "פילוח רמות עקביות",

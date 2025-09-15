@@ -3,6 +3,7 @@
 from .asymmetric_loss_distribution import AsymmetricLossDistributionStrategy
 from .base import PairGenerationStrategy, StrategyRegistry
 from .cyclic_shift_strategy import CyclicShiftStrategy
+from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrategy
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
@@ -12,7 +13,6 @@ from .root_sum_squared_sum_vector import RootSumSquaredSumStrategy
 from .rounded_weighted_average_vector import (
     RoundedWeightedAverageVectorStrategy,
 )
-from .temporal_preference_strategy import TemporalPreferenceStrategy
 from .weighted_average_vector import WeightedAverageVectorStrategy
 
 # Register strategies
@@ -26,7 +26,7 @@ StrategyRegistry.register(CyclicShiftStrategy)
 StrategyRegistry.register(LinearSymmetryStrategy)
 StrategyRegistry.register(AsymmetricLossDistributionStrategy)
 StrategyRegistry.register(PreferenceRankingSurveyStrategy)
-StrategyRegistry.register(TemporalPreferenceStrategy)
+StrategyRegistry.register(DynamicTemporalPreferenceStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -41,5 +41,5 @@ __all__ = [
     "LinearSymmetryStrategy",
     "AsymmetricLossDistributionStrategy",
     "PreferenceRankingSurveyStrategy",
-    "TemporalPreferenceStrategy",
+    "DynamicTemporalPreferenceStrategy",
 ]
