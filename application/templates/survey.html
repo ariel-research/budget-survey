@@ -187,11 +187,11 @@ ENHANCED: Now includes UX improvements for ranking interface
                         {% if sub_survey_type == 'simple_discounting' %}
                             <p class="temporal-instruction">{{ get_translation('temporal_simple_discounting_instruction', 'survey')|safe }}</p>
                         {% elif sub_survey_type == 'second_year_choice' and pair.instruction_context and pair.instruction_context.fixed_vector %}
-                            {% set fixed_vector_str = pair.instruction_context.fixed_vector|join(', ') %}
-                            <p class="temporal-instruction">{{ get_translation('temporal_second_year_choice_instruction', 'survey', vector_b=fixed_vector_str)|safe }}</p>
+                            {% set vector_b_formatted = pair.instruction_context.fixed_vector_formatted or (pair.instruction_context.fixed_vector|join(', ')) %}
+                            <p class="temporal-instruction">{{ get_translation('temporal_second_year_choice_instruction', 'survey', vector_b_formatted=vector_b_formatted)|safe }}</p>
                         {% elif sub_survey_type == 'first_year_choice' and pair.instruction_context and pair.instruction_context.fixed_vector %}
-                            {% set fixed_vector_str = pair.instruction_context.fixed_vector|join(', ') %}
-                            <p class="temporal-instruction">{{ get_translation('temporal_first_year_choice_instruction', 'survey', vector_b=fixed_vector_str)|safe }}</p>
+                            {% set vector_b_formatted = pair.instruction_context.fixed_vector_formatted or (pair.instruction_context.fixed_vector|join(', ')) %}
+                            <p class="temporal-instruction">{{ get_translation('temporal_first_year_choice_instruction', 'survey', vector_b_formatted=vector_b_formatted)|safe }}</p>
                         {% endif %}
                     {% else %}
                         {# Fallback to database instructions if no sub-survey type detected #}

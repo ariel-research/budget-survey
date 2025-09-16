@@ -29,6 +29,30 @@ from .awareness_check import (
 logger = logging.getLogger(__name__)
 
 
+def format_budget_vector_with_subjects(vector: tuple, subjects: List[str]) -> str:
+    """
+    Format a budget vector with subject names for display.
+
+    Args:
+        vector: Budget allocation tuple (e.g., (50, 30, 20))
+        subjects: List of subject names (e.g., ["Health", "Education", "Defense"])
+
+    Returns:
+        Formatted string like "Health: 50, Education: 30, Defense: 20"
+    """
+    if len(vector) != len(subjects):
+        logger.warning(
+            f"Vector length {len(vector)} doesn't match subjects length {len(subjects)}"
+        )
+        return ", ".join(map(str, vector))  # Fallback to numbers only
+
+    formatted_parts = []
+    for subject, value in zip(subjects, vector):
+        formatted_parts.append(f"{subject}: {value}")
+
+    return ", ".join(formatted_parts)
+
+
 class SurveyService:
     @staticmethod
     def check_survey_exists(
@@ -356,7 +380,15 @@ class SurveySessionData:
         ]
 
         # Extract instruction context if available
-        instruction_context = pair.get("instruction_context", {})
+        instruction_context = pair.get("instruction_context", {}).copy()
+
+        # If there's a fixed_vector in instruction_context, format it with subject names
+        if "fixed_vector" in instruction_context:
+            fixed_vector = instruction_context["fixed_vector"]
+            formatted_vector = format_budget_vector_with_subjects(
+                fixed_vector, self.subjects
+            )
+            instruction_context["fixed_vector_formatted"] = formatted_vector
 
         if len(vector_items) < 2:
             # Fallback to previous behavior (assume first two values are vectors)
