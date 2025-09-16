@@ -403,24 +403,24 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         },
         "temporal_second_year_choice_instruction": {
             "he": (
-                "התקציב לשנה הנוכחית קבוע: <strong>{vector_b_formatted}</strong>. "
-                "אנא בחרו את התקציב המועדף עליכם לשנה הבאה."
+                "התקציב לשנה <strong>הנוכחית</strong> קבוע: <strong>{vector_b_formatted}</strong>. "
+                "אנא בחרו את התקציב המועדף עליכם לשנה <strong>הבאה</strong>."
             ),
             "en": (
-                "The budget for the current year is fixed at: "
+                "The budget for the <strong>current</strong> year is fixed at: "
                 "<strong>{vector_b_formatted}</strong>. Please choose your "
-                "preferred budget for the next year."
+                "preferred budget for the <strong>next</strong> year."
             ),
         },
         "temporal_first_year_choice_instruction": {
             "he": (
-                "התקציב לשנה הבאה קבוע: <strong>{vector_b_formatted}</strong>. "
-                "אנא בחרו את התקציב המועדף עליכם לשנה הנוכחית."
+                "התקציב לשנה <strong>הבאה</strong> קבוע: <strong>{vector_b_formatted}</strong>. "
+                "אנא בחרו את התקציב המועדף עליכם לשנה <strong>הנוכחית</strong>."
             ),
             "en": (
-                "The budget for the next year is fixed at: "
+                "The budget for the <strong>next</strong> year is fixed at: "
                 "<strong>{vector_b_formatted}</strong>. Please choose your "
-                "preferred budget for the current year."
+                "preferred budget for the <strong>current</strong> year."
             ),
         },
     },
