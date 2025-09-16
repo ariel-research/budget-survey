@@ -56,12 +56,19 @@ class TestDynamicTemporalPreferenceStrategy:
         """Test Sub-Survey 1 (Simple Discounting) structure."""
         pairs = self.strategy.generate_pairs(self.test_vector, n=12)
 
-        # Check pairs 1-4 (sub-survey 1)
-        for i in range(4):
-            pair = pairs[i]
+        # Find Sub-Survey 1 pairs by original_pair_number (1-4)
+        sub_survey_1_pairs = [
+            pair for pair in pairs if pair.get("original_pair_number", 0) in range(1, 5)
+        ]
+        assert len(sub_survey_1_pairs) == 4
 
-            # Should have exactly 2 option keys
-            option_keys = [k for k in pair.keys() if not k.startswith("instruction")]
+        for pair in sub_survey_1_pairs:
+            # Should have exactly 2 option keys plus original_pair_number
+            option_keys = [
+                k
+                for k in pair.keys()
+                if not k.startswith("instruction") and k != "original_pair_number"
+            ]
             assert len(option_keys) == 2
 
             # Check key patterns
@@ -90,9 +97,14 @@ class TestDynamicTemporalPreferenceStrategy:
         """Test that balanced vectors B and C satisfy (B+C)/2 = user_vector."""
         pairs = self.strategy.generate_pairs(self.test_vector, n=12)
 
-        # Test sub-surveys 2 and 3 structure and mathematical correctness
-        for i in range(4, 8):  # Sub-survey 2
-            pair = pairs[i]
+        # Find Sub-Survey 2 pairs by original_pair_number (5-8)
+        sub_survey_2_pairs = [
+            pair for pair in pairs if pair.get("original_pair_number", 0) in range(5, 9)
+        ]
+        assert len(sub_survey_2_pairs) == 4
+
+        # Test sub-survey 2 structure and mathematical correctness
+        for pair in sub_survey_2_pairs:
 
             # Should have instruction context with fixed vector B
             assert "instruction_context" in pair
@@ -118,8 +130,16 @@ class TestDynamicTemporalPreferenceStrategy:
                     f"expected {self.test_vector[j]}"
                 )
 
-        for i in range(8, 12):  # Sub-survey 3
-            pair = pairs[i]
+        # Find Sub-Survey 3 pairs by original_pair_number (9-12)
+        sub_survey_3_pairs = [
+            pair
+            for pair in pairs
+            if pair.get("original_pair_number", 0) in range(9, 13)
+        ]
+        assert len(sub_survey_3_pairs) == 4
+
+        # Test sub-survey 3 structure and mathematical correctness
+        for pair in sub_survey_3_pairs:
 
             # Should have instruction context with fixed vector B
             assert "instruction_context" in pair

@@ -29,6 +29,30 @@ from .awareness_check import (
 logger = logging.getLogger(__name__)
 
 
+def format_budget_vector_with_subjects(vector: tuple, subjects: List[str]) -> str:
+    """
+    Format a budget vector with subject names for display.
+
+    Args:
+        vector: Budget allocation tuple (e.g., (50, 30, 20))
+        subjects: List of subject names (e.g., ["Health", "Education", "Defense"])
+
+    Returns:
+        Formatted string like "Health: 50, Education: 30, Defense: 20"
+    """
+    if len(vector) != len(subjects):
+        logger.warning(
+            f"Vector length {len(vector)} doesn't match subjects length {len(subjects)}"
+        )
+        return ", ".join(map(str, vector))  # Fallback to numbers only
+
+    formatted_parts = []
+    for subject, value in zip(subjects, vector):
+        formatted_parts.append(f"{subject}: {value}")
+
+    return ", ".join(formatted_parts)
+
+
 class SurveyService:
     @staticmethod
     def check_survey_exists(
@@ -276,9 +300,15 @@ class SurveyService:
 
             # Store comparison pairs
             for idx, pair in enumerate(submission.comparison_pairs, 1):
+                # Use original_pair_number if available (for interleaved strategies),
+                # otherwise use enumeration index for backward compatibility
+                pair_number = (
+                    pair.original_pair_number if pair.original_pair_number else idx
+                )
+
                 comparison_pair_id = create_comparison_pair(
                     survey_response_id=survey_response_id,
-                    pair_number=idx,
+                    pair_number=pair_number,
                     option_1=pair.option_1,
                     option_2=pair.option_2,
                     user_choice=pair.user_choice,
@@ -330,7 +360,7 @@ class SurveySessionData:
 
     def _randomize_pair_options(
         self, pair: Dict[str, tuple]
-    ) -> Tuple[tuple, tuple, bool, str, str, list, list, dict]:
+    ) -> Tuple[tuple, tuple, bool, str, str, list, list, dict, int]:
         """
         Randomly reorder options within a pair.
 
@@ -347,6 +377,7 @@ class SurveySessionData:
             - option1_differences: Differences for option 1 (if available)
             - option2_differences: Differences for option 2 (if available)
             - instruction_context: Context for generating sub-survey specific instructions
+            - original_pair_number: Original logical pair number (for interleaved strategies)
         """
         # Identify the two vector entries robustly (ignore metadata keys)
         vector_items = [
@@ -356,7 +387,18 @@ class SurveySessionData:
         ]
 
         # Extract instruction context if available
-        instruction_context = pair.get("instruction_context", {})
+        instruction_context = pair.get("instruction_context", {}).copy()
+
+        # If there's a fixed_vector in instruction_context, format it with subject names
+        if "fixed_vector" in instruction_context:
+            fixed_vector = instruction_context["fixed_vector"]
+            formatted_vector = format_budget_vector_with_subjects(
+                fixed_vector, self.subjects
+            )
+            instruction_context["fixed_vector_formatted"] = formatted_vector
+
+        # Extract original pair number for interleaved strategies (default to 0 for backward compatibility)
+        original_pair_number = pair.get("original_pair_number", 0)
 
         if len(vector_items) < 2:
             # Fallback to previous behavior (assume first two values are vectors)
@@ -374,6 +416,7 @@ class SurveySessionData:
                     option2_diffs,
                     option1_diffs,
                     instruction_context,
+                    original_pair_number,
                 )
             return (
                 vectors[0],
@@ -384,6 +427,7 @@ class SurveySessionData:
                 option1_diffs,
                 option2_diffs,
                 instruction_context,
+                original_pair_number,
             )
 
         # Map vector labels to their strategy text if available
@@ -429,6 +473,7 @@ class SurveySessionData:
                 option2_diffs,
                 option1_diffs,
                 instruction_context,
+                original_pair_number,
             )
 
         return (
@@ -440,6 +485,7 @@ class SurveySessionData:
             option1_diffs,
             option2_diffs,
             instruction_context,
+            original_pair_number,
         )
 
     def to_template_data(self) -> Dict:
@@ -526,6 +572,7 @@ class SurveySessionData:
                     option1_differences,
                     option2_differences,
                     instruction_context,
+                    original_pair_number,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -535,6 +582,7 @@ class SurveySessionData:
                     "is_awareness": False,
                     "question_number": i + 2,
                     "instruction_context": instruction_context,
+                    "original_pair_number": original_pair_number,
                 }
                 # Add differences if they exist
                 if option1_differences is not None:
@@ -567,6 +615,7 @@ class SurveySessionData:
                     option1_differences,
                     option2_differences,
                     instruction_context,
+                    original_pair_number,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -576,6 +625,7 @@ class SurveySessionData:
                     "is_awareness": False,
                     "question_number": i + midpoint + 3,
                     "instruction_context": instruction_context,
+                    "original_pair_number": original_pair_number,
                 }
                 # Add differences if they exist
                 if option1_differences is not None:

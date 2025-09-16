@@ -22,6 +22,7 @@ class ComparisonPair:
     option2_strategy: str = None
     option1_differences: List[int] = None
     option2_differences: List[int] = None
+    original_pair_number: int = None
 
     def is_valid(self) -> bool:
         """
@@ -380,6 +381,16 @@ class SurveySubmission:
                         parse_diffs(option2_diffs_str) if option2_diffs_str else None
                     )
 
+                    # Extract original pair number for interleaved strategies
+                    original_pair_number_str = form_data.get(
+                        f"original_pair_number_{i}", ""
+                    )
+                    original_pair_number = (
+                        int(original_pair_number_str)
+                        if original_pair_number_str
+                        else None
+                    )
+
                     if was_swapped:
                         option_1, option_2 = option_2, option_1
                         option1_strategy, option2_strategy = (
@@ -402,6 +413,7 @@ class SurveySubmission:
                             option2_strategy=option2_strategy,
                             option1_differences=option1_differences,
                             option2_differences=option2_differences,
+                            original_pair_number=original_pair_number,
                         )
                     )
 

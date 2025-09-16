@@ -81,7 +81,10 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
 
         logger.info(f"Generating {n} dynamic temporal preference pairs")
 
-        pairs = []
+        # Generate pairs for each sub-survey separately to enable interleaving
+        sub_survey_1_pairs = []
+        sub_survey_2_pairs = []
+        sub_survey_3_pairs = []
 
         # Sub-Survey 1: Simple Discounting (pairs 1-4)
         # User chooses between ideal vector and random vector for current year
@@ -92,8 +95,9 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
             pair = {
                 "Simple Discounting - Ideal Option": user_vector,
                 "Simple Discounting - Random Option": random_vector,
+                "original_pair_number": i,  # Preserve original logical numbering
             }
-            pairs.append(pair)
+            sub_survey_1_pairs.append(pair)
             logger.debug(f"Sub-survey 1, pair {i}: Ideal vs Random")
 
         # Generate balanced vector pairs for sub-surveys 2 & 3
@@ -109,8 +113,9 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
                 "Second-Year Choice - Ideal Option": user_vector,
                 "Second-Year Choice - Balanced Option": vector_c,
                 "instruction_context": {"fixed_vector": vector_b},
+                "original_pair_number": i,  # Preserve original logical numbering
             }
-            pairs.append(pair)
+            sub_survey_2_pairs.append(pair)
             logger.debug(f"Sub-survey 2, pair {i-4}: Ideal vs C, B={vector_b} fixed")
 
         # Sub-Survey 3: First-Year Choice (pairs 9-12)
@@ -121,16 +126,25 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
                 "First-Year Choice - Ideal Option": user_vector,
                 "First-Year Choice - Balanced Option": vector_c,
                 "instruction_context": {"fixed_vector": vector_b},
+                "original_pair_number": i,  # Preserve original logical numbering
             }
-            pairs.append(pair)
+            sub_survey_3_pairs.append(pair)
             logger.debug(f"Sub-survey 3, pair {i-8}: Ideal vs C, B={vector_b} fixed")
+
+        # Interleave the pairs: [S1-Q1, S2-Q1, S3-Q1, S1-Q2, S2-Q2, S3-Q2, ...]
+        interleaved_pairs = []
+        for i in range(4):  # 4 questions per sub-survey
+            interleaved_pairs.append(sub_survey_1_pairs[i])
+            interleaved_pairs.append(sub_survey_2_pairs[i])
+            interleaved_pairs.append(sub_survey_3_pairs[i])
 
         # Override logging since we have two-year plans, not single vectors
         logger.info(
-            f"Successfully generated {len(pairs)} dynamic temporal preference " "pairs"
+            f"Successfully generated {len(interleaved_pairs)} dynamic temporal "
+            "preference pairs in interleaved order"
         )
 
-        return pairs
+        return interleaved_pairs
 
     def _generate_balanced_vector_pairs(
         self, user_vector: tuple, vector_size: int, n: int
