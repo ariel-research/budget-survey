@@ -1011,21 +1011,46 @@ th.sortable[data-order="desc"]::after {
 }
 
 .view-all-link {
-   display: inline-block;
-   padding: 0.75rem 1.5rem;
-   background-color: var(--color-primary);
-   color: white;
-   text-decoration: none;
-   border-radius: 6px;
-   font-weight: 500;
-   transition: all 0.2s ease;
-   margin: 1rem 0;
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin: 1rem 0;
 }
 
 .view-all-link:hover {
-   background-color: var(--color-primary-light);
-   transform: translateY(-1px);
-   box-shadow: var(--shadow-hover);
+  background-color: var(--color-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.view-all-link.download-csv-link {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  background-color: var(--color-secondary);
+}
+
+.view-all-link.download-csv-link:hover {
+  background-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+/* Style for the new SVG icon */
+.download-csv-link .download-icon {
+    width: 1.2em;
+    height: 1.2em;
+    margin-inline-end: 0.5em; /* Handles spacing for both LTR and RTL */
+    vertical-align: middle;
+}
+
+/* Active state for better click feedback */
+.view-all-link.download-csv-link:active {
+  transform: translateY(1px);
+  background-color: var(--color-primary-light);
 }
 
 .comments-header {
@@ -2539,6 +2564,10 @@ th.sortable[data-order="desc"]::after {
    width: 100%;
 }
 
+[dir="rtl"] .survey-header .download-csv-link {
+   align-self: flex-start;
+}
+
 /* Tables */
 [dir="rtl"] .table-container th,
 [dir="rtl"] .table-container td {
@@ -2737,16 +2766,16 @@ th.sortable[data-order="desc"]::after {
 
 /* Survey Count Containers */
 [dir="rtl"] .survey-count-container {
-   align-items: flex-end;
+  align-items: flex-end;
 }
 
 [dir="rtl"] .survey-ids-list {
-   flex-direction: row-reverse;
-   justify-content: flex-start;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 [dir="rtl"] .ideal-budget {
-   text-align: center;
+  text-align: center;
 }
 
 [dir="rtl"] .matrix-user-header,

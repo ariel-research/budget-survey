@@ -144,6 +144,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "שגיאה ביצירת מטריצת המשתמשים",
             "en": "Error generating the user matrix",
         },
+        "no_responses_to_download": {
+            "he": "אין תשובות זמינות להורדה עבור סקר {survey_id}",
+            "en": "No responses available for download for survey {survey_id}",
+        },
     },
     "pagination": {  # Pagination controls
         "previous": {
@@ -560,6 +564,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "clear_filter": {
             "he": "נקה סינון",
             "en": "Clear",
+        },
+        "download_csv": {
+            "he": "הורד CSV",
+            "en": "Download CSV",
+        },
+        "download_csv_tooltip": {
+            "he": "הורד את נתוני התשובות בפורמט CSV",
+            "en": "Download response data in CSV format",
         },
         "comments_title": {"he": "הערות המשתמשים", "en": "User Comments"},
         "view_all_comments": {"he": "צפה בכל ההערות", "en": "View All Comments"},

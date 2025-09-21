@@ -3,11 +3,13 @@ Survey responses route module.
 Handles all survey response related endpoints including responses and comments.
 """
 
+import io
 import logging
 import math
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, current_app, render_template, request
+import pandas as pd
+from flask import Blueprint, Response, current_app, render_template, request
 
 from analysis.report_content_generators import (
     generate_aggregated_percentile_breakdown,
@@ -428,6 +430,81 @@ def get_survey_responses(survey_id: int):
                 "error.html",
                 message=get_translation("survey_retrieval_error", "messages"),
             ),
+            500,
+        )
+
+
+@responses_routes.route("/<int:survey_id>/responses/download")
+def download_survey_responses_csv(survey_id: int):
+    """
+    Generates and serves a CSV file of survey responses,
+    respecting the view_filter query parameter by reusing existing logic.
+    """
+    try:
+        # 1. Reuse the existing get_user_responses function to get filtered data
+        # We pass user_choices=None so it fetches from the DB.
+        data_dict = get_user_responses(
+            survey_id=survey_id,
+            user_choices=None,
+            show_tables_only=False,  # Ensure we get the full data structure
+            view_filter=request.args.get("view_filter"),
+        )
+
+        # 2. Check if the function returned any response data
+        user_choices_from_function = data_dict.get("responses")
+        if not user_choices_from_function:
+            return (
+                render_template(
+                    "error.html",
+                    message=get_translation(
+                        "no_responses_to_download", "messages", survey_id=survey_id
+                    ),
+                ),
+                404,
+            )
+
+        # 3. Flatten the detailed data into a list of dicts for the CSV
+        csv_data = []
+        for choice in user_choices_from_function:
+            csv_data.append(
+                {
+                    "user_id": choice.get("user_id"),
+                    "survey_response_id": choice.get("survey_response_id"),
+                    "response_created_at": choice.get("response_created_at"),
+                    "optimal_allocation": str(choice.get("optimal_allocation")),
+                    "pair_number": choice.get("pair_number"),
+                    "option_1": str(choice.get("option_1")),
+                    "option_2": str(choice.get("option_2")),
+                    "user_choice": choice.get("user_choice"),
+                    "raw_user_choice": choice.get("raw_user_choice"),
+                    "option1_strategy": choice.get("option1_strategy"),
+                    "option2_strategy": choice.get("option2_strategy"),
+                }
+            )
+
+        # 4. Generate CSV using pandas
+        df = pd.DataFrame(csv_data)
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        csv_string = output.getvalue()
+
+        # 5. Create the dynamic filename and Flask Response
+        view_filter = request.args.get("view_filter")
+        filename = f"survey_{survey_id}_responses"
+        if view_filter:
+            filename += f"_{view_filter}"
+        filename += ".csv"
+
+        return Response(
+            csv_string,
+            mimetype="text/csv",
+            headers={"Content-disposition": f"attachment; filename={filename}"},
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating CSV for survey {survey_id}: {e}", exc_info=True)
+        return (
+            render_template("error.html", message="Failed to generate CSV file."),
             500,
         )
 
