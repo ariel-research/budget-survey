@@ -3198,6 +3198,25 @@ def generate_detailed_breakdown_table(
                     data_cells.append(
                         f'<td class="{highlight_sub3}">{sub3_percent:.0f}%</td>'
                     )
+                elif "option_a" in strategy_columns and "option_b" in strategy_columns:
+                    # Handle preference_ranking_survey strategy with option_a/option_b columns
+                    # Map to the standard option1_percent/option2_percent statistics
+                    option_a_percent = summary["stats"]["option1_percent"]
+                    option_b_percent = summary["stats"]["option2_percent"]
+
+                    highlight_a = (
+                        "highlight-row" if option_a_percent > option_b_percent else ""
+                    )
+                    highlight_b = (
+                        "highlight-row" if option_b_percent > option_a_percent else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_a}">{format(option_a_percent, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_b}">{format(option_b_percent, ".1f")}%</td>'
+                    )
                 elif "option1" in strategy_columns and "option2" in strategy_columns:
                     # Default case with option1/option2 columns
                     opt1_percent = summary["stats"]["option1_percent"]
