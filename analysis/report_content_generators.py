@@ -1720,16 +1720,7 @@ def _generate_final_ranking_summary_table(
     )
 
     # Final Consistency Rate
-    final_cons_score = 0
-    for pt in pairwise_prefs:
-        prefs = [
-            pairwise_prefs[pt][x1_mag]["+"],
-            pairwise_prefs[pt][x1_mag]["–"],
-            pairwise_prefs[pt][x2_mag]["+"],
-            pairwise_prefs[pt][x2_mag]["–"],
-        ]
-        if len(set(prefs)) == 1:
-            final_cons_score += 1
+    final_cons_score = _calculate_final_consistency_score(deduced_data)
 
     # Helper functions for consistency display
     def get_consistency_class(score, total):
@@ -2962,6 +2953,30 @@ def generate_detailed_breakdown_table(
             if strategy_columns:
                 if (
                     "consistency" in strategy_columns
+                    and summary.get("strategy_name") == "preference_ranking_survey"
+                ) and "choices" in summary:
+                    # Handle preference_ranking_survey strategy with consistency (final score) column
+                    choices = summary["choices"]
+                    if len(choices) == 12:
+                        deduced_data = _deduce_rankings(choices)
+                        if deduced_data:
+                            final_score = _calculate_final_consistency_score(
+                                deduced_data
+                            )
+                            final_score_percent = (final_score / 3) * 100
+                        else:
+                            final_score_percent = 0
+                    else:
+                        final_score_percent = 0
+
+                    # Highlight if consistency is high (>= 67%, which means 2/3 or 3/3)
+                    highlight = "highlight-row" if final_score_percent >= 67 else ""
+
+                    data_cells.append(
+                        f'<td class="{highlight}">{final_score_percent:.1f}%</td>'
+                    )
+                elif (
+                    "consistency" in strategy_columns
                     or "transitivity_rate" in strategy_columns
                     or "order_consistency" in strategy_columns
                 ) and "choices" in summary:
@@ -3541,6 +3556,54 @@ def generate_overall_statistics_table(
                 <p class="summary-note">No data available for consistency analysis.</p>
             </div>
             """
+    elif strategy_name == "preference_ranking_survey":
+        # Handle preference ranking survey strategy
+        # Calculate average final-score across all users
+        total_final_scores = 0
+        valid_summaries = 0
+
+        for summary in summaries:
+            if "choices" in summary:
+                choices = summary["choices"]
+                # Only process if we have exactly 12 choices for preference ranking
+                if len(choices) == 12:
+                    deduced_data = _deduce_rankings(choices)
+                    if deduced_data:
+                        final_score = _calculate_final_consistency_score(deduced_data)
+                        total_final_scores += final_score
+                        valid_summaries += 1
+
+        # Calculate average final score as percentage
+        avg_final_score = (
+            total_final_scores / valid_summaries if valid_summaries > 0 else 0
+        )
+        avg_final_score_percent = (avg_final_score / 3) * 100
+
+        # Get translation for final score label
+        final_score_label = "Average Final Score"
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_metric}</th>
+                            <th>{th_avg_perc}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="highlight-row">
+                            <td>{final_score_label}</td>
+                            <td>{avg_final_score_percent:.1f}%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
+        </div>
+        """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
         # Handle root sum squared strategies
         # Calculate overall averages
@@ -5378,6 +5441,27 @@ def generate_dynamic_temporal_consistency_breakdown_tables(
         {sub3_table}
     </div>
     """
+
+
+def _calculate_final_consistency_score(deduced_data: Dict) -> int:
+    """Calculates the final consistency score from deduced ranking data."""
+    if not deduced_data or "pairwise" not in deduced_data:
+        return 0
+
+    magnitudes = deduced_data["magnitudes"]
+    x1_mag, x2_mag = magnitudes
+    pairwise_prefs = deduced_data["pairwise"]
+    final_cons_score = 0
+    for pt in pairwise_prefs:
+        prefs = [
+            pairwise_prefs[pt][x1_mag]["+"],
+            pairwise_prefs[pt][x1_mag]["–"],
+            pairwise_prefs[pt][x2_mag]["+"],
+            pairwise_prefs[pt][x2_mag]["–"],
+        ]
+        if len(set(prefs)) == 1:
+            final_cons_score += 1
+    return final_cons_score
 
 
 if __name__ == "__main__":

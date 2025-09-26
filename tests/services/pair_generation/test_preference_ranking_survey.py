@@ -378,8 +378,7 @@ def test_option_labels(strategy):
 def test_table_columns(strategy):
     """Test that strategy returns correct table column definitions."""
     columns = strategy.get_table_columns()
-    assert "option_a" in columns
-    assert "option_b" in columns
+    assert "consistency" in columns
 
     for col_name, col_def in columns.items():
         assert "name" in col_def

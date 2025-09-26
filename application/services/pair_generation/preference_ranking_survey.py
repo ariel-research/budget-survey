@@ -311,13 +311,9 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
     def get_table_columns(self) -> Dict[str, Dict]:
         """Get column definitions for the survey response breakdown table."""
         return {
-            "option_a": {
-                "name": get_translation("option_a_label", "answers"),
-                "type": "percentage",
-                "highlight": True,
-            },
-            "option_b": {
-                "name": get_translation("option_b_label", "answers"),
+            "consistency": {
+                "name": "Consistency",
+                "metric": "Ranking Consistency",
                 "type": "percentage",
                 "highlight": True,
             },
