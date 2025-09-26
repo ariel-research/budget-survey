@@ -231,8 +231,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Your ideal budget allocation is:",
         },
         "reality_explanation": {
-            "he": "אבל במציאות, חלוקת התקציב לא זהה לחלוקה האידיאלית שלך. בהמשך נציג לפניך עשרה זוגות של חלוקות-תקציב לא אידיאליות. עבור כל אחד מהזוגות, עליך לבחור איזו מבין שתי החלוקות טובה יותר בעיניך.",
-            "en": "However, in reality, the budget allocation differs from your ideal allocation. We will present you with ten pairs of non-ideal budget allocations. For each pair, you need to choose which of the two allocations is better in your opinion.",
+            "he": "אבל במציאות, חלוקת התקציב לא זהה לחלוקה האידיאלית שלך. בהמשך נציג לפניך זוגות של חלוקות-תקציב לא אידיאליות. עבור כל אחד מהזוגות, עליך לבחור איזו מבין שתי החלוקות טובה יותר בעיניך.",
+            "en": "However, in reality, the budget allocation differs from your ideal allocation. We will present you with pairs of non-ideal budget allocations. For each pair, you need to choose which of the two allocations is better in your opinion.",
         },
         "pair": {"he": "זוג", "en": "Pair"},
         "option": {"he": "חלוקה", "en": "Option"},
