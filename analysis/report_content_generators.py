@@ -3580,7 +3580,7 @@ def generate_overall_statistics_table(
         avg_final_score_percent = (avg_final_score / 3) * 100
 
         # Get translation for final score label
-        final_score_label = "Average Final Score"
+        final_score_label = get_translation("final_score", "answers")
 
         overall_table = f"""
         <div class="summary-table-container">
