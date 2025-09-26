@@ -16,7 +16,7 @@
     --color-linear-symmetry: #EF4444;         /* Red */
     --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
     --color-preference-ranking-survey: #E91E63; /* Pink */
-    --color-temporal-preference-test: #FF7F50;  /* Coral */
+    --color-biennial-budget-preference: #FF7F50;  /* Coral */
 
     /* Text Colors */
     --color-text-dark: #1f2937;
@@ -403,8 +403,8 @@
 .strategy-badge[data-strategy="preference_ranking_survey"] { 
     background: var(--color-preference-ranking-survey);
   }
-.strategy-badge[data-strategy="temporal_preference_test"] { 
-    background: var(--color-temporal-preference-test);
+.strategy-badge[data-strategy="biennial_budget_preference"] { 
+    background: var(--color-biennial-budget-preference);
   }
 .strategy-badge {
     background: var(--color-indigo);

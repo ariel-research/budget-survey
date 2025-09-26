@@ -373,7 +373,7 @@ class DynamicTemporalPreferenceStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Return unique identifier for this strategy."""
-        return "temporal_preference_test"
+        return "biennial_budget_preference"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """

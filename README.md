@@ -498,7 +498,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
     - **Core Hypothesis**: User's underlying preference order will be consistently revealed across all ranking questions, providing insights into stable budget allocation priorities
 
 11. **Dynamic Temporal Preference Test**
-    - Strategy name: `temporal_preference_test`
+    - Strategy name: `biennial_budget_preference`
     - Tests comprehensive temporal discounting and preference for achieving exact ideal states versus mathematically balanced two-year plans
     - **Algorithm Overview**:
       - Generates 12 pairs across three 4-question sub-surveys
@@ -1034,7 +1034,7 @@ To add new surveys or modify existing ones, follow these steps:
        'budget_2024',
        TRUE,
        JSON_OBJECT(
-           'strategy', 'temporal_preference_test',
+           'strategy', 'biennial_budget_preference',
            'params', JSON_OBJECT('num_pairs', 10),
            'pair_instructions', JSON_OBJECT(
                'he', 'עליכם לקבוע את התקציב עבור שתי שנים עוקבות: השנה הנוכחית, והשנה הבאה. איזה מבין שני התקציבים הבאים תעדיפו שיהיה התקציב בשנה הנוכחית? התקציב שלא תבחרו יהיה התקציב בשנה הבאה.',
@@ -1102,7 +1102,7 @@ VALUES (
     'my_custom_survey',
     TRUE,
     JSON_OBJECT(
-        'strategy', 'temporal_preference_test',
+        'strategy', 'biennial_budget_preference',
         'params', JSON_OBJECT('num_pairs', 10),
         'pair_instructions', JSON_OBJECT(
             'he', 'הוראות מותאמות אישית בעברית',
@@ -1156,7 +1156,7 @@ VALUES (
     'highlighted_instructions_survey',
     TRUE,
     JSON_OBJECT(
-        'strategy', 'temporal_preference_test',
+        'strategy', 'biennial_budget_preference',
         'params', JSON_OBJECT('num_pairs', 10),
         'pair_instructions', JSON_OBJECT(
             'he', 'עליכם לקבוע את התקציב עבור <mark>שתי שנים עוקבות</mark>: <strong>השנה הנוכחית</strong>, והשנה הבאה.',

@@ -948,8 +948,8 @@ def _generate_survey_choices_html(
         if matrix_html:
             html_parts.append(matrix_html)
 
-    # Special handling for temporal_preference_test strategy - three separate tables
-    elif strategy_name == "temporal_preference_test":
+    # Special handling for biennial_budget_preference strategy - three separate tables
+    elif strategy_name == "biennial_budget_preference":
         temporal_sub_tables_html = _generate_temporal_sub_survey_tables(choices)
         if temporal_sub_tables_html:
             html_parts.append(temporal_sub_tables_html)
@@ -2694,7 +2694,7 @@ def generate_detailed_user_choices(
             if (
                 choices
                 and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "temporal_preference_test"
+                and choices[0]["strategy_name"] == "biennial_budget_preference"
             ):
                 temporal_metrics = _calculate_temporal_preference_metrics(choices)
                 stats.update(temporal_metrics)
@@ -2702,7 +2702,7 @@ def generate_detailed_user_choices(
             if (
                 choices
                 and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "temporal_preference_test"
+                and choices[0]["strategy_name"] == "biennial_budget_preference"
             ):
                 dynamic_temporal_metrics = _calculate_dynamic_temporal_metrics(choices)
                 stats.update(dynamic_temporal_metrics)
@@ -3194,7 +3194,7 @@ def generate_detailed_breakdown_table(
                     and "sub2_ideal_y2" in strategy_columns
                     and "sub3_ideal_y1" in strategy_columns
                 ):
-                    # Handle temporal_preference_test strategy with three sub-survey columns
+                    # Handle biennial_budget_preference strategy with three sub-survey columns
                     sub1_percent = summary["stats"].get("sub1_ideal_y1_percent", 0)
                     sub2_percent = summary["stats"].get("sub2_ideal_y2_percent", 0)
                     sub3_percent = summary["stats"].get("sub3_ideal_y1_percent", 0)
@@ -3535,7 +3535,7 @@ def generate_overall_statistics_table(
             <p class="summary-note">{note}</p>
         </div>
         """
-    elif strategy_name == "temporal_preference_test":
+    elif strategy_name == "biennial_budget_preference":
         # Handle dynamic temporal preference strategy using three consistency breakdown tables
         # Extract all user choices from summaries
         all_user_choices = []

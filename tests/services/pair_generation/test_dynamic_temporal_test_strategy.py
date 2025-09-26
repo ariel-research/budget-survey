@@ -36,7 +36,7 @@ class TestDynamicTemporalPreferenceStrategy:
 
     def test_strategy_name(self):
         """Test that strategy returns correct name."""
-        assert self.strategy.get_strategy_name() == "temporal_preference_test"
+        assert self.strategy.get_strategy_name() == "biennial_budget_preference"
 
     def test_generate_pairs_returns_exactly_12(self):
         """Test that generate_pairs returns exactly 12 pairs."""
