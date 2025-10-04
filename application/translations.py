@@ -482,18 +482,18 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Active surveys in the system",
         },
         "total_participants": {
-            "he": "עברו בדיקות ערנות",
-            "en": "Passed Attention Checks",
+            "he": "עברו בדיקות איכות (בדיקות ערנות)",
+            "en": "Passed Quality Checks (Attention Checks)",
         },
         "excluded_users": {"he": "משתמשים חסומים", "en": "Blocked Users"},
-        "all_participants": {"he": "סך כל המשתתפים", "en": "All Participants"},
+        "all_participants": {"he": "כל המשתתפים", "en": "All Survey Completers"},
         "all_participants_description": {
-            "he": "משתמשים שהשלימו סקרים כלשהם",
-            "en": "Users who completed any survey",
+            "he": "משתמשים שהשלימו סקרים (כולל כאלה שנכשלו בבדיקות איכות/ערנות)",
+            "en": "Users who completed surveys (including those who failed quality/attention checks)",
         },
         "total_participants_description": {
-            "he": "משתמשים עם לפחות השלמה מוצלחת",
-            "en": "Users with at least one successful completion",
+            "he": "משתמשים שהשלימו סקרים ועברו בדיקות איכות (ערנות)",
+            "en": "Users who completed surveys and passed quality (attention) checks",
         },
         "excluded_users_description": {
             "he": "משתמשים החסומים כעת",
