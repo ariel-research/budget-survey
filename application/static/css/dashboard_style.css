@@ -17,6 +17,7 @@
     --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
     --color-preference-ranking-survey: #E91E63; /* Pink */
     --color-biennial-budget-preference: #FF7F50;  /* Coral */
+    --color-triangle-inequality-test: #0EA5E9;  /* Sky Blue */
 
     /* Text Colors */
     --color-text-dark: #1f2937;
@@ -402,10 +403,13 @@
 }
 .strategy-badge[data-strategy="preference_ranking_survey"] { 
     background: var(--color-preference-ranking-survey);
-  }
+}
 .strategy-badge[data-strategy="biennial_budget_preference"] { 
     background: var(--color-biennial-budget-preference);
-  }
+}
+.strategy-badge[data-strategy="triangle_inequality_test"] { 
+    background: var(--color-triangle-inequality-test);
+}
 .strategy-badge {
     background: var(--color-indigo);
 }

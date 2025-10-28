@@ -1,0 +1,127 @@
+<!--
+This template displays screening questions for the triangle inequality test.
+Users must pass these questions to proceed to the main survey.
+-->
+
+{% extends "base.html" %}
+
+{% block title %}{{ get_translation('screening_title', 'survey') }}{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/survey_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="survey-container">
+    {% if is_demo %}
+    <div class="demo-badge">
+        {{ get_translation('demo_mode', 'messages') }}
+    </div>
+    {% endif %}
+    
+    <h1>{{ get_translation('screening_title', 'survey') }}</h1>
+    <p class="screening-instruction">{{ get_translation('screening_instruction', 'survey') }}</p>
+    
+    <div class="ideal-budget">
+        <h2>{{ get_translation('ideal_budget', 'survey') }}</h2>
+        {% for subject, value in zip(subjects, user_vector) %}
+        <div>
+            <span class="subject">{{ subject }}:</span>
+            <span class="value">{{ value }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <form method="POST">
+        {% for question in screening_questions %}
+        <div class="screening-question">
+            <h3>{{ get_translation('question', 'answers') }} {{ question.question_number }}</h3>
+            <p class="question-prompt">{{ get_translation(question.prompt_key, 'survey') }}</p>
+            
+            <!-- Fixed budget display -->
+            <div class="fixed-budget-display">
+                <h4>{{ get_translation('year_' + question.fixed_year|string + '_fixed', 'survey') }}</h4>
+                <div class="budget-breakdown">
+                    {% for subject, value in zip(subjects, question.fixed_budget) %}
+                    <div class="budget-item">
+                        <span class="subject">{{ subject }}:</span>
+                        <span class="value">{{ value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Choice options -->
+            <div class="choice-section">
+                <h4>{{ get_translation('your_choice_for_year', 'survey', year=3 - question.fixed_year) }}</h4>
+                
+                <div class="screening-options">
+                    <div class="screening-option">
+                        <input type="radio" 
+                               id="q{{ loop.index0 }}_opt1" 
+                               name="screening_answer_{{ loop.index0 }}" 
+                               value="1" 
+                               required>
+                        <label for="q{{ loop.index0 }}_opt1" class="option-card">
+                            <h5>{{ get_translation('option', 'survey') }} A</h5>
+                            <div class="budget-breakdown">
+                                {% for subject, value in zip(subjects, question.option_a) %}
+                                <div class="budget-item">
+                                    <span class="subject">{{ subject }}:</span>
+                                    <span class="value">{{ value }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="screening-option">
+                        <input type="radio" 
+                               id="q{{ loop.index0 }}_opt2" 
+                               name="screening_answer_{{ loop.index0 }}" 
+                               value="2" 
+                               required>
+                        <label for="q{{ loop.index0 }}_opt2" class="option-card">
+                            <h5>{{ get_translation('option', 'survey') }} B</h5>
+                            <div class="budget-breakdown">
+                                {% for subject, value in zip(subjects, question.option_b) %}
+                                <div class="budget-item">
+                                    <span class="subject">{{ subject }}:</span>
+                                    <span class="value">{{ value }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="form-actions">
+            <button type="submit" class="submit-button">
+                {{ get_translation('proceed_to_main_survey', 'survey') }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block additional_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handler to option cards
+    const optionCards = document.querySelectorAll('.option-card');
+    optionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.previousElementSibling;
+            if (radio && radio.type === 'radio') {
+                radio.checked = true;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+

@@ -537,6 +537,37 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       #         Ideal,B vs C,B (Year 2 fixed as B)
       ```
 
+12. **Triangle Inequality Test**
+    - Strategy name: `triangle_inequality_test`
+    - Tests if user preferences for biennial budgets satisfy the triangle inequality by comparing concentrated versus distributed budget changes over two years.
+    - **Algorithm Overview**:
+      - Generates 12 pairs to test if the perceived "distance" of a budget change satisfies `||q|| ≤ ||q1|| + ||q2||`, where `q` is a total change vector decomposed into `q1` and `q2`.
+      - Each pair compares a **concentrated change** (full deviation `q` in Year 2) with a **distributed change** (deviation split into `q1` in Year 1 and `q2` in Year 2).
+      - Structure: 2 base change vectors × 3 cyclic rotations × 2 variants (positive/negative) = 12 pairs.
+      - All comparisons are for biennial budgets, represented as flattened 6-element vectors.
+    - **Special Handling**:
+      - Throws `UnsuitableForStrategyError` if the user's ideal budget contains any zero values, as this can create invalid budget allocations.
+    - Parameters:
+      - `num_pairs`: Number of pairs to generate (must be 12).
+    - Example:
+      ```python
+      # For user_vector p = [50, 30, 20]
+      # Base change q = [10, -20, 10], decomposed into:
+      # q1 = [10, 0, -10] and q2 = [0, -20, 20]
+
+      # Positive Variant Pair:
+      # Concentrated Option (Year 1: p, Year 2: p+q):
+      # ([50, 30, 20], [60, 10, 30])
+      
+      # Distributed Option (Year 1: p+q1, Year 2: p+q2):
+      # ([60, 30, 10], [50, 10, 40])
+      ```
+    - **Core Hypothesis & Analysis**:
+      - **Hypothesis**: This test assumes the user has an additive utility model (where total disutility is the sum of each year's disutility), as two initial screening questions filter out participants who "balance" budgets across years. The hypothesis is that this additive model, when treated as a distance, satisfies the triangle inequality ($||q|| \le ||q_1|| + ||q_2||$). Therefore, users should consistently prefer the "Concentrated" option (one large deviation, total disutility $||q||$) over the "Distributed" option (two smaller deviations, total disutility $||q_1|| + ||q_2||$), because its total disutility is lower (or equal).
+      - **Analysis Features**:
+        - Measures user preference for concentrated vs. distributed changes.
+        - Calculates a "Triangle Inequality Consistency" score to see how choices align with the mathematical principle.
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

@@ -42,8 +42,11 @@ class ComparisonPair:
             if self.user_choice not in [1, 2]:
                 return False
 
-            # Validate that each option sums to 100
-            if sum(self.option_1) != 100 or sum(self.option_2) != 100:
+            # Validate sum: 100 for single-year, 200 for biennial budgets
+            # Biennial budgets have 6 elements (2 years × 3 subjects)
+            expected_sum = 200 if len(self.option_1) == 6 else 100
+
+            if sum(self.option_1) != expected_sum or sum(self.option_2) != expected_sum:
                 return False
 
             return True

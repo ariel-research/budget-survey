@@ -168,18 +168,37 @@ def create_vector():
                 )
 
             logger.info(f"Valid vector created by user {user_id}: {user_vector}")
-            return redirect(
-                url_for(
-                    "survey.survey",
-                    vector=",".join(map(str, user_vector)),
-                    userID=user_id,
-                    surveyID=external_survey_id,
-                    internalID=internal_survey_id,
-                    lang=current_lang,
-                    q=external_q_argument,
-                    demo="true" if is_demo else None,
+
+            # Check if strategy requires screening (triangle_inequality_test)
+            strategy_name = survey_data.get("strategy_name", "")
+            if strategy_name == "triangle_inequality_test":
+                # Redirect to screening questions
+                return redirect(
+                    url_for(
+                        "survey.screening",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
                 )
-            )
+            else:
+                # Redirect directly to survey
+                return redirect(
+                    url_for(
+                        "survey.survey",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
+                )
 
         except ValueError as e:
             logger.error(f"Invalid vector data: {str(e)}")
@@ -473,6 +492,106 @@ def handle_survey_post(
         return render_template(
             "error.html", message=get_translation("survey_processing_error", "messages")
         )
+
+
+@survey_routes.route("/screening", methods=["GET", "POST"])
+@check_survey_eligibility
+def screening():
+    """Screening questions route handler for triangle inequality test."""
+    user_id, external_survey_id, internal_survey_id, external_q_argument, is_demo = (
+        get_required_params()
+    )
+    current_lang = get_current_language()
+
+    # Get survey data
+    survey_exists, error, survey_data = SurveyService.check_survey_exists(
+        internal_survey_id
+    )
+    if not survey_exists:
+        error_key, error_params = error
+        abort(404, description=get_translation(error_key, "messages", **error_params))
+
+    # Get user vector from URL
+    try:
+        user_vector = list(map(int, request.args.get("vector", "").split(",")))
+        if not SurveyService.validate_vector(user_vector, len(survey_data["subjects"])):
+            return redirect(
+                url_for(
+                    "survey.create_vector",
+                    userID=user_id,
+                    surveyID=external_survey_id,
+                    internalID=internal_survey_id,
+                    lang=current_lang,
+                    demo="true" if is_demo else None,
+                )
+            )
+    except ValueError:
+        return redirect(
+            url_for(
+                "survey.create_vector",
+                userID=user_id,
+                surveyID=external_survey_id,
+                internalID=internal_survey_id,
+                lang=current_lang,
+                demo="true" if is_demo else None,
+            )
+        )
+
+    if request.method == "POST":
+        # Validate screening answers
+        try:
+            answer1 = int(request.form.get("screening_answer_0", 0))
+            answer2 = int(request.form.get("screening_answer_1", 0))
+
+            # Check if both answers are correct (1 for Q1, 2 for Q2)
+            if answer1 == 1 and answer2 == 2:
+                # User passed - redirect to main survey
+                logger.info(f"User {user_id} passed screening questions")
+                return redirect(
+                    url_for(
+                        "survey.survey",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
+                )
+            else:
+                # User failed - redirect to unsuitable page
+                logger.info(f"User {user_id} failed screening questions")
+                return redirect(
+                    url_for(
+                        "survey.unsuitable",
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        demo="true" if is_demo else None,
+                    )
+                )
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error processing screening answers: {str(e)}")
+            flash(get_translation("validation_error", "messages"), "error")
+
+    # GET request - generate and display screening questions
+    screening_questions = SurveyService.generate_screening_questions(
+        user_vector, survey_data["subjects"]
+    )
+
+    return render_template(
+        "screening.html",
+        screening_questions=screening_questions,
+        subjects=survey_data["subjects"],
+        user_vector=user_vector,
+        user_id=user_id,
+        external_survey_id=external_survey_id,
+        internal_survey_id=internal_survey_id,
+        external_q_argument=external_q_argument,
+        is_demo=is_demo,
+        zip=zip,
+    )
 
 
 @survey_routes.route("/thank_you")

@@ -427,6 +427,51 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "preferred budget for the <strong>current</strong> year."
             ),
         },
+        # Triangle inequality screening
+        "screening_title": {"he": "שאלות מיון", "en": "Screening Questions"},
+        "screening_instruction": {
+            "he": "לפני שנתחיל, יש לנו שתי שאלות קצרות כדי להבין את העדפותיך.",
+            "en": "Before we begin, we have two short questions to understand your preferences.",
+        },
+        "screening_q1_prompt": {
+            "he": "התקציב לשנה 1 קבוע. אנא בחרו את התקציב המועדף עליכם לשנה 2.",
+            "en": "The budget for Year 1 is fixed. Please choose your preferred budget for Year 2.",
+        },
+        "screening_q2_prompt": {
+            "he": "התקציב לשנה 2 קבוע. אנא בחרו את התקציב המועדף עליכם לשנה 1.",
+            "en": "The budget for Year 2 is fixed. Please choose your preferred budget for Year 1.",
+        },
+        "year_1_fixed": {"he": "תקציב שנה 1 (קבוע)", "en": "Year 1 Budget (Fixed)"},
+        "year_2_fixed": {"he": "תקציב שנה 2 (קבוע)", "en": "Year 2 Budget (Fixed)"},
+        "your_choice_for_year": {
+            "he": "הבחירה שלך לשנה {year}",
+            "en": "Your choice for Year {year}",
+        },
+        "screening_failed": {
+            "he": "תודה על השתתפותך. תשובותיך מצביעות על העדפות שאינן מתאימות לסוג הסקר הזה.",
+            "en": "Thank you for your participation. Your answers indicate preferences that are not suitable for this type of survey.",
+        },
+        "proceed_to_main_survey": {
+            "he": "המשך לשלב הבא בסקר",
+            "en": "Proceed to Main Survey",
+        },
+        # Triangle inequality test
+        "triangle_inequality_instruction": {
+            "he": "עליכם לבחור בין שתי אפשרויות תקציב דו-שנתיות. כל אפשרות מציגה את התקציב לשנה הנוכחית ולשנה הבאה.",
+            "en": "You need to choose between two biennial budget options. Each plan shows the budget for the current year and next year.",
+        },
+        "year_1_budget": {"he": "שנה 1", "en": "Year 1"},
+        "year_2_budget": {"he": "שנה 2", "en": "Year 2"},
+        "year_1": {"he": "שנה 1", "en": "Year 1"},
+        "year_2": {"he": "שנה 2", "en": "Year 2"},
+        "group_rotation_explanation_line1": {
+            "he": "קבוצה (G1/G2) = שני תרחישי שינוי תקציב שונים",
+            "en": "Group (G1/G2) = Two different budget change scenarios",
+        },
+        "group_rotation_explanation_line2": {
+            "he": "סיבוב (R0/R1/R2) = סיבוב מעגלי של הקטגוריות המושפעות",
+            "en": "Rotation (R0/R1/R2) = Cyclic rotation of affected categories",
+        },
     },
     "dashboard": {  # Dashboard page
         "refresh": {"he": "רענן נתונים", "en": "Refresh Data"},
@@ -1074,6 +1119,29 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "negative_question_explanation": {
             "he": "שאלה –: העדפות מוחלפות כדי לשקף משמעות אמיתית",
             "en": "Question –: Preferences swapped to reflect true meaning",
+        },
+        # Triangle inequality analysis
+        "triangle_concentrated": {"he": "שינוי מרוכז", "en": "Concentrated Change"},
+        "triangle_distributed": {"he": "שינוי מבוזר", "en": "Distributed Change"},
+        "triangle_consistency": {
+            "he": "עקביות אי-שוויון המשולש",
+            "en": "Triangle Inequality Consistency",
+        },
+        "triangle_analysis_title": {
+            "he": "ניתוח אי-שוויון המשולש",
+            "en": "Triangle Inequality Analysis",
+        },
+        "prefers_concentrated": {
+            "he": "מעדיפים שינוי מרוכז",
+            "en": "Prefers Concentrated",
+        },
+        "prefers_distributed": {
+            "he": "מעדיפים שינוי מבוזר",
+            "en": "Prefers Distributed",
+        },
+        "triangle_explanation": {
+            "he": "הטבלה מציגה את ההעדפות המשתמש בין שינויים מרוכזים (כל השינוי בשנה אחת) לעומת שינויים מבוזרים (שינויים בשתי השנים).",
+            "en": "This table shows the user's preferences between concentrated changes (all change in one year) versus distributed changes (changes across both years).",
         },
     },
     "headers": {

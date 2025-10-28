@@ -363,6 +363,43 @@ def calculate_choice_statistics(choices: List[Dict]) -> Dict[str, float]:
             "option2_percent": 0,
         }
 
+    # Check if this is a biennial budget strategy (uses 6-element vectors)
+    # These strategies have their own analysis metrics and can't use
+    # sum/ratio optimization
+    # Two ways to detect: explicit strategy_name or vector length check
+    is_biennial = False
+
+    if choices and "strategy_name" in choices[0]:
+        strategy_name = choices[0]["strategy_name"]
+        if strategy_name == "triangle_inequality_test":
+            is_biennial = True
+    elif choices:
+        # Fallback: Check if vectors are 6 elements (biennial) vs 3 (single year)
+        try:
+            first_choice = choices[0]
+            option_1 = json.loads(first_choice.get("option_1", "[]"))
+            if len(option_1) == 6:
+                # This is a biennial budget (2 years × 3 subjects = 6 elements)
+                is_biennial = True
+        except (json.JSONDecodeError, TypeError, KeyError):
+            pass
+
+    if is_biennial:
+        # Only calculate option selection percentages
+        # Strategy-specific metrics are calculated by
+        # _calculate_triangle_inequality_metrics()
+        option1_count = sum(1 for choice in choices if choice.get("user_choice") == 1)
+        opt1_p = (option1_count / total_choices) * 100
+        opt2_p = ((total_choices - option1_count) / total_choices) * 100
+
+        return {
+            # Not applicable for biennial strategies
+            "sum_percent": None,
+            "ratio_percent": None,
+            "option1_percent": opt1_p,
+            "option2_percent": opt2_p,
+        }
+
     sum_optimized = 0
     option1_count = 0
 
@@ -464,6 +501,34 @@ def choice_explanation_string_version2(
                 </table>
             </div>
     """
+
+
+def _format_biennial_option(option: list) -> str:
+    """
+    Format a biennial budget option (6 elements) into Year 1 and Year 2 display.
+
+    Args:
+        option: List of 6 elements [year1_val1, year1_val2, year1_val3, year2_val1, year2_val2, year2_val3]
+
+    Returns:
+        str: Formatted HTML with Year 1 and Year 2 on separate lines
+    """
+    if len(option) != 6:
+        # Not a biennial budget, return as-is
+        return str(option)
+
+    # Split into Year 1 (first 3) and Year 2 (last 3)
+    year1 = option[:3]
+    year2 = option[3:]
+
+    # Get translations
+    year1_label = get_translation("year_1", "survey")
+    year2_label = get_translation("year_2", "survey")
+
+    return f"""<div class="biennial-budget-display">
+        <div class="year-budget"><strong>{year1_label}:</strong> {year1}</div>
+        <div class="year-budget"><strong>{year2_label}:</strong> {year2}</div>
+    </div>"""
 
 
 def _generate_choice_pair_html(
@@ -715,6 +780,15 @@ def _generate_choice_pair_html(
     option_2_display = choice.get("_formatted_option_2", str(option_2))
     target_name = choice.get("_target_name")
 
+    # For triangle inequality test, format biennial budgets with Year 1/Year 2 split
+    strategy_name = choice.get("strategy_name")
+    if strategy_name == "triangle_inequality_test":
+        # Only format if not already formatted
+        if not choice.get("_formatted_option_1"):
+            option_1_display = _format_biennial_option(option_1)
+        if not choice.get("_formatted_option_2"):
+            option_2_display = _format_biennial_option(option_2)
+
     # Build the pair header with target info if available
     header_content = f"{pair_num_label} #{choice['pair_number']}"
     if target_name:
@@ -942,6 +1016,12 @@ def _generate_survey_choices_html(
         if consistency_table:
             html_parts.append(consistency_table)
 
+    # Special handling for triangle_inequality_test strategy
+    elif strategy_name == "triangle_inequality_test":
+        triangle_table = _generate_triangle_inequality_table(choices)
+        if triangle_table:
+            html_parts.append(triangle_table)
+
     # Special handling for asymmetric_loss_distribution strategy (single-user matrix)
     elif strategy_name == "asymmetric_loss_distribution":
         matrix_html = _generate_single_user_asymmetric_matrix_table(choices, survey_id)
@@ -967,9 +1047,24 @@ def _generate_survey_choices_html(
 
     if pairs_list:
         pairs_list_label = get_translation("pairs_list", "answers")
+
+        # Add group/rotation explanation once for triangle inequality test
+        group_rotation_info = ""
+        if strategy_name == "triangle_inequality_test":
+            line1 = get_translation("group_rotation_explanation_line1", "survey")
+            line2 = get_translation("group_rotation_explanation_line2", "survey")
+            group_rotation_info = f"""<div class="group-rotation-info">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-content">
+                    <div class="info-line">{line1}</div>
+                    <div class="info-line">{line2}</div>
+                </div>
+            </div>"""
+
         html_parts.extend(
             [
                 f"<h5>{pairs_list_label}</h5>",
+                group_rotation_info,
                 '<div class="pairs-list">',
                 "".join(pairs_list),
                 "</div>",
@@ -2707,6 +2802,15 @@ def generate_detailed_user_choices(
                 dynamic_temporal_metrics = _calculate_dynamic_temporal_metrics(choices)
                 stats.update(dynamic_temporal_metrics)
 
+            # Add triangle inequality metrics if applicable
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"] == "triangle_inequality_test"
+            ):
+                triangle_metrics = _calculate_triangle_inequality_metrics(choices)
+                stats.update(triangle_metrics)
+
             # Get strategy-specific metrics for enhanced stats
             try:
                 from database.queries import get_user_survey_performance_data
@@ -3212,6 +3316,46 @@ def generate_detailed_breakdown_table(
                     )
                     data_cells.append(
                         f'<td class="{highlight_sub3}">{sub3_percent:.0f}%</td>'
+                    )
+                elif (
+                    "concentrated_preference" in strategy_columns
+                    and "distributed_preference" in strategy_columns
+                    and "triangle_consistency" in strategy_columns
+                ):
+                    # Handle triangle_inequality_test strategy
+                    concentrated_percent = summary["stats"].get(
+                        "concentrated_percent", 0
+                    )
+                    distributed_percent = summary["stats"].get("distributed_percent", 0)
+                    consistency_percent = summary["stats"].get("consistency_percent", 0)
+
+                    # Highlight dominant preference
+                    highlight_concentrated = (
+                        "highlight-row"
+                        if concentrated_percent > distributed_percent
+                        else ""
+                    )
+                    highlight_distributed = (
+                        "highlight-row"
+                        if distributed_percent > concentrated_percent
+                        else ""
+                    )
+                    # Highlight high consistency (>= 75%)
+                    highlight_consistency = (
+                        "highlight-row" if consistency_percent >= 75 else ""
+                    )
+
+                    data_cells.append(
+                        f'<td class="{highlight_concentrated}">'
+                        f"{concentrated_percent:.1f}%</td>"
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_distributed}">'
+                        f"{distributed_percent:.1f}%</td>"
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_consistency}">'
+                        f"{consistency_percent:.1f}%</td>"
                     )
                 elif "option_a" in strategy_columns and "option_b" in strategy_columns:
                     # Handle preference_ranking_survey strategy with option_a/option_b columns
@@ -5462,6 +5606,171 @@ def _calculate_final_consistency_score(deduced_data: Dict) -> int:
         if len(set(prefs)) == 1:
             final_cons_score += 1
     return final_cons_score
+
+
+def _calculate_triangle_inequality_metrics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate triangle inequality test metrics for a single user's response.
+
+    Analyzes whether users prefer concentrated changes (entire deviation in one year)
+    or distributed changes (deviation split across two years).
+
+    Args:
+        choices: List of 12 choices for triangle inequality survey
+
+    Returns:
+        Dict with:
+            - concentrated_count: Number of times user chose concentrated
+            - distributed_count: Number of times user chose distributed
+            - concentrated_percent: Percentage choosing concentrated
+            - distributed_percent: Percentage choosing distributed
+            - consistency_percent: Consistency score (how often user made same choice type)
+    """
+    if not choices or len(choices) != 12:
+        return {
+            "concentrated_count": 0,
+            "distributed_count": 0,
+            "concentrated_percent": 0.0,
+            "distributed_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    concentrated_count = 0
+    distributed_count = 0
+
+    for choice in choices:
+        chosen_option = choice.get("user_choice")
+        option1_strategy = choice.get("option1_strategy", "")
+        option2_strategy = choice.get("option2_strategy", "")
+
+        # Determine what type was chosen
+        if chosen_option == 1:
+            chosen_strategy = option1_strategy
+        else:
+            chosen_strategy = option2_strategy
+
+        if "Concentrated" in chosen_strategy:
+            concentrated_count += 1
+        elif "Distributed" in chosen_strategy:
+            distributed_count += 1
+
+    total = concentrated_count + distributed_count
+    if total == 0:
+        concentrated_percent = 0.0
+        distributed_percent = 0.0
+        consistency_percent = 0.0
+    else:
+        concentrated_percent = (concentrated_count / total) * 100
+        distributed_percent = (distributed_count / total) * 100
+
+        # Consistency: percentage of most frequent choice
+        consistency_percent = max(concentrated_percent, distributed_percent)
+
+    return {
+        "concentrated_count": concentrated_count,
+        "distributed_count": distributed_count,
+        "concentrated_percent": round(concentrated_percent, 1),
+        "distributed_percent": round(distributed_percent, 1),
+        "consistency_percent": round(consistency_percent, 1),
+    }
+
+
+def _generate_triangle_inequality_table(choices: List[Dict]) -> str:
+    """
+    Generate HTML table for triangle inequality test results.
+
+    Args:
+        choices: List of choices for a single user's triangle inequality survey
+
+    Returns:
+        str: HTML table showing user's preference pattern
+    """
+    if not choices:
+        return ""
+
+    metrics = _calculate_triangle_inequality_metrics(choices)
+
+    # Get translations
+    title = get_translation(
+        "triangle_analysis_title",
+        "answers",
+        default="Triangle Inequality Analysis",
+    )
+    concentrated_label = get_translation(
+        "triangle_concentrated",
+        "answers",
+        default="Concentrated Change",
+    )
+    distributed_label = get_translation(
+        "triangle_distributed",
+        "answers",
+        default="Distributed Change",
+    )
+    consistency_label = get_translation(
+        "triangle_consistency",
+        "answers",
+        default="Consistency",
+    )
+
+    concentrated_pct = metrics["concentrated_percent"]
+    distributed_pct = metrics["distributed_percent"]
+    consistency_pct = metrics["consistency_percent"]
+
+    # Determine dominant preference for highlighting
+    if concentrated_pct > distributed_pct:
+        concentrated_class = "highlight-cell"
+        distributed_class = ""
+        preference_text = get_translation(
+            "prefers_concentrated",
+            "answers",
+            default="Prefers Concentrated",
+        )
+    else:
+        concentrated_class = ""
+        distributed_class = "highlight-cell"
+        preference_text = get_translation(
+            "prefers_distributed",
+            "answers",
+            default="Prefers Distributed",
+        )
+
+    # Consistency highlighting
+    consistency_class = "highlight-cell" if consistency_pct >= 75 else ""
+
+    # Get explanation text
+    explanation = get_translation(
+        "triangle_explanation",
+        "answers",
+        default="This table shows your preferences between concentrated changes (all change in one year) versus distributed changes (changes across both years).",
+    )
+
+    table_html = f"""
+    <div class="analysis-table-container triangle-inequality-analysis">
+        <h4>{title}</h4>
+        <p class="analysis-explanation">{explanation}</p>
+        <div class="preference-summary-badge {concentrated_class if concentrated_pct > distributed_pct else distributed_class}">
+            {preference_text}
+        </div>
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>{concentrated_label}</th>
+                    <th>{distributed_label}</th>
+                    <th>{consistency_label}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="{concentrated_class}">{concentrated_pct}%</td>
+                    <td class="{distributed_class}">{distributed_pct}%</td>
+                    <td class="{consistency_class}">{consistency_pct}%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    """
+
+    return table_html
 
 
 if __name__ == "__main__":

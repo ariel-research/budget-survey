@@ -55,6 +55,120 @@ def format_budget_vector_with_subjects(vector: tuple, subjects: List[str]) -> st
 
 class SurveyService:
     @staticmethod
+    def generate_screening_questions(
+        user_vector: List[int], subjects: List[str]
+    ) -> List[Dict]:
+        """
+        Generate 2 screening questions for triangle inequality test.
+
+        Tests whether user uses additive utility (prefers ideal in one year)
+        or balancing utility (prefers average to be ideal).
+
+        Args:
+            user_vector: User's ideal budget allocation
+            subjects: List of subject names
+
+        Returns:
+            List of 2 screening questions, each containing:
+            - question_number: int
+            - fixed_year: int (1 or 2)
+            - fixed_budget: tuple
+            - option_a: tuple
+            - option_b: tuple
+            - correct_answer: int (1 or 2)
+            - prompt_key: str
+        """
+
+        def create_random_vector(size: int) -> tuple:
+            """Create a random budget vector that sums to 100."""
+            # Generate random values
+            values = []
+            remaining = 100
+
+            for i in range(size - 1):
+                # Randomly allocate between 0 and remaining, in multiples of 5
+                max_val = (
+                    remaining - (size - i - 1) * 5
+                )  # Leave at least 5 for each remaining
+                max_val = max(0, min(95, max_val))
+                val = random.randint(0, max_val // 5) * 5
+                values.append(val)
+                remaining -= val
+
+            values.append(remaining)
+            return tuple(values)
+
+        def generate_valid_screening_pair(
+            user_vector: tuple, existing_randoms: List[tuple]
+        ) -> Tuple[tuple, tuple]:
+            """
+            Generate valid (r, q_balance) pair where q_balance = 2*p - r is valid.
+
+            Uses retry loop pattern from dynamic_temporal_preference_strategy.
+
+            Args:
+                user_vector: User's ideal budget allocation
+                existing_randoms: Already used random vectors to avoid duplicates
+
+            Returns:
+                Tuple of (r, q_balance) where both are valid and different from user_vector
+            """
+            max_attempts = 200
+
+            for attempt in range(max_attempts):
+                # Generate random vector
+                r = create_random_vector(len(user_vector))
+
+                # Ensure r is unique and different from user_vector
+                if r == tuple(user_vector) or r in existing_randoms:
+                    continue
+
+                # Calculate balancing vector: q_balance = 2*p - r
+                q_balance = tuple(
+                    2 * user_vector[i] - r[i] for i in range(len(user_vector))
+                )
+
+                # Validate balancing vector
+                if all(0 <= v <= 100 for v in q_balance) and q_balance != tuple(
+                    user_vector
+                ):
+                    return r, q_balance
+
+            # Should rarely reach here - raise error if we can't find valid pair
+            raise ValueError(
+                f"Unable to generate valid screening pair for user_vector "
+                f"{user_vector} after {max_attempts} attempts"
+            )
+
+        # Generate Question 1: Year 1 fixed, choose Year 2
+        r1, q_balance_1 = generate_valid_screening_pair(tuple(user_vector), [])
+
+        q1 = {
+            "question_number": 1,
+            "fixed_year": 1,
+            "fixed_budget": r1,
+            "option_a": tuple(user_vector),  # Additive (correct)
+            "option_b": q_balance_1,  # Balancing
+            "correct_answer": 1,
+            "prompt_key": "screening_q1_prompt",
+        }
+
+        # Generate Question 2: Year 2 fixed, choose Year 1
+        r2, q_balance_2 = generate_valid_screening_pair(tuple(user_vector), [r1])
+
+        q2 = {
+            "question_number": 2,
+            "fixed_year": 2,
+            "fixed_budget": r2,
+            "option_a": q_balance_2,  # Balancing
+            "option_b": tuple(user_vector),  # Additive (correct)
+            "correct_answer": 2,
+            "prompt_key": "screening_q2_prompt",
+        }
+
+        return [q1, q2]
+
+    @staticmethod
     def check_survey_exists(
         survey_id: int,
     ) -> Tuple[bool, Optional[str], Optional[Dict]]:
@@ -73,6 +187,7 @@ class SurveyService:
                 - description: str: Survey description
                 - subjects: List[str]: Survey subjects
                 - survey_id: int: The survey ID
+                - strategy_name: str: The strategy name for this survey
         """
         survey_name = get_survey_name(survey_id)
         if not survey_name:
@@ -88,6 +203,10 @@ class SurveyService:
         if not subjects:
             return False, ("survey_not_found", {"survey_id": survey_id}), None
 
+        # Get strategy name
+        config = get_survey_pair_generation_config(survey_id)
+        strategy_name = config.get("strategy", "") if config else ""
+
         return (
             True,
             None,
@@ -96,6 +215,7 @@ class SurveyService:
                 "description": survey_description,
                 "subjects": subjects,
                 "survey_id": survey_id,
+                "strategy_name": strategy_name,
             },
         )
 
@@ -380,10 +500,15 @@ class SurveySessionData:
             - original_pair_number: Original logical pair number (for interleaved strategies)
         """
         # Identify the two vector entries robustly (ignore metadata keys)
+        # Support both standard 3-element vectors and biennial 6-element vectors
         vector_items = [
             (k, v)
             for k, v in pair.items()
-            if isinstance(v, (list, tuple)) and len(v) == 3 and sum(v) == 100
+            if isinstance(v, (list, tuple))
+            and (
+                (len(v) == 3 and sum(v) == 100)  # Standard single-year budget
+                or (len(v) == 6 and sum(v) == 200)  # Biennial two-year budget
+            )
         ]
 
         # Extract instruction context if available

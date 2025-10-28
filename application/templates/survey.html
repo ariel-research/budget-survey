@@ -202,6 +202,14 @@ ENHANCED: Now includes UX improvements for ranking interface
                     {% endif %}
                 {% endif %}
             {% endif %}
+            
+            {% if strategy_name == 'triangle_inequality_test' %}
+                {% if pair.is_awareness %}
+                    <p class="temporal-instruction">{{ get_translation('temporal_awareness_instruction', 'survey')|safe }}</p>
+                {% else %}
+                    <p class="triangle-instruction">{{ get_translation('triangle_inequality_instruction', 'survey')|safe }}</p>
+                {% endif %}
+            {% endif %}
 
             {% if pair.is_awareness %}
                 <div class="awareness-check">
@@ -216,12 +224,42 @@ ENHANCED: Now includes UX improvements for ranking interface
             <div class="options-container">
                 <div class="option">
                     <h4>{{ get_translation('option') }} 1:</h4>
-                    {% for subject, value in zip(subjects, pair.display[0]) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
-                    </div>
-                    {% endfor %}
+                    {% if strategy_name == 'triangle_inequality_test' and not pair.is_awareness %}
+                        <!-- Biennial budget display for triangle inequality test -->
+                        <div class="biennial-budget-container">
+                            <div class="budget-year-section">
+                                <h5>{{ get_translation('year_1_budget', 'survey') }}</h5>
+                                <div class="budget-breakdown">
+                                    {% for subject, value in zip(subjects, pair.display[0][:3]) %}
+                                    <div class="budget-item">
+                                        <span class="subject">{{ subject }}:</span>
+                                        <span class="value">{{ value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="year-separator">→</div>
+                            <div class="budget-year-section">
+                                <h5>{{ get_translation('year_2_budget', 'survey') }}</h5>
+                                <div class="budget-breakdown">
+                                    {% for subject, value in zip(subjects, pair.display[0][3:]) %}
+                                    <div class="budget-item">
+                                        <span class="subject">{{ subject }}:</span>
+                                        <span class="value">{{ value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Standard single budget display -->
+                        {% for subject, value in zip(subjects, pair.display[0]) %}
+                        <div>
+                            <span class="subject">{{ subject }}:</span>
+                            <span class="value">{{ value }}</span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
                     <input type="radio" name="{% if pair.is_awareness %}awareness_check_{{ loop.index0 // 6 }}{% else %}choice_{{ loop.index0 }}{% endif %}" value="1">
                     {% if not pair.is_awareness %}
                     <input type="hidden" name="option1_{{ loop.index0 }}" value="{{ pair.display[0]|join(',') }}">
@@ -233,12 +271,42 @@ ENHANCED: Now includes UX improvements for ranking interface
                 </div>
                 <div class="option">
                     <h4>{{ get_translation('option') }} 2:</h4>
-                    {% for subject, value in zip(subjects, pair.display[1]) %}
-                    <div>
-                        <span class="subject">{{ subject }}:</span>
-                        <span class="value">{{ value }}</span>
-                    </div>
-                    {% endfor %}
+                    {% if strategy_name == 'triangle_inequality_test' and not pair.is_awareness %}
+                        <!-- Biennial budget display for triangle inequality test -->
+                        <div class="biennial-budget-container">
+                            <div class="budget-year-section">
+                                <h5>{{ get_translation('year_1_budget', 'survey') }}</h5>
+                                <div class="budget-breakdown">
+                                    {% for subject, value in zip(subjects, pair.display[1][:3]) %}
+                                    <div class="budget-item">
+                                        <span class="subject">{{ subject }}:</span>
+                                        <span class="value">{{ value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="year-separator">→</div>
+                            <div class="budget-year-section">
+                                <h5>{{ get_translation('year_2_budget', 'survey') }}</h5>
+                                <div class="budget-breakdown">
+                                    {% for subject, value in zip(subjects, pair.display[1][3:]) %}
+                                    <div class="budget-item">
+                                        <span class="subject">{{ subject }}:</span>
+                                        <span class="value">{{ value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Standard single budget display -->
+                        {% for subject, value in zip(subjects, pair.display[1]) %}
+                        <div>
+                            <span class="subject">{{ subject }}:</span>
+                            <span class="value">{{ value }}</span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
                     <input type="radio" name="{% if pair.is_awareness %}awareness_check_{{ loop.index0 // 6 }}{% else %}choice_{{ loop.index0 }}{% endif %}" value="2">
                     {% if not pair.is_awareness %}
                     <input type="hidden" name="option2_{{ loop.index0 }}" value="{{ pair.display[1]|join(',') }}">
