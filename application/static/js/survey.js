@@ -154,9 +154,15 @@ function updateTotalDisplay(totalElement, total) {
 function updateErrorDisplay(errorElement, total, nonZeroDepartments) {
     if (!errorElement) return;
 
+    const inputs = document.querySelectorAll('.budget-input');
+    const values = Array.from(inputs).map(input => parseInt(input.value) || 0);
+    const hasNonDivisibleBy5 = values.some(val => val % 5 !== 0);
+
     let errorMessage = '';
     if (nonZeroDepartments < CONFIG.MIN_DEPARTMENTS) {
         errorMessage = state.messages.min_two_departments;
+    } else if (hasNonDivisibleBy5) {
+        errorMessage = state.messages.invalid_vector;
     } else if (total !== CONFIG.TOTAL_EXPECTED) {
         errorMessage = state.messages.total_not_100;
     }
@@ -169,7 +175,10 @@ function updateErrorDisplay(errorElement, total, nonZeroDepartments) {
  * Update submit and rescale button states
  */
 function updateButtonStates(elements, { total, values, nonZeroDepartments, zeroCount }) {
-    const isValid = total === CONFIG.TOTAL_EXPECTED && nonZeroDepartments >= CONFIG.MIN_DEPARTMENTS;
+    const hasNonDivisibleBy5 = values.some(val => val % 5 !== 0);
+    const isValid = total === CONFIG.TOTAL_EXPECTED && 
+                   nonZeroDepartments >= CONFIG.MIN_DEPARTMENTS &&
+                   !hasNonDivisibleBy5;
 
     // Update submit button
     elements.submit.disabled = !isValid;
@@ -183,11 +192,13 @@ function updateButtonStates(elements, { total, values, nonZeroDepartments, zeroC
     }
     if (!isValid) state.wasSubmitEnabled = false;
 
-    // Update rescale button
-    elements.rescale.disabled = total === 0 || 
-                              total === CONFIG.TOTAL_EXPECTED || 
-                              values.some(val => isNaN(val)) ||
-                              zeroCount > 1;
+    // Update rescale button - enabled when form is invalid OR unusable
+    // Disabled only when form is already valid OR unusable (total=0 or too many zeros)
+    elements.rescale.disabled = 
+        total === 0 ||                                    // Can't rescale from zero
+        (isValid) ||                                      // Form is already valid
+        values.some(val => isNaN(val)) ||                // Has invalid numbers
+        zeroCount > 1;                                    // Too many zeros
 }
 
 /**

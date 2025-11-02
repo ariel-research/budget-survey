@@ -268,6 +268,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "title": "שימו לב",
                 "rules": [
                     "הזינו ערכים עבור כל נושא",
+                    "כל הערכים חייבים להתחלק ב-5 (כפולות של 5)",
                     "ניתן להשתמש בכפתור 'התאם את הסכום' כדי להתאים את הערכים באופן יחסי לסכום של 100",
                     "יש להקצות תקציב לשני נושאים שונים לפחות",
                     "בסוף התהליך הסכום הכולל חייב להיות בדיוק 100",
@@ -277,6 +278,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "title": "Instructions",
                 "rules": [
                     "Enter monetary value for each issue",
+                    "All values must be divisible by 5 (multiples of 5)",
                     "Use the 'Rescale' button to proportionally adjust your values to sum to 100",
                     "The budget must be allocated to at least two different issues",
                     "The final total must equal exactly 100",
