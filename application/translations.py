@@ -235,7 +235,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "However, in reality, the budget allocation differs from your ideal allocation. We will present you with pairs of non-ideal budget allocations. For each pair, you need to choose which of the two allocations is better in your opinion.",
         },
         "pair": {"he": "זוג", "en": "Pair"},
-        "option": {"he": "חלוקה", "en": "Option"},
+        "option": {"he": "אפשרות", "en": "Option"},
         "awareness_check": {"he": "שאלת בדיקה", "en": "Awareness Check"},
         "awareness_question": {
             "he": "איזו מהאפשרויות הבאות מייצגת את התקציב האידיאלי שבחרת בתחילת הסקר?",
@@ -361,8 +361,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Please rank the following three options from best to worst "
             "(1 = best, 3 = worst)",
         },
-        "option_a_label": {"he": "אפשרות א", "en": "Option A"},
-        "option_b_label": {"he": "אפשרות ב", "en": "Option B"},
+        "option_a_label": {"he": "אפשרות א׳", "en": "Option A"},
+        "option_b_label": {"he": "אפשרות ב׳", "en": "Option B"},
         "option_c_label": {"he": "אפשרות ג", "en": "Option C"},
         "rank_1": {"he": "דירוג 1", "en": "Rank 1"},
         "rank_2": {"he": "דירוג 2", "en": "Rank 2"},

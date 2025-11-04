@@ -222,8 +222,10 @@ ENHANCED: Now includes UX improvements for ranking interface
             {% endif %}
             
             <div class="options-container">
+                {% set option1_label = get_translation('option_a_label') %}
+                {% set option2_label = get_translation('option_b_label') %}
                 <div class="option">
-                    <h4>{{ get_translation('option') }} 1:</h4>
+                    <h4>{{ option1_label }}:</h4>
                     {% if strategy_name == 'triangle_inequality_test' and not pair.is_awareness %}
                         <!-- Biennial budget display for triangle inequality test -->
                         <div class="biennial-budget-container">
@@ -270,7 +272,7 @@ ENHANCED: Now includes UX improvements for ranking interface
                     {% endif %}
                 </div>
                 <div class="option">
-                    <h4>{{ get_translation('option') }} 2:</h4>
+                    <h4>{{ option2_label }}:</h4>
                     {% if strategy_name == 'triangle_inequality_test' and not pair.is_awareness %}
                         <!-- Biennial budget display for triangle inequality test -->
                         <div class="biennial-budget-container">
