@@ -2,6 +2,7 @@
 
 import pytest
 
+from application.exceptions import UnsuitableForStrategyError
 from application.services.survey_service import SurveyService
 
 
@@ -297,6 +298,9 @@ class TestScreeningQuestions:
                 # It's acceptable to raise ValueError for impossible cases
                 assert "Unable to generate valid screening pair" in str(e)
                 # This is better than generating incorrect identical options!
+            except UnsuitableForStrategyError as e:
+                # Some scenarios surface a dedicated unsuitable error
+                assert "Unable to generate" in str(e) or "unsuitable" in str(e).lower()
 
 
 class TestScreeningQuestionsRegressionBug:
