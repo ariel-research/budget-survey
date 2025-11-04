@@ -576,9 +576,38 @@ def screening():
             flash(get_translation("validation_error", "messages"), "error")
 
     # GET request - generate and display screening questions
-    screening_questions = SurveyService.generate_screening_questions(
-        user_vector, survey_data["subjects"]
-    )
+    try:
+        screening_questions = SurveyService.generate_screening_questions(
+            user_vector, survey_data["subjects"]
+        )
+    except UnsuitableForStrategyError as e:
+        logger.info(
+            "User %s unsuitable for triangle inequality screening: %s",
+            user_id,
+            str(e),
+        )
+
+        if is_demo:
+            redirect_kwargs = {
+                "userID": user_id,
+                "surveyID": external_survey_id,
+                "internalID": internal_survey_id,
+                "demo": "true",
+            }
+            if current_lang:
+                redirect_kwargs["lang"] = current_lang
+
+            return redirect(url_for("survey.unsuitable", **redirect_kwargs))
+
+        panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"]
+        return redirect(
+            redirect_to_panel4all(
+                user_id,
+                external_survey_id,
+                status=panel4all_status,
+                q=external_q_argument,
+            )
+        )
 
     return render_template(
         "screening.html",

@@ -79,6 +79,17 @@ class SurveyService:
             - prompt_key: str
         """
 
+        if any(value == 0 for value in user_vector):
+            logger.info(
+                "User vector %s contains zero values; unsuitable for "
+                "triangle inequality screening",
+                user_vector,
+            )
+            raise UnsuitableForStrategyError(
+                "User vector contains zero values and is unsuitable for triangle "
+                "inequality strategy",
+            )
+
         def create_random_vector(size: int) -> tuple:
             """Create a random budget vector that sums to 100."""
             # Generate random values
@@ -135,9 +146,14 @@ class SurveyService:
                     return r, q_balance
 
             # Should rarely reach here - raise error if we can't find valid pair
-            raise ValueError(
-                f"Unable to generate valid screening pair for user_vector "
-                f"{user_vector} after {max_attempts} attempts"
+            logger.info(
+                "Unable to generate valid screening pair for user_vector %s after "
+                "%s attempts",
+                user_vector,
+                max_attempts,
+            )
+            raise UnsuitableForStrategyError(
+                "Unable to generate screening questions for the provided user vector"
             )
 
         # Generate Question 1: Year 1 fixed, choose Year 2
