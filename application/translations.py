@@ -1126,8 +1126,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "triangle_concentrated": {"he": "שינוי מרוכז", "en": "Concentrated Change"},
         "triangle_distributed": {"he": "שינוי מבוזר", "en": "Distributed Change"},
         "triangle_consistency": {
-            "he": "עקביות אי-שוויון המשולש",
-            "en": "Triangle Inequality Consistency",
+            "he": "עקביות משתמש",
+            "en": "User Consistency",
         },
         "triangle_analysis_title": {
             "he": "ניתוח אי-שוויון המשולש",
