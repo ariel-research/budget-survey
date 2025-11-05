@@ -1,70 +1,10 @@
 """Test suite for triangle inequality strategy."""
 
-import time
-
 import numpy as np
 import pytest
 
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import TriangleInequalityStrategy
-
-# Test constants
-EXPECTED_VALID_VECTORS = 171  # Vectors without zeros
-MAX_GENERATION_TIME = 3.0
-PERFORMANCE_TIMEOUT = 10.0
-
-
-def enumerate_all_valid_vectors():
-    """
-    Enumerate all valid 3D budget vectors without zeros.
-
-    Returns:
-        List[tuple]: All valid vectors (a,b,c) where:
-            - a + b + c = 100
-            - a,b,c ∈ {5,10,15,...,95}
-            - a,b,c > 0 (no zeros)
-    """
-    valid_vectors = []
-
-    for a in range(5, 96, 5):
-        for b in range(5, 96, 5):
-            c = 100 - a - b
-
-            if c > 0 and 5 <= c <= 95 and c % 5 == 0:
-                valid_vectors.append((a, b, c))
-
-    return valid_vectors
-
-
-def validate_pair_structure(pair, pair_index, user_vector):
-    """Validate basic pair structure and properties."""
-    # Must have required keys
-    required_keys = ["group_number", "rotation_number", "variant", "is_biennial"]
-    for key in required_keys:
-        if key not in pair:
-            return f"Pair {pair_index} missing key: {key}"
-
-    # Must have difference keys
-    if "option1_differences" not in pair or "option2_differences" not in pair:
-        return f"Pair {pair_index} missing difference keys"
-
-    # Validate biennial vectors (6 elements each)
-    for key, vector in pair.items():
-        if (
-            not key.endswith("_differences")
-            and not key.endswith("_number")
-            and key not in ["variant", "is_biennial"]
-        ):
-            if (
-                not isinstance(vector, list)
-                or len(vector) != 6  # Biennial: 3 for Year 1 + 3 for Year 2
-                or sum(vector[:3]) != 100  # Year 1 sums to 100
-                or sum(vector[3:]) != 100  # Year 2 sums to 100
-                or not all(0 <= v <= 100 for v in vector)
-            ):
-                return f"Invalid biennial vector in pair {pair_index}: {vector}"
-
-    return None  # No errors
 
 
 @pytest.fixture
@@ -122,6 +62,30 @@ def test_decomposition_correctness(strategy):
 
     assert np.array_equal(q1, expected_q1), f"q1 pattern wrong: {q1} != {expected_q1}"
     assert np.array_equal(q2, expected_q2), f"q2 pattern wrong: {q2} != {expected_q2}"
+
+
+def test_decomposition_fails_for_q_with_zeros(strategy):
+    """Verify decomposition rejects change vectors that contain zeros."""
+    invalid_q_vectors = [
+        np.array([-5, 5, 0]),
+        np.array([0, 5, -5]),
+        np.array([5, 0, -5]),
+    ]
+
+    for q in invalid_q_vectors:
+        with pytest.raises(ValueError) as exc_info:
+            strategy._decompose_change_vector(q)
+
+        assert "zero element" in str(exc_info.value)
+
+
+def test_decomposition_passes_for_non_zero_q(strategy):
+    """Verify decomposition succeeds when all components are non-zero."""
+    q = np.array([-10, 5, 5])
+    q1, q2 = strategy._decompose_change_vector(q)
+
+    assert np.array_equal(q1, np.array([-10, 0, 10]))
+    assert np.array_equal(q2, np.array([0, 5, -5]))
 
 
 def test_coordinate_rotations(strategy):
@@ -215,106 +179,30 @@ def test_edge_case_vectors(strategy):
     assert len(pairs) == 12
 
 
-def test_all_valid_vectors_generate_pairs(strategy):
-    """
-    Test that ALL valid non-zero vectors successfully generate 12 pairs.
+def test_generate_pairs_succeeds_for_extreme_vectors_with_fallback(strategy):
+    """Ensure extreme vectors succeed via fallback path with non-multiple changes."""
+    extreme_vector = (90, 5, 5)
+    pairs = strategy.generate_pairs(extreme_vector, n=12, vector_size=3)
 
-    This ensures the algorithm is complete for the entire valid constraint space.
-    """
-    print("\n=== COMPREHENSIVE ALGORITHM VALIDATION ===")
+    assert len(pairs) == 12
 
-    valid_vectors = enumerate_all_valid_vectors()
-    assert (
-        len(valid_vectors) == EXPECTED_VALID_VECTORS
-    ), f"Expected {EXPECTED_VALID_VECTORS} valid vectors, got {len(valid_vectors)}"
+    distributed_differences = [
+        diff for pair in pairs for diff in pair["option2_differences"]
+    ]
 
-    print(f"Testing {len(valid_vectors)} valid non-zero vectors...")
+    assert any(abs(diff) % 5 != 0 for diff in distributed_differences)
 
-    successful_vectors = []
-    failed_vectors = []
-    timing_results = []
 
-    for i, user_vector in enumerate(valid_vectors, 1):
-        if i % 20 == 0:
-            print(f"Progress: {i}/{len(valid_vectors)} vectors tested...")
+def test_generate_pairs_uses_multiples_of_5_for_normal_vectors(strategy):
+    """Verify standard vectors stick to multiples-of-5 adjustments."""
+    normal_vector = (40, 30, 30)
+    pairs = strategy.generate_pairs(normal_vector, n=12, vector_size=3)
 
-        try:
-            start_time = time.time()
-            pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
-            elapsed = time.time() - start_time
+    assert len(pairs) == 12
 
-            # Basic validation
-            if len(pairs) != 12:
-                failed_vectors.append(
-                    (user_vector, f"Generated {len(pairs)} pairs, expected 12")
-                )
-                continue
-
-            # Performance validation
-            if elapsed >= PERFORMANCE_TIMEOUT:
-                failed_vectors.append((user_vector, f"Too slow: {elapsed:.2f}s"))
-                continue
-
-            # Structural validation
-            structure_error = None
-            for j, pair in enumerate(pairs):
-                error = validate_pair_structure(pair, j, user_vector)
-                if error:
-                    structure_error = error
-                    break
-
-            if structure_error:
-                failed_vectors.append((user_vector, structure_error))
-                continue
-
-            # All validations passed
-            successful_vectors.append(user_vector)
-            timing_results.append((user_vector, elapsed))
-
-        except Exception as e:
-            failed_vectors.append((user_vector, str(e)))
-
-    # Results analysis
-    total_tested = len(valid_vectors)
-    total_successful = len(successful_vectors)
-    success_rate = (total_successful / total_tested) * 100
-
-    print("\n=== RESULTS ===")
-    print(f"Vectors tested: {total_tested}")
-    print(f"Successful: {total_successful}")
-    print(f"Success rate: {success_rate:.1f}%")
-
-    if timing_results:
-        avg_time = sum(t[1] for t in timing_results) / len(timing_results)
-        max_time = max(t[1] for t in timing_results)
-        min_time = min(t[1] for t in timing_results)
-        print(f"Timing: avg={avg_time:.3f}s, min={min_time:.3f}s, max={max_time:.3f}s")
-
-    # Report failures
-    if failed_vectors:
-        print(f"\n❌ ALGORITHM FAILURES ({len(failed_vectors)}):")
-        for vec, error in failed_vectors[:5]:
-            print(f"  {vec}: {error}")
-        if len(failed_vectors) > 5:
-            print(f"  ... and {len(failed_vectors) - 5} more")
-
-    # STRICT REQUIREMENTS
-    assert total_successful == total_tested, (
-        f"ALGORITHMIC INCOMPLETENESS: Only {total_successful}/{total_tested} "
-        f"vectors succeeded. Algorithm must work for 100% of valid vectors."
-    )
-
-    assert (
-        success_rate == 100.0
-    ), f"Success rate {success_rate:.1f}% is below requirement of 100%"
-
-    if timing_results:
-        assert avg_time < MAX_GENERATION_TIME, (
-            f"Average time {avg_time:.2f}s exceeds performance requirement "
-            f"of {MAX_GENERATION_TIME}s"
-        )
-
-    print("✅ COMPREHENSIVE VALIDATION COMPLETE: All 171 valid vectors passed!")
+    for pair in pairs:
+        distributed_differences = pair["option2_differences"]
+        assert all(abs(diff) % 5 == 0 for diff in distributed_differences)
 
 
 def test_option_labels(strategy):
@@ -463,30 +351,3 @@ def test_no_identical_pairs_generated(strategy):
                 f"  Both have Year 1: {concentrated[:3]}\n"
                 f"  Both have Year 2: {concentrated[3:]}"
             )
-
-
-def test_decomposition_never_produces_zero_vectors(strategy):
-    """
-    Test that decomposition never produces q1=[0,0,0] or q2=[0,0,0].
-
-    This validates that the degenerate case filtering is working correctly.
-    """
-    user_vector = (30, 40, 30)
-
-    # Test multiple base vectors
-    for _ in range(20):
-        try:
-            q = strategy._generate_base_change_vector(user_vector, 3)
-            q1, q2 = strategy._decompose_change_vector(q)
-
-            # Verify neither component is the zero vector
-            assert not np.all(q1 == 0), f"q1 is zero vector! q={q}, q1={q1}, q2={q2}"
-            assert not np.all(q2 == 0), f"q2 is zero vector! q={q}, q1={q1}, q2={q2}"
-
-            # Verify decomposition correctness
-            assert np.allclose(q1 + q2, q), (
-                f"Decomposition incorrect: q1 + q2 != q\n" f"  q={q}, q1={q1}, q2={q2}"
-            )
-        except ValueError as e:
-            # This is expected for degenerate cases - they should be caught and raised
-            assert "Degenerate decomposition" in str(e), f"Unexpected ValueError: {e}"

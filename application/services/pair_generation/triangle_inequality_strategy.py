@@ -47,8 +47,8 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             List of 12 dicts containing biennial budget comparison pairs
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values
-            ValueError: If unable to generate required pairs
+            UnsuitableForStrategyError: If user vector contains zero values or
+            if suitable pairs cannot be generated
         """
         # Check for zero values
         if 0 in user_vector:
@@ -133,7 +133,9 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                 continue
 
         if len(all_pairs) < 12:
-            raise ValueError(f"Unable to generate 12 pairs, only got {len(all_pairs)}")
+            raise UnsuitableForStrategyError(
+                "Unable to generate required pairs for triangle inequality strategy"
+            )
 
         # Take exactly 12 pairs
         final_pairs = all_pairs[:12]
@@ -146,99 +148,104 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
 
         return final_pairs
 
-    def _generate_base_change_vector(
-        self, user_vector: tuple, vector_size: int
+    def _is_valid_budget(self, vec: np.ndarray) -> bool:
+        """Check whether an allocation vector is within bounds and sums to 100."""
+        return bool(
+            np.all(vec >= 0)
+            and np.all(vec <= 100)
+            and np.isclose(np.sum(vec), 100, atol=0.01)
+        )
+
+    def _try_generate_base_change_vector(
+        self, user_vector: tuple, vector_size: int, multiples_of_5: bool
     ) -> np.ndarray:
-        """
-        Generate a base change vector q where:
-        - sum(q) = 0
-        - Each element is multiple of 5
-        - q ≠ [0, 0, 0]
-        - p ± q produces valid budgets
-        - After decomposition, p ± q1 and p ± q2 also produce valid budgets
-
-        Args:
-            user_vector: User's ideal budget
-            vector_size: Size of vector (3)
-
-        Returns:
-            Change vector q as numpy array
-        """
+        """Attempt to generate a valid base change vector with configurable granularity."""
         user_array = np.array(user_vector)
         max_attempts = 1000
 
+        min_val = min(user_vector)
+        max_val = max(user_vector)
+        max_change_limit = min(min_val, 100 - max_val)
+
+        if multiples_of_5:
+            max_change = max(1, max_change_limit // 10)
+        else:
+            max_change = max(1, max_change_limit // 2)
+
+        step = 5 if multiples_of_5 else 1
+        max_adjustment = max_change * step
+
         for _ in range(max_attempts):
-            # Generate random multiples of 5 that sum to 0
-            # Use conservative range to ensure valid budgets even after decomposition
-            min_val = min(user_vector)
-            max_val = max(user_vector)
-
-            # After decomposition q1=[x1,0,-x1] and q2=[0,x2,-x2]
-            # We need p±x1 and p±x2 to be valid for all positions
-            max_change = min(min_val, 100 - max_val) // 5
-            max_change = max(1, max_change // 2)
-
-            if max_change < 1:
-                max_change = 1
-
-            # Generate first two elements
             q = []
             for _ in range(vector_size - 1):
-                change = np.random.randint(-max_change, max_change + 1) * 5
-                q.append(change)
+                change = np.random.randint(-max_change, max_change + 1)
+                q.append(change * step)
 
-            # Last element ensures sum = 0
             q.append(-sum(q))
-            q = np.array(q)
+            q = np.array(q, dtype=int)
 
-            # Check if all zeros
             if np.all(q == 0):
                 continue
 
-            # Check if at least one meaningful difference
-            if not any(abs(d) >= 5 for d in q):
+            if any(abs(component) > max_adjustment for component in q):
                 continue
 
-            # Validate both addition and subtraction
+            if 0 in q:
+                continue
+
+            try:
+                q1, q2 = self._decompose_change_vector(q)
+            except ValueError:
+                continue
+
             vec_plus = user_array + q
             vec_minus = user_array - q
 
             if not (
-                np.all(vec_plus >= 0)
-                and np.all(vec_plus <= 100)
-                and np.all(vec_minus >= 0)
-                and np.all(vec_minus <= 100)
+                self._is_valid_budget(vec_plus) and self._is_valid_budget(vec_minus)
             ):
                 continue
 
-            # Check decomposed components
-            try:
-                q1, q2 = self._decompose_change_vector(q)
-            except ValueError:
-                # Degenerate decomposition, skip this q
-                continue
-
-            # Validate p ± q1
             vec_plus_q1 = user_array + q1
             vec_minus_q1 = user_array - q1
-
-            # Validate p ± q2
             vec_plus_q2 = user_array + q2
             vec_minus_q2 = user_array - q2
 
             if (
-                np.all(vec_plus_q1 >= 0)
-                and np.all(vec_plus_q1 <= 100)
-                and np.all(vec_minus_q1 >= 0)
-                and np.all(vec_minus_q1 <= 100)
-                and np.all(vec_plus_q2 >= 0)
-                and np.all(vec_plus_q2 <= 100)
-                and np.all(vec_minus_q2 >= 0)
-                and np.all(vec_minus_q2 <= 100)
+                self._is_valid_budget(vec_plus_q1)
+                and self._is_valid_budget(vec_minus_q1)
+                and self._is_valid_budget(vec_plus_q2)
+                and self._is_valid_budget(vec_minus_q2)
             ):
                 return q
 
-        raise ValueError("Unable to generate valid base change vector")
+        raise ValueError(
+            f"Unable to generate valid base change vector (mult_of_5={multiples_of_5})"
+        )
+
+    def _generate_base_change_vector(
+        self, user_vector: tuple, vector_size: int
+    ) -> np.ndarray:
+        """Generate a base change vector using multiples of 5 with fallback to integers."""
+
+        try:
+            return self._try_generate_base_change_vector(
+                user_vector, vector_size, multiples_of_5=True
+            )
+        except ValueError as e1:
+            logger.info(
+                f"Primary (mult-of-5) generation failed for {user_vector}: {e1}. "
+                "Trying fallback (non-mult-of-5)."
+            )
+            try:
+                return self._try_generate_base_change_vector(
+                    user_vector, vector_size, multiples_of_5=False
+                )
+            except ValueError as e2:
+                logger.error(f"Fallback generation also failed for {user_vector}: {e2}")
+                raise ValueError(
+                    "Unable to generate valid base change vector even with fallback"
+                )
 
     def _decompose_change_vector(self, q: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -261,6 +268,11 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             ValueError: If decomposition produces degenerate components (all zeros)
         """
         x1, x2, x3 = q
+
+        if x1 == 0 or x2 == 0 or x3 == 0:
+            raise ValueError(
+                f"Degenerate decomposition: q contains a zero element: {q}"
+            )
 
         q1 = np.array([x1, 0, -x1])
         q2 = np.array([0, x2, -x2])
@@ -339,11 +351,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
         ]
 
         for vec in all_vecs:
-            if not (
-                np.all(vec >= 0)
-                and np.all(vec <= 100)
-                and abs(np.sum(vec) - 100) < 0.01
-            ):
+            if not self._is_valid_budget(vec):
                 logger.debug(f"Invalid vector in pair: {vec}")
                 return None
 
