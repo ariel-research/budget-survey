@@ -3679,6 +3679,10 @@ def generate_overall_statistics_table(
             <p class="summary-note">{note}</p>
         </div>
         """
+    elif strategy_name == "triangle_inequality_test":
+        overall_table = _generate_triangle_overall_consistency_table(
+            summaries, title, note
+        )
     elif strategy_name == "biennial_budget_preference":
         # Handle dynamic temporal preference strategy using three consistency breakdown tables
         # Extract all user choices from summaries
@@ -5374,7 +5378,7 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
     <div class="summary-table-container consistency-breakdown-container">
         <h2>{title}</h2>
         <div class="table-container">
-                            <table>
+            <table>
                 <thead>
                     <tr>
                         <th>{consistency_level_label}</th>
@@ -5388,6 +5392,173 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
                 </tbody>
             </table>
         </div>
+    </div>
+    """
+
+
+def _generate_triangle_overall_consistency_table(
+    summaries: List[Dict], title: str, note: str
+) -> str:
+    """Generate consistency breakdown table for triangle inequality surveys."""
+    if not summaries:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    # Define the possible consistency levels based on 12 binary choices
+    level_percentages = [50.0, 58.3, 66.7, 75.0, 83.3, 91.7, 100.0]
+    bucket_data = {level: [] for level in level_percentages}
+
+    for summary in summaries:
+        stats = summary.get("stats", {})
+        concentrated_count = stats.get("concentrated_count")
+        distributed_count = stats.get("distributed_count")
+        concentrated_percent = stats.get("concentrated_percent")
+        distributed_percent = stats.get("distributed_percent")
+        consistency_percent = stats.get("consistency_percent")
+
+        if (
+            concentrated_count is None
+            or distributed_count is None
+            or concentrated_percent is None
+            or distributed_percent is None
+            or consistency_percent is None
+        ):
+            continue
+
+        total_choices = concentrated_count + distributed_count
+        if total_choices <= 0:
+            continue
+
+        consistency_percent = float(consistency_percent)
+        if consistency_percent <= 0:
+            continue
+
+        target_level = min(
+            level_percentages, key=lambda level: abs(level - consistency_percent)
+        )
+
+        # Skip obviously mismatched data (e.g., users without enough answers)
+        if abs(target_level - consistency_percent) > 12:
+            continue
+
+        bucket_data[target_level].append(
+            {
+                "concentrated_percent": float(concentrated_percent),
+                "distributed_percent": float(distributed_percent),
+            }
+        )
+
+    rows = []
+    total_users = 0
+    total_concentrated_weighted = 0.0
+    total_distributed_weighted = 0.0
+
+    for level in level_percentages:
+        user_stats = bucket_data[level]
+        if not user_stats:
+            continue
+
+        num_users = len(user_stats)
+        total_users += num_users
+
+        avg_concentrated = (
+            sum(item["concentrated_percent"] for item in user_stats) / num_users
+        )
+        avg_distributed = (
+            sum(item["distributed_percent"] for item in user_stats) / num_users
+        )
+
+        total_concentrated_weighted += avg_concentrated * num_users
+        total_distributed_weighted += avg_distributed * num_users
+
+        concentrated_class_attr = (
+            ' class="highlight-cell"' if avg_concentrated > avg_distributed else ""
+        )
+        distributed_class_attr = (
+            ' class="highlight-cell"' if avg_distributed > avg_concentrated else ""
+        )
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{level:.1f}%</td>
+                <td>{num_users}</td>
+                <td{concentrated_class_attr}>{avg_concentrated:.1f}%</td>
+                <td{distributed_class_attr}>{avg_distributed:.1f}%</td>
+            </tr>
+            """
+        )
+
+    if not rows:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    consistency_level_label = get_translation("consistency_level", "answers")
+    num_users_label = get_translation("num_of_users", "answers")
+    concentrated_label = get_translation(
+        "triangle_concentrated", "answers", default="Concentrated Change"
+    )
+    distributed_label = get_translation(
+        "triangle_distributed", "answers", default="Distributed Change"
+    )
+
+    # Append total row with weighted averages
+    if total_users > 0:
+        overall_concentrated = total_concentrated_weighted / total_users
+        overall_distributed = total_distributed_weighted / total_users
+        total_label = get_translation("total", "answers")
+
+        concentrated_total_class = (
+            ' class="highlight-cell"'
+            if overall_concentrated > overall_distributed
+            else ""
+        )
+        distributed_total_class = (
+            ' class="highlight-cell"'
+            if overall_distributed > overall_concentrated
+            else ""
+        )
+
+        rows.append(
+            f"""
+            <tr class="total-row">
+                <td><strong>{total_label}</strong></td>
+                <td><strong>{total_users}</strong></td>
+                <td{concentrated_total_class}><strong>{overall_concentrated:.1f}%</strong></td>
+                <td{distributed_total_class}><strong>{overall_distributed:.1f}%</strong></td>
+            </tr>
+            """
+        )
+
+    return f"""
+    <div class="summary-table-container consistency-breakdown-container">
+        <h2>{title}</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{consistency_level_label}</th>
+                        <th>{num_users_label}</th>
+                        <th>{concentrated_label}</th>
+                        <th>{distributed_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
+        <p class="summary-note">{note}</p>
     </div>
     """
 
