@@ -163,6 +163,11 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
         user_array = np.array(user_vector)
         max_attempts = 1000
 
+        if vector_size != 3:
+            raise ValueError(
+                "Triangle inequality strategy only supports 3-element vectors"
+            )
+
         min_val = min(user_vector)
         max_val = max(user_vector)
         max_change_limit = min(min_val, 100 - max_val)
@@ -173,24 +178,15 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             max_change = max(1, max_change_limit // 2)
 
         step = 5 if multiples_of_5 else 1
-        max_adjustment = max_change * step
 
         for _ in range(max_attempts):
-            q = []
-            for _ in range(vector_size - 1):
-                change = np.random.randint(-max_change, max_change + 1)
-                q.append(change * step)
+            x1 = np.random.randint(1, max_change + 1) * step
+            x2 = np.random.randint(1, max_change + 1) * step
+            x3 = -(x1 + x2)
 
-            q.append(-sum(q))
-            q = np.array(q, dtype=int)
+            q = np.array([x1, x2, x3], dtype=int)
 
             if np.all(q == 0):
-                continue
-
-            if any(abs(component) > max_adjustment for component in q):
-                continue
-
-            if 0 in q:
                 continue
 
             try:
@@ -198,26 +194,10 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             except ValueError:
                 continue
 
-            vec_plus = user_array + q
-            vec_minus = user_array - q
-
-            if not (
-                self._is_valid_budget(vec_plus) and self._is_valid_budget(vec_minus)
-            ):
+            if not self._all_rotation_variants_valid(user_array, q, q1, q2):
                 continue
 
-            vec_plus_q1 = user_array + q1
-            vec_minus_q1 = user_array - q1
-            vec_plus_q2 = user_array + q2
-            vec_minus_q2 = user_array - q2
-
-            if (
-                self._is_valid_budget(vec_plus_q1)
-                and self._is_valid_budget(vec_minus_q1)
-                and self._is_valid_budget(vec_plus_q2)
-                and self._is_valid_budget(vec_minus_q2)
-            ):
-                return q
+            return q
 
         raise ValueError(
             f"Unable to generate valid base change vector (mult_of_5={multiples_of_5})"
@@ -246,6 +226,35 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                 raise ValueError(
                     "Unable to generate valid base change vector even with fallback"
                 )
+
+    def _all_rotation_variants_valid(
+        self,
+        user_array: np.ndarray,
+        q: np.ndarray,
+        q1: np.ndarray,
+        q2: np.ndarray,
+    ) -> bool:
+        """Ensure every rotation and sign variant keeps budgets within bounds."""
+
+        for rotation in range(3):
+            q_rot = self._rotate_vector(q, rotation)
+            q1_rot = self._rotate_vector(q1, rotation)
+            q2_rot = self._rotate_vector(q2, rotation)
+
+            if not self._is_valid_budget(user_array + q_rot):
+                return False
+            if not self._is_valid_budget(user_array - q_rot):
+                return False
+            if not self._is_valid_budget(user_array + q1_rot):
+                return False
+            if not self._is_valid_budget(user_array - q1_rot):
+                return False
+            if not self._is_valid_budget(user_array + q2_rot):
+                return False
+            if not self._is_valid_budget(user_array - q2_rot):
+                return False
+
+        return True
 
     def _decompose_change_vector(self, q: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
