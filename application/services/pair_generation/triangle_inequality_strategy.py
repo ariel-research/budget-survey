@@ -9,7 +9,7 @@ participants who use balancing utility models rather than additive models.
 """
 
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
@@ -72,14 +72,39 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
         # Generate 2 base change vectors with multiple attempts
         max_base_attempts = 100
         successful_bases = 0
+        seen_base_vector_rotations: Set[Tuple[int, int, int]] = set()
+
+        def vector_tuple(vec: np.ndarray) -> Tuple[int, int, int]:
+            return tuple(int(v) for v in vec)
 
         for attempt in range(max_base_attempts):
             if successful_bases >= 2:
                 break
 
             try:
-                # Generate base change vector q
-                q = self._generate_base_change_vector(user_vector, vector_size)
+                q = None
+                for multiples_of_5 in (True, False):
+                    try:
+                        candidate_q = self._try_generate_base_change_vector(
+                            user_vector, vector_size, multiples_of_5
+                        )
+                    except ValueError:
+                        continue
+
+                    duplicate_rotation = any(
+                        vector_tuple(self._rotate_vector(candidate_q, rotation))
+                        in seen_base_vector_rotations
+                        for rotation in range(3)
+                    )
+
+                    if duplicate_rotation:
+                        continue
+
+                    q = candidate_q
+                    break
+
+                if q is None:
+                    continue
 
                 # Decompose q into q1 and q2
                 # This may raise ValueError if decomposition is degenerate
@@ -127,6 +152,10 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                 if len(base_pairs) == 6:
                     all_pairs.extend(base_pairs)
                     successful_bases += 1
+
+                    for rotation in range(3):
+                        rotated_q = self._rotate_vector(q, rotation)
+                        seen_base_vector_rotations.add(vector_tuple(rotated_q))
 
             except ValueError:
                 # Failed to generate valid base vector, try again

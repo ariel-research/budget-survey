@@ -179,6 +179,28 @@ def test_edge_case_vectors(strategy):
     assert len(pairs) == 12
 
 
+def test_all_pairs_are_unique(strategy):
+    """Ensure that all 12 generated pairs are unique."""
+    user_vector = (40, 30, 30)
+    pairs = strategy.generate_pairs(user_vector, n=12, vector_size=3)
+
+    assert len(pairs) == 12
+
+    seen_pairs = set()
+    for pair in pairs:
+        vector_keys = [key for key in pair if "Triangle" in key]
+        assert len(vector_keys) == 2
+
+        vectors = [tuple(pair[key]) for key in vector_keys]
+        pair_signature = tuple(sorted(vectors))
+        seen_pairs.add(pair_signature)
+
+    assert len(seen_pairs) == 12, (
+        "Generated duplicate pair configurations; base vectors must be "
+        "rotationally unique."
+    )
+
+
 def test_generate_pairs_succeeds_for_extreme_vectors_with_fallback(strategy):
     """Ensure extreme vectors succeed via fallback path with non-multiple changes."""
     extreme_vector = (90, 5, 5)
