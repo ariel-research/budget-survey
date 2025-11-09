@@ -20,7 +20,7 @@ JOIN
 WHERE 
     sr.completed = TRUE  
     AND sr.attention_check_failed = FALSE
-    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') = 'single_peaked_preference_test'
+    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') = 'star_shaped_preference_test'
 GROUP BY 
     sr.user_id, sr.survey_id, s.story_code, 
     JSON_UNQUOTE(JSON_EXTRACT(s.pair_generation_config, '$.strategy')),
@@ -47,7 +47,7 @@ JOIN
 WHERE 
     sr.completed = TRUE  
     AND sr.attention_check_failed = FALSE
-    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') = 'single_peaked_preference_test_rounded'
+    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') = 'star_shaped_preference_test_rounded'
 GROUP BY 
     sr.user_id, sr.survey_id, s.story_code, 
     JSON_UNQUOTE(JSON_EXTRACT(s.pair_generation_config, '$.strategy')),
@@ -74,7 +74,7 @@ JOIN
 WHERE 
     sr.completed = TRUE  
     AND sr.attention_check_failed = FALSE
-    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') IN ('single_peaked_preference_test', 'single_peaked_preference_test_rounded')
+    AND JSON_EXTRACT(s.pair_generation_config, '$.strategy') IN ('star_shaped_preference_test', 'star_shaped_preference_test_rounded')
 GROUP BY 
     sr.user_id, sr.survey_id, s.story_code, 
     JSON_UNQUOTE(JSON_EXTRACT(s.pair_generation_config, '$.strategy')),

@@ -97,7 +97,7 @@ def setup_test_data(app):
 
         # Second survey
         pair_gen_config2 = json.dumps(
-            {"strategy": "single_peaked_preference_test", "params": {"num_pairs": 10}}
+            {"strategy": "star_shaped_preference_test", "params": {"num_pairs": 10}}
         )
         execute_query(survey_query, (code2, True, pair_gen_config2))
 

@@ -237,8 +237,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 2: (70, 15, 15)  Better sum of differences (20) but worse minimal ratio (0.75)
      ```
 
-2. **Single-Peaked Preference Test**
-   - Strategy name: `single_peaked_preference_test`
+2. **Star-Shaped Preference Test**
+   - Strategy name: `star_shaped_preference_test`
    - Generates pairs by combining user's ideal vector with random vectors using weighted averages
    - Each pair contains:
      - A random vector different from user's ideal allocation
@@ -258,8 +258,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - Weighted result: [38, 39, 23] (40*0.9 + 20*0.1, 40*0.9 + 30*0.1, 20*0.9 + 50*0.1)
      ```
 
-3. **Single-Peaked Preference Test (Rounded)**
-   - Strategy name: `single_peaked_preference_test_rounded`
+3. **Star-Shaped Preference Test (Rounded)**
+   - Strategy name: `star_shaped_preference_test_rounded`
    - Extends the Weighted Vector Strategy to ensure all allocations are multiples of 5
    - Each pair contains:
      - A random vector different from user's ideal allocation (in multiples of 5)

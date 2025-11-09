@@ -223,10 +223,10 @@
 .strategy-badge[data-strategy="l1_vs_leontief_comparison"] { 
    background: var(--color-optimization-metrics);
 }
-.strategy-badge[data-strategy="single_peaked_preference_test"] { 
+.strategy-badge[data-strategy="star_shaped_preference_test"] { 
    background: var(--color-weighted-average-vector);
 }
-.strategy-badge[data-strategy="single_peaked_preference_test_rounded"] { 
+.strategy-badge[data-strategy="star_shaped_preference_test_rounded"] { 
    background: var(--color-rounded-weighted-average-vector);
 }
 .strategy-badge[data-strategy="l1_vs_l2_comparison"] { 
