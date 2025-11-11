@@ -83,9 +83,10 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
 
             try:
                 q = None
+                multiples_of_5_mode = None
                 for multiples_of_5 in (True, False):
                     try:
-                        candidate_q = self._try_generate_base_change_vector(
+                        candidate_q, mode_used = self._try_generate_base_change_vector(
                             user_vector, vector_size, multiples_of_5
                         )
                     except ValueError:
@@ -101,6 +102,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                         continue
 
                     q = candidate_q
+                    multiples_of_5_mode = mode_used
                     break
 
                 if q is None:
@@ -131,6 +133,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                         variant="positive",
                         group_num=successful_bases + 1,
                         rotation=rotation,
+                        multiples_of_5_mode=multiples_of_5_mode,
                     )
                     if pos_pair:
                         base_pairs.append(pos_pair)
@@ -144,6 +147,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
                         variant="negative",
                         group_num=successful_bases + 1,
                         rotation=rotation,
+                        multiples_of_5_mode=multiples_of_5_mode,
                     )
                     if neg_pair:
                         base_pairs.append(neg_pair)
@@ -187,10 +191,21 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
 
     def _try_generate_base_change_vector(
         self, user_vector: tuple, vector_size: int, multiples_of_5: bool
-    ) -> np.ndarray:
-        """Attempt to generate a valid base change vector with configurable granularity."""
+    ) -> Tuple[np.ndarray, bool]:
+        """
+        Attempt to generate a valid base change vector with configurable granularity.
+
+        Uses deterministic enumeration of all candidate combinations instead of random
+        sampling. This ensures:
+        - For multiples_of_5=True: Reliable generation from 9 combinations (3×3)
+        - For multiples_of_5=False: Efficient search from all valid combinations
+        - Better performance and reliability than random attempts
+
+        Returns:
+            Tuple of (q, multiples_of_5_used) where multiples_of_5_used indicates
+            whether the returned q used multiples of 5 granularity.
+        """
         user_array = np.array(user_vector)
-        max_attempts = 1000
 
         if vector_size != 3:
             raise ValueError(
@@ -203,30 +218,38 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
 
         if multiples_of_5:
             max_change = max(1, max_change_limit // 10)
+            step = 5
         else:
             max_change = max(1, max_change_limit // 2)
+            step = 1
 
-        step = 5 if multiples_of_5 else 1
+        # Generate ALL valid candidate vectors upfront
+        candidates = []
+        for x1_multiplier in range(1, max_change + 1):
+            for x2_multiplier in range(1, max_change + 1):
+                x1 = x1_multiplier * step
+                x2 = x2_multiplier * step
+                x3 = -(x1 + x2)
 
-        for _ in range(max_attempts):
-            x1 = np.random.randint(1, max_change + 1) * step
-            x2 = np.random.randint(1, max_change + 1) * step
-            x3 = -(x1 + x2)
+                q = np.array([x1, x2, x3], dtype=int)
 
-            q = np.array([x1, x2, x3], dtype=int)
+                if np.all(q == 0):
+                    continue
 
-            if np.all(q == 0):
-                continue
+                try:
+                    q1, q2 = self._decompose_change_vector(q)
+                except ValueError:
+                    continue
 
-            try:
-                q1, q2 = self._decompose_change_vector(q)
-            except ValueError:
-                continue
+                candidates.append((q, q1, q2))
 
-            if not self._all_rotation_variants_valid(user_array, q, q1, q2):
-                continue
+        # Shuffle candidates for randomness in selection order
+        np.random.shuffle(candidates)
 
-            return q
+        # Check candidates in shuffled order until one passes validation
+        for q, q1, q2 in candidates:
+            if self._all_rotation_variants_valid(user_array, q, q1, q2):
+                return q, multiples_of_5
 
         raise ValueError(
             f"Unable to generate valid base change vector (mult_of_5={multiples_of_5})"
@@ -238,18 +261,20 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
         """Generate a base change vector using multiples of 5 with fallback to integers."""
 
         try:
-            return self._try_generate_base_change_vector(
+            q, _ = self._try_generate_base_change_vector(
                 user_vector, vector_size, multiples_of_5=True
             )
+            return q
         except ValueError as e1:
             logger.info(
                 f"Primary (mult-of-5) generation failed for {user_vector}: {e1}. "
                 "Trying fallback (non-mult-of-5)."
             )
             try:
-                return self._try_generate_base_change_vector(
+                q, _ = self._try_generate_base_change_vector(
                     user_vector, vector_size, multiples_of_5=False
                 )
+                return q
             except ValueError as e2:
                 logger.error(f"Fallback generation also failed for {user_vector}: {e2}")
                 raise ValueError(
@@ -353,6 +378,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
         variant: str,
         group_num: int,
         rotation: int,
+        multiples_of_5_mode: bool = None,
     ) -> Dict:
         """
         Generate a single pair variant (positive or negative).
@@ -365,6 +391,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             variant: "positive" or "negative"
             group_num: Base vector group number (1-2)
             rotation: Rotation number (0-2)
+            multiples_of_5_mode: Whether this pair used multiples-of-5 granularity
 
         Returns:
             Pair dictionary with flattened biennial budgets
@@ -426,6 +453,7 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             "rotation_number": rotation,
             "variant": variant,
             "is_biennial": True,
+            "multiples_of_5_mode": multiples_of_5_mode,
         }
 
         return pair

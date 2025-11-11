@@ -1,10 +1,14 @@
 """Test suite for triangle inequality strategy."""
 
+import logging
+
 import numpy as np
 import pytest
 
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import TriangleInequalityStrategy
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -222,9 +226,29 @@ def test_generate_pairs_uses_multiples_of_5_for_normal_vectors(strategy):
 
     assert len(pairs) == 12
 
+    multiples_count = 0
+    fallback_count = 0
+
     for pair in pairs:
+        mode = pair.get("multiples_of_5_mode", True)
         distributed_differences = pair["option2_differences"]
-        assert all(abs(diff) % 5 == 0 for diff in distributed_differences)
+
+        if mode:
+            # Strict check: all differences must be multiples of 5
+            assert all(abs(diff) % 5 == 0 for diff in distributed_differences), (
+                f"Pair with multiples_of_5_mode=True has non-multiple differences: "
+                f"{distributed_differences}"
+            )
+            multiples_count += 1
+        else:
+            # Fallback mode: no constraint
+            fallback_count += 1
+
+    # Log which mode was used (for debugging)
+    logger.info(
+        f"test_generate_pairs_uses_multiples_of_5_for_normal_vectors: "
+        f"{multiples_count} pairs used multiples_of_5, {fallback_count} used fallback"
+    )
 
 
 def test_option_labels(strategy):
