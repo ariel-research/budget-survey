@@ -350,8 +350,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Unsuitable for Survey",
         },
         "unsuitable_message": {
-            "he": "התקציב האידיאלי שלך אינו מתאים לסוג הסקר הזה.",
-            "en": "Your ideal budget is not suitable for this type of survey.",
+            "he": "אינך מתאים לסקר זה.",
+            "en": "You are not suitable for this survey.",
         },
         # Ranking survey interface
         "question": {"he": "שאלה", "en": "Question"},

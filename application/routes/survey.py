@@ -560,17 +560,32 @@ def screening():
                     )
                 )
             else:
-                # User failed - redirect to unsuitable page
+                # User failed - handle based on demo mode
                 logger.info(f"User {user_id} failed screening questions")
-                return redirect(
-                    url_for(
-                        "survey.unsuitable",
-                        userID=user_id,
-                        surveyID=external_survey_id,
-                        internalID=internal_survey_id,
-                        demo="true" if is_demo else None,
+                if is_demo:
+                    # In demo mode, show the unsuitable page
+                    return redirect(
+                        url_for(
+                            "survey.unsuitable",
+                            userID=user_id,
+                            surveyID=external_survey_id,
+                            internalID=internal_survey_id,
+                            demo="true",
+                        )
                     )
-                )
+                else:
+                    # In regular mode, redirect to Panel4All with filterout status
+                    panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                        "FILTEROUT"
+                    ]
+                    return redirect(
+                        redirect_to_panel4all(
+                            user_id,
+                            external_survey_id,
+                            status=panel4all_status,
+                            q=external_q_argument,
+                        )
+                    )
         except (ValueError, KeyError) as e:
             logger.error(f"Error processing screening answers: {str(e)}")
             flash(get_translation("validation_error", "messages"), "error")
