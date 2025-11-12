@@ -1,0 +1,88 @@
+/**
+ * Shared CSS Variables
+ * Universal variables used across multiple stylesheets
+ * 
+ * This file defines:
+ * - Shadows (consistent across the app)
+ * - Spacing/sizing units
+ * - Typography/fonts
+ * - Neutral colors (whites, grays, borders)
+ * 
+ * Section-specific colors (primary colors, strategy colors, etc.)
+ * are defined in their respective CSS files to maintain visual distinctions
+ * between different sections of the application.
+ */
+
+:root {
+  /* ==========================================================================
+     Shadows - Unified across all sections
+     ========================================================================== */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* ==========================================================================
+     Spacing/Sizing - Standardized throughout the app
+     ========================================================================== */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+  --spacing-xxl: 3rem;      /* 48px */
+
+  /* ==========================================================================
+     Typography/Fonts
+     ========================================================================== */
+  --font-family-base: 'Noto Sans Hebrew', sans-serif;
+  --font-family-mono: 'Monaco', 'Consolas', monospace;
+
+  /* ==========================================================================
+     Neutral Colors - Used across multiple sections
+     ========================================================================== */
+  /* Whites and backgrounds */
+  --color-white: #ffffff;
+  --color-background-light: #ffffff;
+  --color-background-alt: #f8fafc;
+  
+  /* Grays and text */
+  --color-black: #000000;
+  --color-disabled: #708090;
+  
+  /* Borders */
+  --color-border-light: #e2e8f0;
+  --color-border: #bdc3c7;
+
+  /* ==========================================================================
+     Universal State Colors
+     ========================================================================== */
+  --color-error: #e74c3c;
+  --color-success: #27ae60;
+  --color-warning: #e67e22;
+
+  /* ==========================================================================
+     Survey Strategy Colors - Brand Identity across all pages
+     These colors represent specific survey methodologies and must be consistent
+     everywhere they appear (dashboard, responses, analysis, etc.)
+     ========================================================================== */
+  --color-linear-symmetry: #EF4444;                            /* Red */
+  --color-asymmetric-loss-distribution: #D946EF;               /* Fuchsia */
+  --color-preference-ranking-survey: #E91E63;                  /* Pink */
+  --color-biennial-budget-preference: #FF7F50;                 /* Coral */
+  --color-triangle-inequality-test: #0EA5E9;                   /* Sky Blue */
+  --color-optimization-metrics: #3B82F6;                       /* Blue */
+  --color-weighted-average-vector: #10B981;                    /* Green */
+  --color-rounded-weighted-average-vector: #8B5CF6;            /* Purple */
+  --color-root-sum-squared-sum: #14B8A6;                       /* Teal */
+  --color-root-sum-squared-ratio: #F43F5E;                     /* Rose */
+  --color-extreme-vectors: #6366F1;                            /* Indigo */
+  --color-cyclic-shift: #F59E0B;                               /* Amber */
+
+  /* ==========================================================================
+     Transitions
+     ========================================================================== */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+

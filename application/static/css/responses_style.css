@@ -1,8 +1,11 @@
+/* Import shared variables (shadows, spacing, typography, neutral colors) */
+@import '_variables.css';
+
 /* ==========================================================================
-  Variables & Base Styles
+  Variables & Base Styles - Responses Specific
   ========================================================================== */
   :root {
-   /* Colors */
+   /* Colors - Responses specific */
    --color-primary: #2C3E50;
    --color-primary-light: #34495e;
    --color-secondary: #3498db;
@@ -22,38 +25,17 @@
    --color-better: #f1c40f;
    --color-highlight: #e8e1b6;
    
-   /* Strategy Colors */
-   --color-optimization-metrics: #3B82F6;    /* Blue */
-   --color-weighted-average-vector: #10B981; /* Green */
-   --color-rounded-weighted-average-vector: #8B5CF6; /* Purple */
-   --color-root-sum-squared-sum: #14B8A6;    /* Teal */
-   --color-root-sum-squared-ratio: #F43F5E;  /* Rose */
-   --color-extreme-vectors: #6366F1;         /* Indigo */
-   --color-cyclic-shift: #F59E0B;            /* Amber */
-   --color-linear-symmetry: #EF4444;         /* Red */
-   --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
-   --color-preference-ranking-survey: #E91E63; /* Pink */
-   --color-biennial-budget-preference: #FF7F50;  /* Coral */
-   
-   /* Spacing */
-   --spacing-xs: 0.25rem;
-   --spacing-sm: 0.5rem;
-   --spacing-md: 1rem;
-   --spacing-lg: 1.5rem;
-   --spacing-xl: 2rem;
-   --spacing-xxl: 3rem;
+   /* Note: Survey Strategy Colors (optimization-metrics, weighted-average-vector, etc.) 
+      are now defined in _variables.css for consistency across all pages */
    
    /* Typography */
-   --font-family-mono: 'Monaco', 'Consolas', monospace;
    --font-size-xs: 0.85rem;
    --font-size-sm: 0.9rem;
    --font-size-base: 1rem;
    --font-size-lg: 1.2rem;
    --font-size-xl: 1.5rem;
    
-   /* Shadows */
-   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+   /* Shadows - Custom shadow for hover state */
    --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
 
     /* Neutral Preference Colors for Asymmetric Matrix */

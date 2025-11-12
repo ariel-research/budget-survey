@@ -1,8 +1,11 @@
+/* Import shared variables (shadows, spacing, typography, neutral colors) */
+@import '_variables.css';
+
 /* ==========================================================================
-   Variables & Settings
+   Variables & Settings - Dashboard Specific
    ========================================================================== */
    :root {
-    /* Colors */
+    /* Dashboard Primary Colors */
     --color-primary: #3B82F6;    /* Blue */
     --color-success: #10B981;    /* Green */
     --color-warning: #F59E0B;    /* Amber */
@@ -13,11 +16,8 @@
     --color-indigo: #6366F1;     /* Indigo */
     --color-rose: #F43F5E;       /* Rose */
     --color-amber: #F59E0B;      /* Amber */
-    --color-linear-symmetry: #EF4444;         /* Red */
-    --color-asymmetric-loss-distribution: #D946EF; /* Fuchsia */
-    --color-preference-ranking-survey: #E91E63; /* Pink */
-    --color-biennial-budget-preference: #FF7F50;  /* Coral */
-    --color-triangle-inequality-test: #0EA5E9;  /* Sky Blue */
+    
+    /* Note: Survey Strategy Colors are now defined in _variables.css for consistency across all pages */
 
     /* Text Colors */
     --color-text-dark: #1f2937;
@@ -26,24 +26,10 @@
     
     /* Background Colors */
     --color-background: #F3F4F6;
-    --color-background-light: #ffffff;
-    --color-background-alt: #f8fafc;
     
     /* Border Colors */
     --color-border: #e5e7eb;
     --color-border-light: #f3f4f6;
-    
-    /* Shadow values */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    
-    /* Spacing */
-    --spacing-xs: 0.25rem;    /* 4px */
-    --spacing-sm: 0.5rem;     /* 8px */
-    --spacing-md: 1rem;       /* 16px */
-    --spacing-lg: 1.5rem;     /* 24px */
-    --spacing-xl: 2rem;       /* 32px */
     
     /* Font Sizes */
     --text-xs: 0.8125rem;     /* 13px */
