@@ -15,6 +15,17 @@ def strategy():
     return MultiDimensionalSinglePeakedStrategy()
 
 
+def enumerate_all_valid_vectors():
+    """Enumerate all valid 3D budget vectors using 5-point granularity."""
+    valid_vectors = []
+    for a in range(5, 100, 5):
+        for b in range(5, 100, 5):
+            c = 100 - a - b
+            if 5 <= c <= 95 and c % 5 == 0:
+                valid_vectors.append((a, b, c))
+    return valid_vectors
+
+
 def test_is_unambiguously_closer_cases(strategy):
     peak = (40, 30, 30)
 
@@ -26,13 +37,34 @@ def test_is_unambiguously_closer_cases(strategy):
     assert not strategy._is_unambiguously_closer(peak, identical_far, q_far)
 
     sign_mismatch_near = (40, 35, 25)
-    assert not strategy._is_unambiguously_closer(peak, sign_mismatch_near, q_far)
+    assert not strategy._is_unambiguously_closer(
+        peak,
+        sign_mismatch_near,
+        q_far,
+    )
 
     farther_component = (48, 18, 34)
-    assert not strategy._is_unambiguously_closer(peak, farther_component, q_far)
+    assert not strategy._is_unambiguously_closer(
+        peak,
+        farther_component,
+        q_far,
+    )
 
     at_peak = peak
     assert not strategy._is_unambiguously_closer(peak, at_peak, q_far)
+
+
+def test_peak_dimension_edge_cases(strategy):
+    """Ensure behavior is correct when some dimensions are at the peak."""
+    peak = (50, 30, 20)
+
+    q_far = (50, 40, 10)
+    q_near = (50, 35, 15)
+    assert strategy._is_unambiguously_closer(peak, q_near, q_far)
+
+    q_far = (50, 40, 10)
+    q_near = (45, 35, 20)
+    assert not strategy._is_unambiguously_closer(peak, q_near, q_far)
 
 
 def test_unsuitable_for_zero_entries(strategy):
@@ -54,7 +86,11 @@ def test_generate_pairs_filters_user_vector(strategy):
         assert user_vector not in vectors
         far_vector = pair[far_desc]
         near_vector = pair[near_desc]
-        assert strategy._is_unambiguously_closer(user_vector, near_vector, far_vector)
+        assert strategy._is_unambiguously_closer(
+            user_vector,
+            near_vector,
+            far_vector,
+        )
 
 
 def test_generate_pairs_failure(strategy):
@@ -70,3 +106,29 @@ def test_generate_pairs_failure(strategy):
     ):
         with pytest.raises(ValueError):
             strategy.generate_pairs(user_vector, n=10, vector_size=3)
+
+
+def test_all_valid_vectors_generate_successfully(strategy):
+    """MDSP should generate pure pairs for every valid user vector."""
+    valid_vectors = enumerate_all_valid_vectors()
+
+    failed_vectors = []
+    for user_vector in valid_vectors:
+        try:
+            pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
+            assert len(pairs) == 10
+        except (ValueError, UnsuitableForStrategyError) as error:
+            failed_vectors.append((user_vector, str(error)))
+
+    success_rate = 1 - (len(failed_vectors) / len(valid_vectors))
+
+    if failed_vectors:
+        print(f"\nFailed vectors ({len(failed_vectors)}):")
+        for vec, err in failed_vectors[:10]:
+            print(f"  {vec}: {err[:60]}")
+
+    assert success_rate == 1.0, (
+        "Must generate pairs for ALL valid vectors. "
+        f"Success rate: {success_rate:.1%} "
+        f"({len(failed_vectors)} failures)"
+    )

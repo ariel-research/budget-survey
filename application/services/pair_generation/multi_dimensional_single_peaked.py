@@ -1,6 +1,7 @@
 """Implementation of the multi-dimensional single-peaked (MDSP) strategy."""
 
 import logging
+import random
 from typing import Dict, List, Set, Tuple
 
 import numpy as np
@@ -24,15 +25,17 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         q_far: Tuple[int, ...],
     ) -> bool:
         """
-        Determine if q_near is unambiguously closer to the peak than q_far.
+        Determine if q_near is unambiguously closer to peak than q_far.
 
-        Args:
-            peak: The user's ideal allocation (the peak).
-            q_near: Candidate vector expected to be nearer to the peak.
-            q_far: Candidate vector expected to be further from the peak.
+        Implements the MDSP definition: every dimension must deviate from the
+        peak in the same direction (no overshoot), q_near's deviation magnitude
+        must not exceed q_far's, and it must be strictly smaller somewhere.
+        Handles np.sign(0) edge cases:
+            - If d_far[j] = 0 and d_near[j] ≠ 0, signs differ → False.
+            - If both deviations are zero, the dimension passes.
 
         Returns:
-            True if q_near is unambiguously closer than q_far under MDSP.
+            True if q_near is unambiguously closer under MDSP.
         """
         peak_arr = np.asarray(peak)
         near_arr = np.asarray(q_near)
@@ -60,6 +63,25 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
                 strictly_closer_found = True
 
         return strictly_closer_found
+
+    def create_random_vector_unrestricted(self, size: int = 3) -> tuple:
+        """
+        Generate a random vector summing to 100 without divisibility limits.
+
+        Used by MDSP to broaden the candidate space for extreme user vectors.
+        """
+        max_attempts = 100
+
+        for _ in range(max_attempts):
+            vector = np.random.rand(size)
+            vector = np.floor(vector / vector.sum() * 100).astype(int)
+            vector[-1] = 100 - vector[:-1].sum()
+
+            if np.all(vector >= 0) and np.all(vector <= 100):
+                np.random.shuffle(vector)
+                return tuple(int(v) for v in vector)
+
+        raise ValueError("Could not generate valid random vector")
 
     def generate_pairs(
         self, user_vector: tuple, n: int = 10, vector_size: int = 3
@@ -95,8 +117,8 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         while len(pairs) < n and attempts < max_attempts:
             attempts += 1
 
-            q_a = self.create_random_vector(vector_size)
-            q_b = self.create_random_vector(vector_size)
+            q_a = self.create_random_vector_unrestricted(vector_size)
+            q_b = self.create_random_vector_unrestricted(vector_size)
 
             if q_a == q_b:
                 continue
@@ -130,10 +152,14 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
                 f"{max_attempts} attempts."
             )
 
+        random.shuffle(pairs)
+        success_rate = 100 * len(pairs) / attempts if attempts > 0 else 0
         logger.info(
-            "Generated %s MDSP pairs using %s",
+            "Generated %d MDSP pairs in %d attempts using %s " "(success rate: %.2f%%)",
             len(pairs),
+            attempts,
             self.__class__.__name__,
+            success_rate,
         )
         self._log_pairs(pairs)
         return pairs
