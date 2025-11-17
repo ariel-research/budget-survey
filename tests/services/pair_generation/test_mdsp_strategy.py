@@ -29,8 +29,8 @@ def enumerate_all_valid_vectors():
 def test_is_unambiguously_closer_cases(strategy):
     peak = (40, 30, 30)
 
-    q_far = (50, 20, 30)
-    q_near = (45, 25, 30)
+    q_far = (48, 20, 32)
+    q_near = (44, 25, 31)
     assert strategy._is_unambiguously_closer(peak, q_near, q_far)
 
     identical_far = (50, 20, 30)
@@ -51,20 +51,37 @@ def test_is_unambiguously_closer_cases(strategy):
     )
 
     at_peak = peak
-    assert not strategy._is_unambiguously_closer(peak, at_peak, q_far)
+    assert strategy._is_unambiguously_closer(peak, at_peak, q_far)
 
 
 def test_peak_dimension_edge_cases(strategy):
     """Ensure behavior is correct when some dimensions are at the peak."""
     peak = (50, 30, 20)
 
+    # Both at peak in dimension 1, invalid because far must be strictly away
     q_far = (50, 40, 10)
     q_near = (50, 35, 15)
-    assert strategy._is_unambiguously_closer(peak, q_near, q_far)
+    assert not strategy._is_unambiguously_closer(peak, q_near, q_far)
 
+    # q_far is closer (identical to peak) in dimension 1
     q_far = (50, 40, 10)
     q_near = (45, 35, 20)
     assert not strategy._is_unambiguously_closer(peak, q_near, q_far)
+
+    # q_near at peak in dimension 1, q_far away - should be valid (extended MDSP)
+    q_far = (55, 40, 5)
+    q_near = (50, 35, 15)
+    assert strategy._is_unambiguously_closer(peak, q_near, q_far)
+
+    # q_far at peak in dimension 1, q_near away - should be invalid
+    q_far = (50, 40, 10)
+    q_near = (55, 35, 15)
+    assert not strategy._is_unambiguously_closer(peak, q_near, q_far)
+
+    # q_near at peak in all dimensions (q_near equals peak)
+    q_far = (55, 35, 10)
+    q_near = (50, 30, 20)
+    assert strategy._is_unambiguously_closer(peak, q_near, q_far)
 
 
 def test_unsuitable_for_zero_entries(strategy):

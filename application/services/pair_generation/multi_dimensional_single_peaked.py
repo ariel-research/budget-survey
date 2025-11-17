@@ -27,12 +27,23 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         """
         Determine if q_near is unambiguously closer to peak than q_far.
 
-        Implements the MDSP definition: every dimension must deviate from the
-        peak in the same direction (no overshoot), q_near's deviation magnitude
-        must not exceed q_far's, and it must be strictly smaller somewhere.
-        Handles np.sign(0) edge cases:
-            - If d_far[j] = 0 and d_near[j] ≠ 0, signs differ → False.
-            - If both deviations are zero, the dimension passes.
+        Implements the MDSP definition: for every dimension j, either:
+        1. (q_far_j - Pj) > (q_near_j - Pj) >= 0 (both non-negative, q_far further), OR
+        2. (q_far_j - Pj) < (q_near_j - Pj) <= 0 (both non-positive, q_far further)
+
+        In terms of deviations: d_far > d_near >= 0 OR d_far < d_near <= 0
+
+        This means q_far must be STRICTLY further from peak than q_near in ALL
+        dimensions.
+
+        Special cases:
+            - If d_near[j] == d_far[j] in any dimension (regardless of value),
+              due to sum-to-zero constraint, remaining dimensions must have opposite
+              relationships, violating MDSP → False.
+            - If d_far[j] = 0 in any dimension, pair is invalid. With d_far = 0,
+              MDSP requires 0 > d_near >= 0 OR 0 < d_near <= 0, both impossible → False.
+            - If q_near is at peak (d_near[j] = 0) and q_far is away (d_far[j] ≠ 0),
+              q_near is closer in that dimension → valid.
 
         Returns:
             True if q_near is unambiguously closer under MDSP.
@@ -44,23 +55,46 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         diff_near = near_arr - peak_arr
         diff_far = far_arr - peak_arr
 
+        # Check if both vectors are identical (all deviations zero)
+        if np.all(diff_near == diff_far):
+            return False  # q_near == q_far, not closer
+
         strictly_closer_found = False
 
         for d_near, d_far in zip(diff_near, diff_far):
+            # If d_near[j] == d_far[j] in any dimension, pair is invalid
+            if d_near == d_far:
+                return False
+
+            # If d_far[j] = 0 in any dimension, pair is invalid
+            if d_far == 0:
+                return False
+
+            # Special case: if q_near is at peak (d_near = 0) and q_far is away
+            # Since d_far != 0 (checked above), and d_near = 0, q_near is closer
+            if d_near == 0:
+                strictly_closer_found = True
+                continue
+
+            # Standard MDSP check: d_far > d_near >= 0 OR d_far < d_near <= 0
+            # Both deviations must be on the same side of peak (same sign)
             sign_near = np.sign(d_near)
             sign_far = np.sign(d_far)
 
             if sign_near != sign_far:
                 return False
 
+            # Check the MDSP condition using absolute values
+            # Since both have same sign (and neither is zero), q_far is further iff |d_far| > |d_near|
             abs_near = abs(d_near)
             abs_far = abs(d_far)
 
-            if abs_near > abs_far:
-                return False
-
-            if abs_near < abs_far:
+            if abs_far > abs_near:
                 strictly_closer_found = True
+            elif abs_far < abs_near:
+                return False
+            else:
+                return False
 
         return strictly_closer_found
 
