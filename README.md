@@ -568,6 +568,17 @@ Note: '>' represents observed choice, which may include cases of user indifferen
         - Measures user preference for concentrated vs. distributed changes.
         - Calculates a "Triangle Inequality Consistency" score to see how choices align with the mathematical principle.
 
+13. **Multi-Dimensional Single-Peaked Test**
+   - Strategy name: `multi_dimensional_single_peaked_test`
+   - Generates pairs where the "near" option is weakly closer to the user's peak on every dimension and strictly closer on at least one, ensuring consistent directional deviations.
+   - Rejects user vectors containing zeros and filters out duplicate or peak-identical candidates to keep comparisons informative.
+   - Example:
+     ```python
+     # User's ideal: (50, 30, 20)
+     # Option A (Far): (50, 40, 10)   # Deviations: [0, +10, -10]
+     # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
+     ```
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

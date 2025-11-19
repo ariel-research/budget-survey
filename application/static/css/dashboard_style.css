@@ -396,6 +396,9 @@
 .strategy-badge[data-strategy="triangle_inequality_test"] { 
     background: var(--color-triangle-inequality-test);
 }
+.strategy-badge[data-strategy="multi_dimensional_single_peaked_test"] {
+    background: var(--color-multi-dimensional-single-peaked);
+}
 .strategy-badge {
     background: var(--color-indigo);
 }

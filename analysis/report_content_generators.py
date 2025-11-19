@@ -2811,6 +2811,15 @@ def generate_detailed_user_choices(
                 triangle_metrics = _calculate_triangle_inequality_metrics(choices)
                 stats.update(triangle_metrics)
 
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"]
+                == "multi_dimensional_single_peaked_test"
+            ):
+                single_peaked_metrics = _calculate_single_peaked_metrics(choices)
+                stats.update(single_peaked_metrics)
+
             # Get strategy-specific metrics for enhanced stats
             try:
                 from database.queries import get_user_survey_performance_data
@@ -3679,6 +3688,10 @@ def generate_overall_statistics_table(
             <p class="summary-note">{note}</p>
         </div>
         """
+    elif strategy_name == "multi_dimensional_single_peaked_test":
+        overall_table = _generate_single_peaked_overall_consistency_table(
+            summaries, title, note
+        )
     elif strategy_name == "triangle_inequality_test":
         overall_table = _generate_triangle_overall_consistency_table(
             summaries, title, note
@@ -5396,6 +5409,136 @@ def generate_consistency_breakdown_table(user_choices: List[Dict]) -> str:
     """
 
 
+def _generate_single_peaked_overall_consistency_table(
+    summaries: List[Dict], title: str, note: str
+) -> str:
+    """
+    Generate consistency breakdown table for multi-dimensional single-peaked surveys.
+    """
+    if not summaries:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    bucket_stats: Dict[float, Dict[str, float]] = {}
+    total_users = 0
+    total_near_count = 0
+    total_far_count = 0
+
+    for summary in summaries:
+        stats = summary.get("stats", {})
+        near_count = stats.get("near_vector_count")
+        far_count = stats.get("far_vector_count")
+        near_percent = stats.get("near_vector_percent")
+        far_percent = stats.get("far_vector_percent")
+        consistency = stats.get("consistency_percent")
+
+        if (
+            near_count is None
+            or far_count is None
+            or near_percent is None
+            or far_percent is None
+            or consistency is None
+        ):
+            continue
+
+        total_pairs = near_count + far_count
+        if total_pairs <= 0:
+            continue
+
+        total_users += 1
+        total_near_count += near_count
+        total_far_count += far_count
+
+        level = round(float(consistency), 1)
+        level_bucket = bucket_stats.setdefault(
+            level, {"users": 0, "near_sum": 0.0, "far_sum": 0.0}
+        )
+        level_bucket["users"] += 1
+        level_bucket["near_sum"] += float(near_percent)
+        level_bucket["far_sum"] += float(far_percent)
+
+    if total_users == 0:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    consistency_level_label = get_translation("consistency_level", "answers")
+    num_users_label = get_translation("num_of_users", "answers")
+    far_label = get_translation("far_vector", "answers")
+    near_label = get_translation("near_vector", "answers")
+
+    rows: List[str] = []
+    for level in sorted(bucket_stats.keys()):
+        level_data = bucket_stats[level]
+        users = level_data["users"]
+        avg_near = level_data["near_sum"] / users if users else 0.0
+        avg_far = level_data["far_sum"] / users if users else 0.0
+
+        far_class = ' class="highlight-cell"' if avg_far > avg_near else ""
+        near_class = ' class="highlight-cell"' if avg_near > avg_far else ""
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{level:.1f}%</td>
+                <td>{users}</td>
+                <td{far_class}>{avg_far:.1f}%</td>
+                <td{near_class}>{avg_near:.1f}%</td>
+            </tr>
+            """
+        )
+
+    total_label = get_translation("total", "answers")
+    all_pairs = total_near_count + total_far_count
+    overall_far = (total_far_count / all_pairs) * 100 if all_pairs else 0.0
+    overall_near = (total_near_count / all_pairs) * 100 if all_pairs else 0.0
+
+    far_total_class = ' class="highlight-cell"' if overall_far > overall_near else ""
+    near_total_class = ' class="highlight-cell"' if overall_near > overall_far else ""
+
+    rows.append(
+        f"""
+        <tr class="total-row">
+            <td><strong>{total_label}</strong></td>
+            <td><strong>{total_users}</strong></td>
+            <td{far_total_class}><strong>{overall_far:.1f}%</strong></td>
+            <td{near_total_class}><strong>{overall_near:.1f}%</strong></td>
+        </tr>
+        """
+    )
+
+    return f"""
+    <div class="summary-table-container consistency-breakdown-container">
+        <h2>{title}</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{consistency_level_label}</th>
+                        <th>{num_users_label}</th>
+                        <th>{far_label}</th>
+                        <th>{near_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
+        <p class="summary-note">{note}</p>
+    </div>
+    """
+
+
 def _generate_triangle_overall_consistency_table(
     summaries: List[Dict], title: str, note: str
 ) -> str:
@@ -5777,6 +5920,97 @@ def _calculate_final_consistency_score(deduced_data: Dict) -> int:
         if len(set(prefs)) == 1:
             final_cons_score += 1
     return final_cons_score
+
+
+def _calculate_single_peaked_metrics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate multi-dimensional single-peaked metrics for a user's responses.
+
+    Determines how often respondents selected the vector closer to their peak
+    (near vector) versus the further vector, and derives consistency levels.
+    """
+    if not choices:
+        return {
+            "near_vector_count": 0,
+            "far_vector_count": 0,
+            "near_vector_percent": 0.0,
+            "far_vector_percent": 0.0,
+            "consistency_percent": 0.0,
+            "total_pairs": 0,
+        }
+
+    near_count = 0
+    far_count = 0
+
+    for choice in choices:
+        try:
+            optimal_raw = choice.get("optimal_allocation")
+            option1_raw = choice.get("option_1")
+            option2_raw = choice.get("option_2")
+            user_choice = choice.get("user_choice")
+
+            if user_choice not in (1, 2):
+                continue
+
+            if isinstance(optimal_raw, (list, tuple)):
+                optimal = [int(v) for v in optimal_raw]
+            else:
+                optimal = list(json.loads(optimal_raw))
+
+            if isinstance(option1_raw, (list, tuple)):
+                option_1 = [int(v) for v in option1_raw]
+            else:
+                option_1 = list(json.loads(option1_raw))
+
+            if isinstance(option2_raw, (list, tuple)):
+                option_2 = [int(v) for v in option2_raw]
+            else:
+                option_2 = list(json.loads(option2_raw))
+
+            if not (optimal and option_1 and option_2):
+                continue
+            if len(optimal) != len(option_1) or len(optimal) != len(option_2):
+                continue
+
+            dist_1 = sum(abs(o1 - opt) for o1, opt in zip(option_1, optimal))
+            dist_2 = sum(abs(o2 - opt) for o2, opt in zip(option_2, optimal))
+
+            if dist_1 == dist_2:
+                # Ambiguous pair; skip to avoid misclassification
+                continue
+
+            near_option = 1 if dist_1 < dist_2 else 2
+
+            if user_choice == near_option:
+                near_count += 1
+            else:
+                far_count += 1
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            logger.debug("Failed to process MDSP choice for metrics: %s", exc)
+            continue
+
+    total_pairs = near_count + far_count
+    if total_pairs == 0:
+        return {
+            "near_vector_count": 0,
+            "far_vector_count": 0,
+            "near_vector_percent": 0.0,
+            "far_vector_percent": 0.0,
+            "consistency_percent": 0.0,
+            "total_pairs": 0,
+        }
+
+    near_percent = (near_count / total_pairs) * 100
+    far_percent = (far_count / total_pairs) * 100
+
+    return {
+        "near_vector_count": near_count,
+        "far_vector_count": far_count,
+        "near_vector_percent": round(near_percent, 1),
+        "far_vector_percent": round(far_percent, 1),
+        "consistency_percent": round(max(near_percent, far_percent), 1),
+        "total_pairs": total_pairs,
+    }
 
 
 def _calculate_triangle_inequality_metrics(choices: List[Dict]) -> Dict[str, float]:

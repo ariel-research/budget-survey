@@ -6,6 +6,7 @@ from .cyclic_shift_strategy import CyclicShiftStrategy
 from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrategy
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
+from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .root_sum_squared_ratio_vector import RootSumSquaredRatioStrategy
@@ -20,6 +21,7 @@ from .weighted_average_vector import WeightedAverageVectorStrategy
 StrategyRegistry.register(OptimizationMetricsStrategy)
 StrategyRegistry.register(WeightedAverageVectorStrategy)
 StrategyRegistry.register(RoundedWeightedAverageVectorStrategy)
+StrategyRegistry.register(MultiDimensionalSinglePeakedStrategy)
 StrategyRegistry.register(RootSumSquaredSumStrategy)
 StrategyRegistry.register(RootSumSquaredRatioStrategy)
 StrategyRegistry.register(ExtremeVectorsStrategy)
@@ -36,6 +38,7 @@ __all__ = [
     "OptimizationMetricsStrategy",
     "WeightedAverageVectorStrategy",
     "RoundedWeightedAverageVectorStrategy",
+    "MultiDimensionalSinglePeakedStrategy",
     "RootSumSquaredSumStrategy",
     "RootSumSquaredRatioStrategy",
     "ExtremeVectorsStrategy",

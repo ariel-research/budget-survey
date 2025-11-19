@@ -651,6 +651,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Survey Response Breakdown",
         },
         "survey_summary": {"he": "סיכום הסקר", "en": "Survey Summary"},
+        "far_vector": {
+            "he": "וקטור רחוק",
+            "en": "Far Vector",
+        },
+        "near_vector": {
+            "he": "וקטור קרוב",
+            "en": "Near Vector",
+        },
         # Table headers and labels
         "average_percentage": {
             "he": "אחוז ממוצע",
