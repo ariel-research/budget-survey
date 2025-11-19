@@ -59,13 +59,13 @@ def test_is_unambiguously_closer_cases_REVISED(strategy):
     assert not strategy._is_unambiguously_closer(peak, q_far, q_far)
 
 
-def test_peak_dimension_edge_cases_REVISED(strategy):
+def test_peak_dimension_edge_cases(strategy):
     """
     Tests scenarios where one or more coordinates matches the peak exactly.
     """
     peak = (50, 30, 20)
 
-    # Case 1: Valid - unchanged coordinate remains valid under revised logic
+    # Case 1: Valid
     q_far = (50, 40, 10)  # D_far = [0, +10, -10]
     q_near = (50, 35, 15)  # D_near = [0, +5, -5]
     assert strategy._is_unambiguously_closer(peak, q_near, q_far)
