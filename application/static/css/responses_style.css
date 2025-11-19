@@ -235,6 +235,9 @@
 .strategy-badge[data-strategy="biennial_budget_preference"] { 
    background: var(--color-biennial-budget-preference);
  }
+.strategy-badge[data-strategy="multi_dimensional_single_peaked_test"] {
+   background: var(--color-multi-dimensional-single-peaked);
+}
 
 /* ==========================================================================
   View Filter Styles
