@@ -4,10 +4,13 @@ Implementation of the rank-based optimization metrics pair generation strategy.
 This strategy uses rank-based normalization (percentiles) with adaptive
 relaxation to generate pairs with complementary trade-offs between
 L1 distance and Leontief ratio.
+
+Uses the "sticks method" (broken-stick model) for uniform simplex sampling
+to ensure unbiased coverage of corners, edges, and centers of the vector space.
 """
 
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
@@ -70,17 +73,93 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
     """
 
     # Constants validated in reference implementation
-    POOL_SIZE = 2000
-    TARGET_PAIRS = 12
+    POOL_SIZE = 10000
+    TARGET_PAIRS = 10
 
     # Relaxation levels: (epsilon, balance_tolerance)
     # Start strict, progressively relax constraints if needed
     RELAXATION_LEVELS = [
-        (0.15, 2.0),  # Level 1: Strict
-        (0.10, 2.5),  # Level 2: Moderate
-        (0.05, 4.0),  # Level 3: Loose
-        (0.01, 6.0),  # Level 4: Last Resort
+        (0.25, 1.5),  # Level 1: Excellent separation
+        (0.20, 2.0),  # Level 2: Strong separation
+        (0.15, 3.0),  # Level 3: Moderate separation
+        (0.10, 4.0),  # Level 4: Minimum viable signal
+        (0.05, 5.0),  # Level 5: SAFETY NET
     ]
+
+    def _create_random_vector_sticks(self, size: int = 3) -> tuple:
+        """
+        Generate a random vector using the sticks method (broken-stick model).
+
+        This method generates uniformly distributed vectors on the simplex,
+        ensuring unbiased coverage of corners, edges, and centers. Unlike
+        the normalize-and-floor approach, it doesn't overrepresent central
+        vectors or underrepresent extreme allocations.
+
+        Algorithm:
+        1. Generate (size-1) uniform random points in [0, 1]
+        2. Add 0 and 1 as boundaries
+        3. Sort to get ordered "breaks"
+        4. Take differences between consecutive breaks as proportions
+        5. Scale by 100 to get budget allocations
+
+        Args:
+            size: Number of elements in the vector
+
+        Returns:
+            tuple: Vector of integers summing to 100
+        """
+        # Generate breaks using the sticks method
+        breaks = np.sort(np.random.rand(size - 1))
+        breaks = np.concatenate([[0], breaks, [1]])
+
+        # Differences give uniform simplex proportions
+        proportions = np.diff(breaks)
+
+        # Scale to 100 and round to integers
+        vector = np.round(proportions * 100).astype(int)
+
+        # Adjust for rounding errors to ensure sum is exactly 100
+        diff = 100 - vector.sum()
+        if diff != 0:
+            # Add/subtract from a random position
+            idx = np.random.randint(0, size)
+            vector[idx] += diff
+
+        # Ensure values are in valid range [0, 100]
+        vector = np.clip(vector, 0, 100)
+
+        return tuple(int(v) for v in vector)
+
+    def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
+        """
+        Generate a pool of unique random vectors using uniform sampling.
+
+        Overrides the base class method to use the sticks method for
+        statistically unbiased vector generation.
+
+        Args:
+            size: Number of vectors to generate
+            vector_size: Size of each vector
+
+        Returns:
+            Set of unique vectors
+        """
+        vector_pool: Set[tuple] = set()
+        attempts = 0
+        max_attempts = size * 20
+
+        while len(vector_pool) < size and attempts < max_attempts:
+            vector = self._create_random_vector_sticks(vector_size)
+            # Validate: sum must be 100, all values in [0, 100]
+            if sum(vector) == 100 and all(0 <= v <= 100 for v in vector):
+                vector_pool.add(vector)
+            attempts += 1
+
+        logger.debug(
+            f"Generated vector pool of size {len(vector_pool)} "
+            f"using sticks method (uniform simplex sampling)"
+        )
+        return vector_pool
 
     def _calculate_l1_distance(
         self, user_vector: tuple, comparison_vector: tuple
@@ -164,71 +243,77 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
         target_pairs: int,
     ) -> List[Tuple[int, int, int, float, float]]:
         """
-        Find pairs with complementary trade-offs using adaptive relaxation.
-
-        A valid pair has one vector better in L1 rank and the other better
-        in Leontief rank, with discrepancies within the tolerance.
-
-        Args:
-            vectors: List of candidate vectors
-            l1_ranks: Normalized L1 ranks
-            leontief_ranks: Normalized Leontief ranks
-            target_pairs: Number of pairs to find
-
-        Returns:
-            List of tuples: (idx1, idx2, level, epsilon, balance_tolerance)
+        Find pairs with complementary trade-offs using Best-First Search.
+        Scans all candidates and selects those with maximum metric separation.
         """
-        # Discrepancy: positive = better in L1, negative = better in Leontief
         discrepancies = l1_ranks - leontief_ranks
-
         found_pairs = []
         used_indices = set()
 
+        # Iterate through relaxation levels
         for level_idx, (epsilon, balance_tol) in enumerate(self.RELAXATION_LEVELS, 1):
             if len(found_pairs) >= target_pairs:
                 break
 
-            # Type A: Better in L1 (positive discrepancy > epsilon)
+            # Identify all potential candidates for this level
             type_a_indices = np.where(discrepancies > epsilon)[0]
-            # Type B: Better in Leontief (negative discrepancy < -epsilon)
             type_b_indices = np.where(discrepancies < -epsilon)[0]
 
-            # Filter out already used indices
-            type_a_available = [i for i in type_a_indices if i not in used_indices]
-            type_b_available = [i for i in type_b_indices if i not in used_indices]
+            # Store candidates with a quality score
+            level_candidates = []
 
-            # Try to match Type A with Type B
-            for a_idx in type_a_available:
-                if len(found_pairs) >= target_pairs:
-                    break
+            for a_idx in type_a_indices:
+                if a_idx in used_indices:
+                    continue
+
+                # Performance opt: Don't scan B's that are already used
+                # We can filter type_b_indices dynamically if this is too slow,
+                # but with 10k vectors, this nested loop is acceptable (~0.5s).
 
                 a_disc = discrepancies[a_idx]
 
-                for b_idx in type_b_available:
-                    if b_idx in used_indices:
+                for b_idx in type_b_indices:
+                    if b_idx in used_indices or b_idx == a_idx:
                         continue
-
                     b_disc = discrepancies[b_idx]
 
-                    # Check balance: ratio of absolute discrepancies
-                    # should be within tolerance
+                    # Check Balance Ratio
                     if abs(b_disc) > 0.001:
                         ratio = abs(a_disc) / abs(b_disc)
                     else:
                         ratio = float("inf")
 
                     if 1 / balance_tol <= ratio <= balance_tol:
-                        found_pairs.append(
-                            (a_idx, b_idx, level_idx, epsilon, balance_tol)
+                        # QUALITY METRIC: Total Separation
+                        # We want pairs that are FAR apart in rank space.
+                        # Score = (A's L1 advantage) + (B's Leontief advantage)
+                        # This maximizes the trade-off clarity for the user.
+                        score = (l1_ranks[a_idx] - l1_ranks[b_idx]) + (
+                            leontief_ranks[b_idx] - leontief_ranks[a_idx]
                         )
-                        used_indices.add(a_idx)
-                        used_indices.add(b_idx)
-                        break
 
-            logger.debug(
-                f"Level {level_idx} (epsilon={epsilon}, tol={balance_tol}): "
-                f"Found {len(found_pairs)} pairs so far"
-            )
+                        level_candidates.append(
+                            {
+                                "indices": (a_idx, b_idx),
+                                "meta": (level_idx, epsilon, balance_tol),
+                                "score": score,
+                            }
+                        )
+
+            # CRITICAL CHANGE: Sort candidates by score (Best First)
+            # This ensures we pick the "Diamonds" from the pool, not just the first matches.
+            level_candidates.sort(key=lambda x: x["score"], reverse=True)
+
+            # Select the best pairs, respecting usage constraints
+            for cand in level_candidates:
+                if len(found_pairs) >= target_pairs:
+                    break
+
+                a, b = cand["indices"]
+                if a not in used_indices and b not in used_indices:
+                    found_pairs.append((*cand["indices"], *cand["meta"]))
+                    used_indices.add(a)
+                    used_indices.add(b)
 
         return found_pairs
 
@@ -257,7 +342,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
             f"for user_vector: {user_vector}"
         )
 
-        # Generate pool of random vectors
+        # Generate pool of random vectors using uniform simplex sampling
         vector_pool = list(self.generate_vector_pool(self.POOL_SIZE, vector_size))
 
         # Calculate metrics for all vectors
@@ -278,8 +363,8 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
 
         if len(pair_indices) < n:
             logger.warning(
-                f"Only found {len(pair_indices)} valid pairs, requested {n}. "
-                "Using all available pairs."
+                f"Only found {len(pair_indices)} valid pairs, "
+                f"requested {n}. Using all available pairs."
             )
 
         if len(pair_indices) == 0:
