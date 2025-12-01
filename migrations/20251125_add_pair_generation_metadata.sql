@@ -8,3 +8,4 @@ ALTER TABLE `comparison_pairs`
 ADD COLUMN `generation_metadata` JSON DEFAULT NULL
 COMMENT 'Metadata about pair generation (e.g., relaxation level, epsilon)';
 
+

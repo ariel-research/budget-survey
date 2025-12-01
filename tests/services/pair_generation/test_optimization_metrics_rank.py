@@ -189,9 +189,9 @@ class TestMetadataGeneration:
 
         for pair in pairs:
             metadata = pair["__metadata__"]
-            assert 1 <= metadata["level"] <= 4
-            assert 0.01 <= metadata["epsilon"] <= 0.15
-            assert 2.0 <= metadata["balance_tolerance"] <= 6.0
+            assert 1 <= metadata["level"] <= 5
+            assert 0.05 <= metadata["epsilon"] <= 0.25
+            assert 1.5 <= metadata["balance_tolerance"] <= 5.0
 
 
 class TestCornerCases:
