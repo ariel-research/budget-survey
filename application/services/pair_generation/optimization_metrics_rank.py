@@ -300,7 +300,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                             }
                         )
 
-            # CRITICAL CHANGE: Sort candidates by score (Best First)
+            # Sort candidates by score (Best First)
             # This ensures we pick the "Diamonds" from the pool, not just the first matches.
             level_candidates.sort(key=lambda x: x["score"], reverse=True)
 
