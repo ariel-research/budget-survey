@@ -11,7 +11,7 @@ edges, and centers of the vector space without sampling bias.
 
 import logging
 import math
-from typing import Dict, Generator, List, Optional, Set, Tuple
+from typing import Dict, Generator, List, Set, Tuple
 
 import numpy as np
 
@@ -115,12 +115,12 @@ def rankdata(a: np.ndarray, method: str = "average") -> np.ndarray:
 
 class OptimizationMetricsRankStrategy(PairGenerationStrategy):
     """
-    Strategy using rank-based normalization for pair generation.
+    Strategy using rank-based normalization with Max-Min optimization.
 
-    Instead of comparing raw L1 and Leontief values directly (which are
-    on different scales), this strategy normalizes both metrics to
-    percentile ranks (0.0 to 1.0). It then uses an adaptive relaxation
-    mechanism to find pairs with complementary trade-offs.
+    This strategy performs a brute-force search over the discrete simplex grid to find pairs that
+    maximize the minimum advantage (Max-Min) for both metrics simultaneously.
+    L1 and Leontief values are normalized to percentile ranks (0.0 to 1.0)
+    to enable fair comparison across different metric scales.
     """
 
     # Constants validated in reference implementation
@@ -129,16 +129,6 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
     STEP_SIZE = 5
     MIN_COMPONENT = 10
     MAX_COMPONENT = 100
-
-    # Relaxation levels: (epsilon, balance_tolerance)
-    # Start strict, progressively relax constraints if needed
-    RELAXATION_LEVELS = [
-        (0.25, 1.5),  # Level 1: Excellent separation
-        (0.20, 2.0),  # Level 2: Strong separation
-        (0.15, 3.0),  # Level 3: Moderate separation
-        (0.10, 4.0),  # Level 4: Minimum viable signal
-        (0.05, 5.0),  # Level 5: SAFETY NET
-    ]
 
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
@@ -261,132 +251,76 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
         l1_ranks: np.ndarray,
         leontief_ranks: np.ndarray,
         target_pairs: int,
-    ) -> List[Tuple[int, int, int, float, float]]:
+    ) -> List[Tuple[int, int, float]]:
         """
-        Find pairs with complementary trade-offs using Best-First Search.
-        Scans all candidates and selects those with maximum metric separation.
-        """
-        discrepancies = l1_ranks - leontief_ranks
-        found_pairs = []
-        used_indices = set()
+        Brute-force search for complementary pairs using a max-min score.
 
-        # Iterate through relaxation levels
-        for level_idx, (epsilon, balance_tol) in enumerate(self.RELAXATION_LEVELS, 1):
-            if len(found_pairs) >= target_pairs:
+        A candidate pair (i, j) is valid iff one vector outranks the other on
+        L1 while the other outranks on Leontief. The score is the minimum of
+        the two advantages, encouraging balanced trade-offs.
+        """
+        _ = vectors  # kept for signature compatibility
+        n = len(l1_ranks)
+        candidates: List[Tuple[int, int, float]] = []
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                l1_gain = l1_ranks[i] - l1_ranks[j]
+                leo_gain = leontief_ranks[j] - leontief_ranks[i]
+
+                if l1_gain > 0 and leo_gain > 0:
+                    score = min(l1_gain, leo_gain)
+                    candidates.append((i, j, score))
+                elif l1_gain < 0 and leo_gain < 0:
+                    # Swap direction: j beats i on L1, i beats j on Leontief
+                    score = min(-l1_gain, -leo_gain)
+                    candidates.append((j, i, score))
+
+        candidates.sort(key=lambda item: item[2], reverse=True)
+
+        selected: List[Tuple[int, int, float]] = []
+        used_indices: Set[int] = set()
+
+        for idx_a, idx_b, score in candidates:
+            if len(selected) >= target_pairs:
                 break
+            if idx_a in used_indices or idx_b in used_indices:
+                continue
+            selected.append((idx_a, idx_b, score))
+            used_indices.update({idx_a, idx_b})
 
-            # Identify all potential candidates for this level
-            type_a_indices = np.where(discrepancies > epsilon)[0]
-            type_b_indices = np.where(discrepancies < -epsilon)[0]
+        if len(selected) < target_pairs:
+            # Fallback: If we couldn't find enough pairs with positive
+            # trade-offs (rare in simplex grid), fill the quota with the best
+            # available L1 vectors paired against the best available Leontief
+            # vectors.
+            l1_order = np.argsort(-l1_ranks)
+            leo_order = np.argsort(-leontief_ranks)
+            leo_ptr = 0
 
-            # Store candidates with a quality score
-            level_candidates = []
-
-            for a_idx in type_a_indices:
-                if a_idx in used_indices:
+            for idx_a in l1_order:
+                if len(selected) >= target_pairs:
+                    break
+                if idx_a in used_indices:
                     continue
 
-                # Performance opt: Don't scan B's that are already used
-                # We can filter type_b_indices dynamically if this is too slow,
-                # but with 10k vectors, this nested loop is acceptable (~0.5s).
-
-                a_disc = discrepancies[a_idx]
-
-                for b_idx in type_b_indices:
-                    if b_idx in used_indices or b_idx == a_idx:
+                while leo_ptr < len(leo_order):
+                    idx_b = leo_order[leo_ptr]
+                    leo_ptr += 1
+                    if idx_b in used_indices or idx_b == idx_a:
                         continue
-                    b_disc = discrepancies[b_idx]
 
-                    # Check Balance Ratio
-                    if abs(b_disc) > 0.001:
-                        ratio = abs(a_disc) / abs(b_disc)
-                    else:
-                        ratio = float("inf")
-
-                    if 1 / balance_tol <= ratio <= balance_tol:
-                        # QUALITY METRIC: Total Separation
-                        # We want pairs that are FAR apart in rank space.
-                        # Score = (A's L1 advantage) + (B's Leontief advantage)
-                        # This maximizes the trade-off clarity for the user.
-                        score = (l1_ranks[a_idx] - l1_ranks[b_idx]) + (
-                            leontief_ranks[b_idx] - leontief_ranks[a_idx]
-                        )
-
-                        level_candidates.append(
-                            {
-                                "indices": (a_idx, b_idx),
-                                "meta": (level_idx, epsilon, balance_tol),
-                                "score": score,
-                            }
-                        )
-
-            # Sort candidates by score (Best First)
-            # This ensures we pick the "Diamonds" from the pool,
-            # not just the first matches.
-            level_candidates.sort(key=lambda x: x["score"], reverse=True)
-
-            # Select the best pairs, respecting usage constraints
-            for cand in level_candidates:
-                if len(found_pairs) >= target_pairs:
+                    selected.append((idx_a, idx_b, 0.0))
+                    used_indices.update({idx_a, idx_b})
                     break
 
-                a, b = cand["indices"]
-                if a not in used_indices and b not in used_indices:
-                    found_pairs.append((*cand["indices"], *cand["meta"]))
-                    used_indices.add(a)
-                    used_indices.add(b)
-
-        return found_pairs
-
-    def _generate_fallback_pairs(
-        self,
-        l1_ranks: np.ndarray,
-        leontief_ranks: np.ndarray,
-        target_pairs: int,
-        excluded: Optional[Set[int]] = None,
-    ) -> List[Tuple[int, int, int, float, float]]:
-        """
-        Deterministic fallback pairing when rank discrepancies collapse.
-
-        Pairs best L1-ranked vectors with best Leontief-ranked vectors while
-        respecting uniqueness constraints so we can still surface options.
-        """
-        if target_pairs <= 0:
-            return []
-
-        excluded = set(excluded or set())
-        epsilon, balance_tol = self.RELAXATION_LEVELS[-1]
-        level = len(self.RELAXATION_LEVELS)
-
-        l1_order = np.argsort(-l1_ranks)
-        leo_order = np.argsort(-leontief_ranks)
-
-        pairs: List[Tuple[int, int, int, float, float]] = []
-        leo_ptr = 0
-
-        for a_idx in l1_order:
-            if len(pairs) >= target_pairs or leo_ptr >= len(leo_order):
-                break
-            if a_idx in excluded:
-                continue
-
-            while leo_ptr < len(leo_order):
-                b_idx = leo_order[leo_ptr]
-                leo_ptr += 1
-                if b_idx in excluded or b_idx == a_idx:
-                    continue
-
-                pairs.append((a_idx, b_idx, level, epsilon, balance_tol))
-                excluded.update({a_idx, b_idx})
-                break
-
-        return pairs
+        return selected
 
     def generate_pairs(
         self, user_vector: tuple, n: int, vector_size: int
     ) -> List[Dict[str, tuple]]:
         """
-        Generate pairs using rank-based normalization with adaptive relaxation.
+        Generate pairs using rank-based normalization with Max-Min selection.
 
         Args:
             user_vector: The user's ideal budget allocation
@@ -395,7 +329,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
 
         Returns:
             List of dicts containing vectors and embedded __metadata__ key
-            with generation level information
+            with score and strategy information
 
         Raises:
             ValueError: If unable to generate enough valid pairs
@@ -421,20 +355,10 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
         # Convert to normalized ranks
         l1_ranks, leontief_ranks = self._compute_ranks(l1_distances, leontief_ratios)
 
-        # Find complementary pairs with adaptive relaxation
+        # Find complementary pairs via brute-force max-min scan
         pair_indices = self._find_complementary_pairs(
             vector_pool, l1_ranks, leontief_ranks, n
         )
-
-        if len(pair_indices) < n:
-            used_indices = {idx for pair in pair_indices for idx in pair[:2]}
-            fallback_pairs = self._generate_fallback_pairs(
-                l1_ranks,
-                leontief_ranks,
-                n - len(pair_indices),
-                excluded=used_indices,
-            )
-            pair_indices.extend(fallback_pairs)
 
         if len(pair_indices) < n:
             logger.warning(
@@ -449,7 +373,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
 
         # Build result pairs with metadata
         result_pairs = []
-        for idx_a, idx_b, level, epsilon, balance_tol in pair_indices[:n]:
+        for idx_a, idx_b, score in pair_indices[:n]:
             vec_a = vector_pool[idx_a]
             vec_b = vector_pool[idx_b]
 
@@ -481,17 +405,19 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                 ): leo_vec,
                 # Embed metadata for pipeline to extract and persist
                 "__metadata__": {
-                    "level": level,
-                    "epsilon": epsilon,
-                    "balance_tolerance": balance_tol,
+                    "score": float(score),
+                    "strategy": "max_min_rank",
                 },
             }
             result_pairs.append(pair)
 
             logger.info(
-                f"Generated pair using Level {level} "
-                f"(epsilon={epsilon}, balance_tol={balance_tol}): "
-                f"L1={l1_best}/{l1_worst}, Leo={leo_best:.2f}/{leo_worst:.2f}"
+                "Generated pair (score=%.3f): L1=%s/%s, Leo=%.2f/%.2f",
+                score,
+                l1_best,
+                l1_worst,
+                leo_best,
+                leo_worst,
             )
 
         self._log_pairs(result_pairs)

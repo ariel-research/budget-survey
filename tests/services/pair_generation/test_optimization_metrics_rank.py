@@ -192,9 +192,8 @@ class TestMetadataGeneration:
         for pair in pairs:
             assert "__metadata__" in pair
             metadata = pair["__metadata__"]
-            assert "level" in metadata
-            assert "epsilon" in metadata
-            assert "balance_tolerance" in metadata
+            assert metadata["strategy"] == "max_min_rank"
+            assert "score" in metadata
 
     def test_metadata_values_valid(self, strategy):
         """Test that metadata values are within expected ranges."""
@@ -203,9 +202,8 @@ class TestMetadataGeneration:
 
         for pair in pairs:
             metadata = pair["__metadata__"]
-            assert 1 <= metadata["level"] <= 5
-            assert 0.05 <= metadata["epsilon"] <= 0.25
-            assert 1.5 <= metadata["balance_tolerance"] <= 5.0
+            assert metadata["strategy"] == "max_min_rank"
+            assert 0 <= metadata["score"] <= 1
 
 
 class TestCornerCases:
@@ -215,8 +213,8 @@ class TestCornerCases:
         """
         Test with a corner vector containing zero.
 
-        This tests the adaptive relaxation mechanism - with extreme vectors,
-        it may need to use looser constraints to find valid pairs.
+        This ensures the brute-force max-min approach still surfaces pairs
+        when vectors are highly skewed.
         """
         user_vector = (95, 5, 0)
         pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
