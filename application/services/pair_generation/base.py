@@ -135,6 +135,27 @@ class PairGenerationStrategy(ABC):
         vector = vector * 5
         return tuple(vector)
 
+    def _create_random_vector_sticks(self, size: int = 3) -> tuple:
+        """
+        Generate a random vector using the sticks (broken-stick) method.
+
+        This produces uniformly distributed vectors on the simplex by drawing
+        random breakpoints on the [0, 1] interval and using the resulting
+        segments as proportions of the total budget.
+        """
+        breaks = np.sort(np.random.rand(size - 1))
+        breaks = np.concatenate([[0], breaks, [1]])
+        proportions = np.diff(breaks)
+        vector = np.round(proportions * 100).astype(int)
+
+        diff = 100 - vector.sum()
+        if diff != 0:
+            idx = np.random.randint(0, size)
+            vector[idx] += diff
+
+        vector = np.clip(vector, 0, 100)
+        return tuple(int(v) for v in vector)
+
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
         Generate a pool of unique random vectors.
@@ -191,7 +212,8 @@ class PairGenerationStrategy(ABC):
         Identify if this strategy uses ranking questions instead of pairs.
 
         Returns:
-            bool: False by default. Override to return True for ranking-based strategies.
+            bool: False by default. Override to return True for
+                ranking-based strategies.
         """
         return False
 
@@ -216,11 +238,17 @@ class PairGenerationStrategy(ABC):
 
         Examples:
             Additive inverses are identical:
-            >>> _are_absolute_canonical_identical([10, -5, -5], [-10, 5, 5])
+            >>> _are_absolute_canonical_identical(
+            ...     [10, -5, -5],
+            ...     [-10, 5, 5],
+            ... )
             True  # Both become [5, 5, 10] when sorted by absolute value
 
             Different patterns are distinct:
-            >>> _are_absolute_canonical_identical([20, -10, -10], [15, -10, -5])
+            >>> _are_absolute_canonical_identical(
+            ...     [20, -10, -10],
+            ...     [15, -10, -5],
+            ... )
             False  # Different canonical forms
         """
         v1_abs_canonical = tuple(sorted(abs(x) for x in v1))
@@ -249,7 +277,10 @@ class PairGenerationStrategy(ABC):
             logger.warning("Kwargs received: %s", json.dumps(kwargs, indent=2))
             return "Unknown Vector"
 
-        return f"{self._get_metric_name(metric_type)}: {{best: {best_value:.2f}, worst: {worst_value:.2f}}}"
+        metric_name = self._get_metric_name(metric_type)
+        return (
+            f"{metric_name}: {{best: {best_value:.2f}, " f"worst: {worst_value:.2f}}}"
+        )
 
     @abstractmethod
     def _get_metric_name(self, metric_type: str) -> str:

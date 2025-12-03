@@ -109,6 +109,20 @@ class TestRankNormalization:
         assert all(0 <= r <= 1 for r in leontief_ranks)
 
 
+class TestVectorPoolEnumeration:
+    """Tests for deterministic simplex enumeration."""
+
+    def test_vector_pool_covers_simplex(self, strategy):
+        """The strategy should enumerate the full discrete simplex."""
+        pool = strategy.generate_vector_pool(size=5, vector_size=3)
+
+        # With min=10 and step=5 we have C(14 + 3 - 1, 3 - 1) = 120 points
+        assert len(pool) == 120
+        assert (80, 10, 10) in pool
+        assert (10, 10, 80) in pool
+        assert (50, 30, 20) in pool
+
+
 class TestPairGeneration:
     """Tests for the main pair generation functionality."""
 
@@ -147,14 +161,14 @@ class TestPairGeneration:
                 assert sum(vector) == 100
 
     def test_vectors_in_valid_range(self, strategy):
-        """Test that all vector components are in valid range [0, 95]."""
+        """Test that all vector components are in valid range [0, 100]."""
         user_vector = (50, 25, 25)
         pairs = strategy.generate_pairs(user_vector, n=5, vector_size=3)
 
         for pair in pairs:
             vectors = [v for v in pair.values() if isinstance(v, tuple)]
             for vector in vectors:
-                assert all(0 <= v <= 95 for v in vector)
+                assert all(0 <= v <= 100 for v in vector)
 
     def test_vectors_distinct_from_user_vector(self, strategy):
         """Test that generated vectors are different from the user vector."""
@@ -225,7 +239,7 @@ class TestCornerCases:
             vectors = [v for v in pair.values() if isinstance(v, tuple)]
             for vector in vectors:
                 assert sum(vector) == 100
-                assert all(0 <= v <= 95 for v in vector)
+                assert all(0 <= v <= 100 for v in vector)
 
     def test_even_distribution(self, strategy):
         """Test with an even distribution."""

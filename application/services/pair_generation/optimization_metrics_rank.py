@@ -5,12 +5,13 @@ This strategy uses rank-based normalization (percentiles) with adaptive
 relaxation to generate pairs with complementary trade-offs between
 L1 distance and Leontief ratio.
 
-Uses the "sticks method" (broken-stick model) for uniform simplex sampling
-to ensure unbiased coverage of corners, edges, and centers of the vector space.
+Enumerates the discrete simplex (step=5) to ensure full coverage of corners,
+edges, and centers of the vector space without sampling bias.
 """
 
 import logging
-from typing import Dict, List, Set, Tuple
+import math
+from typing import Dict, Generator, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -18,6 +19,56 @@ from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
+
+
+def simplex_points(
+    num_variables: int,
+    side_length: int = 100,
+    step: int = 5,
+    min_value: int = 0,
+) -> Generator[Tuple[int, ...], None, None]:
+    """
+    Generate lattice points on a discrete simplex grid.
+
+    Args:
+        num_variables: Number of coordinates per vector.
+        side_length: Total sum required across coordinates.
+        step: Grid resolution.
+        min_value: Minimum allowed value per coordinate (rounded up to step).
+
+    Yields:
+        Tuples that satisfy the simplex constraints.
+    """
+    if num_variables <= 0:
+        raise ValueError("num_variables must be positive")
+    if side_length % step != 0:
+        raise ValueError(
+            f"side_length ({side_length}) must be divisible by step ({step})"
+        )
+
+    total_steps = side_length // step
+    min_steps_per_var = math.ceil(min_value / step)
+
+    if num_variables * min_steps_per_var > total_steps:
+        return
+
+    def generate(
+        vars_left: int, remaining_steps: int
+    ) -> Generator[Tuple[int, ...], None, None]:
+        if vars_left == 1:
+            yield (remaining_steps * step,)
+            return
+
+        min_needed_for_rest = (vars_left - 1) * min_steps_per_var
+        start = min_steps_per_var
+        end = remaining_steps - min_needed_for_rest
+
+        for steps_taken in range(start, end + 1):
+            value = steps_taken * step
+            for rest in generate(vars_left - 1, remaining_steps - steps_taken):
+                yield (value,) + rest
+
+    yield from generate(num_variables, total_steps)
 
 
 def rankdata(a: np.ndarray, method: str = "average") -> np.ndarray:
@@ -75,6 +126,9 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
     # Constants validated in reference implementation
     POOL_SIZE = 10000
     TARGET_PAIRS = 10
+    STEP_SIZE = 5
+    MIN_COMPONENT = 10
+    MAX_COMPONENT = 100
 
     # Relaxation levels: (epsilon, balance_tolerance)
     # Start strict, progressively relax constraints if needed
@@ -86,78 +140,44 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
         (0.05, 5.0),  # Level 5: SAFETY NET
     ]
 
-    def _create_random_vector_sticks(self, size: int = 3) -> tuple:
-        """
-        Generate a random vector using the sticks method (broken-stick model).
-
-        This method generates uniformly distributed vectors on the simplex,
-        ensuring unbiased coverage of corners, edges, and centers. Unlike
-        the normalize-and-floor approach, it doesn't overrepresent central
-        vectors or underrepresent extreme allocations.
-
-        Algorithm:
-        1. Generate (size-1) uniform random points in [0, 1]
-        2. Add 0 and 1 as boundaries
-        3. Sort to get ordered "breaks"
-        4. Take differences between consecutive breaks as proportions
-        5. Scale by 100 to get budget allocations
-
-        Args:
-            size: Number of elements in the vector
-
-        Returns:
-            tuple: Vector of integers summing to 100
-        """
-        # Generate breaks using the sticks method
-        breaks = np.sort(np.random.rand(size - 1))
-        breaks = np.concatenate([[0], breaks, [1]])
-
-        # Differences give uniform simplex proportions
-        proportions = np.diff(breaks)
-
-        # Scale to 100 and round to integers
-        vector = np.round(proportions * 100).astype(int)
-
-        # Adjust for rounding errors to ensure sum is exactly 100
-        diff = 100 - vector.sum()
-        if diff != 0:
-            # Add/subtract from a random position
-            idx = np.random.randint(0, size)
-            vector[idx] += diff
-
-        # Ensure values are in valid range [0, 100]
-        vector = np.clip(vector, 0, 100)
-
-        return tuple(int(v) for v in vector)
-
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
-        Generate a pool of unique random vectors using uniform sampling.
-
-        Overrides the base class method to use the sticks method for
-        statistically unbiased vector generation.
+        Enumerate all valid vectors within the discrete simplex.
 
         Args:
-            size: Number of vectors to generate
-            vector_size: Size of each vector
+            size: Ignored; kept for compatibility with the base signature.
+            vector_size: Number of coordinates per vector.
 
         Returns:
-            Set of unique vectors
+            Set containing every lattice point (step=5) that sums to 100 and
+            falls within the allowed min/max bounds.
         """
-        vector_pool: Set[tuple] = set()
-        attempts = 0
-        max_attempts = size * 20
+        _ = size
+        simplex_iter = simplex_points(
+            num_variables=vector_size,
+            side_length=100,
+            step=self.STEP_SIZE,
+            min_value=self.MIN_COMPONENT,
+        )
 
-        while len(vector_pool) < size and attempts < max_attempts:
-            vector = self._create_random_vector_sticks(vector_size)
-            # Validate: sum must be 100, all values in [0, 100]
-            if sum(vector) == 100 and all(0 <= v <= 100 for v in vector):
-                vector_pool.add(vector)
-            attempts += 1
+        vector_pool: Set[tuple] = {
+            vector
+            for vector in simplex_iter
+            if all(
+                self.MIN_COMPONENT <= value <= self.MAX_COMPONENT for value in vector
+            )
+        }
+
+        if not vector_pool:
+            raise ValueError(
+                f"No valid vectors found for vector_size={vector_size} "
+                f"with step={self.STEP_SIZE}"
+            )
 
         logger.debug(
-            f"Generated vector pool of size {len(vector_pool)} "
-            f"using sticks method (uniform simplex sampling)"
+            "Generated full simplex vector pool of size %s for vector_size=%s",
+            len(vector_pool),
+            vector_size,
         )
         return vector_pool
 
@@ -301,7 +321,8 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                         )
 
             # Sort candidates by score (Best First)
-            # This ensures we pick the "Diamonds" from the pool, not just the first matches.
+            # This ensures we pick the "Diamonds" from the pool,
+            # not just the first matches.
             level_candidates.sort(key=lambda x: x["score"], reverse=True)
 
             # Select the best pairs, respecting usage constraints
@@ -316,6 +337,50 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                     used_indices.add(b)
 
         return found_pairs
+
+    def _generate_fallback_pairs(
+        self,
+        l1_ranks: np.ndarray,
+        leontief_ranks: np.ndarray,
+        target_pairs: int,
+        excluded: Optional[Set[int]] = None,
+    ) -> List[Tuple[int, int, int, float, float]]:
+        """
+        Deterministic fallback pairing when rank discrepancies collapse.
+
+        Pairs best L1-ranked vectors with best Leontief-ranked vectors while
+        respecting uniqueness constraints so we can still surface options.
+        """
+        if target_pairs <= 0:
+            return []
+
+        excluded = set(excluded or set())
+        epsilon, balance_tol = self.RELAXATION_LEVELS[-1]
+        level = len(self.RELAXATION_LEVELS)
+
+        l1_order = np.argsort(-l1_ranks)
+        leo_order = np.argsort(-leontief_ranks)
+
+        pairs: List[Tuple[int, int, int, float, float]] = []
+        leo_ptr = 0
+
+        for a_idx in l1_order:
+            if len(pairs) >= target_pairs or leo_ptr >= len(leo_order):
+                break
+            if a_idx in excluded:
+                continue
+
+            while leo_ptr < len(leo_order):
+                b_idx = leo_order[leo_ptr]
+                leo_ptr += 1
+                if b_idx in excluded or b_idx == a_idx:
+                    continue
+
+                pairs.append((a_idx, b_idx, level, epsilon, balance_tol))
+                excluded.update({a_idx, b_idx})
+                break
+
+        return pairs
 
     def generate_pairs(
         self, user_vector: tuple, n: int, vector_size: int
@@ -342,7 +407,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
             f"for user_vector: {user_vector}"
         )
 
-        # Generate pool of random vectors using uniform simplex sampling
+        # Enumerate the simplex (step=5) to build the candidate pool
         vector_pool = list(self.generate_vector_pool(self.POOL_SIZE, vector_size))
 
         # Calculate metrics for all vectors
@@ -362,6 +427,16 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
         )
 
         if len(pair_indices) < n:
+            used_indices = {idx for pair in pair_indices for idx in pair[:2]}
+            fallback_pairs = self._generate_fallback_pairs(
+                l1_ranks,
+                leontief_ranks,
+                n - len(pair_indices),
+                excluded=used_indices,
+            )
+            pair_indices.extend(fallback_pairs)
+
+        if len(pair_indices) < n:
             logger.warning(
                 f"Only found {len(pair_indices)} valid pairs, "
                 f"requested {n}. Using all available pairs."
@@ -369,7 +444,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
 
         if len(pair_indices) == 0:
             raise ValueError(
-                f"Failed to generate any valid pairs for " f"user_vector {user_vector}"
+                "Failed to generate any valid pairs for " f"user_vector {user_vector}"
             )
 
         # Build result pairs with metadata
