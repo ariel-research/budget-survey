@@ -21,7 +21,8 @@ const CONFIG = {
 // State management for the application
 const state = {
     messages: {},
-    wasSubmitEnabled: false
+    wasSubmitEnabled: false,
+    countdownTimer: null
 };
 
 /**
@@ -75,49 +76,34 @@ async function checkAwarenessAnswer({ userId, internalSurveyId, externalSurveyId
         const result = await response.json();
         
         if (!result.valid && result.redirect_url) {
-            // Show friendly message with countdown
-            showAlert(state.messages.early_awareness_failed || 
-                     'Thank you for your participation. Your responses have been recorded and you are being redirected back to Panel4All.');
-            
-            // Add special styling for awareness failure alert
-            const customAlert = document.getElementById('customAlert');
-            customAlert.classList.add('awareness-failed');
-            
             // Disable form to prevent further interaction
             const form = document.querySelector('form');
             if (form) {
                 form.querySelectorAll('input, button').forEach(el => el.disabled = true);
             }
-            
-            // Add countdown timer with better formatting
-            let secondsLeft = 4;
-            const alertMessage = document.getElementById('alertMessage');
-            const originalMessage = alertMessage.textContent;
-            
-            // Create countdown element
-            let countdownEl = document.querySelector('.awareness-check-countdown');
-            if (!countdownEl) {
-                countdownEl = document.createElement('div');
-                countdownEl.className = 'awareness-check-countdown';
-                alertMessage.parentElement.appendChild(countdownEl);
-            }
-            
-            const countdownInterval = setInterval(() => {
-                countdownEl.textContent = 'Redirecting in ' + secondsLeft + ' second' + (secondsLeft !== 1 ? 's' : '') + '...';
-                secondsLeft--;
-                
-                if (secondsLeft < 0) {
-                    clearInterval(countdownInterval);
+
+            const title =
+                state.messages.early_awareness_failed_title ||
+                'Attention check not passed';
+
+            // Show friendly message with countdown and clearer action
+            showAlert(
+                state.messages.early_awareness_failed ||
+                    'You did not pass the attention check. Your responses have been saved and we will return you to Panel4All.',
+                {
+                    title,
+                    variant: 'warning',
+                    countdownSeconds: 4,
+                    primaryLabel: state.messages.return_now || 'Return now',
+                    onPrimary: () => {
+                        window.location.href = result.redirect_url;
+                    },
                 }
-            }, 1000);
-            
-            // Trigger initial countdown display
-            countdownEl.textContent = 'Redirecting in 4 seconds...';
-            
-            // Redirect after 4 seconds
-            setTimeout(() => {
-                window.location.href = result.redirect_url;
-            }, 4000);
+            );
+
+            // Add special styling for awareness failure alert
+            const customAlert = document.getElementById('customAlert');
+            customAlert.classList.add('awareness-failed');
         }
     } catch (error) {
         console.error('Awareness check failed:', error);
@@ -158,7 +144,11 @@ async function loadMessages() {
             rescale_error_too_small: "Cannot rescale when the total sum is 0",
             ranking_validation_error: "Please rank all options for each question",
             duplicate_ranking_error: "Cannot give the same rank to multiple options",
-            early_awareness_failed: "You did not pass the attention check. Your responses have been recorded and you are being redirected back to Panel4All."
+            early_awareness_failed: "You did not pass the attention check. Your responses have been recorded and you are being redirected back to Panel4All.",
+            early_awareness_failed_title: "Attention check not passed",
+            return_now: "Return now",
+            redirecting_in: "Redirecting in",
+            seconds_label: "seconds"
         };
     }
 }
@@ -746,7 +736,11 @@ function initializeAlerts() {
     const alertHTML = `
         <div id="customAlert" class="custom-alert">
             <div class="alert-content">
+                <div class="alert-header">
+                    <p id="alertTitle" class="alert-title"></p>
+                </div>
                 <p id="alertMessage"></p>
+                <p id="alertCountdown" class="alert-countdown" style="display:none"></p>
                 <button id="alertClose">OK</button>
             </div>
         </div>
@@ -767,15 +761,88 @@ function initializeAlerts() {
 /**
  * Show custom alert with message
  */
-function showAlert(message) {
+function showAlert(message, options = {}) {
     const alert = document.getElementById('customAlert');
     const alertMessage = document.getElementById('alertMessage');
-    
-    if (!alert || !alertMessage) {
+    const alertTitle = document.getElementById('alertTitle');
+    const alertCountdown = document.getElementById('alertCountdown');
+    const closeBtn = document.getElementById('alertClose');
+
+    if (!alert || !alertMessage || !closeBtn) {
         console.error('Custom alert elements not found');
         return;
     }
-    
+
+    const {
+        title = '',
+        variant = '',
+        countdownSeconds = null,
+        primaryLabel = null,
+        onPrimary = null
+    } = options;
+
+    // Reset classes and timers
+    alert.className = 'custom-alert';
+    if (variant) {
+        alert.classList.add(`alert-${variant}`);
+    }
+    if (state.countdownTimer) {
+        clearInterval(state.countdownTimer);
+        state.countdownTimer = null;
+    }
+
     alertMessage.textContent = message;
+
+    if (alertTitle) {
+        if (title) {
+            alertTitle.textContent = title;
+            alertTitle.style.display = 'block';
+        } else {
+            alertTitle.textContent = '';
+            alertTitle.style.display = 'none';
+        }
+    }
+
+    if (alertCountdown) {
+        alertCountdown.style.display = 'none';
+        alertCountdown.textContent = '';
+    }
+
+    // Configure button
+    closeBtn.textContent = primaryLabel || state.messages.ok || 'OK';
+    closeBtn.onclick = () => {
+        if (onPrimary) {
+            onPrimary();
+        } else {
+            alert.style.display = "none";
+        }
+    };
+
+    // Countdown handling
+    if (countdownSeconds && alertCountdown) {
+        let secondsLeft = countdownSeconds;
+        const redirectLabel = state.messages.redirecting_in || 'Redirecting in';
+        const secondsLabel = state.messages.seconds_label || 'seconds';
+
+        const updateCountdown = () => {
+            alertCountdown.textContent = `${redirectLabel} ${secondsLeft} ${secondsLabel}...`;
+            alertCountdown.style.display = 'block';
+            secondsLeft--;
+
+            if (secondsLeft < 0) {
+                clearInterval(state.countdownTimer);
+                state.countdownTimer = null;
+                if (onPrimary) {
+                    onPrimary();
+                } else {
+                    alert.style.display = "none";
+                }
+            }
+        };
+
+        updateCountdown();
+        state.countdownTimer = setInterval(updateCountdown, 1000);
+    }
+
     alert.style.display = "block";
 }

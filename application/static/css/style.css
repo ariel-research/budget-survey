@@ -1507,6 +1507,7 @@ input[type="radio"] {
     padding: 20px;
     text-align: center;
     width: 90%;
+    margin: 0 auto;
 }
 
 .alert-content p {
@@ -1541,6 +1542,8 @@ input[type="radio"] {
     color: #c0392b;
     font-weight: 500;
     line-height: 1.6;
+    text-align: center;
+    margin: 0 0 15px 0;
 }
 
 .awareness-check-countdown {
@@ -1550,6 +1553,7 @@ input[type="radio"] {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid rgba(231, 76, 60, 0.3);
+    text-align: center;
 }
 
 /* RTL support for custom alert */

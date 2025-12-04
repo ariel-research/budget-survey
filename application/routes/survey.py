@@ -275,6 +275,39 @@ def handle_survey_get(
 ) -> str:
     """Handle GET request for survey page."""
     try:
+        # Check if user has already responded to this survey (prevent duplicates)
+        # FAIL-SAFE: If we can't verify, block access (don't let them through)
+        if not is_demo:
+            try:
+                if SurveyService.check_user_already_responded(
+                    user_id, internal_survey_id
+                ):
+                    logger.warning(
+                        f"User {user_id} attempted to retake survey {internal_survey_id}"
+                    )
+                    # Redirect to thank you page - they've already completed this survey
+                    return redirect(
+                        url_for(
+                            "survey.thank_you",
+                            is_demo=False,
+                        )
+                    )
+            except Exception as e:
+                logger.error(
+                    f"CRITICAL: Error checking duplicate response for user {user_id}: {str(e)}",
+                    exc_info=True,
+                )
+                # FAIL-SAFE: Block access - don't let them through if we can't verify
+                logger.warning(
+                    f"BLOCKING USER {user_id} - Could not verify survey participation status"
+                )
+                return redirect(
+                    url_for(
+                        "survey.thank_you",
+                        is_demo=False,
+                    )
+                )
+
         user_vector = list(map(int, request.args.get("vector", "").split(",")))
         current_lang = get_current_language()
 
@@ -403,6 +436,28 @@ def handle_survey_post(
         str: Redirect response to appropriate destination
     """
     try:
+        # Check if user has already responded to this survey (prevent duplicates from back button)
+        # FAIL-SAFE: If we can't verify, block submission (don't let them through)
+        if not is_demo:
+            try:
+                if SurveyService.check_user_already_responded(
+                    user_id, internal_survey_id
+                ):
+                    logger.warning(
+                        f"User {user_id} attempted to resubmit survey {internal_survey_id}"
+                    )
+                    # Redirect to thank you page - they've already completed this survey
+                    return redirect(url_for("survey.thank_you", is_demo=False))
+            except Exception as e:
+                logger.error(
+                    f"CRITICAL: Error checking duplicate response on POST for user {user_id}: {str(e)}",
+                    exc_info=True,
+                )
+                # FAIL-SAFE: Block submission - don't let them through if we can't verify
+                logger.warning(
+                    f"BLOCKING SUBMISSION from user {user_id} - Could not verify survey participation status"
+                )
+                return redirect(url_for("survey.thank_you", is_demo=False))
         # Get the total number of questions from the form data
         total_questions = 0
         for key in request.form:

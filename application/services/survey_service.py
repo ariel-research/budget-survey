@@ -19,6 +19,7 @@ from database.queries import (
     get_survey_pair_generation_config,
     is_user_blacklisted,
     mark_survey_as_completed,
+    user_already_responded_to_survey,
     user_exists,
 )
 
@@ -475,6 +476,21 @@ class SurveyService:
                 exc_info=True,
             )
             raise
+
+    @staticmethod
+    def check_user_already_responded(user_id: str, survey_id: int) -> bool:
+        """
+        Check if a user has already responded to this survey.
+        Prevents duplicate submissions and browser back-button exploits.
+
+        Args:
+            user_id: The user's identifier
+            survey_id: The internal survey ID
+
+        Returns:
+            bool: True if user already has a response for this survey
+        """
+        return user_already_responded_to_survey(user_id, survey_id)
 
     @staticmethod
     def record_early_awareness_failure(
