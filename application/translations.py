@@ -132,6 +132,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "לא עברת את בדיקת תשומת הלב",
             "en": "Failed attention check",
         },
+        "early_awareness_failed": {
+            "he": "לא עברת את בדיקת הערנות. התשובות שלך נשמרו. אתה מועבר חזרה Panel4All.",
+            "en": "You did not pass the attention check. Your responses have been recorded and you are being redirected back to Panel4All.",
+        },
         "user_blacklisted": {
             "he": "המשתמש חסום מהשתתפות בסקרים עקב כישלון בבדיקת הערנות",
             "en": "User is blacklisted from participating in surveys due to failing attention checks",

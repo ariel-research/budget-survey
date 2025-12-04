@@ -7,6 +7,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -644,6 +645,88 @@ def thank_you():
     is_demo = request.args.get("is_demo", "").lower() == "true"
     logger.info(f"Thank you page accessed {'(demo mode)' if is_demo else ''}")
     return render_template("thank_you.html", is_demo=is_demo)
+
+
+@survey_routes.route("/api/awareness/check", methods=["POST"])
+def awareness_check_api():
+    """
+    Validate awareness check answer and return redirect URL if failed.
+
+    Request JSON:
+        user_id, internal_survey_id, external_survey_id,
+        question_index (0 or 1), answer (1 or 2), user_vector
+
+    Response JSON:
+        Success: {"valid": true}
+        Failure: {"valid": false, "redirect_url": "...", "pts_value": 7|10}
+    """
+    try:
+        payload = request.get_json(force=True)
+
+        user_id = payload["user_id"]
+        internal_survey_id = payload["internal_survey_id"]
+        external_survey_id = payload["external_survey_id"]
+        question_index = payload["question_index"]  # 0 = first, 1 = second
+        answer = payload["answer"]  # 1 or 2
+        user_vector = payload["user_vector"]
+
+        # Determine expected answer: first awareness = 1, second = 2
+        expected_answer = question_index + 1
+
+        if answer == expected_answer:
+            logger.debug(
+                f"Correct awareness answer from user {user_id} at question {question_index}"
+            )
+            return jsonify({"valid": True})
+
+        # Failed - determine PTS value and build redirect
+        pts_config = current_app.config["PANEL4ALL"]["PTS"]
+        pts_value = (
+            pts_config["FIRST_AWARENESS"]
+            if question_index == 0
+            else pts_config["SECOND_AWARENESS"]
+        )
+
+        # Record early failure in database
+        SurveyService.record_early_awareness_failure(
+            user_id=user_id,
+            survey_id=internal_survey_id,
+            user_vector=user_vector,
+            pts_value=pts_value,
+        )
+
+        # Build redirect URL
+        redirect_url = redirect_to_panel4all_with_pts(
+            user_id,
+            external_survey_id,
+            status=current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"],
+            pts=pts_value,
+        )
+
+        logger.info(
+            f"Early awareness failure detected: user_id={user_id}, "
+            f"question_index={question_index}, pts_value={pts_value}"
+        )
+
+        return jsonify(
+            {
+                "valid": False,
+                "redirect_url": redirect_url,
+                "pts_value": pts_value,
+            }
+        )
+
+    except (KeyError, TypeError, ValueError) as e:
+        logger.warning(f"Invalid awareness check request: {e}")
+        return jsonify({"error": "Invalid request"}), 400
+
+
+def redirect_to_panel4all_with_pts(
+    user_id: str, survey_id: str, status: str, pts: int
+) -> str:
+    """Generate Panel4All redirect URL with PTS parameter."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status, "PTS": pts}
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
 
 
 def redirect_to_panel4all(

@@ -1530,9 +1530,36 @@ input[type="radio"] {
     background-color: var(--color-primary-dark);
 }
 
+/* Special styling for early awareness failure alerts */
+.custom-alert.awareness-failed .alert-content {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+    border-left: 5px solid #e74c3c;
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(231, 76, 60, 0.2);
+}
+
+.custom-alert.awareness-failed .alert-content p {
+    color: #c0392b;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.awareness-check-countdown {
+    color: #e74c3c;
+    font-size: 0.95em;
+    font-weight: bold;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(231, 76, 60, 0.3);
+}
+
 /* RTL support for custom alert */
 .rtl .alert-content {
     direction: rtl;
+}
+
+.rtl .custom-alert.awareness-failed .alert-content {
+    border-left: none;
+    border-right: 5px solid #e74c3c;
 }
 
 /* ==========================================================================

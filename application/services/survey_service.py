@@ -10,6 +10,7 @@ from application.translations import get_translation
 from database.queries import (
     check_user_participation,
     create_comparison_pair,
+    create_early_awareness_failure,
     create_survey_response,
     create_user,
     get_subjects,
@@ -474,6 +475,54 @@ class SurveyService:
                 exc_info=True,
             )
             raise
+
+    @staticmethod
+    def record_early_awareness_failure(
+        user_id: str,
+        survey_id: int,
+        user_vector: List[int],
+        pts_value: int,
+    ) -> Optional[int]:
+        """
+        Record an early awareness check failure detected by the frontend.
+        Creates user if not exists, then creates survey_response with failure data.
+
+        Args:
+            user_id: The user's identifier
+            survey_id: The survey ID
+            user_vector: The user's budget vector
+            pts_value: Panel4All PTS value (7 for first awareness, 10 for second)
+
+        Returns:
+            int: The ID of the created survey_response record, or None if creation fails
+        """
+        try:
+            # Ensure user exists
+            if not user_exists(user_id):
+                create_user(user_id)
+                logger.info(f"Created new user for early failure: {user_id}")
+
+            # Record the early failure with completed=FALSE
+            response_id = create_early_awareness_failure(
+                user_id=user_id,
+                survey_id=survey_id,
+                optimal_allocation=user_vector,
+                pts_value=pts_value,
+            )
+
+            logger.info(
+                f"Early awareness failure recorded: user_id={user_id}, "
+                f"survey_id={survey_id}, pts_value={pts_value}, response_id={response_id}"
+            )
+            return response_id
+
+        except Exception as e:
+            logger.error(
+                f"Failed to record early awareness failure for user {user_id}: "
+                f"{str(e)}",
+                exc_info=True,
+            )
+            return None
 
 
 class SurveySessionData:

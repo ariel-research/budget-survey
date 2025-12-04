@@ -25,6 +25,107 @@ const state = {
 };
 
 /**
+ * Setup live awareness check detection
+ */
+function setupAwarenessLiveChecks() {
+    const form = document.querySelector('form[data-form-type="survey"]');
+    if (!form) return;
+    
+    const userId = form.querySelector('input[name="userID"]')?.value;
+    const internalSurveyId = form.querySelector('input[name="internalID"]')?.value;
+    const externalSurveyId = form.querySelector('input[name="surveyID"]')?.value;
+    const userVectorStr = form.querySelector('input[name="user_vector"]')?.value;
+    
+    if (!userId || !internalSurveyId || !externalSurveyId || !userVectorStr) return;
+    
+    const userVector = userVectorStr.split(',').map(Number);
+    
+    // Find awareness check radio buttons (traditional surveys)
+    document.querySelectorAll('input[type="radio"][name^="awareness_check_"]').forEach(radio => {
+        radio.addEventListener('change', async function() {
+            const questionIndex = parseInt(this.name.split('_')[2]); // awareness_check_0 or awareness_check_1
+            const answer = parseInt(this.value); // 1 or 2
+            
+            await checkAwarenessAnswer({
+                userId, internalSurveyId, externalSurveyId, userVector,
+                questionIndex, answer
+            });
+        });
+    });
+}
+
+/**
+ * Check awareness answer via API
+ */
+async function checkAwarenessAnswer({ userId, internalSurveyId, externalSurveyId, userVector, questionIndex, answer }) {
+    try {
+        const response = await fetch('/take-survey/api/awareness/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                internal_survey_id: parseInt(internalSurveyId),
+                external_survey_id: externalSurveyId,
+                question_index: questionIndex,
+                answer: answer,
+                user_vector: userVector,
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.valid && result.redirect_url) {
+            // Show friendly message with countdown
+            showAlert(state.messages.early_awareness_failed || 
+                     'Thank you for your participation. Your responses have been recorded and you are being redirected back to Panel4All.');
+            
+            // Add special styling for awareness failure alert
+            const customAlert = document.getElementById('customAlert');
+            customAlert.classList.add('awareness-failed');
+            
+            // Disable form to prevent further interaction
+            const form = document.querySelector('form');
+            if (form) {
+                form.querySelectorAll('input, button').forEach(el => el.disabled = true);
+            }
+            
+            // Add countdown timer with better formatting
+            let secondsLeft = 4;
+            const alertMessage = document.getElementById('alertMessage');
+            const originalMessage = alertMessage.textContent;
+            
+            // Create countdown element
+            let countdownEl = document.querySelector('.awareness-check-countdown');
+            if (!countdownEl) {
+                countdownEl = document.createElement('div');
+                countdownEl.className = 'awareness-check-countdown';
+                alertMessage.parentElement.appendChild(countdownEl);
+            }
+            
+            const countdownInterval = setInterval(() => {
+                countdownEl.textContent = 'Redirecting in ' + secondsLeft + ' second' + (secondsLeft !== 1 ? 's' : '') + '...';
+                secondsLeft--;
+                
+                if (secondsLeft < 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+            
+            // Trigger initial countdown display
+            countdownEl.textContent = 'Redirecting in 4 seconds...';
+            
+            // Redirect after 4 seconds
+            setTimeout(() => {
+                window.location.href = result.redirect_url;
+            }, 4000);
+        }
+    } catch (error) {
+        console.error('Awareness check failed:', error);
+        // Fail silently - backend will catch on submit
+    }
+}
+
+/**
  * Initialize the application when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -56,7 +157,8 @@ async function loadMessages() {
             min_two_departments: "Budget must be allocated to at least two departments.",
             rescale_error_too_small: "Cannot rescale when the total sum is 0",
             ranking_validation_error: "Please rank all options for each question",
-            duplicate_ranking_error: "Cannot give the same rank to multiple options"
+            duplicate_ranking_error: "Cannot give the same rank to multiple options",
+            early_awareness_failed: "You did not pass the attention check. Your responses have been recorded and you are being redirected back to Panel4All."
         };
     }
 }
@@ -279,6 +381,9 @@ function initializeSurveyForm() {
 
     form.addEventListener('submit', handleSurveySubmission);
     updateSubmitButtonState(submitBtn);
+    
+    // Setup live awareness check detection
+    setupAwarenessLiveChecks();
 }
 
 /**

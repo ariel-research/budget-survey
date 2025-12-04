@@ -43,6 +43,10 @@ class Config:
             "ATTENTION_FAILED": "attentionfilter",  # For users who faild the attention check
             "FILTEROUT": "filterout",  # For users who do not qualify for the survey
         },
+        "PTS": {
+            "FIRST_AWARENESS": 7,  # User fails first awareness question
+            "SECOND_AWARENESS": 10,  # User fails second awareness question
+        },
     }
 
     # Survey base URL
