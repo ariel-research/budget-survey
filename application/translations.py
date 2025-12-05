@@ -128,6 +128,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מצב הדגמה - הנתונים אינם נשמרים",
             "en": "DEMO MODE - Data not saved",
         },
+        "attention_check_title": {
+            "he": "בדיקת הערנות נכשלה",
+            "en": "Attention check failed",
+        },
         "attention_check_failed": {
             "he": "לא עברת את בדיקת תשומת הלב",
             "en": "Failed attention check",
@@ -135,6 +139,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "early_awareness_failed": {
             "he": "לא עברת את בדיקת הערנות. התשובות שלך נשמרו. אתה מועבר חזרה Panel4All.",
             "en": "You did not pass the attention check. Your responses have been recorded and you are being redirected back to Panel4All.",
+        },
+        "redirecting_in_seconds": {
+            "he": "מועבר בעוד {seconds} שניות...",
+            "en": "Redirecting in {seconds} seconds...",
         },
         "user_blacklisted": {
             "he": "המשתמש חסום מהשתתפות בסקרים עקב כישלון בבדיקת הערנות",
