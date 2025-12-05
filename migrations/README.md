@@ -86,3 +86,6 @@ In chronological order:
 - `20250616_add_option_differences.sql` - Adds option1_differences and option2_differences columns to comparison_pairs table for storing vector differences (used by cyclic shift strategy)
 - `20250806_add_transitivity_analysis.sql` - Adds transitivity_analysis JSON column to survey_responses table for storing transitivity metrics from extreme vectors strategy analysis
 - `20250907_add_strategy_instructions.sql` - Adds pair_instructions JSON column to surveys table for storing custom strategy instructions in Hebrew and English
+- `20251125_add_pair_generation_metadata.sql` - Adds generation_metadata JSON column to comparison_pairs for storing pair generation metadata
+- `20251204_add_pts_value_column.sql` - Adds pts_value column to survey_responses to record early awareness failures (PTS=7/10)
+- `20251204_add_survey_response_uniqueness.sql` - Adds unique constraint on (user_id, survey_id) to prevent duplicate survey responses

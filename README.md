@@ -667,6 +667,7 @@ The application includes an attention check mechanism to ensure survey quality:
   - Two attention check questions mixed within comparison pairs
   - Validates that users recognize their own optimal allocation
   - Failed checks are recorded and do not allow retries
+- **Early awareness failures**: Client-side checks catch wrong awareness answers before submission, store `pts_value` in `survey_responses`, and redirect users to Panel4All with the `PTS` parameter (7 or 10).
 
 - **Panel4All Integration**:
   - Sends "attentionfilter" status for failed attention checks
@@ -791,6 +792,12 @@ You can set up the database using one of two methods:
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
 
 Note: Make sure your .env file is properly configured with the correct database connection details before running either method.
+
+### Recent Migrations (20251204)
+- Run in order:
+  - `python migrations/run_migration.py migrations/20251204_add_pts_value_column.sql`
+  - `python migrations/run_migration.py migrations/20251204_add_survey_response_uniqueness.sql`
+- Note: The uniqueness migration will fail if duplicates already exist for `(user_id, survey_id)`; clean them first if needed.
 
 ## Docker Guide
 
