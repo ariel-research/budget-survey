@@ -78,6 +78,79 @@ def create_survey_response(
         return None
 
 
+def user_already_responded_to_survey(user_id: str, survey_id: int) -> bool:
+    """
+    Check if a user has already responded to a specific survey.
+
+    Args:
+        user_id (str): The user's identifier
+        survey_id (int): The survey ID
+
+    Returns:
+        bool: True if user already has a response for this survey, False otherwise
+    """
+    query = (
+        "SELECT id FROM survey_responses WHERE user_id = %s AND survey_id = %s LIMIT 1"
+    )
+
+    try:
+        result = execute_query(query, (user_id, survey_id), fetch_one=True)
+        has_response = result is not None
+        logger.debug(
+            f"User {user_id} response check for survey {survey_id}: {has_response}"
+        )
+        return has_response
+    except Exception as e:
+        logger.error(f"Error checking user response: {str(e)}")
+        return False
+
+
+def create_early_awareness_failure(
+    user_id: str,
+    survey_id: int,
+    optimal_allocation: list,
+    pts_value: int,
+) -> int:
+    """
+    Records an early awareness check failure (detected by frontend before survey completion).
+
+    Args:
+        user_id (str): The ID of the user.
+        survey_id (int): The ID of the survey.
+        optimal_allocation (list): The user's budget vector.
+        pts_value (int): Panel4All PTS value (7 for first awareness, 10 for second).
+
+    Returns:
+        int: The ID of the newly created survey response, or None if an error occurs.
+    """
+    query = """
+        INSERT INTO survey_responses 
+        (user_id, survey_id, optimal_allocation, completed, attention_check_failed, pts_value)
+        VALUES (%s, %s, %s, FALSE, TRUE, %s)
+    """
+    optimal_allocation_json = json.dumps(optimal_allocation)
+    logger.debug(
+        "Inserting early awareness failure for user_id: %s, survey_id: %s, pts_value: %s",
+        user_id,
+        survey_id,
+        pts_value,
+    )
+
+    try:
+        return execute_query(
+            query,
+            (
+                user_id,
+                survey_id,
+                optimal_allocation_json,
+                pts_value,
+            ),
+        )
+    except Exception as e:
+        logger.error("Error inserting early awareness failure: %s", str(e))
+        return None
+
+
 def create_comparison_pair(
     survey_response_id: int,
     pair_number: int,

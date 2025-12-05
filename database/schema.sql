@@ -64,10 +64,12 @@ CREATE TABLE `survey_responses` (
   `user_comment` TEXT DEFAULT NULL,
   `completed` BOOLEAN DEFAULT FALSE,
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
+  `pts_value` INT DEFAULT NULL COMMENT 'Panel4All PTS value for early awareness failures (7=first, 10=second)',
   `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`user_id`), -- Index for potential joins/lookups
   INDEX (`survey_id`), -- Index for potential joins/lookups
+  UNIQUE KEY `unique_user_survey` (`user_id`, `survey_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   FOREIGN KEY (`survey_id`) REFERENCES `surveys` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

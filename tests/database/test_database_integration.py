@@ -117,7 +117,15 @@ def app_context(app):
 
 @pytest.fixture(scope="function")
 def cleanup_db(app):
+    # Ensure each test starts with a clean slate to avoid cross-test contamination
+    with app.app_context():
+        execute_query("DELETE FROM comparison_pairs")
+        execute_query("DELETE FROM survey_responses")
+        execute_query("DELETE FROM users")
+
     yield
+
+    # Clean up again after the test in case it inserted data
     with app.app_context():
         execute_query("DELETE FROM comparison_pairs")
         execute_query("DELETE FROM survey_responses")
