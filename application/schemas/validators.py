@@ -23,6 +23,7 @@ class ComparisonPair:
     option1_differences: List[int] = None
     option2_differences: List[int] = None
     original_pair_number: int = None
+    generation_metadata: Optional[Dict[str, Any]] = None
 
     def is_valid(self) -> bool:
         """
@@ -394,6 +395,21 @@ class SurveySubmission:
                         else None
                     )
 
+                    # Extract generation metadata if available (for rank-based strategies)
+                    generation_metadata_str = form_data.get(
+                        f"generation_metadata_{i}", ""
+                    )
+                    generation_metadata = None
+                    if generation_metadata_str:
+                        try:
+                            import json
+
+                            generation_metadata = json.loads(generation_metadata_str)
+                        except (json.JSONDecodeError, TypeError):
+                            logger.warning(
+                                f"Failed to parse generation_metadata for pair {i}"
+                            )
+
                     if was_swapped:
                         option_1, option_2 = option_2, option_1
                         option1_strategy, option2_strategy = (
@@ -417,6 +433,7 @@ class SurveySubmission:
                             option1_differences=option1_differences,
                             option2_differences=option2_differences,
                             original_pair_number=original_pair_number,
+                            generation_metadata=generation_metadata,
                         )
                     )
 

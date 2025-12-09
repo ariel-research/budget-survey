@@ -579,6 +579,23 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
      ```
 
+14. **L1 vs. Leontief Rank Comparison**
+   - Strategy name: `l1_vs_leontief_rank_comparison`
+   - Uses rank-based normalization (percentiles) instead of raw metric values to generate pairs with complementary trade-offs between L1 distance and Leontief ratio.
+   - **Algorithm Overview**:
+     - Generates a large pool of random vectors (2000 by default)
+     - Computes L1 distance and Leontief ratio for each vector against user's ideal
+     - Normalizes metrics to percentile ranks (0.0-1.0) to eliminate scale differences
+     - Uses adaptive relaxation with 4 levels to find complementary pairs
+   - **Adaptive Relaxation Levels**:
+     - Level 1: Strict (epsilon=0.15, balance_tolerance=2.0)
+     - Level 2: Moderate (epsilon=0.10, balance_tolerance=2.5)
+     - Level 3: Loose (epsilon=0.05, balance_tolerance=4.0)
+     - Level 4: Last Resort (epsilon=0.01, balance_tolerance=6.0)
+   - **Generation Metadata**: Each pair includes metadata about the relaxation level used, stored in `generation_metadata` column for quality analysis.
+   - Parameters:
+     - `num_pairs`: Number of pairs to generate (default: 12)
+
 #### Adding New Strategies
 
 To add a new pair generation strategy:

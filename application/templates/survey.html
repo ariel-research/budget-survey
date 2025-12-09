@@ -316,6 +316,9 @@ ENHANCED: Now includes UX improvements for ranking interface
                     {% if pair.option2_differences %}
                     <input type="hidden" name="option2_differences_{{ loop.index0 }}" value="{{ pair.option2_differences|join(',') }}">
                     {% endif %}
+                    {% if pair.generation_metadata %}
+                    <input type="hidden" name="generation_metadata_{{ loop.index0 }}" value="{{ pair.generation_metadata|tojson }}">
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>
