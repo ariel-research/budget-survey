@@ -35,7 +35,7 @@ class TestAwarenessCheckAPI:
         assert data["valid"] is True
 
     def test_incorrect_first_awareness_returns_redirect(self, client):
-        """First awareness with answer=2 should return valid=False with redirect and PTS=7."""
+        """First awareness wrong answer returns redirect without PTS when tokens missing."""
         payload = {
             "user_id": "test_user_3",
             "internal_survey_id": 4,
@@ -49,14 +49,14 @@ class TestAwarenessCheckAPI:
         data = response.get_json()
         assert data["valid"] is False
         assert "redirect_url" in data
-        assert "PTS=7" in data["redirect_url"]
-        assert data["pts_value"] == 7
+        assert "PTS=" not in data["redirect_url"]
+        assert data["pts_value"] == 1
         assert "filterout" in data["redirect_url"]
         assert "ext_survey_123" in data["redirect_url"]
         assert "test_user_3" in data["redirect_url"]
 
-    def test_incorrect_second_awareness_returns_pts_10(self, client):
-        """Second awareness failure should return PTS=10."""
+    def test_incorrect_second_awareness_returns_code_2(self, client):
+        """Second awareness failure returns code 2 without PTS when tokens missing."""
         payload = {
             "user_id": "test_user_4",
             "internal_survey_id": 4,
@@ -69,8 +69,8 @@ class TestAwarenessCheckAPI:
         assert response.status_code == 200
         data = response.get_json()
         assert data["valid"] is False
-        assert "PTS=10" in data["redirect_url"]
-        assert data["pts_value"] == 10
+        assert "PTS=" not in data["redirect_url"]
+        assert data["pts_value"] == 2
         assert "filterout" in data["redirect_url"]
 
     def test_missing_user_id_returns_400(self, client):
@@ -175,4 +175,35 @@ class TestAwarenessCheckAPI:
         assert response.status_code == 200
         data = response.get_json()
         assert data["valid"] is False  # Wrong answer
-        assert "PTS=7" in data["redirect_url"]
+        assert "PTS=" not in data["redirect_url"]
+        assert data["pts_value"] == 1
+
+    def test_incorrect_first_awareness_uses_tokens_when_present(
+        self, client, monkeypatch
+    ):
+        """When tokens exist, redirect should include PTS token and code 1."""
+        token_first = "UFWGYNtT9GZiK7M7EZJjPw=="
+
+        def fake_get_awareness_token(survey_id, question_index):
+            return token_first if question_index == 0 else None
+
+        monkeypatch.setattr(
+            "application.routes.survey.SurveyService.get_awareness_token",
+            fake_get_awareness_token,
+        )
+
+        payload = {
+            "user_id": "test_user_tok",
+            "internal_survey_id": 116,
+            "external_survey_id": "ext_survey_tok",
+            "question_index": 0,
+            "answer": 2,  # Wrong for first awareness
+            "user_vector": [50, 30, 20],
+        }
+
+        response = client.post("/take-survey/api/awareness/check", json=payload)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["valid"] is False
+        assert f"PTS={token_first}" in data["redirect_url"]
+        assert data["pts_value"] == 1

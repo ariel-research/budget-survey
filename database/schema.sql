@@ -47,6 +47,7 @@ CREATE TABLE `surveys` (
   `story_code` VARCHAR(50) NOT NULL, -- FK to stories.code
   `active` BOOLEAN DEFAULT TRUE,
   `pair_generation_config` JSON NOT NULL,
+  `awareness_pts` JSON DEFAULT NULL COMMENT 'Per-survey awareness PTS tokens: {\"first\": \"...\", \"second\": \"...\"}',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX (`story_code`), -- Index for the foreign key
@@ -64,7 +65,7 @@ CREATE TABLE `survey_responses` (
   `user_comment` TEXT DEFAULT NULL,
   `completed` BOOLEAN DEFAULT FALSE,
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
-  `pts_value` INT DEFAULT NULL COMMENT 'Panel4All PTS value for early awareness failures (7=first, 10=second)',
+  `pts_value` INT DEFAULT NULL COMMENT 'Awareness failure code (1=first awareness, 2=second awareness)',
   `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`user_id`), -- Index for potential joins/lookups

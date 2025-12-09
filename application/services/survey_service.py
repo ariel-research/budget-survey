@@ -14,6 +14,7 @@ from database.queries import (
     create_survey_response,
     create_user,
     get_subjects,
+    get_survey_awareness_pts,
     get_survey_description,
     get_survey_name,
     get_survey_pair_generation_config,
@@ -455,6 +456,7 @@ class SurveyService:
                     option2_strategy=pair.option2_strategy,
                     option1_differences=pair.option1_differences,
                     option2_differences=pair.option2_differences,
+                    generation_metadata=pair.generation_metadata,
                 )
                 logger.debug(
                     f"Created comparison pair {idx}/{len(submission.comparison_pairs)}: "
@@ -507,7 +509,7 @@ class SurveyService:
             user_id: The user's identifier
             survey_id: The survey ID
             user_vector: The user's budget vector
-            pts_value: Panel4All PTS value (7 for first awareness, 10 for second)
+            pts_value: Awareness failure code (1=first awareness, 2=second awareness)
 
         Returns:
             int: The ID of the created survey_response record, or None if creation fails
@@ -540,6 +542,31 @@ class SurveyService:
             )
             return None
 
+    @staticmethod
+    def get_awareness_token(survey_id: int, question_index: int) -> Optional[str]:
+        """
+        Fetch the per-survey awareness token for a given question index.
+
+        Args:
+            survey_id: The survey ID
+            question_index: 0 for first awareness, 1 for second awareness
+
+        Returns:
+            Optional[str]: Token string if configured, otherwise None.
+        """
+        tokens = get_survey_awareness_pts(survey_id)
+        if tokens is None:
+            return None
+
+        if not isinstance(question_index, int):
+            return None
+
+        if question_index == 0:
+            return tokens.get("first")
+        if question_index == 1:
+            return tokens.get("second")
+        return None
+
 
 class SurveySessionData:
     """Helper class to manage survey session data."""
@@ -561,7 +588,7 @@ class SurveySessionData:
 
     def _randomize_pair_options(
         self, pair: Dict[str, tuple]
-    ) -> Tuple[tuple, tuple, bool, str, str, list, list, dict, int]:
+    ) -> Tuple[tuple, tuple, bool, str, str, list, list, dict, int, dict]:
         """
         Randomly reorder options within a pair.
 
@@ -579,7 +606,11 @@ class SurveySessionData:
             - option2_differences: Differences for option 2 (if available)
             - instruction_context: Context for generating sub-survey specific instructions
             - original_pair_number: Original logical pair number (for interleaved strategies)
+            - generation_metadata: Metadata about pair generation (for rank-based strategies)
         """
+        # Extract and remove __metadata__ key before processing (so it's not treated as a vector)
+        generation_metadata = pair.pop("__metadata__", None)
+
         # Identify the two vector entries robustly (ignore metadata keys)
         # Support both standard 3-element vectors and biennial 6-element vectors
         vector_items = [
@@ -623,6 +654,7 @@ class SurveySessionData:
                     option1_diffs,
                     instruction_context,
                     original_pair_number,
+                    generation_metadata,
                 )
             return (
                 vectors[0],
@@ -634,6 +666,7 @@ class SurveySessionData:
                 option2_diffs,
                 instruction_context,
                 original_pair_number,
+                generation_metadata,
             )
 
         # Map vector labels to their strategy text if available
@@ -680,6 +713,7 @@ class SurveySessionData:
                 option1_diffs,
                 instruction_context,
                 original_pair_number,
+                generation_metadata,
             )
 
         return (
@@ -692,6 +726,7 @@ class SurveySessionData:
             option2_diffs,
             instruction_context,
             original_pair_number,
+            generation_metadata,
         )
 
     def to_template_data(self) -> Dict:
@@ -779,6 +814,7 @@ class SurveySessionData:
                     option2_differences,
                     instruction_context,
                     original_pair_number,
+                    generation_metadata,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -795,6 +831,9 @@ class SurveySessionData:
                     pair_data["option1_differences"] = option1_differences
                 if option2_differences is not None:
                     pair_data["option2_differences"] = option2_differences
+                # Add generation metadata if it exists
+                if generation_metadata is not None:
+                    pair_data["generation_metadata"] = generation_metadata
                 presentation_pairs.append(pair_data)
 
             # Add second awareness question
@@ -822,6 +861,7 @@ class SurveySessionData:
                     option2_differences,
                     instruction_context,
                     original_pair_number,
+                    generation_metadata,
                 ) = self._randomize_pair_options(pair)
                 pair_data = {
                     "display": (option1, option2),
@@ -838,6 +878,9 @@ class SurveySessionData:
                     pair_data["option1_differences"] = option1_differences
                 if option2_differences is not None:
                     pair_data["option2_differences"] = option2_differences
+                # Add generation metadata if it exists
+                if generation_metadata is not None:
+                    pair_data["generation_metadata"] = generation_metadata
                 presentation_pairs.append(pair_data)
 
             return {

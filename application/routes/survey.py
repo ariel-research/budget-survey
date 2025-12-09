@@ -713,7 +713,7 @@ def awareness_check_api():
 
     Response JSON:
         Success: {"valid": true}
-        Failure: {"valid": false, "redirect_url": "...", "pts_value": 7|10}
+        Failure: {"valid": false, "redirect_url": "...", "pts_value": 1|2}
     """
     try:
         payload = request.get_json(force=True)
@@ -734,40 +734,45 @@ def awareness_check_api():
             )
             return jsonify({"valid": True})
 
-        # Failed - determine PTS value and build redirect
-        pts_config = current_app.config["PANEL4ALL"]["PTS"]
-        pts_value = (
-            pts_config["FIRST_AWARENESS"]
-            if question_index == 0
-            else pts_config["SECOND_AWARENESS"]
-        )
+        # Failed - determine awareness code and build redirect
+        awareness_code = 1 if question_index == 0 else 2
+        token = SurveyService.get_awareness_token(internal_survey_id, question_index)
 
         # Record early failure in database
         SurveyService.record_early_awareness_failure(
             user_id=user_id,
             survey_id=internal_survey_id,
             user_vector=user_vector,
-            pts_value=pts_value,
+            pts_value=awareness_code,
         )
+
+        if token is None:
+            logger.warning(
+                "Missing awareness token for survey_id=%s question_index=%s; "
+                "redirecting without PTS parameter",
+                internal_survey_id,
+                question_index,
+            )
 
         # Build redirect URL
         redirect_url = redirect_to_panel4all_with_pts(
             user_id,
             external_survey_id,
             status=current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"],
-            pts=pts_value,
+            pts=token,
         )
 
         logger.info(
             f"Early awareness failure detected: user_id={user_id}, "
-            f"question_index={question_index}, pts_value={pts_value}"
+            f"question_index={question_index}, awareness_code={awareness_code}, "
+            f"token_present={'yes' if token else 'no'}"
         )
 
         return jsonify(
             {
                 "valid": False,
                 "redirect_url": redirect_url,
-                "pts_value": pts_value,
+                "pts_value": awareness_code,
             }
         )
 
@@ -777,10 +782,12 @@ def awareness_check_api():
 
 
 def redirect_to_panel4all_with_pts(
-    user_id: str, survey_id: str, status: str, pts: int
+    user_id: str, survey_id: str, status: str, pts: Optional[str] = None
 ) -> str:
     """Generate Panel4All redirect URL with PTS parameter."""
-    params = {"surveyID": survey_id, "userID": user_id, "status": status, "PTS": pts}
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if pts is not None:
+        params["PTS"] = pts
     return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
 
 
