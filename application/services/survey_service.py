@@ -609,7 +609,14 @@ class SurveySessionData:
             - generation_metadata: Metadata about pair generation (for rank-based strategies)
         """
         # Extract and remove __metadata__ key before processing (so it's not treated as a vector)
+        has_metadata = "__metadata__" in pair
         generation_metadata = pair.pop("__metadata__", None)
+        logger.debug(
+            "Randomizing pair original_num=%s has_metadata=%s metadata=%s",
+            pair.get("original_pair_number"),
+            has_metadata,
+            generation_metadata,
+        )
 
         # Identify the two vector entries robustly (ignore metadata keys)
         # Support both standard 3-element vectors and biennial 6-element vectors

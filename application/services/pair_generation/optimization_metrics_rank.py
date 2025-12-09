@@ -409,6 +409,11 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                     "strategy": "max_min_rank",
                 },
             }
+            logger.debug(
+                "Rank strategy generated pair %s metadata=%s",
+                len(result_pairs),
+                pair.get("__metadata__"),
+            )
             result_pairs.append(pair)
 
             logger.info(
