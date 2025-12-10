@@ -205,5 +205,10 @@ class TestAwarenessCheckAPI:
         assert response.status_code == 200
         data = response.get_json()
         assert data["valid"] is False
-        assert f"PTS={token_first}" in data["redirect_url"]
+        # Token is URL-encoded; parse query for comparison
+        from urllib.parse import parse_qs, urlparse
+
+        parsed = urlparse(data["redirect_url"])
+        qs = parse_qs(parsed.query)
+        assert qs.get("PTS") == [token_first]
         assert data["pts_value"] == 1
