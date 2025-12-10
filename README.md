@@ -667,12 +667,12 @@ The application includes an attention check mechanism to ensure survey quality:
   - Two attention check questions mixed within comparison pairs
   - Validates that users recognize their own optimal allocation
   - Failed checks are recorded and do not allow retries
-- **Early awareness failures**: Client-side checks catch wrong awareness answers before submission, store `pts_value` in `survey_responses`, and redirect users to Panel4All with the `PTS` parameter (7 or 10).
+- **Early awareness failures**: Client-side checks catch wrong awareness answers before submission, store `pts_value` in `survey_responses` as awareness codes (`1` = first question failed, `2` = second question failed), and redirect users to the survey company. If per-survey PTS tokens are configured (`surveys.awareness_pts`), the redirect includes the matching token; otherwise the redirect omits the `PTS` param but still sends the status.
 
-- **Panel4All Integration**:
+- **Panel4All (External survey provider) Integration**:
   - Sends "attentionfilter" status for failed attention checks
   - Sends "finish" status for successful completions
-  - Allows proper handling by survey management system
+  - Uses per-survey PTS tokens when available. Falls back to status-only redirect if tokens are missing
 
 - **Data Storage**:
   - Failed checks are stored with `attention_check_failed` flag
@@ -1074,6 +1074,7 @@ To add new surveys or modify existing ones, follow these steps:
 
    Then, add a new survey that uses this story:
    ```sql
+   -- awareness_pts is optional; include it only if you have per-survey PTS tokens
    INSERT INTO surveys (
        story_code,
        active,
@@ -1143,6 +1144,7 @@ Surveys can include custom instructions for specific strategies. These instructi
 
 ```sql
 INSERT INTO surveys (
+    -- awareness_pts is optional; include only if you have PTS tokens
     story_code,
     active,
     pair_generation_config
@@ -1197,6 +1199,7 @@ You can highlight specific words or phrases in your custom instructions using HT
 
 ```sql
 INSERT INTO surveys (
+    -- awareness_pts is optional; include only if you have PTS tokens
     story_code,
     active,
     pair_generation_config

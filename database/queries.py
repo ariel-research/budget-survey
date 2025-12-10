@@ -118,7 +118,7 @@ def create_early_awareness_failure(
         user_id (str): The ID of the user.
         survey_id (int): The ID of the survey.
         optimal_allocation (list): The user's budget vector.
-        pts_value (int): Panel4All PTS value (7 for first awareness, 10 for second).
+        pts_value (int): Awareness failure code (1=first awareness, 2=second awareness).
 
     Returns:
         int: The ID of the newly created survey response, or None if an error occurs.
@@ -378,6 +378,64 @@ def get_subjects(survey_id: int) -> List[str]:
     except Exception as e:
         logger.error("Error retrieving subjects for survey %s: %s", survey_id, str(e))
         return []
+
+
+def get_survey_awareness_pts(survey_id: int) -> Optional[Dict[str, str]]:
+    """
+    Retrieve per-survey awareness PTS tokens if present.
+
+    Args:
+        survey_id (int): The ID of the survey.
+
+    Returns:
+        Optional[Dict[str, str]]: A dictionary with optional 'first'/'second' tokens,
+        or empty dict if not set/malformed, or None if survey inactive/missing.
+    """
+    query = """
+        SELECT awareness_pts
+        FROM surveys
+        WHERE id = %s AND active = TRUE
+    """
+    logger.debug("Retrieving awareness PTS tokens for survey_id: %s", survey_id)
+
+    try:
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result:
+            logger.info("No active survey found with id: %s", survey_id)
+            return None
+
+        pts_json = result.get("awareness_pts")
+        if not pts_json:
+            return {}
+
+        try:
+            pts_data = json.loads(pts_json)
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(
+                "Malformed awareness_pts for survey %s: %s", survey_id, str(e)
+            )
+            return {}
+
+        if not isinstance(pts_data, dict):
+            logger.warning(
+                "Unexpected awareness_pts type for survey %s: %s",
+                survey_id,
+                type(pts_data),
+            )
+            return {}
+
+        tokens = {}
+        for key in ("first", "second"):
+            val = pts_data.get(key)
+            if isinstance(val, str) and val:
+                tokens[key] = val
+
+        return tokens
+    except Exception as e:
+        logger.error(
+            "Error retrieving awareness_pts for survey %s: %s", survey_id, str(e)
+        )
+        return {}
 
 
 def check_user_participation(user_id: str, survey_id: int) -> bool:
