@@ -162,6 +162,7 @@ def create_comparison_pair(
     option2_strategy: str,
     option1_differences: list = None,
     option2_differences: list = None,
+    generation_metadata: dict = None,
 ) -> int:
     """
     Inserts a new comparison pair into the comparison_pairs table.
@@ -179,6 +180,8 @@ def create_comparison_pair(
                            (for cyclic shift)
         option2_differences: Optional differences vector for option 2
                            (for cyclic shift)
+        generation_metadata: Optional metadata about pair generation
+                           (e.g., relaxation level, epsilon for rank-based strategies)
 
     Returns:
         int: The ID of the newly created comparison pair, or None if an error occurs
@@ -187,9 +190,9 @@ def create_comparison_pair(
         INSERT INTO comparison_pairs (
             survey_response_id, pair_number, option_1, option_2, 
             user_choice, raw_user_choice, option1_strategy, option2_strategy,
-            option1_differences, option2_differences
+            option1_differences, option2_differences, generation_metadata
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     try:
         option_1_json = json.dumps(option_1)
@@ -199,6 +202,9 @@ def create_comparison_pair(
         )
         option2_differences_json = (
             json.dumps(option2_differences) if option2_differences is not None else None
+        )
+        generation_metadata_json = (
+            json.dumps(generation_metadata) if generation_metadata is not None else None
         )
 
         return execute_query(
@@ -214,6 +220,7 @@ def create_comparison_pair(
                 option2_strategy,
                 option1_differences_json,
                 option2_differences_json,
+                generation_metadata_json,
             ),
         )
     except Exception as e:

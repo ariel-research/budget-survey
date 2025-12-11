@@ -90,6 +90,7 @@ CREATE TABLE `comparison_pairs` (
   `option1_differences` JSON DEFAULT NULL,
   `option2_differences` JSON DEFAULT NULL,
   `raw_user_choice` INT DEFAULT NULL,
+  `generation_metadata` JSON DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`survey_response_id`) REFERENCES `survey_responses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
