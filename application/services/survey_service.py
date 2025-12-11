@@ -330,6 +330,16 @@ class SurveyService:
                 n=params.get("num_pairs", 10),
                 vector_size=num_subjects,
             )
+            first_metadata = (
+                comparison_pairs[0].get("__metadata__") if comparison_pairs else None
+            )
+            logger.info(
+                "Pair generation completed: survey_id=%s strategy=%s pairs=%s first_metadata=%s",
+                survey_id,
+                strategy_name,
+                len(comparison_pairs),
+                first_metadata,
+            )
 
             # Generate two awareness questions
             awareness_questions = generate_awareness_questions(
@@ -609,14 +619,7 @@ class SurveySessionData:
             - generation_metadata: Metadata about pair generation (for rank-based strategies)
         """
         # Extract and remove __metadata__ key before processing (so it's not treated as a vector)
-        has_metadata = "__metadata__" in pair
         generation_metadata = pair.pop("__metadata__", None)
-        logger.debug(
-            "Randomizing pair original_num=%s has_metadata=%s metadata=%s",
-            pair.get("original_pair_number"),
-            has_metadata,
-            generation_metadata,
-        )
 
         # Identify the two vector entries robustly (ignore metadata keys)
         # Support both standard 3-element vectors and biennial 6-element vectors
@@ -791,7 +794,6 @@ class SurveySessionData:
             original_pairs, awareness_questions = SurveyService.generate_survey_pairs(
                 self.user_vector, len(self.subjects), self.internal_survey_id
             )
-
             # Combine pair data with its presentation state
             presentation_pairs = []
 

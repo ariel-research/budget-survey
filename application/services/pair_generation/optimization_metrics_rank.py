@@ -394,6 +394,7 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                 leo_best, leo_worst = leo_a, leo_b
 
             # Create pair with strategy descriptions
+            metadata_score = round(float(score), 2)
             pair = {
                 self.get_option_description(
                     metric_type="sum", best_value=l1_best, worst_value=l1_worst
@@ -405,12 +406,12 @@ class OptimizationMetricsRankStrategy(PairGenerationStrategy):
                 ): leo_vec,
                 # Embed metadata for pipeline to extract and persist
                 "__metadata__": {
-                    "score": float(score),
+                    "score": metadata_score,
                     "strategy": "max_min_rank",
                 },
             }
-            logger.debug(
-                "Rank strategy generated pair %s metadata=%s",
+            logger.info(
+                "Rank strategy generated pair idx=%s metadata=%s",
                 len(result_pairs),
                 pair.get("__metadata__"),
             )

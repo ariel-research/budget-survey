@@ -437,6 +437,12 @@ class SurveySubmission:
                         )
                     )
 
+            logger.info(
+                "SurveySubmission.from_form_data built %s pairs; first_metadata=%s",
+                len(pairs),
+                pairs[0].generation_metadata if pairs else None,
+            )
+
             return cls(
                 user_id=user_id,
                 survey_id=survey_id,
