@@ -458,6 +458,26 @@
    font-weight: 500;
 }
 
+.pair-metadata {
+   font-size: var(--font-size-xs);
+   padding: 6px 10px;
+   margin-bottom: var(--spacing-sm);
+   border-radius: 4px;
+   background-color: var(--color-background-alt);
+   color: var(--color-text-light);
+   display: inline-block;
+}
+
+.pair-metadata-label {
+   color: var(--color-text-light);
+   margin-right: 6px;
+}
+
+.pair-metadata-value {
+   color: var(--color-primary);
+   font-weight: 500;
+}
+
 /* When raw choice is available */
 .original-choice {
    color: var(--color-text);

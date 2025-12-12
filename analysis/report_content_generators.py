@@ -795,6 +795,22 @@ def _generate_choice_pair_html(
         target_label = get_translation("target_is", "answers", target_name=target_name)
         header_content += f" ({target_label})"
 
+    # Generate metadata section for l1_vs_leontief_rank_comparison strategy
+    metadata_html = ""
+    if (
+        choice.get("strategy_name") == "l1_vs_leontief_rank_comparison"
+        and choice.get("generation_metadata")
+        and isinstance(choice.get("generation_metadata"), dict)
+        and "score" in choice.get("generation_metadata", {})
+    ):
+        score = choice["generation_metadata"]["score"]
+        metadata_html = f"""
+        <div class="pair-metadata">
+            <span class="pair-metadata-label">Generation Score:</span>
+            <span class="pair-metadata-value">{score:.2f}</span>
+        </div>
+        """
+
     return f"""
     <div class="choice-pair">
         <div class="pair-header">
@@ -803,6 +819,7 @@ def _generate_choice_pair_html(
                 {raw_choice_html}
             </div>
         </div>
+        {metadata_html}
         <div class="table-container">
             <table>
                 <tr>
