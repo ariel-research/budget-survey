@@ -583,18 +583,20 @@ Note: '>' represents observed choice, which may include cases of user indifferen
    - Strategy name: `l1_vs_leontief_rank_comparison`
    - Uses rank-based normalization (percentiles) instead of raw metric values to generate pairs with complementary trade-offs between L1 distance and Leontief ratio.
    - **Algorithm Overview**:
-     - Generates a large pool of random vectors (2000 by default)
+     - Enumerates the discrete simplex grid (step=5) to ensure full coverage of corners, edges, and centers of the vector space without sampling bias
+     - All vectors must sum to 100 with components between 10 and 100 (inclusive)
      - Computes L1 distance and Leontief ratio for each vector against user's ideal
      - Normalizes metrics to percentile ranks (0.0-1.0) to eliminate scale differences
-     - Uses adaptive relaxation with 4 levels to find complementary pairs
-   - **Adaptive Relaxation Levels**:
-     - Level 1: Strict (epsilon=0.15, balance_tolerance=2.0)
-     - Level 2: Moderate (epsilon=0.10, balance_tolerance=2.5)
-     - Level 3: Loose (epsilon=0.05, balance_tolerance=4.0)
-     - Level 4: Last Resort (epsilon=0.01, balance_tolerance=6.0)
-   - **Generation Metadata**: Each pair includes metadata about the relaxation level used, stored in `generation_metadata` column for quality analysis.
+     - Uses brute-force max-min search to find complementary pairs where one vector outranks the other on L1 while the other outranks on Leontief
+     - Scores pairs using the minimum of the two rank advantages to encourage balanced trade-offs
+   - **Pair Selection**:
+     - Valid pairs must have complementary advantages: one vector better on L1, the other better on Leontief
+     - Pairs are sorted by max-min score (minimum of the two rank advantages)
+     - Greedy selection ensures no vector is reused across pairs
+     - Falls back to pairing best L1 vectors with best Leontief vectors if insufficient complementary pairs are found
+   - **Generation Metadata**: Each pair includes metadata with the max-min score and strategy identifier, stored in `generation_metadata` column for quality analysis.
    - Parameters:
-     - `num_pairs`: Number of pairs to generate (default: 12)
+     - `num_pairs`: Number of pairs to generate (default: 10)
 
 #### Adding New Strategies
 
