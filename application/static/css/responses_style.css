@@ -423,15 +423,14 @@
 }
 
 .raw-choice-info {
-   position: absolute;
-   top: var(--spacing-sm);
-   right: var(--spacing-sm);
    font-size: var(--font-size-xs);
    padding: 4px 8px;
+   margin-bottom: var(--spacing-sm);
    border-radius: 4px;
    background-color: var(--color-background-alt);
    color: var(--color-text-light);
    transition: all 0.2s ease;
+   display: inline-block;
 }
 
 .raw-choice-info:hover {
@@ -460,22 +459,86 @@
 
 .pair-metadata {
    font-size: var(--font-size-xs);
-   padding: 6px 10px;
+   padding: 8px 12px;
    margin-bottom: var(--spacing-sm);
    border-radius: 4px;
    background-color: var(--color-background-alt);
    color: var(--color-text-light);
-   display: inline-block;
+   display: block;
+   line-height: 1.5;
+}
+
+.pair-metadata-content {
+   display: flex;
+   align-items: center;
+   margin-bottom: 4px;
+   flex-wrap: nowrap;
 }
 
 .pair-metadata-label {
    color: var(--color-text-light);
    margin-right: 6px;
+   white-space: nowrap;
 }
 
 .pair-metadata-value {
    color: var(--color-primary);
    font-weight: 500;
+   white-space: nowrap;
+}
+
+.pair-metadata-explanation {
+   font-size: calc(var(--font-size-xs) - 1px);
+   color: var(--color-text-light);
+   font-style: italic;
+   line-height: 1.4;
+   margin-top: 4px;
+   word-wrap: break-word;
+   overflow-wrap: break-word;
+}
+
+/* RTL support for choice-pair */
+[dir="rtl"] .choice-pair {
+   direction: rtl;
+   text-align: right;
+}
+
+[dir="rtl"] .choice-pair h5 {
+   text-align: right;
+}
+
+[dir="rtl"] .pair-header {
+   text-align: right;
+}
+
+[dir="rtl"] .pair-header h5 {
+   text-align: right;
+}
+
+/* RTL support for pair-metadata */
+[dir="rtl"] .pair-metadata {
+   text-align: right;
+   direction: rtl;
+}
+
+[dir="rtl"] .pair-metadata-content {
+   justify-content: flex-start;
+   text-align: right;
+}
+
+[dir="rtl"] .pair-metadata-label {
+   margin-right: 0;
+   margin-left: 6px;
+   text-align: right;
+}
+
+[dir="rtl"] .pair-metadata-value {
+   text-align: right;
+}
+
+[dir="rtl"] .pair-metadata-explanation {
+   text-align: right;
+   direction: rtl;
 }
 
 /* When raw choice is available */
@@ -1252,15 +1315,15 @@ th.sortable[data-order="desc"]::after {
 
 .preference-summary-badge {
     display: inline-block;
-    background: var(--color-primary) !important;
-    color: white !important;
+    background: var(--color-primary);
+    color: white;
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: 20px;
     font-weight: 600;
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-sm);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: none !important;
+    border: none;
 }
 
 .analysis-table {
@@ -2748,8 +2811,7 @@ th.sortable[data-order="desc"]::after {
 }
 
 [dir="rtl"] .raw-choice-info {
-   right: auto;
-   left: var(--spacing-sm);
+   text-align: right;
 }
 
 [dir="rtl"] .back-icon {

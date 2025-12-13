@@ -804,10 +804,15 @@ def _generate_choice_pair_html(
         and "score" in choice.get("generation_metadata", {})
     ):
         score = choice["generation_metadata"]["score"]
+        score_label = get_translation("pair_score", "answers")
+        score_explanation = get_translation("pair_score_explanation", "answers")
         metadata_html = f"""
         <div class="pair-metadata">
-            <span class="pair-metadata-label">Generation Score:</span>
-            <span class="pair-metadata-value">{score:.2f}</span>
+            <div class="pair-metadata-content">
+                <span class="pair-metadata-label">{score_label}:</span>
+                <span class="pair-metadata-value">{score:.2f}</span>
+            </div>
+            <div class="pair-metadata-explanation">{score_explanation}</div>
         </div>
         """
 
@@ -815,9 +820,9 @@ def _generate_choice_pair_html(
     <div class="choice-pair">
         <div class="pair-header">
             <h5>{header_content}</h5>
-            <div class="raw-choice-info">
-                {raw_choice_html}
-            </div>
+        </div>
+        <div class="raw-choice-info">
+            {raw_choice_html}
         </div>
         {metadata_html}
         <div class="table-container">
