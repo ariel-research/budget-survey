@@ -795,14 +795,36 @@ def _generate_choice_pair_html(
         target_label = get_translation("target_is", "answers", target_name=target_name)
         header_content += f" ({target_label})"
 
+    # Generate metadata section for l1_vs_leontief_rank_comparison strategy
+    metadata_html = ""
+    if (
+        choice.get("strategy_name") == "l1_vs_leontief_rank_comparison"
+        and choice.get("generation_metadata")
+        and isinstance(choice.get("generation_metadata"), dict)
+        and "score" in choice.get("generation_metadata", {})
+    ):
+        score = choice["generation_metadata"]["score"]
+        score_label = get_translation("pair_score", "answers")
+        score_explanation = get_translation("pair_score_explanation", "answers")
+        metadata_html = f"""
+        <div class="pair-metadata">
+            <div class="pair-metadata-content">
+                <span class="pair-metadata-label">{score_label}:</span>
+                <span class="pair-metadata-value">{score:.2f}</span>
+            </div>
+            <div class="pair-metadata-explanation">{score_explanation}</div>
+        </div>
+        """
+
     return f"""
     <div class="choice-pair">
         <div class="pair-header">
             <h5>{header_content}</h5>
-            <div class="raw-choice-info">
-                {raw_choice_html}
-            </div>
         </div>
+        <div class="raw-choice-info">
+            {raw_choice_html}
+        </div>
+        {metadata_html}
         <div class="table-container">
             <table>
                 <tr>
@@ -2810,6 +2832,13 @@ def generate_detailed_user_choices(
             ):
                 triangle_metrics = _calculate_triangle_inequality_metrics(choices)
                 stats.update(triangle_metrics)
+            if (
+                choices
+                and "strategy_name" in choices[0]
+                and choices[0]["strategy_name"] == "l1_vs_leontief_rank_comparison"
+            ):
+                rank_metrics = _calculate_rank_consistency_metrics(choices)
+                stats.update(rank_metrics)
 
             if (
                 choices
@@ -3695,6 +3724,10 @@ def generate_overall_statistics_table(
     elif strategy_name == "triangle_inequality_test":
         overall_table = _generate_triangle_overall_consistency_table(
             summaries, title, note
+        )
+    elif strategy_name == "l1_vs_leontief_rank_comparison":
+        overall_table = _generate_rank_overall_consistency_table(
+            summaries, title, note, option_labels
         )
     elif strategy_name == "biennial_budget_preference":
         # Handle dynamic temporal preference strategy using three consistency breakdown tables
@@ -5706,6 +5739,143 @@ def _generate_triangle_overall_consistency_table(
     """
 
 
+def _generate_rank_overall_consistency_table(
+    summaries: List[Dict],
+    title: str,
+    note: str,
+    option_labels: Tuple[str, str],
+) -> str:
+    """Generate consistency breakdown table for rank-based L1 vs Leontief strategy."""
+    if not summaries:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    # Bucket by observed consistency percentages (rounded to 1 decimal)
+    bucket_data: Dict[float, List[Dict[str, float]]] = {}
+
+    for summary in summaries:
+        stats = summary.get("stats", {})
+        sum_count = stats.get("sum_count")
+        ratio_count = stats.get("ratio_count")
+        sum_percent = stats.get("sum_percent")
+        ratio_percent = stats.get("ratio_percent")
+        consistency_percent = stats.get("consistency_percent")
+
+        if (
+            sum_count is None
+            or ratio_count is None
+            or sum_percent is None
+            or ratio_percent is None
+            or consistency_percent is None
+        ):
+            continue
+
+        total_choices = sum_count + ratio_count
+        if total_choices <= 0:
+            continue
+
+        level = round(float(consistency_percent), 1)
+        bucket_data.setdefault(level, []).append(
+            {"sum_percent": float(sum_percent), "ratio_percent": float(ratio_percent)}
+        )
+
+    if not bucket_data:
+        no_data_msg = get_translation("no_answers", "answers")
+        return f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <p class="summary-note">{no_data_msg}</p>
+        </div>
+        """
+
+    rows = []
+    total_users = 0
+    total_sum_weighted = 0.0
+    total_ratio_weighted = 0.0
+
+    for level in sorted(bucket_data.keys()):
+        user_stats = bucket_data[level]
+        num_users = len(user_stats)
+        total_users += num_users
+
+        avg_sum = sum(item["sum_percent"] for item in user_stats) / num_users
+        avg_ratio = sum(item["ratio_percent"] for item in user_stats) / num_users
+
+        total_sum_weighted += avg_sum * num_users
+        total_ratio_weighted += avg_ratio * num_users
+
+        sum_class_attr = ' class="highlight-cell"' if avg_sum > avg_ratio else ""
+        ratio_class_attr = ' class="highlight-cell"' if avg_ratio > avg_sum else ""
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{level:.1f}%</td>
+                <td>{num_users}</td>
+                <td{sum_class_attr}>{avg_sum:.1f}%</td>
+                <td{ratio_class_attr}>{avg_ratio:.1f}%</td>
+            </tr>
+            """
+        )
+
+    if total_users > 0:
+        overall_sum = total_sum_weighted / total_users
+        overall_ratio = total_ratio_weighted / total_users
+        total_label = get_translation("total", "answers")
+
+        sum_total_class = (
+            ' class="highlight-cell"' if overall_sum > overall_ratio else ""
+        )
+        ratio_total_class = (
+            ' class="highlight-cell"' if overall_ratio > overall_sum else ""
+        )
+
+        rows.append(
+            f"""
+            <tr class="total-row">
+                <td><strong>{total_label}</strong></td>
+                <td><strong>{total_users}</strong></td>
+                <td{sum_total_class}><strong>{overall_sum:.1f}%</strong></td>
+                <td{ratio_total_class}><strong>{overall_ratio:.1f}%</strong></td>
+            </tr>
+            """
+        )
+
+    consistency_level_label = get_translation("consistency_level", "answers")
+    num_users_label = get_translation("num_of_users", "answers")
+    sum_label = option_labels[0] if option_labels else get_translation("sum", "answers")
+    ratio_label = (
+        option_labels[1] if option_labels else get_translation("ratio", "answers")
+    )
+
+    return f"""
+    <div class="summary-table-container consistency-breakdown-container">
+        <h2>{title}</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{consistency_level_label}</th>
+                        <th>{num_users_label}</th>
+                        <th>{sum_label}</th>
+                        <th>{ratio_label}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(rows)}
+                </tbody>
+            </table>
+        </div>
+        <p class="summary-note">{note}</p>
+    </div>
+    """
+
+
 def _generate_sub_survey_consistency_breakdown_table(
     user_choices: List[Dict],
     sub_survey_num: int,
@@ -6077,6 +6247,60 @@ def _calculate_triangle_inequality_metrics(choices: List[Dict]) -> Dict[str, flo
         "concentrated_percent": round(concentrated_percent, 1),
         "distributed_percent": round(distributed_percent, 1),
         "consistency_percent": round(consistency_percent, 1),
+    }
+
+
+def _calculate_rank_consistency_metrics(choices: List[Dict]) -> Dict[str, float]:
+    """
+    Calculate per-user consistency for rank-based L1 vs Leontief strategy.
+
+    Consistency is defined as the percentage of the dominant choice type
+    (Sum vs Ratio) across all answered pairs.
+    """
+    if not choices:
+        return {
+            "sum_count": 0,
+            "ratio_count": 0,
+            "sum_percent": 0.0,
+            "ratio_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    sum_count = 0
+    ratio_count = 0
+
+    for choice in choices:
+        chosen_option = choice.get("user_choice")
+        option1_strategy = choice.get("option1_strategy", "") or ""
+        option2_strategy = choice.get("option2_strategy", "") or ""
+
+        chosen_strategy = option1_strategy if chosen_option == 1 else option2_strategy
+        chosen_lower = chosen_strategy.lower()
+
+        if "sum" in chosen_lower:
+            sum_count += 1
+        elif "ratio" in chosen_lower:
+            ratio_count += 1
+
+    total = sum_count + ratio_count
+    if total == 0:
+        return {
+            "sum_count": 0,
+            "ratio_count": 0,
+            "sum_percent": 0.0,
+            "ratio_percent": 0.0,
+            "consistency_percent": 0.0,
+        }
+
+    sum_percent = (sum_count / total) * 100
+    ratio_percent = (ratio_count / total) * 100
+
+    return {
+        "sum_count": sum_count,
+        "ratio_count": ratio_count,
+        "sum_percent": round(sum_percent, 1),
+        "ratio_percent": round(ratio_percent, 1),
+        "consistency_percent": round(max(sum_percent, ratio_percent), 1),
     }
 
 

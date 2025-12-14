@@ -1165,6 +1165,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "הטבלה מציגה את ההעדפות המשתמש בין שינויים מרוכזים (כל השינוי בשנה אחת) לעומת שינויים מבוזרים (שינויים בשתי השנים).",
             "en": "This table shows the user's preferences between concentrated changes (all change in one year) versus distributed changes (changes across both years).",
         },
+        "pair_score": {
+            "he": "ציון זוג",
+            "en": "Pair Score",
+        },
+        "pair_score_explanation": {
+            "he": "ציון = min(היתרון ב-L1, היתרון ב-Leontief). היתרון = כמה וקטור אחד טוב יותר מהשני בכל מדד. ציון גבוה יותר = בחירה ברורה יותר.",
+            "en": "Score = min(L1 advantage, Leontief advantage). Advantage = how much better one vector is than the other in each metric. Higher score = clearer choice.",
+        },
     },
     "headers": {
         "comparison_pair": {"he": "זוג להשוואה", "en": "Comparison Pair"},

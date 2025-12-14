@@ -601,7 +601,8 @@ def retrieve_user_survey_choices() -> List[Dict]:
         cp.option1_strategy,
         cp.option2_strategy,
         cp.option1_differences,
-        cp.option2_differences
+        cp.option2_differences,
+        cp.generation_metadata
     FROM 
         survey_responses sr
     JOIN 
@@ -642,6 +643,15 @@ def retrieve_user_survey_choices() -> List[Dict]:
                         )
                     except (json.JSONDecodeError, TypeError):
                         result["option2_differences"] = None
+
+                # Parse generation_metadata if present
+                if result.get("generation_metadata"):
+                    try:
+                        result["generation_metadata"] = json.loads(
+                            result["generation_metadata"]
+                        )
+                    except (json.JSONDecodeError, TypeError):
+                        result["generation_metadata"] = None
 
                 # Try to enrich with pair_type, magnitude, target_category
                 try:
