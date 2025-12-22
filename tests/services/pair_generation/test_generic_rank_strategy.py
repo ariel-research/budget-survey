@@ -138,3 +138,93 @@ def test_generic_rank_strategy_compute_ranks_single_item():
 
     assert ranks_a[0] == 1.0
     assert ranks_b[0] == 1.0
+
+
+def test_select_pairs_max_min_logic():
+    """
+    Test the MaxMin matchmaking logic with a simple, symmetric scenario.
+    """
+    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+
+    # Use 4 identical dummy vectors to focus strictly on the ranking logic.
+    vectors = [(0, 0)] * 4
+
+    # Symmetric Rank distribution (High variance = Clear trade-offs):
+    # v0: Strong A (1.0) / Weak B (0.0)
+    # v1: Good A   (0.9) / Poor B (0.1)
+    # v2: Poor A   (0.1) / Good B (0.9)
+    # v3: Weak A   (0.0) / Strong B (1.0)
+    ranks_a = np.array([1.0, 0.9, 0.1, 0.0])
+    ranks_b = np.array([0.0, 0.1, 0.9, 1.0])
+
+    # Pair scores [min(GainA, GainB)]:
+    # (0, 3): GainA(1.0-0.0)=1.0, GainB(1.0-0.0)=1.0. Score = 1.0
+    # (1, 2): GainA(0.9-0.1)=0.8, GainB(0.9-0.1)=0.8. Score = 0.8
+    # (0, 2): GainA(1.0-0.1)=0.9, GainB(0.9-0.0)=0.9. Score = 0.9
+
+    target_pairs = 2
+    pairs = strategy._select_pairs(vectors, ranks_a, ranks_b, target_pairs)
+
+    assert len(pairs) == 2
+
+    # Selection 1: Best overall trade-off (v0 vs v3)
+    idx_a, idx_b, score = pairs[0]
+    assert np.isclose(score, 1.0)
+    assert {idx_a, idx_b} == {0, 3}
+
+    # Selection 2: Best remaining trade-off (v1 vs v2)
+    # Note: (0, 2) was skipped because index 0 was already used.
+    idx_a_2, idx_b_2, score_2 = pairs[1]
+    assert np.isclose(score_2, 0.8)
+    assert {idx_a_2, idx_b_2} == {1, 2}
+
+
+def test_generate_pairs_integration():
+    """
+    Test generate_pairs runs through the full pipeline and returns correct format.
+    """
+    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    # Use vector_size=3 to ensure trade-offs exist (metrics aren't perfectly correlated)
+    user_vector = (30, 30, 40)
+    n = 2
+
+    # With step=5, vector_size=3, we have enough variance for trade-offs
+    results = strategy.generate_pairs(user_vector, n, vector_size=3)
+
+    assert len(results) == n
+
+    for pair in results:
+        # Check keys
+        keys = list(pair.keys())
+        assert len(keys) == 3  # 2 descriptions + __metadata__
+        assert "__metadata__" in keys
+
+        # Check metadata
+        meta = pair["__metadata__"]
+        assert "score" in meta
+        assert meta["strategy"] == "max_min_rank"
+
+        # Check vector sums
+        vecs = [v for k, v in pair.items() if k != "__metadata__"]
+        assert len(vecs) == 2
+        for v in vecs:
+            assert sum(v) == 100
+
+
+def test_generate_pairs_no_tradeoff():
+    """
+    Test generate_pairs returns fewer/no pairs when no valid trade-offs exist,
+    rather than using fallback.
+    """
+    # Use L1 for both. Then ranks will be identical, so Gain A > 0 implies Gain B < 0.
+    # No trade-off possible.
+    strategy = GenericRankStrategy(L1Metric, L1Metric)
+    user_vector = (50, 50)
+
+    # Expect 0 pairs because L1 vs L1 has no trade-offs
+    try:
+        results = strategy.generate_pairs(user_vector, n=2, vector_size=2)
+        assert len(results) == 0
+    except ValueError:
+        # This is also an acceptable outcome for "no valid pairs found"
+        pass

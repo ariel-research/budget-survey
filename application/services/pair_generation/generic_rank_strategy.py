@@ -22,30 +22,39 @@ class GenericRankStrategy(PairGenerationStrategy):
     that maximize the minimum rank (MaxMin).
     """
 
-    def __init__(self, metric_a_class: Type[Metric], metric_b_class: Type[Metric]):
+    # Step size for discrete simplex grid (5% increments)
+    DEFAULT_GRID_STEP = 5
+
+    def __init__(
+        self,
+        metric_a_class: Type[Metric],
+        metric_b_class: Type[Metric],
+        grid_step: int = None,
+    ):
         """
         Initialize the strategy with two metric classes.
 
         Args:
             metric_a_class: Class for the first metric (e.g., L1Metric)
             metric_b_class: Class for the second metric (e.g., LeontiefMetric)
+            grid_step: Optional step size for grid generation. Defaults to DEFAULT_GRID_STEP.
         """
         self.metric_a = metric_a_class()
         self.metric_b = metric_b_class()
+        self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
 
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
         Generate a pool of vectors using a discrete simplex grid.
 
         Args:
-            size: Used as the step size for the grid (default is 5).
-                  If 5 doesn't provide enough options, a smaller step (like 1) can be used.
+            size: Used as the step size for the grid if > 0, else uses DEFAULT_GRID_STEP.
             vector_size: Number of elements in each vector.
 
         Returns:
             Set of unique vectors summing to 100 on a step=size grid.
         """
-        step = size if size > 0 else 5
+        step = size if size > 0 else self.DEFAULT_GRID_STEP
         pool = set(simplex_points(num_variables=vector_size, step=step))
         logger.debug(f"Generated simplex vector pool (step={step}) of size {len(pool)}")
         return pool
@@ -55,10 +64,203 @@ class GenericRankStrategy(PairGenerationStrategy):
     ) -> List[Dict[str, tuple]]:
         """
         Generate pairs based on the generic ranking logic.
-        (Implementation will follow in Task 6).
+
+        Args:
+            user_vector: The user's ideal budget allocation.
+            n: Number of pairs to generate.
+            vector_size: Size of each vector.
+
+        Returns:
+            List of dicts containing vectors and embedded __metadata__ key
+            with score and strategy information.
+
+        Note on __metadata__:
+            The __metadata__ dictionary contains internal scoring details (e.g., "score")
+            that are useful for analysis or debugging.
         """
-        # Placeholder for Task 4
-        return []
+        self._validate_vector(user_vector, vector_size)
+
+        logger.info(
+            f"Generating {n} pairs using GenericRankStrategy "
+            f"for user_vector: {user_vector}"
+        )
+
+        # 1. Generate Pool
+        vector_pool_set = self.generate_vector_pool(
+            size=self.grid_step, vector_size=vector_size
+        )
+
+        # 2. Calculate Metrics
+        scores_a, scores_b, pool_list = self._calculate_metrics(
+            vector_pool_set, user_vector
+        )
+
+        # 3. Compute Ranks (Normalized 0-1)
+        ranks_a, ranks_b = self._compute_ranks(scores_a, scores_b)
+
+        # 4. Select Pairs (MaxMin Logic)
+        pair_indices = self._select_pairs(pool_list, ranks_a, ranks_b, n)
+
+        if len(pair_indices) < n:
+            logger.warning(
+                f"Only found {len(pair_indices)} valid pairs, "
+                f"requested {n}. Using all available pairs."
+            )
+
+        if not pair_indices:
+            raise ValueError(
+                f"Failed to generate any valid pairs for user_vector {user_vector}"
+            )
+
+        # 5. Format Output
+        result_pairs = []
+        for idx_a, idx_b, score in pair_indices:
+            pair = self._create_pair_output(
+                pool_list[idx_a],
+                pool_list[idx_b],
+                score,
+                scores_a[idx_a],
+                scores_a[idx_b],
+                scores_b[idx_a],
+                scores_b[idx_b],
+                ranks_a[idx_a] > ranks_a[idx_b],
+            )
+            result_pairs.append(pair)
+
+        self._log_pairs(result_pairs)
+        return result_pairs
+
+    def _create_pair_output(
+        self,
+        vec_a: tuple,
+        vec_b: tuple,
+        score: float,
+        score_a_a: float,
+        score_a_b: float,
+        score_b_a: float,
+        score_b_b: float,
+        vec_a_wins_metric_a: bool,
+    ) -> Dict[str, tuple]:
+        """
+        Create the formatted pair dictionary with correct metric descriptions.
+
+        Determines which vector represents the "Metric A" option and which represents
+        the "Metric B" option based on rank comparison.
+
+        Args:
+            vec_a: First vector from the pair.
+            vec_b: Second vector from the pair.
+            score: The MaxMin score for this pair.
+            score_a_a: Score of vec_a on Metric A.
+            score_a_b: Score of vec_b on Metric A.
+            score_b_a: Score of vec_a on Metric B.
+            score_b_b: Score of vec_b on Metric B.
+            vec_a_wins_metric_a: True if vec_a outranks vec_b on Metric A.
+
+        Returns:
+            Dict containing the two options with descriptive keys and metadata.
+        """
+        # Determine orientation: Which vector is better for Metric A?
+        if vec_a_wins_metric_a:
+            # vec_a is better on Metric A, vec_b is better on Metric B
+            metric_a_vec, metric_b_vec = vec_a, vec_b
+
+            # Metric A stats (Best = vec_a, Worst = vec_b)
+            metric_a_best, metric_a_worst = score_a_a, score_a_b
+
+            # Metric B stats (Best = vec_b, Worst = vec_a)
+            metric_b_best, metric_b_worst = score_b_b, score_b_a
+        else:
+            # vec_b is better on Metric A, vec_a is better on Metric B
+            metric_a_vec, metric_b_vec = vec_b, vec_a
+
+            # Metric A stats (Best = vec_b, Worst = vec_a)
+            metric_a_best, metric_a_worst = score_a_b, score_a_a
+
+            # Metric B stats (Best = vec_a, Worst = vec_b)
+            metric_b_best, metric_b_worst = score_b_a, score_b_b
+
+        return {
+            self.get_option_description(
+                metric_type=self.metric_a.metric_type,
+                best_value=metric_a_best,
+                worst_value=metric_a_worst,
+            ): metric_a_vec,
+            self.get_option_description(
+                metric_type=self.metric_b.metric_type,
+                best_value=metric_b_best,
+                worst_value=metric_b_worst,
+            ): metric_b_vec,
+            "__metadata__": {
+                "score": round(float(score), 2),
+                "strategy": "max_min_rank",
+            },
+        }
+
+    def _select_pairs(
+        self,
+        vectors: List[tuple],
+        ranks_a: np.ndarray,
+        ranks_b: np.ndarray,
+        target_pairs: int,
+    ) -> List[Tuple[int, int, float]]:
+        """
+        Select optimal pairs based on rank analysis.
+
+        Default implementation finds pairs maximizing the trade-off between the two
+        metrics (MaxMin logic), identifying complementary candidates.
+
+        Args:
+            vectors: List of candidate vectors.
+            ranks_a: Normalized ranks (0-1) for Metric A.
+            ranks_b: Normalized ranks (0-1) for Metric B.
+            target_pairs: Number of pairs to select.
+
+        Returns:
+            List of (index_a, index_b, score) tuples, sorted by score descending.
+            Score is calculated as min(Gain_A, Gain_B).
+        """
+        n = len(vectors)
+        candidates: List[Tuple[int, int, float]] = []
+
+        # Iterate all pairs
+        for i in range(n):
+            for j in range(i + 1, n):
+                # Calculate gain for Metric A (i vs j)
+                # If positive, i is better than j on A
+                gain_a = ranks_a[i] - ranks_a[j]
+
+                # Calculate gain for Metric B (j vs i)
+                # If positive, j is better than i on B
+                gain_b = ranks_b[j] - ranks_b[i]
+
+                if gain_a > 0 and gain_b > 0:
+                    # i wins on A, j wins on B
+                    score = min(gain_a, gain_b)
+                    candidates.append((i, j, score))
+                elif gain_a < 0 and gain_b < 0:
+                    # j wins on A (gain_a is neg), i wins on B (gain_b is neg)
+                    # We want positive gains
+                    score = min(-gain_a, -gain_b)
+                    candidates.append((j, i, score))
+
+        # Sort by score descending
+        candidates.sort(key=lambda x: x[2], reverse=True)
+
+        selected: List[Tuple[int, int, float]] = []
+        used_indices: Set[int] = set()
+
+        for idx_a, idx_b, score in candidates:
+            if len(selected) >= target_pairs:
+                break
+            if idx_a in used_indices or idx_b in used_indices:
+                continue
+
+            selected.append((idx_a, idx_b, score))
+            used_indices.add(idx_a)
+            used_indices.add(idx_b)
+
+        return selected
 
     def _calculate_metrics(
         self, vector_pool: Set[tuple], user_vector: tuple
