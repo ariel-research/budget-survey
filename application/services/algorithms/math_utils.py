@@ -69,6 +69,10 @@ def rankdata(a: np.ndarray, method: str = "average") -> np.ndarray:
 
     Returns:
         Array of ranks (1-based, same shape as input)
+
+    Example:
+        >>> rankdata([10, 20, 20, 30])
+        array([1. , 2.5, 2.5, 4. ])
     """
     arr = np.asarray(a)
     sorter = np.argsort(arr)
