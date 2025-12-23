@@ -64,10 +64,17 @@ class TestL1VsLeontiefRankStrategy:
         strategy = L1VsLeontiefRankStrategy(grid_step=10)
         assert strategy.grid_step == 10
 
-        # Pool size for step 10, size 3 should be smaller than step 5
-        # C(n+k-1, k-1) for n=10, k=3 is C(12, 2) = 66
+        # Pool size for step 10, size 3, min_component=10
+        # Side length is 100.
+        # Min component 10 removes 3*10 = 30 from total budget?
+        # Let's verify calculation.
+        # Simplex logic: x1 + x2 + x3 = 100, xi >= 10, step 10.
+        # Let yi = (xi - 10)/10.
+        # sum(10*yi + 10) = 100 => 10*sum(yi) + 30 = 100 => 10*sum(yi) = 70 => sum(yi) = 7.
+        # Stars and bars: C(n + k - 1, k - 1) -> C(7 + 3 - 1, 3 - 1) = C(9, 2)
+        # 9 * 8 / 2 = 36.
         pool = strategy.generate_vector_pool(size=10, vector_size=3)
-        assert len(pool) == 66
+        assert len(pool) == 36
 
 
 class TestL1VsL2RankStrategy:

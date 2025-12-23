@@ -42,6 +42,25 @@ def test_generic_rank_strategy_generate_vector_pool():
         assert sum(vector) == 100
 
 
+def test_generic_rank_strategy_min_component():
+    """
+    Test that min_component enforces minimum values in generated vectors.
+    """
+    # Use min_component=10. This means no vector component can be < 10.
+    strategy = GenericRankStrategy(L1Metric, LeontiefMetric, min_component=10)
+    vector_size = 3
+
+    pool = strategy.generate_vector_pool(size=5, vector_size=vector_size)
+
+    assert len(pool) > 0
+    for vector in pool:
+        assert sum(vector) == 100
+        for val in vector:
+            assert val >= 10
+            # Ensure it is still a multiple of step (default 5)
+            assert val % 5 == 0
+
+
 def test_generic_rank_strategy_option_labels():
     """
     Test that get_option_labels returns correct names.

@@ -34,12 +34,13 @@ class L1VsLeontiefRankStrategy(GenericRankStrategy):
             metric_a_class=L1Metric,
             metric_b_class=LeontiefMetric,
             grid_step=grid_step,
+            min_component=10,
         )
 
 
 class L1VsL2RankStrategy(GenericRankStrategy):
     """
-    Strategy comparing L1 distance (Sum) against L2 distance (Euclidean).
+    Strategy comparing L1 distance (Sum) against L2 distance (Root Sum Squared).
     """
 
     def __init__(self, grid_step: int = None):
@@ -50,12 +51,13 @@ class L1VsL2RankStrategy(GenericRankStrategy):
             metric_a_class=L1Metric,
             metric_b_class=L2Metric,
             grid_step=grid_step,
+            min_component=10,
         )
 
 
 class L2VsLeontiefRankStrategy(GenericRankStrategy):
     """
-    Strategy comparing L2 distance (Euclidean) against Leontief ratio (Ratio).
+    Strategy comparing L2 distance (Root Sum Squared) against Leontief ratio (Ratio).
     """
 
     def __init__(self, grid_step: int = None):
@@ -66,4 +68,5 @@ class L2VsLeontiefRankStrategy(GenericRankStrategy):
             metric_a_class=L2Metric,
             metric_b_class=LeontiefMetric,
             grid_step=grid_step,
+            min_component=10,
         )

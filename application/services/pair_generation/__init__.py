@@ -7,7 +7,6 @@ from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrat
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
 from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrategy
-from .optimization_metrics_rank import OptimizationMetricsRankStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .rank_strategies import (
@@ -25,7 +24,6 @@ from .weighted_average_vector import WeightedAverageVectorStrategy
 
 # Register strategies
 StrategyRegistry.register(OptimizationMetricsStrategy)
-StrategyRegistry.register(OptimizationMetricsRankStrategy)
 StrategyRegistry.register(L1VsLeontiefRankStrategy)
 StrategyRegistry.register(L1VsL2RankStrategy)
 StrategyRegistry.register(L2VsLeontiefRankStrategy)
@@ -46,7 +44,6 @@ __all__ = [
     "PairGenerationStrategy",
     "StrategyRegistry",
     "OptimizationMetricsStrategy",
-    "OptimizationMetricsRankStrategy",
     "L1VsLeontiefRankStrategy",
     "L1VsL2RankStrategy",
     "L2VsLeontiefRankStrategy",

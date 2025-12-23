@@ -31,6 +31,7 @@ class GenericRankStrategy(PairGenerationStrategy):
         metric_a_class: Type[Metric],
         metric_b_class: Type[Metric],
         grid_step: int = None,
+        min_component: int = 0,
     ):
         """
         Initialize the strategy with two metric classes.
@@ -39,10 +40,13 @@ class GenericRankStrategy(PairGenerationStrategy):
             metric_a_class: Class for the first metric (e.g., L1Metric)
             metric_b_class: Class for the second metric (e.g., LeontiefMetric)
             grid_step: Optional step size for grid generation. Defaults to DEFAULT_GRID_STEP.
+            min_component: Minimum value required for each vector component (default 0).
+                           Example: If 10, no category can have less than 10% budget.
         """
         self.metric_a = metric_a_class()
         self.metric_b = metric_b_class()
         self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
+        self.min_component = min_component
 
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
@@ -56,8 +60,14 @@ class GenericRankStrategy(PairGenerationStrategy):
             Set of unique vectors summing to 100 on a step=size grid.
         """
         step = size if size > 0 else self.DEFAULT_GRID_STEP
-        pool = set(simplex_points(num_variables=vector_size, step=step))
-        logger.debug(f"Generated simplex vector pool (step={step}) of size {len(pool)}")
+        pool = set(
+            simplex_points(
+                num_variables=vector_size, step=step, min_value=self.min_component
+            )
+        )
+        logger.debug(
+            f"Generated simplex vector pool (step={step}, min={self.min_component}) of size {len(pool)}"
+        )
         return pool
 
     def generate_pairs(
