@@ -13,7 +13,8 @@ def test_generic_rank_strategy_initialization():
     strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
     assert isinstance(strategy.metric_a, L1Metric)
     assert isinstance(strategy.metric_b, LeontiefMetric)
-    assert strategy.get_strategy_name() == "generic_rank_strategy"
+    # Dynamic name generation
+    assert strategy.get_strategy_name() == "l1_vs_leontief_rank_comparison"
 
 
 def test_generic_rank_strategy_generate_vector_pool():
@@ -47,7 +48,7 @@ def test_generic_rank_strategy_option_labels():
     """
     strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
     labels = strategy.get_option_labels()
-    assert labels == ("l1", "leontief")
+    assert labels == ("L1 (Rank)", "Leontief (Rank)")
 
 
 def test_generic_rank_strategy_metric_name_lookup():
@@ -55,8 +56,8 @@ def test_generic_rank_strategy_metric_name_lookup():
     Test that _get_metric_name correctly identifies metrics.
     """
     strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
-    assert strategy._get_metric_name("distance") == "l1"
-    assert strategy._get_metric_name("ratio") == "leontief"
+    assert strategy._get_metric_name("distance") == "L1 Optimized Vector"
+    assert strategy._get_metric_name("ratio") == "Leontief Optimized Vector"
     assert strategy._get_metric_name("unknown") == "unknown"
 
 

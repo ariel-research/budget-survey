@@ -11,6 +11,7 @@ import numpy as np
 from application.services.algorithms.math_utils import rankdata, simplex_points
 from application.services.algorithms.metric_base import Metric
 from application.services.pair_generation.base import PairGenerationStrategy
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -352,18 +353,51 @@ class GenericRankStrategy(PairGenerationStrategy):
         return norm_ranks_a, norm_ranks_b
 
     def get_strategy_name(self) -> str:
-        """Return unique identifier for this strategy."""
-        # This will be overridden by concrete subclasses in Task 7/8
-        return "generic_rank_strategy"
+        """
+        Return unique identifier for this strategy.
+        Dynamically generated from metric names.
+        """
+        return f"{self.metric_a.name}_vs_{self.metric_b.name}_rank_comparison"
 
     def get_option_labels(self) -> Tuple[str, str]:
-        """Return labels for the two options being compared."""
-        return (self.metric_a.name, self.metric_b.name)
+        """
+        Return human-readable labels for the two options being compared.
+        Dynamically generated from metric names via the translation system.
+        """
+        return (
+            f"{get_translation(self.metric_a.name, 'answers')} (Rank)",
+            f"{get_translation(self.metric_b.name, 'answers')} (Rank)",
+        )
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+        Dynamically generated from metric names.
+        """
+        return {
+            self.metric_a.name: {
+                "name": get_translation(self.metric_a.name, "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            self.metric_b.name: {
+                "name": get_translation(self.metric_b.name, "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
 
     def _get_metric_name(self, metric_type: str) -> str:
-        """Get the display name for a metric type."""
+        """
+        Get the display name for a metric type.
+        Uses the metric's name and translation system for a completely generic implementation.
+        """
         if metric_type == self.metric_a.metric_type:
-            return self.metric_a.name
+            label = get_translation(self.metric_a.name, "answers")
+            return f"{label} Optimized Vector"
+
         if metric_type == self.metric_b.metric_type:
-            return self.metric_b.name
+            label = get_translation(self.metric_b.name, "answers")
+            return f"{label} Optimized Vector"
+
         return metric_type

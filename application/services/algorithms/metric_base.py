@@ -11,9 +11,7 @@ class Metric(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """
-        Unique identifier for the metric.
-        """
+        """Unique identifier for the metric."""
         pass
 
     @property
