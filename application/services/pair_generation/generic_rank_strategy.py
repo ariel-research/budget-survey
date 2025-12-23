@@ -183,12 +183,12 @@ class GenericRankStrategy(PairGenerationStrategy):
 
         return {
             self.get_option_description(
-                metric_type=self.metric_a.metric_type,
+                metric_type=self.metric_a.name,
                 best_value=metric_a_best,
                 worst_value=metric_a_worst,
             ): metric_a_vec,
             self.get_option_description(
-                metric_type=self.metric_b.metric_type,
+                metric_type=self.metric_b.name,
                 best_value=metric_b_best,
                 worst_value=metric_b_worst,
             ): metric_b_vec,
@@ -387,17 +387,26 @@ class GenericRankStrategy(PairGenerationStrategy):
             },
         }
 
-    def _get_metric_name(self, metric_type: str) -> str:
+    def _get_metric_name(self, metric_identifier: str) -> str:
         """
-        Get the display name for a metric type.
-        Uses the metric's name and translation system for a completely generic implementation.
+        Get the display name for a metric.
+        Matches by name first, then falls back to metric_type.
         """
-        if metric_type == self.metric_a.metric_type:
+        if metric_identifier == self.metric_a.name:
             label = get_translation(self.metric_a.name, "answers")
             return f"{label} Optimized Vector"
 
-        if metric_type == self.metric_b.metric_type:
+        if metric_identifier == self.metric_b.name:
             label = get_translation(self.metric_b.name, "answers")
             return f"{label} Optimized Vector"
 
-        return metric_type
+        # Fallback to type check (for robust identification)
+        if metric_identifier == self.metric_a.metric_type:
+            label = get_translation(self.metric_a.name, "answers")
+            return f"{label} Optimized Vector"
+
+        if metric_identifier == self.metric_b.metric_type:
+            label = get_translation(self.metric_b.name, "answers")
+            return f"{label} Optimized Vector"
+
+        return metric_identifier
