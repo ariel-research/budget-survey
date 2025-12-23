@@ -358,7 +358,18 @@ def calculate_choice_statistics(
     """
     total_choices = len(choices)
     if total_choices == 0:
-        return {}
+        stats = {
+            "sum_percent": 0,
+            "ratio_percent": 0,
+            "option1_percent": 0,
+            "option2_percent": 0,
+            "total_choices": 0,
+        }
+        # Add strategy-specific metrics if available
+        if strategy and hasattr(strategy, "metric_a"):
+            stats[f"{strategy.metric_a.name}_percent"] = 0
+            stats[f"{strategy.metric_b.name}_percent"] = 0
+        return stats
 
     # Check for biennial strategy
     is_biennial = False
@@ -398,9 +409,13 @@ def calculate_choice_statistics(
 
         count_a = 0
         count_b = 0
+        option1_count = 0
 
         for choice in choices:
             user_choice = choice["user_choice"]
+            if user_choice == 1:
+                option1_count += 1
+
             opt1_strat = choice.get("option1_strategy", "")
 
             # Identify which option corresponds to which metric
@@ -423,6 +438,8 @@ def calculate_choice_statistics(
         return {
             f"{metric_a_name}_percent": (count_a / total_choices) * 100,
             f"{metric_b_name}_percent": (count_b / total_choices) * 100,
+            "option1_percent": (option1_count / total_choices) * 100,
+            "option2_percent": ((total_choices - option1_count) / total_choices) * 100,
             "total_choices": total_choices,
         }
 
@@ -3249,8 +3266,8 @@ def generate_detailed_breakdown_table(
                     data_cells.append(
                         f'<td class="{highlight}">{overall_consistency}%</td>'
                     )
-                elif set(strategy_columns.keys()).issubset(
-                    set(summary["stats"].keys())
+                elif all(
+                    f"{k}_percent" in summary["stats"] for k in strategy_columns.keys()
                 ):
                     # Handle any GenericRankStrategy dynamically
                     for metric_key, col_config in strategy_columns.items():
@@ -3269,7 +3286,8 @@ def generate_detailed_breakdown_table(
 
                         highlight = "highlight-row" if is_max else ""
                         data_cells.append(
-                            f'<td class="{highlight}">{format(percent, ".1f")}%</td>'
+                            f'<td class="{highlight}">'
+                            f'{format(percent, ".1f")}%</td>'
                         )
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
                     # Handle l1_vs_leontief_comparison strategy with sum/ratio columns

@@ -10,6 +10,11 @@ from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrateg
 from .optimization_metrics_rank import OptimizationMetricsRankStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
+from .rank_strategies import (
+    L1VsL2RankStrategy,
+    L1VsLeontiefRankStrategy,
+    L2VsLeontiefRankStrategy,
+)
 from .root_sum_squared_ratio_vector import RootSumSquaredRatioStrategy
 from .root_sum_squared_sum_vector import RootSumSquaredSumStrategy
 from .rounded_weighted_average_vector import (
@@ -21,6 +26,9 @@ from .weighted_average_vector import WeightedAverageVectorStrategy
 # Register strategies
 StrategyRegistry.register(OptimizationMetricsStrategy)
 StrategyRegistry.register(OptimizationMetricsRankStrategy)
+StrategyRegistry.register(L1VsLeontiefRankStrategy)
+StrategyRegistry.register(L1VsL2RankStrategy)
+StrategyRegistry.register(L2VsLeontiefRankStrategy)
 StrategyRegistry.register(WeightedAverageVectorStrategy)
 StrategyRegistry.register(RoundedWeightedAverageVectorStrategy)
 StrategyRegistry.register(PreferenceRankingSurveyStrategy)
@@ -39,6 +47,9 @@ __all__ = [
     "StrategyRegistry",
     "OptimizationMetricsStrategy",
     "OptimizationMetricsRankStrategy",
+    "L1VsLeontiefRankStrategy",
+    "L1VsL2RankStrategy",
+    "L2VsLeontiefRankStrategy",
     "WeightedAverageVectorStrategy",
     "RoundedWeightedAverageVectorStrategy",
     "MultiDimensionalSinglePeakedStrategy",
