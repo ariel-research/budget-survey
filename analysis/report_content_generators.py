@@ -4,7 +4,7 @@ import logging
 import math
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -342,34 +342,40 @@ def choice_explanation_string_version1(
     )
 
 
-def calculate_choice_statistics(choices: List[Dict]) -> Dict[str, float]:
+def calculate_choice_statistics(
+    choices: List[Dict], strategy: Optional[Any] = None
+) -> Dict[str, float]:
     """
     Calculate optimization and answer choice statistics for a set of choices.
 
     Args:
         choices: List of choices for a single user's survey response.
                  Requires: optimal_allocation, option_1, option_2, user_choice
+        strategy: Optional strategy instance to provide dynamic metric keys.
 
     Returns:
-        Dict with percentages: sum_percent, ratio_percent,
-                               option1_percent, option2_percent
+        Dict with percentages indexed by metric names from the strategy.
     """
     total_choices = len(choices)
     if total_choices == 0:
-        return {
+        stats = {
             "sum_percent": 0,
             "ratio_percent": 0,
             "option1_percent": 0,
             "option2_percent": 0,
+            "total_choices": 0,
         }
+        # Add strategy-specific metrics if available
+        if strategy and hasattr(strategy, "metric_a"):
+            stats[f"{strategy.metric_a.name}_percent"] = 0
+            stats[f"{strategy.metric_b.name}_percent"] = 0
+        return stats
 
-    # Check if this is a biennial budget strategy (uses 6-element vectors)
-    # These strategies have their own analysis metrics and can't use
-    # sum/ratio optimization
-    # Two ways to detect: explicit strategy_name or vector length check
+    # Check for biennial strategy
     is_biennial = False
-
-    if choices and "strategy_name" in choices[0]:
+    if strategy and hasattr(strategy, "is_biennial") and strategy.is_biennial():
+        is_biennial = True
+    elif choices and "strategy_name" in choices[0]:
         strategy_name = choices[0]["strategy_name"]
         if strategy_name == "triangle_inequality_test":
             is_biennial = True
@@ -391,15 +397,53 @@ def calculate_choice_statistics(choices: List[Dict]) -> Dict[str, float]:
         option1_count = sum(1 for choice in choices if choice.get("user_choice") == 1)
         opt1_p = (option1_count / total_choices) * 100
         opt2_p = ((total_choices - option1_count) / total_choices) * 100
-
         return {
-            # Not applicable for biennial strategies
-            "sum_percent": None,
-            "ratio_percent": None,
             "option1_percent": opt1_p,
             "option2_percent": opt2_p,
         }
 
+    # Handle Rank-Based strategies dynamically
+    if strategy and hasattr(strategy, "metric_a"):
+        metric_a_name = strategy.metric_a.name
+        metric_b_name = strategy.metric_b.name
+
+        count_a = 0
+        count_b = 0
+        option1_count = 0
+
+        for choice in choices:
+            user_choice = choice["user_choice"]
+            if user_choice == 1:
+                option1_count += 1
+
+            opt1_strat = choice.get("option1_strategy", "")
+
+            # Identify which option corresponds to which metric
+            # GenericRankStrategy._get_metric_name provides the descriptive strings
+            # stored in optionX_strategy.
+            metric_a_desc = strategy._get_metric_name(strategy.metric_a.metric_type)
+
+            # Check if option 1 is Metric A
+            if metric_a_desc in opt1_strat:
+                chosen_metric_a = user_choice == 1
+            else:
+                # Option 2 must be Metric A
+                chosen_metric_a = user_choice == 2
+
+            if chosen_metric_a:
+                count_a += 1
+            else:
+                count_b += 1
+
+        return {
+            f"{metric_a_name}_percent": (count_a / total_choices) * 100,
+            f"{metric_b_name}_percent": (count_b / total_choices) * 100,
+            "option1_percent": (option1_count / total_choices) * 100,
+            "option2_percent": ((total_choices - option1_count) / total_choices) * 100,
+            "total_choices": total_choices,
+        }
+
+    # Legacy fallback for L1 vs Leontief
     sum_optimized = 0
     option1_count = 0
 
@@ -418,16 +462,11 @@ def calculate_choice_statistics(choices: List[Dict]) -> Dict[str, float]:
         if user_choice == 1:
             option1_count += 1
 
-    sum_p = (sum_optimized / total_choices) * 100
-    ratio_p = ((total_choices - sum_optimized) / total_choices) * 100
-    opt1_p = (option1_count / total_choices) * 100
-    opt2_p = ((total_choices - option1_count) / total_choices) * 100
-
     return {
-        "sum_percent": sum_p,
-        "ratio_percent": ratio_p,
-        "option1_percent": opt1_p,
-        "option2_percent": opt2_p,
+        "sum_percent": (sum_optimized / total_choices) * 100,
+        "ratio_percent": ((total_choices - sum_optimized) / total_choices) * 100,
+        "option1_percent": (option1_count / total_choices) * 100,
+        "option2_percent": ((total_choices - option1_count) / total_choices) * 100,
     }
 
 
@@ -2805,7 +2844,19 @@ def generate_detailed_user_choices(
     # Collect statistics for all surveys
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
-            stats = calculate_choice_statistics(choices)
+            # Get strategy for dynamic calculations
+            strategy = None
+            if choices and "strategy_name" in choices[0]:
+                try:
+                    from application.services.pair_generation import StrategyRegistry
+
+                    strategy = StrategyRegistry.get_strategy(
+                        choices[0]["strategy_name"]
+                    )
+                except Exception:
+                    pass
+
+            stats = calculate_choice_statistics(choices, strategy=strategy)
 
             # For temporal preference, calculate specific metrics
             if (
@@ -3215,6 +3266,29 @@ def generate_detailed_breakdown_table(
                     data_cells.append(
                         f'<td class="{highlight}">{overall_consistency}%</td>'
                     )
+                elif all(
+                    f"{k}_percent" in summary["stats"] for k in strategy_columns.keys()
+                ):
+                    # Handle any GenericRankStrategy dynamically
+                    for metric_key, col_config in strategy_columns.items():
+                        percent = summary["stats"].get(f"{metric_key}_percent", 0.0)
+
+                        # Determine if this row should be highlighted
+                        # Highlight the metric with the higher percentage
+                        other_metrics = [
+                            k for k in strategy_columns.keys() if k != metric_key
+                        ]
+                        is_max = True
+                        for other in other_metrics:
+                            if summary["stats"].get(f"{other}_percent", 0.0) >= percent:
+                                is_max = False
+                                break
+
+                        highlight = "highlight-row" if is_max else ""
+                        data_cells.append(
+                            f'<td class="{highlight}">'
+                            f'{format(percent, ".1f")}%</td>'
+                        )
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
                     # Handle l1_vs_leontief_comparison strategy with sum/ratio columns
                     sum_percent = summary["stats"]["sum_percent"]

@@ -579,65 +579,32 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
      ```
 
-14. **L1 vs. Leontief Rank Comparison**
-   - Strategy name: `l1_vs_leontief_rank_comparison`
-   - Uses rank-based normalization (percentiles) instead of raw metric values to generate pairs with complementary trade-offs between L1 distance and Leontief ratio.
-   - **Algorithm Overview**:
-     - Enumerates the discrete simplex grid (step=5) to ensure full coverage of corners, edges, and centers of the vector space without sampling bias
-     - All vectors must sum to 100 with components between 10 and 100 (inclusive)
-     - Computes L1 distance and Leontief ratio for each vector against user's ideal
-     - Normalizes metrics to percentile ranks (0.0-1.0) to eliminate scale differences
-     - Uses brute-force max-min search to find complementary pairs where one vector outranks the other on L1 while the other outranks on Leontief
-     - Scores pairs using the minimum of the two rank advantages to encourage balanced trade-offs
-   - **Pair Selection**:
-     - Valid pairs must have complementary advantages: one vector better on L1, the other better on Leontief
-     - Pairs are sorted by max-min score (minimum of the two rank advantages)
-     - Greedy selection ensures no vector is reused across pairs
-     - Falls back to pairing best L1 vectors with best Leontief vectors if insufficient complementary pairs are found
-   - **Generation Metadata**: Each pair includes metadata with the max-min score and strategy identifier, stored in `generation_metadata` column for quality analysis.
-   - Parameters:
-     - `num_pairs`: Number of pairs to generate (default: 10)
+14. **Rank-Based Comparison Strategies**
+   - Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`
+   - Uses rank-based normalization (percentiles) instead of raw values to generate pairs with optimal trade-offs.
+   - **How it works**:
+     - Enumerates a discrete simplex grid (default step=5).
+     - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
+     - Normalizes metrics to percentile ranks (0.0-1.0) to eliminate scale differences.
+     - Uses a **Max-Min** search to find pairs where one vector is significantly better on Metric A, while the other is better on Metric B.
+   - **Metrics Supported**:
+     - **L1 (Sum)**: Total absolute disagreement.
+     - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
+     - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
 
 #### Adding New Strategies
 
-To add a new pair generation strategy:
+The application uses a **Strategy Pattern** with **Polymorphic Metrics**. To add a new rank-based strategy:
 
-1. Create a new file in `application/services/pair_generation/` (e.g., `new_strategy.py`):
-```python
-from application.services.pair_generation.base import PairGenerationStrategy
+1.  **Define a Metric** (if new): Add a class to `application/services/algorithms/metrics.py` inheriting from `Metric`.
+2.  **Create Strategy**: In `application/services/pair_generation/rank_strategies.py`, create a thin wrapper:
+    ```python
+    class MyNewRankStrategy(GenericRankStrategy):
+        def __init__(self, grid_step=None):
+            super().__init__(MetricA, MetricB, min_component=10)
+    ```
+3.  **Register**: Add `StrategyRegistry.register(MyNewRankStrategy)` in `application/services/pair_generation/__init__.py`.
 
-class NewStrategy(PairGenerationStrategy):
-    def generate_pairs(self, user_vector: tuple, n: int, vector_size: int):
-        # Implement your pair generation logic here
-        pass
-        
-    def get_strategy_name(self):
-        return "new_strategy_name"
-        
-    def get_option_labels(self):
-        return ("Option Type A", "Option Type B")
-        
-    def get_table_columns(self):
-        """Define custom column definitions for response tables"""
-        return {
-            "column1": {
-                "name": "First Metric", 
-                "type": "percentage",
-                "highlight": True
-            },
-            "column2": {
-                "name": "Second Metric", 
-                "type": "percentage",
-                "highlight": True
-            }
-        }
-```
-
-2. Register the strategy in `application/services/pair_generation/__init__.py`:
-```python
-from .new_strategy import NewStrategy
-StrategyRegistry.register(NewStrategy)
-```
 
 Each strategy can define its own table columns for displaying survey response statistics by implementing the `get_table_columns()` method. This allows the system to dynamically generate strategy-specific tables based on the strategy used for each survey.
 
