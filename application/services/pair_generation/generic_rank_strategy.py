@@ -31,7 +31,7 @@ class GenericRankStrategy(PairGenerationStrategy):
         metric_a_class: Type[Metric],
         metric_b_class: Type[Metric],
         grid_step: int = None,
-        min_component: int = 0,
+        min_component: int = 10,
     ):
         """
         Initialize the strategy with two metric classes.
@@ -410,7 +410,7 @@ class GenericRankStrategy(PairGenerationStrategy):
             label = get_translation(self.metric_b.name, "answers")
             return f"{label} Optimized Vector"
 
-        # Fallback to type check (for robust identification)
+        # Fallback to type check
         if metric_identifier == self.metric_a.metric_type:
             label = get_translation(self.metric_a.name, "answers")
             return f"{label} Optimized Vector"

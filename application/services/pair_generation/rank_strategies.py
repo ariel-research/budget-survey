@@ -51,7 +51,7 @@ class L1VsL2RankStrategy(GenericRankStrategy):
             metric_a_class=L1Metric,
             metric_b_class=L2Metric,
             grid_step=grid_step,
-            min_component=10,
+            min_component=0,
         )
 
 
