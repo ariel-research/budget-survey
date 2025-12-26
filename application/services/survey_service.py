@@ -577,6 +577,49 @@ class SurveyService:
             return tokens.get("second")
         return None
 
+    @staticmethod
+    def record_unsuitable_failure(
+        user_id: str, survey_id: int, user_vector: List[int]
+    ) -> Optional[int]:
+        """
+        Record a user failure due to being unsuitable for the strategy.
+        This occurs when no valid comparison pairs can be generated for the user's vector.
+
+        Args:
+            user_id: The user's identifier
+            survey_id: The survey ID
+            user_vector: The user's budget vector
+
+        Returns:
+            int: The ID of the created survey_response record, or None if creation fails
+        """
+        try:
+            # Ensure user exists
+            if not user_exists(user_id):
+                create_user(user_id)
+                logger.info(f"Created new user for unsuitable failure: {user_id}")
+
+            # Create response record with unsuitable flag
+            response_id = create_survey_response(
+                user_id=user_id,
+                survey_id=survey_id,
+                optimal_allocation=user_vector,
+                user_comment=None,
+                unsuitable_for_strategy=True,
+            )
+
+            logger.info(
+                f"Recorded unsuitable failure for user {user_id}, survey {survey_id}"
+            )
+            return response_id
+
+        except Exception as e:
+            logger.error(
+                f"Failed to record unsuitable failure for user {user_id}: {str(e)}",
+                exc_info=True,
+            )
+            return None
+
 
 class SurveySessionData:
     """Helper class to manage survey session data."""

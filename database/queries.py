@@ -38,6 +38,7 @@ def create_survey_response(
     optimal_allocation: list,
     user_comment: str,
     attention_check_failed: bool = False,
+    unsuitable_for_strategy: bool = False,
 ) -> int:
     """
     Inserts a new survey response into the survey_responses table.
@@ -48,18 +49,20 @@ def create_survey_response(
         optimal_allocation (list): The user optimal allocation in JSON format.
         user_comment (str): The user's comment on the survey.
         attention_check_failed (bool): Whether the user failed the attention check.
+        unsuitable_for_strategy (bool): Whether user was unsuitable for strategy.
 
     Returns:
         int: The ID of the newly created survey response, or None if an error occurs.
     """
     query = """
         INSERT INTO survey_responses 
-        (user_id, survey_id, optimal_allocation, user_comment, attention_check_failed)
-        VALUES (%s, %s, %s, %s, %s)
+        (user_id, survey_id, optimal_allocation, user_comment, attention_check_failed, unsuitable_for_strategy)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
     logger.debug(
-        "Inserting survey response for user_id: %s, survey_id: %s", user_id, survey_id
+        f"Inserting survey response for user_id: {user_id}, survey_id: {survey_id}, "
+        f"unsuitable: {unsuitable_for_strategy}"
     )
 
     try:
@@ -71,6 +74,7 @@ def create_survey_response(
                 optimal_allocation_json,
                 user_comment,
                 attention_check_failed,
+                unsuitable_for_strategy,
             ),
         )
     except Exception as e:

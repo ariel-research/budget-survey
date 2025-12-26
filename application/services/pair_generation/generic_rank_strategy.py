@@ -48,25 +48,29 @@ class GenericRankStrategy(PairGenerationStrategy):
         self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
         self.min_component = min_component
 
-    def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
+    def generate_vector_pool(
+        self, size: int, vector_size: int, min_val_override: int = None
+    ) -> Set[tuple]:
         """
         Generate a pool of vectors using a discrete simplex grid.
 
         Args:
             size: Used as the step size for the grid if > 0, else uses DEFAULT_GRID_STEP.
             vector_size: Number of elements in each vector.
+            min_val_override: Optional override for min_component.
 
         Returns:
             Set of unique vectors summing to 100 on a step=size grid.
         """
         step = size if size > 0 else self.DEFAULT_GRID_STEP
+        min_val = (
+            min_val_override if min_val_override is not None else self.min_component
+        )
         pool = set(
-            simplex_points(
-                num_variables=vector_size, step=step, min_value=self.min_component
-            )
+            simplex_points(num_variables=vector_size, step=step, min_value=min_val)
         )
         logger.debug(
-            f"Generated simplex vector pool (step={step}, min={self.min_component}) of size {len(pool)}"
+            f"Generated simplex vector pool (step={step}, min={min_val}) of size {len(pool)}"
         )
         return pool
 
@@ -96,34 +100,65 @@ class GenericRankStrategy(PairGenerationStrategy):
             f"for user_vector: {user_vector}"
         )
 
-        # 1. Generate Pool
-        vector_pool_set = self.generate_vector_pool(
-            size=self.grid_step, vector_size=vector_size
-        )
+        # Retry logic for dynamic floor (min_component)
+        # Start with configured min_component and reduce by 5 if generation fails
+        # This handles extreme user vectors that cause correlation deadlocks
+        current_min = self.min_component
 
-        # 2. Calculate Metrics
-        scores_a, scores_b, pool_list = self._calculate_metrics(
-            vector_pool_set, user_vector
-        )
+        while True:
+            try:
+                logger.debug(
+                    f"Attempting pair generation with min_component={current_min}"
+                )
 
-        # 3. Compute Ranks (Normalized 0-1)
-        ranks_a, ranks_b = self._compute_ranks(scores_a, scores_b)
+                # 1. Generate Pool
+                vector_pool_set = self.generate_vector_pool(
+                    size=self.grid_step,
+                    vector_size=vector_size,
+                    min_val_override=current_min,
+                )
 
-        # 4. Select Pairs (MaxMin Logic)
-        pair_indices = self._select_pairs(pool_list, ranks_a, ranks_b, n)
+                # 2. Calculate Metrics
+                scores_a, scores_b, pool_list = self._calculate_metrics(
+                    vector_pool_set, user_vector
+                )
 
-        if len(pair_indices) < n:
-            logger.warning(
-                f"Only found {len(pair_indices)} valid pairs, "
-                f"requested {n}. Using all available pairs."
-            )
+                # 3. Compute Ranks (Normalized 0-1)
+                ranks_a, ranks_b = self._compute_ranks(scores_a, scores_b)
 
-        if not pair_indices:
-            raise ValueError(
-                f"Failed to generate any valid pairs for user_vector {user_vector}"
-            )
+                # 4. Select Pairs (MaxMin Logic)
+                pair_indices = self._select_pairs(pool_list, ranks_a, ranks_b, n)
 
-        # 5. Format Output
+                if len(pair_indices) >= n:
+                    # Found enough pairs, proceed to formatting
+                    break
+
+                # If we found some pairs but not enough, retry with relaxed floor if possible.
+                logger.info(
+                    f"Only found {len(pair_indices)}/{n} pairs with min_component={current_min}. "
+                    "Attempting to relax constraint."
+                )
+
+            except ValueError as e:
+                logger.info(
+                    f"Generation failed with min_component={current_min}: {str(e)}. "
+                    "Attempting to relax constraint."
+                )
+
+            # Reduce floor and retry
+            current_min -= 5
+            if current_min < 0:
+                # Exhausted all options
+                logger.warning(
+                    f"Failed to generate valid pairs even with min_component=0 for vector {user_vector}"
+                )
+                from application.exceptions import UnsuitableForStrategyError
+
+                raise UnsuitableForStrategyError(
+                    "Unable to generate suitable comparison pairs for the provided preferences."
+                )
+
+        # 5. Format Output using the successful pair_indices
         result_pairs = []
         for idx_a, idx_b, score in pair_indices:
             pair = self._create_pair_output(
@@ -136,6 +171,12 @@ class GenericRankStrategy(PairGenerationStrategy):
                 scores_b[idx_b],
                 ranks_a[idx_a] > ranks_a[idx_b],
             )
+
+            # Add generation metadata
+            if "__metadata__" not in pair:
+                pair["__metadata__"] = {}
+            pair["__metadata__"]["relaxed_min_component"] = current_min
+
             result_pairs.append(pair)
 
         self._log_pairs(result_pairs)

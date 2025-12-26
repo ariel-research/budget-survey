@@ -341,6 +341,15 @@ def handle_survey_get(
     except UnsuitableForStrategyError as e:
         logger.info(f"User {user_id} unsuitable for strategy: {str(e)}")
 
+        # Record unsuitable failure in database (but don't blacklist)
+        # Note: We record it only if not in demo mode (similar to attention failures)
+        if not is_demo:
+            SurveyService.record_unsuitable_failure(
+                user_id=user_id,
+                survey_id=internal_survey_id,
+                user_vector=user_vector,
+            )
+
         if is_demo:
             # In demo mode, show the unsuitable page
             return redirect(
