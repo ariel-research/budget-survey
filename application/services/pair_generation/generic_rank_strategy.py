@@ -26,6 +26,11 @@ class GenericRankStrategy(PairGenerationStrategy):
     # Step size for discrete simplex grid (5% increments)
     DEFAULT_GRID_STEP = 5
 
+    # Optimization constants for extreme vector detection
+    CONCENTRATION_THRESHOLD = 70  # Max single-category % before relaxation
+    RELAXATION_STEP = 5  # Step size for floor reduction
+    HIGH_CONCENTRATION_CAP = 5  # Max floor allowed for concentrated vectors
+
     def __init__(
         self,
         metric_a_class: Type[Metric],
@@ -103,13 +108,28 @@ class GenericRankStrategy(PairGenerationStrategy):
         # Retry logic for dynamic floor (min_component)
         # Start with configured min_component and reduce by 5 if generation fails
         # This handles extreme user vectors that cause correlation deadlocks
-        current_min = self.min_component
+
+        # Optimization: If user vector is extreme (violates floor or highly
+        # concentrated), start with a relaxed floor immediately.
+        user_min = min(user_vector)
+        user_max = max(user_vector)
+
+        # We start relaxed if:
+        # 1. User has a component below the required floor
+        # 2. User has a very high concentration which cramps the space
+        if user_min < self.min_component or user_max >= self.CONCENTRATION_THRESHOLD:
+            # Start at the nearest valid step below their min or straight to 0
+            start_min = (user_min // self.RELAXATION_STEP) * self.RELAXATION_STEP
+            current_min = min(self.min_component, start_min)
+            if user_max >= self.CONCENTRATION_THRESHOLD:
+                current_min = min(current_min, self.HIGH_CONCENTRATION_CAP)
+        else:
+            current_min = self.min_component
 
         while True:
             try:
-                logger.debug(
-                    f"Attempting pair generation with min_component={current_min}"
-                )
+                msg = f"Attempting pair generation with min_component={current_min}"
+                logger.debug(msg)
 
                 # 1. Generate Pool
                 vector_pool_set = self.generate_vector_pool(
@@ -133,29 +153,31 @@ class GenericRankStrategy(PairGenerationStrategy):
                     # Found enough pairs, proceed to formatting
                     break
 
-                # If we found some pairs but not enough, retry with relaxed floor if possible.
+                # If we found some pairs but not enough, retry with relaxed floor.
                 logger.info(
-                    f"Only found {len(pair_indices)}/{n} pairs with min_component={current_min}. "
-                    "Attempting to relax constraint."
+                    f"Only found {len(pair_indices)}/{n} pairs with "
+                    f"min_component={current_min}. Attempting to relax."
                 )
 
             except ValueError as e:
                 logger.info(
-                    f"Generation failed with min_component={current_min}: {str(e)}. "
-                    "Attempting to relax constraint."
+                    f"Generation failed with min_component={current_min}: "
+                    f"{str(e)}. Attempting to relax."
                 )
 
             # Reduce floor and retry
-            current_min -= 5
+            current_min -= self.RELAXATION_STEP
             if current_min < 0:
                 # Exhausted all options
                 logger.warning(
-                    f"Failed to generate valid pairs even with min_component=0 for vector {user_vector}"
+                    f"Failed to generate valid pairs even with "
+                    f"min_component=0 for vector {user_vector}"
                 )
                 from application.exceptions import UnsuitableForStrategyError
 
                 raise UnsuitableForStrategyError(
-                    "Unable to generate suitable comparison pairs for the provided preferences."
+                    "Unable to generate suitable comparison pairs for the "
+                    "provided preferences."
                 )
 
         # 5. Format Output using the successful pair_indices
