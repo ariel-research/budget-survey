@@ -1,5 +1,7 @@
 import numpy as np
+import pytest
 
+from application.exceptions import UnsuitableForStrategyError
 from application.services.algorithms.metrics import L1Metric, LeontiefMetric
 from application.services.pair_generation.generic_rank_strategy import (
     GenericRankStrategy,
@@ -233,18 +235,13 @@ def test_generate_pairs_integration():
 
 def test_generate_pairs_no_tradeoff():
     """
-    Test generate_pairs returns fewer/no pairs when no valid trade-offs exist,
-    rather than using fallback.
+    Test generate_pairs raises UnsuitableForStrategyError when no valid trade-offs exist.
     """
     # Use L1 for both. Then ranks will be identical, so Gain A > 0 implies Gain B < 0.
     # No trade-off possible.
     strategy = GenericRankStrategy(L1Metric, L1Metric)
     user_vector = (50, 50)
 
-    # Expect 0 pairs because L1 vs L1 has no trade-offs
-    try:
-        results = strategy.generate_pairs(user_vector, n=2, vector_size=2)
-        assert len(results) == 0
-    except ValueError:
-        # This is also an acceptable outcome for "no valid pairs found"
-        pass
+    # Expect UnsuitableForStrategyError because L1 vs L1 has no trade-offs
+    with pytest.raises(UnsuitableForStrategyError):
+        strategy.generate_pairs(user_vector, n=2, vector_size=2)
