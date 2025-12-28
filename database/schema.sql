@@ -1,6 +1,5 @@
 -- Database Schema for budget-survey
--- Reflects state AFTER migration 20250401_add_stories_table.sql
--- 20250501_add_user_blacklist.sql
+-- Reflects state AFTER migration 20251226_add_unsuitable_for_strategy_column.sql
 
 -- WARNING! Running this script will DROP existing tables
 -- (users, stories, surveys, survey_responses, comparison_pairs)
@@ -67,9 +66,11 @@ CREATE TABLE `survey_responses` (
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
   `pts_value` INT DEFAULT NULL COMMENT 'Awareness failure code (1=first awareness, 2=second awareness)',
   `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
+  `unsuitable_for_strategy` BOOLEAN DEFAULT FALSE COMMENT 'Indicates if user vector was unsuitable for pair generation strategy',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`user_id`), -- Index for potential joins/lookups
   INDEX (`survey_id`), -- Index for potential joins/lookups
+  INDEX `idx_unsuitable_strategy` (`unsuitable_for_strategy`),
   UNIQUE KEY `unique_user_survey` (`user_id`, `survey_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   FOREIGN KEY (`survey_id`) REFERENCES `surveys` (`id`) ON DELETE RESTRICT
