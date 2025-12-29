@@ -8,7 +8,10 @@ from typing import Dict, List, Set, Tuple, Type
 
 import numpy as np
 
-from application.services.algorithms.math_utils import rankdata, simplex_points
+from application.services.algorithms.math_utils import (
+    get_cached_simplex_pool,
+    rankdata,
+)
 from application.services.algorithms.metric_base import Metric
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
@@ -72,7 +75,12 @@ class GenericRankStrategy(PairGenerationStrategy):
             min_val_override if min_val_override is not None else self.min_component
         )
         pool = set(
-            simplex_points(num_variables=vector_size, step=step, min_value=min_val)
+            get_cached_simplex_pool(
+                num_variables=vector_size,
+                side_length=100,
+                step=step,
+                min_value=min_val,
+            )
         )
         logger.debug(
             f"Generated simplex vector pool (step={step}, min={min_val}) of size {len(pool)}"

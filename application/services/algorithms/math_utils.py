@@ -1,4 +1,5 @@
 import math
+from functools import lru_cache
 from typing import Generator, Tuple
 
 import numpy as np
@@ -12,6 +13,11 @@ def simplex_points(
 ) -> Generator[Tuple[int, ...], None, None]:
     """
     Generate lattice points on a discrete simplex grid.
+
+    PERFORMANCE NOTE:
+    This is a generator that calculates points from scratch. For high-volume
+    usage (like N=5, step=5), use `get_cached_simplex_pool` instead to avoid
+    re-calculation overhead.
 
     Args:
         num_variables: Number of coordinates per vector.
@@ -54,6 +60,28 @@ def simplex_points(
                 yield (value,) + rest
 
     yield from generate(num_variables, total_steps)
+
+
+@lru_cache(maxsize=32)
+def get_cached_simplex_pool(
+    num_variables: int,
+    side_length: int = 100,
+    step: int = 5,
+    min_value: int = 0,
+) -> Tuple[Tuple[int, ...], ...]:
+    """
+    Cached wrapper around `simplex_points`.
+
+    Returns an immutable tuple-of-tuples so it can be safely cached via `lru_cache`.
+    """
+    return tuple(
+        simplex_points(
+            num_variables=num_variables,
+            side_length=side_length,
+            step=step,
+            min_value=min_value,
+        )
+    )
 
 
 def rankdata(a: np.ndarray, method: str = "average") -> np.ndarray:
