@@ -319,20 +319,24 @@ class GenericRankStrategy(PairGenerationStrategy):
         #
         # 1. OUTER LOOP (Python): Iterates through each vector 'i' one by one.
         #    This keeps memory usage constant (O(N)) and prevents OOM crashes
-        #    on low-RAM hardware (2.5GB limit).
+        #    on low-RAM hardware.
         #
         # 2. INNER "LOOP" (NumPy): Compares vector 'i' against ALL remaining
         #    candidates simultaneously using NumPy slicing and SIMD hardware
         #    acceleration.
         #
-        # Result: Execution time drops from 20s to < 0.5s while remaining
+        # Result: Execution time drops from 20s to < 0.9s while remaining
         # memory-safe.
 
         # Convert to float32 to reduce memory bandwidth and improve speed.
         ranks_a_f32 = np.asarray(ranks_a, dtype=np.float32)
         ranks_b_f32 = np.asarray(ranks_b, dtype=np.float32)
 
-        candidates: List[Tuple[int, int, float]] = []
+        # High-performance candidate collection using list of NumPy arrays.
+        # (avoids the overhead of creating millions of Python tuples).
+        all_idx_a = []
+        all_idx_b = []
+        all_scores = []
 
         for i in range(n - 1):
             # Slice ranks for all remaining candidates (indices > i)
@@ -350,49 +354,51 @@ class GenericRankStrategy(PairGenerationStrategy):
             if np.any(mask_i_better_on_a):
                 # Get indices relative to the slice
                 indices_rel = np.where(mask_i_better_on_a)[0]
-
-                # Map slice indices back to global pool indices
-                indices_global = indices_rel + i + 1
-
-                # Calculate MaxMin scores
-                scores = np.minimum(gains_a[indices_rel], gains_b[indices_rel])
-
-                # Add to candidates: (i, other_idx, score)
-                candidates.extend(
-                    (int(i), int(other_idx), float(s))
-                    for other_idx, s in zip(indices_global.tolist(), scores.tolist())
+                all_idx_a.append(np.full(len(indices_rel), i, dtype=np.int32))
+                all_idx_b.append(indices_rel + i + 1)
+                all_scores.append(
+                    np.minimum(gains_a[indices_rel], gains_b[indices_rel])
                 )
 
             # Case 2: Candidate is better on Metric A, 'i' is better on Metric B
             mask_candidate_better_on_a = (gains_a < 0) & (gains_b < 0)
             if np.any(mask_candidate_better_on_a):
+                # Get indices relative to the slice
                 indices_rel = np.where(mask_candidate_better_on_a)[0]
-                indices_global = indices_rel + i + 1
-
-                # Score uses absolute values (negative gains flipped)
-                scores = np.minimum(-gains_a[indices_rel], -gains_b[indices_rel])
-
-                # Add to candidates: (other_idx, i, score)
-                candidates.extend(
-                    (int(other_idx), int(i), float(s))
-                    for other_idx, s in zip(indices_global.tolist(), scores.tolist())
+                all_idx_a.append(indices_rel + i + 1)
+                all_idx_b.append(np.full(len(indices_rel), i, dtype=np.int32))
+                all_scores.append(
+                    np.minimum(-gains_a[indices_rel], -gains_b[indices_rel])
                 )
 
+        if not all_scores:
+            return []
+
+        # Concatenate and sort using NumPy
+        final_idx_a = np.concatenate(all_idx_a)
+        final_idx_b = np.concatenate(all_idx_b)
+        final_scores = np.concatenate(all_scores)
+
         # Sort by score descending
-        candidates.sort(key=lambda x: x[2], reverse=True)
+        sort_indices = np.argsort(final_scores)[::-1]
 
         selected: List[Tuple[int, int, float]] = []
         used_indices: Set[int] = set()
 
-        for idx_a, idx_b, score in candidates:
+        for idx in sort_indices:
             if len(selected) >= target_pairs:
                 break
-            if idx_a in used_indices or idx_b in used_indices:
+
+            a_idx = int(final_idx_a[idx])
+            b_idx = int(final_idx_b[idx])
+            score = float(final_scores[idx])
+
+            if a_idx in used_indices or b_idx in used_indices:
                 continue
 
-            selected.append((idx_a, idx_b, score))
-            used_indices.add(idx_a)
-            used_indices.add(idx_b)
+            selected.append((a_idx, b_idx, score))
+            used_indices.add(a_idx)
+            used_indices.add(b_idx)
 
         return selected
 
