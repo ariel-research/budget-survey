@@ -5,7 +5,7 @@ from typing import Generator, Tuple
 import numpy as np
 
 
-def simplex_points(
+def _simplex_points(
     num_variables: int,
     side_length: int = 100,
     step: int = 5,
@@ -70,12 +70,13 @@ def get_cached_simplex_pool(
     min_value: int = 0,
 ) -> Tuple[Tuple[int, ...], ...]:
     """
-    Cached wrapper around `simplex_points`.
+    Cached wrapper around `_simplex_points`.
 
-    Returns an immutable tuple-of-tuples so it can be safely cached via `lru_cache`.
+    Returns an immutable tuple-of-tuples so it can be safely cached via
+    `lru_cache`.
     """
     return tuple(
-        simplex_points(
+        _simplex_points(
             num_variables=num_variables,
             side_length=side_length,
             step=step,

@@ -21,7 +21,7 @@ def test_generic_rank_strategy_initialization():
 
 def test_generic_rank_strategy_generate_vector_pool():
     """
-    Test that GenericRankStrategy generates a valid vector pool using simplex_points,
+    Test that GenericRankStrategy generates a valid vector pool using get_cached_simplex_pool,
     with configurable step (passed via 'size' parameter).
     """
     strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
