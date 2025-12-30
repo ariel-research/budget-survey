@@ -755,6 +755,9 @@ def awareness_check_api():
             pts_value=awareness_code,
         )
 
+        # Blacklist the user for failing awareness checks
+        blacklist_user(user_id, internal_survey_id)
+
         if token is None:
             logger.warning(
                 "Missing awareness token for survey_id=%s question_index=%s; "
