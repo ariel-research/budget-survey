@@ -2,12 +2,12 @@ from typing import Tuple
 
 import numpy as np
 
-from application.services.algorithms.metric_base import Metric
+from application.services.algorithms.utility_model_base import UtilityModel
 
 
-class L1Metric(Metric):
+class L1UtilityModel(UtilityModel):
     """
-    Implements L1 (Manhattan) distance as a scoring metric.
+    Implements L1 (Manhattan) distance as a scoring utility model.
 
     In the context of budget research, L1 represents the total absolute difference
     between a user's ideal budget and a proposed budget. It measures "total
@@ -31,7 +31,7 @@ class L1Metric(Metric):
         return "l1"
 
     @property
-    def metric_type(self) -> str:
+    def utility_type(self) -> str:
         return "distance"
 
     def calculate(
@@ -43,9 +43,9 @@ class L1Metric(Metric):
         return -float(np.sum(diff))
 
 
-class L2Metric(Metric):
+class L2UtilityModel(UtilityModel):
     """
-    Implements L2 (Euclidean) distance as a scoring metric.
+    Implements L2 (Euclidean) distance as a scoring utility model.
 
     L2 represents the "as-the-crow-flies" distance in the budget simplex.
     Unlike L1, L2 penalizes large deviations in a single category more heavily
@@ -68,7 +68,7 @@ class L2Metric(Metric):
         return "l2"
 
     @property
-    def metric_type(self) -> str:
+    def utility_type(self) -> str:
         return "distance"
 
     def calculate(
@@ -80,11 +80,11 @@ class L2Metric(Metric):
         return -float(dist)
 
 
-class LeontiefMetric(Metric):
+class LeontiefUtilityModel(UtilityModel):
     """
-    Implements Leontief ratio as a scoring metric.
+    Implements Leontief ratio as a scoring utility model.
 
-    The Leontief metric focuses on the "bottleneck" or the category where the
+    The Leontief utility model focuses on the "bottleneck" or the category where the
     proposed budget is most deficient relative to the user's ideal. It is
     based on the Leontief utility function: U = min(x_i / a_i).
 
@@ -107,7 +107,7 @@ class LeontiefMetric(Metric):
         return "leontief"
 
     @property
-    def metric_type(self) -> str:
+    def utility_type(self) -> str:
         return "ratio"
 
     def calculate(
@@ -119,7 +119,7 @@ class LeontiefMetric(Metric):
         # Create mask for non-zero user values to avoid division by zero.
         # This reflects the "skip zeros" rule: if a user didn't fund a category
         # in their ideal, we don't penalize any candidate for its funding level
-        # in that category via the ratio metric.
+        # in that category via the ratio utility model.
         non_zero_mask = user_arr > 0
 
         if not np.any(non_zero_mask):

@@ -2,23 +2,23 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 
-class Metric(ABC):
+class UtilityModel(ABC):
     """
-    Abstract base class for all scoring metrics.
-    Metrics must be stateless.
+    Abstract base class for all scoring utility models.
+    Utility models must be stateless.
     """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """Unique identifier for the metric."""
+        """Unique identifier for the utility model."""
         pass
 
     @property
     @abstractmethod
-    def metric_type(self) -> str:
+    def utility_type(self) -> str:
         """
-        Category of the metric (e.g., 'distance', 'ratio').
+        Category of the utility model (e.g., 'distance', 'ratio').
         """
         pass
 
@@ -31,7 +31,7 @@ class Metric(ABC):
         ideal vector.
 
         Higher Score = Better Match.
-        (e.g., for distance metrics, this should return -distance).
+        (e.g., for distance models, this should return -distance).
 
         Args:
             user_vec: The user's ideal budget allocation.

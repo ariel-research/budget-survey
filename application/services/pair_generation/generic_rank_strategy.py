@@ -1,6 +1,6 @@
 """
 Generic ranking-based pair generation strategy.
-Uses metric-based scoring and normalized ranking to select optimal pairs.
+Uses utility-model-based scoring and normalized ranking to select optimal pairs.
 """
 
 import logging
@@ -12,7 +12,7 @@ from application.services.algorithms.math_utils import (
     get_cached_simplex_pool,
     rankdata,
 )
-from application.services.algorithms.metric_base import Metric
+from application.services.algorithms.utility_model_base import UtilityModel
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 class GenericRankStrategy(PairGenerationStrategy):
     """
-    A generic engine that generates pairs by comparing two metrics.
-    It ranks all candidates in a grid using both metrics, then selects pairs
+    A generic engine that generates pairs by comparing two utility models.
+    It ranks all candidates in a grid using both utility models, then selects pairs
     that maximize the minimum rank (MaxMin).
     """
 
@@ -36,23 +36,23 @@ class GenericRankStrategy(PairGenerationStrategy):
 
     def __init__(
         self,
-        metric_a_class: Type[Metric],
-        metric_b_class: Type[Metric],
+        utility_model_a_class: Type[UtilityModel],
+        utility_model_b_class: Type[UtilityModel],
         grid_step: int = None,
         min_component: int = 10,
     ):
         """
-        Initialize the strategy with two metric classes.
+        Initialize the strategy with two utility model classes.
 
         Args:
-            metric_a_class: Class for the first metric (e.g., L1Metric)
-            metric_b_class: Class for the second metric (e.g., LeontiefMetric)
+            utility_model_a_class: Class for the first utility model (e.g., L1UtilityModel)
+            utility_model_b_class: Class for the second utility model (e.g., LeontiefUtilityModel)
             grid_step: Optional step size for grid generation. Defaults to DEFAULT_GRID_STEP.
             min_component: Minimum value required for each vector component (default 0).
                            Example: If 10, no category can have less than 10% budget.
         """
-        self.metric_a = metric_a_class()
-        self.metric_b = metric_b_class()
+        self.utility_model_a = utility_model_a_class()
+        self.utility_model_b = utility_model_b_class()
         self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
         self.min_component = min_component
 
@@ -146,8 +146,8 @@ class GenericRankStrategy(PairGenerationStrategy):
                     min_val_override=current_min,
                 )
 
-                # 2. Calculate Metrics
-                scores_a, scores_b, pool_list = self._calculate_metrics(
+                # 2. Calculate Utility Scores
+                scores_a, scores_b, pool_list = self._calculate_utility_scores(
                     vector_pool_set, user_vector
                 )
 
@@ -221,58 +221,58 @@ class GenericRankStrategy(PairGenerationStrategy):
         score_a_b: float,
         score_b_a: float,
         score_b_b: float,
-        vec_a_wins_metric_a: bool,
+        vec_a_wins_utility_a: bool,
     ) -> Dict[str, tuple]:
         """
-        Create the formatted pair dictionary with correct metric descriptions.
+        Create the formatted pair dictionary with correct utility model descriptions.
 
-        Determines which vector represents the "Metric A" option and which represents
-        the "Metric B" option based on rank comparison.
+        Determines which vector represents the "Utility Model A" option and which represents
+        the "Utility Model B" option based on rank comparison.
 
         Args:
             vec_a: First vector from the pair.
             vec_b: Second vector from the pair.
             score: The MaxMin score for this pair.
-            score_a_a: Score of vec_a on Metric A.
-            score_a_b: Score of vec_b on Metric A.
-            score_b_a: Score of vec_a on Metric B.
-            score_b_b: Score of vec_b on Metric B.
-            vec_a_wins_metric_a: True if vec_a outranks vec_b on Metric A.
+            score_a_a: Score of vec_a on Utility Model A.
+            score_a_b: Score of vec_b on Utility Model A.
+            score_b_a: Score of vec_a on Utility Model B.
+            score_b_b: Score of vec_b on Utility Model B.
+            vec_a_wins_utility_a: True if vec_a outranks vec_b on Utility Model A.
 
         Returns:
             Dict containing the two options with descriptive keys and metadata.
         """
-        # Determine orientation: Which vector is better for Metric A?
-        if vec_a_wins_metric_a:
-            # vec_a is better on Metric A, vec_b is better on Metric B
-            metric_a_vec, metric_b_vec = vec_a, vec_b
+        # Determine orientation: Which vector is better for Utility Model A?
+        if vec_a_wins_utility_a:
+            # vec_a is better on Utility Model A, vec_b is better on Utility Model B
+            utility_a_vec, utility_b_vec = vec_a, vec_b
 
-            # Metric A stats (Best = vec_a, Worst = vec_b)
-            metric_a_best, metric_a_worst = score_a_a, score_a_b
+            # Utility Model A stats (Best = vec_a, Worst = vec_b)
+            utility_a_best, utility_a_worst = score_a_a, score_a_b
 
-            # Metric B stats (Best = vec_b, Worst = vec_a)
-            metric_b_best, metric_b_worst = score_b_b, score_b_a
+            # Utility Model B stats (Best = vec_b, Worst = vec_a)
+            utility_b_best, utility_b_worst = score_b_b, score_b_a
         else:
-            # vec_b is better on Metric A, vec_a is better on Metric B
-            metric_a_vec, metric_b_vec = vec_b, vec_a
+            # vec_b is better on Utility Model A, vec_a is better on Utility Model B
+            utility_a_vec, utility_b_vec = vec_b, vec_a
 
-            # Metric A stats (Best = vec_b, Worst = vec_a)
-            metric_a_best, metric_a_worst = score_a_b, score_a_a
+            # Utility Model A stats (Best = vec_b, Worst = vec_a)
+            utility_a_best, utility_a_worst = score_a_b, score_a_a
 
-            # Metric B stats (Best = vec_a, Worst = vec_b)
-            metric_b_best, metric_b_worst = score_b_a, score_b_b
+            # Utility Model B stats (Best = vec_a, Worst = vec_b)
+            utility_b_best, utility_b_worst = score_b_a, score_b_b
 
         return {
             self.get_option_description(
-                metric_type=self.metric_a.name,
-                best_value=metric_a_best,
-                worst_value=metric_a_worst,
-            ): metric_a_vec,
+                metric_type=self.utility_model_a.name,
+                best_value=utility_a_best,
+                worst_value=utility_a_worst,
+            ): utility_a_vec,
             self.get_option_description(
-                metric_type=self.metric_b.name,
-                best_value=metric_b_best,
-                worst_value=metric_b_worst,
-            ): metric_b_vec,
+                metric_type=self.utility_model_b.name,
+                best_value=utility_b_best,
+                worst_value=utility_b_worst,
+            ): utility_b_vec,
             "__metadata__": {
                 "score": round(float(score), 2),
                 "strategy": "max_min_rank",
@@ -287,11 +287,11 @@ class GenericRankStrategy(PairGenerationStrategy):
         target_pairs: int,
     ) -> List[Tuple[int, int, float]]:
         """
-        Select optimal pairs maximizing the 'MaxMin' trade-off between metrics.
+        Select optimal pairs maximizing the 'MaxMin' trade-off between utility models.
 
         Identifies 'complementary' pairs where:
-        1. Vector A is better on Metric A (positive Gain A).
-        2. Vector B is better on Metric B (positive Gain B).
+        1. Vector A is better on Utility Model A (positive Gain A).
+        2. Vector B is better on Utility Model B (positive Gain B).
         3. The score is min(Gain A, Gain B), favoring balanced trade-offs.
 
         Example:
@@ -300,8 +300,8 @@ class GenericRankStrategy(PairGenerationStrategy):
 
         Args:
             vectors: List of candidate vectors.
-            ranks_a: Normalized ranks (0-1) for Metric A.
-            ranks_b: Normalized ranks (0-1) for Metric B.
+            ranks_a: Normalized ranks (0-1) for Utility Model A.
+            ranks_b: Normalized ranks (0-1) for Utility Model B.
             target_pairs: Number of pairs to select.
 
         Returns:
@@ -343,13 +343,13 @@ class GenericRankStrategy(PairGenerationStrategy):
             ranks_a_rest = ranks_a_f32[i + 1 :]
             ranks_b_rest = ranks_b_f32[i + 1 :]
 
-            # gains_a: Advantage of 'i' over the 'rest' on Metric A
+            # gains_a: Advantage of 'i' over the 'rest' on Utility Model A
             gains_a = ranks_a_f32[i] - ranks_a_rest
 
-            # gains_b: Advantage of the 'rest' over 'i' on Metric B
+            # gains_b: Advantage of the 'rest' over 'i' on Utility Model B
             gains_b = ranks_b_rest - ranks_b_f32[i]
 
-            # Case 1: 'i' is better on Metric A, Candidate is better on Metric B
+            # Case 1: 'i' is better on Utility Model A, Candidate is better on Utility Model B
             mask_i_better_on_a = (gains_a > 0) & (gains_b > 0)
             if np.any(mask_i_better_on_a):
                 # Get indices relative to the slice
@@ -360,7 +360,7 @@ class GenericRankStrategy(PairGenerationStrategy):
                     np.minimum(gains_a[indices_rel], gains_b[indices_rel])
                 )
 
-            # Case 2: Candidate is better on Metric A, 'i' is better on Metric B
+            # Case 2: Candidate is better on Utility Model A, 'i' is better on Utility Model B
             mask_candidate_better_on_a = (gains_a < 0) & (gains_b < 0)
             if np.any(mask_candidate_better_on_a):
                 # Get indices relative to the slice
@@ -402,11 +402,11 @@ class GenericRankStrategy(PairGenerationStrategy):
 
         return selected
 
-    def _calculate_metrics(
+    def _calculate_utility_scores(
         self, vector_pool: Set[tuple], user_vector: tuple
     ) -> Tuple[np.ndarray, np.ndarray, List[tuple]]:
         """
-        Calculate raw metric scores for all vectors in the pool.
+        Calculate raw utility scores for all vectors in the pool.
 
         Args:
             vector_pool: Set of candidate vectors.
@@ -414,15 +414,15 @@ class GenericRankStrategy(PairGenerationStrategy):
 
         Returns:
             Tuple containing:
-            - Array of scores for metric A
-            - Array of scores for metric B
+            - Array of scores for utility model A
+            - Array of scores for utility model B
             - List of vectors (ordered corresponding to the arrays)
 
         Example:
             User Vector: (50, 50)
             Pool: [(50, 50), (100, 0)]
 
-            Metric A (L1, returns negative distance):
+            Utility Model A (L1, returns negative distance):
                 (50,50) vs (50,50)   -> dist=0   -> score=0
                 (50,50) vs (100,0)   -> dist=100 -> score=-100
 
@@ -438,8 +438,8 @@ class GenericRankStrategy(PairGenerationStrategy):
         scores_b = []
 
         for candidate in pool_list:
-            scores_a.append(self.metric_a.calculate(user_vector, candidate))
-            scores_b.append(self.metric_b.calculate(user_vector, candidate))
+            scores_a.append(self.utility_model_a.calculate(user_vector, candidate))
+            scores_b.append(self.utility_model_b.calculate(user_vector, candidate))
 
         return np.array(scores_a), np.array(scores_b), pool_list
 
@@ -447,12 +447,12 @@ class GenericRankStrategy(PairGenerationStrategy):
         self, scores_a: np.ndarray, scores_b: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Convert raw metric scores into normalized ranks (0.0 to 1.0).
+        Convert raw utility scores into normalized ranks (0.0 to 1.0).
         Higher rank indicates better match (closer to 1.0).
 
         Args:
-            scores_a: Raw scores from metric A.
-            scores_b: Raw scores from metric B.
+            scores_a: Raw scores from utility model A.
+            scores_b: Raw scores from utility model B.
 
         Returns:
             Tuple of (normalized_ranks_a, normalized_ranks_b)
@@ -478,7 +478,7 @@ class GenericRankStrategy(PairGenerationStrategy):
             return np.ones(n), np.ones(n)
 
         # rankdata returns 1-based ranks (lowest score = 1, highest score = N)
-        # Since metrics guarantee Higher Score = Better Match,
+        # Since utility models guarantee Higher Score = Better Match,
         # we can directly use rankdata to get ordinal ranks.
         raw_ranks_a = rankdata(scores_a)
         raw_ranks_b = rankdata(scores_b)
@@ -494,58 +494,58 @@ class GenericRankStrategy(PairGenerationStrategy):
     def get_strategy_name(self) -> str:
         """
         Return unique identifier for this strategy.
-        Dynamically generated from metric names.
+        Dynamically generated from utility model names.
         """
-        return f"{self.metric_a.name}_vs_{self.metric_b.name}_rank_comparison"
+        return f"{self.utility_model_a.name}_vs_{self.utility_model_b.name}_rank_comparison"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """
         Return human-readable labels for the two options being compared.
-        Dynamically generated from metric names via the translation system.
+        Dynamically generated from utility model names via the translation system.
         """
         return (
-            f"{get_translation(self.metric_a.name, 'answers')} (Rank)",
-            f"{get_translation(self.metric_b.name, 'answers')} (Rank)",
+            f"{get_translation(self.utility_model_a.name, 'answers')} (Rank)",
+            f"{get_translation(self.utility_model_b.name, 'answers')} (Rank)",
         )
 
     def get_table_columns(self) -> Dict[str, Dict]:
         """
         Get column definitions for the survey response breakdown table.
-        Dynamically generated from metric names.
+        Dynamically generated from utility model names.
         """
         return {
-            self.metric_a.name: {
-                "name": get_translation(self.metric_a.name, "answers"),
+            self.utility_model_a.name: {
+                "name": get_translation(self.utility_model_a.name, "answers"),
                 "type": "percentage",
                 "highlight": True,
             },
-            self.metric_b.name: {
-                "name": get_translation(self.metric_b.name, "answers"),
+            self.utility_model_b.name: {
+                "name": get_translation(self.utility_model_b.name, "answers"),
                 "type": "percentage",
                 "highlight": True,
             },
         }
 
-    def _get_metric_name(self, metric_identifier: str) -> str:
+    def _get_metric_name(self, utility_model_identifier: str) -> str:
         """
-        Get the display name for a metric.
-        Matches by name first, then falls back to metric_type.
+        Get the display name for a utility model.
+        Matches by name first, then falls back to utility_type.
         """
-        if metric_identifier == self.metric_a.name:
-            label = get_translation(self.metric_a.name, "answers")
+        if utility_model_identifier == self.utility_model_a.name:
+            label = get_translation(self.utility_model_a.name, "answers")
             return f"{label} Optimized Vector"
 
-        if metric_identifier == self.metric_b.name:
-            label = get_translation(self.metric_b.name, "answers")
+        if utility_model_identifier == self.utility_model_b.name:
+            label = get_translation(self.utility_model_b.name, "answers")
             return f"{label} Optimized Vector"
 
         # Fallback to type check
-        if metric_identifier == self.metric_a.metric_type:
-            label = get_translation(self.metric_a.name, "answers")
+        if utility_model_identifier == self.utility_model_a.utility_type:
+            label = get_translation(self.utility_model_a.name, "answers")
             return f"{label} Optimized Vector"
 
-        if metric_identifier == self.metric_b.metric_type:
-            label = get_translation(self.metric_b.name, "answers")
+        if utility_model_identifier == self.utility_model_b.utility_type:
+            label = get_translation(self.utility_model_b.name, "answers")
             return f"{label} Optimized Vector"
 
-        return metric_identifier
+        return utility_model_identifier

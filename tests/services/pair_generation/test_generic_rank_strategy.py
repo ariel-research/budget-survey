@@ -2,7 +2,10 @@ import numpy as np
 import pytest
 
 from application.exceptions import UnsuitableForStrategyError
-from application.services.algorithms.metrics import L1Metric, LeontiefMetric
+from application.services.algorithms.utility_models import (
+    L1UtilityModel,
+    LeontiefUtilityModel,
+)
 from application.services.pair_generation.generic_rank_strategy import (
     GenericRankStrategy,
 )
@@ -10,11 +13,11 @@ from application.services.pair_generation.generic_rank_strategy import (
 
 def test_generic_rank_strategy_initialization():
     """
-    Test that GenericRankStrategy can be initialized with two metric classes.
+    Test that GenericRankStrategy can be initialized with two utility model classes.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
-    assert isinstance(strategy.metric_a, L1Metric)
-    assert isinstance(strategy.metric_b, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
+    assert isinstance(strategy.utility_model_a, L1UtilityModel)
+    assert isinstance(strategy.utility_model_b, LeontiefUtilityModel)
     # Dynamic name generation
     assert strategy.get_strategy_name() == "l1_vs_leontief_rank_comparison"
 
@@ -24,7 +27,7 @@ def test_generic_rank_strategy_generate_vector_pool():
     Test that GenericRankStrategy generates a valid vector pool using get_cached_simplex_pool,
     with configurable step (passed via 'size' parameter).
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     vector_size = 3
 
     # Test default step=5
@@ -49,7 +52,9 @@ def test_generic_rank_strategy_min_component():
     Test that min_component enforces minimum values in generated vectors.
     """
     # Use min_component=10. This means no vector component can be < 10.
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric, min_component=10)
+    strategy = GenericRankStrategy(
+        L1UtilityModel, LeontiefUtilityModel, min_component=10
+    )
     vector_size = 3
 
     pool = strategy.generate_vector_pool(size=5, vector_size=vector_size)
@@ -67,30 +72,32 @@ def test_generic_rank_strategy_option_labels():
     """
     Test that get_option_labels returns correct names.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     labels = strategy.get_option_labels()
     assert labels == ("L1 (Rank)", "Leontief (Rank)")
 
 
-def test_generic_rank_strategy_metric_name_lookup():
+def test_generic_rank_strategy_utility_model_name_lookup():
     """
-    Test that _get_metric_name correctly identifies metrics.
+    Test that _get_metric_name correctly identifies utility models.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     assert strategy._get_metric_name("distance") == "L1 Optimized Vector"
     assert strategy._get_metric_name("ratio") == "Leontief Optimized Vector"
     assert strategy._get_metric_name("unknown") == "unknown"
 
 
-def test_generic_rank_strategy_calculate_metrics():
+def test_generic_rank_strategy_calculate_utility_scores():
     """
-    Test _calculate_metrics calculates scores for a pool of vectors.
+    Test _calculate_utility_scores calculates scores for a pool of vectors.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     user_vector = (50, 50)
     pool = {(50, 50), (100, 0), (0, 100)}  # Set of tuples
 
-    scores_a, scores_b, pool_list = strategy._calculate_metrics(pool, user_vector)
+    scores_a, scores_b, pool_list = strategy._calculate_utility_scores(
+        pool, user_vector
+    )
 
     assert len(scores_a) == 3
     assert len(scores_b) == 3
@@ -101,7 +108,7 @@ def test_generic_rank_strategy_calculate_metrics():
     # Find index of perfect match
     perfect_idx = pool_list.index((50, 50))
 
-    # L1 metric: 0 distance -> score 0
+    # L1 utility model: 0 distance -> score 0
     # L1: distance = |50-50| + |50-50| = 0. score = -0 = 0.
     assert scores_a[perfect_idx] == 0
 
@@ -113,7 +120,7 @@ def test_generic_rank_strategy_compute_ranks():
     """
     Test _compute_ranks normalizes scores to 0.0-1.0 range correctly.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
 
     # 5 scores: 10, 20, 30, 40, 50
     # Ranks: 1, 2, 3, 4, 5
@@ -134,7 +141,7 @@ def test_generic_rank_strategy_compute_ranks_ties():
     """
     Test _compute_ranks handles ties by averaging.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
 
     # Scores: 10, 20, 20, 30
     # Ranks (1-based): 1, 2.5, 2.5, 4
@@ -153,7 +160,7 @@ def test_generic_rank_strategy_compute_ranks_single_item():
     """
     Test _compute_ranks handles single item pool (should be 1.0).
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     scores = np.array([10])
 
     ranks_a, ranks_b = strategy._compute_ranks(scores, scores)
@@ -166,7 +173,7 @@ def test_select_pairs_max_min_logic():
     """
     Test the MaxMin matchmaking logic with a simple, symmetric scenario.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
 
     # Use 4 identical dummy vectors to focus strictly on the ranking logic.
     vectors = [(0, 0)] * 4
@@ -205,8 +212,8 @@ def test_generate_pairs_integration():
     """
     Test generate_pairs runs through the full pipeline and returns correct format.
     """
-    strategy = GenericRankStrategy(L1Metric, LeontiefMetric)
-    # Use vector_size=3 to ensure trade-offs exist (metrics aren't perfectly correlated)
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
+    # Use vector_size=3 to ensure trade-offs exist (utility models aren't perfectly correlated)
     user_vector = (30, 30, 40)
     n = 2
 
@@ -239,7 +246,7 @@ def test_generate_pairs_no_tradeoff():
     """
     # Use L1 for both. Then ranks will be identical, so Gain A > 0 implies Gain B < 0.
     # No trade-off possible.
-    strategy = GenericRankStrategy(L1Metric, L1Metric)
+    strategy = GenericRankStrategy(L1UtilityModel, L1UtilityModel)
     user_vector = (50, 50)
 
     # Expect UnsuitableForStrategyError because L1 vs L1 has no trade-offs

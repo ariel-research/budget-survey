@@ -585,23 +585,23 @@ Note: '>' represents observed choice, which may include cases of user indifferen
    - **How it works**:
      - Enumerates a discrete simplex grid (default step=5).
      - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
-     - Normalizes metrics to percentile ranks (0.0-1.0) to eliminate scale differences.
-     - Uses a **Max-Min** search to find pairs where one vector is significantly better on Metric A, while the other is better on Metric B.
-   - **Metrics Supported**:
+     - Normalizes utility models to percentile ranks (0.0-1.0) to eliminate scale differences.
+     - Uses a **Max-Min** search to find pairs where one vector is significantly better on Utility Model A, while the other is better on Utility Model B.
+   - **Utility Models Supported**:
      - **L1 (Sum)**: Total absolute disagreement.
      - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
      - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
 
 #### Adding New Strategies
 
-The application uses a **Strategy Pattern** with **Polymorphic Metrics**. To add a new rank-based strategy:
+The application uses a **Strategy Pattern** with **Polymorphic Utility Models**. To add a new rank-based strategy:
 
-1.  **Define a Metric** (if new): Add a class to `application/services/algorithms/metrics.py` inheriting from `Metric`.
+1.  **Define a Utility Model** (if new): Add a class to `application/services/algorithms/utility_models.py` inheriting from `UtilityModel`.
 2.  **Create Strategy**: In `application/services/pair_generation/rank_strategies.py`, create a thin wrapper:
     ```python
     class MyNewRankStrategy(GenericRankStrategy):
         def __init__(self, grid_step=None):
-            super().__init__(MetricA, MetricB, min_component=10)
+            super().__init__(UtilityModelA, UtilityModelB, min_component=10)
     ```
 3.  **Register**: Add `StrategyRegistry.register(MyNewRankStrategy)` in `application/services/pair_generation/__init__.py`.
 
