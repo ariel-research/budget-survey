@@ -211,7 +211,7 @@ class KLUtilityModel(UtilityModel):
         epsilon = 1e-10
 
         # Calculate KL Divergence: sum(p_i * ln(p_i / q_i))
-        # Use a mask for p_i > 0 because if p_i is 0, the term is 0 * ln(0) -> 0 (lim x->0 x*ln(x) = 0)
+        # Use a mask for p_i > 0 because if p_i is 0, the term is 0 * ln(0)
         mask = p_norm > 0
 
         # Add epsilon to q to avoid division by zero inside log
