@@ -128,3 +128,98 @@ class LeontiefUtilityModel(UtilityModel):
 
         ratios = comp_arr[non_zero_mask] / user_arr[non_zero_mask]
         return float(np.min(ratios))
+
+
+class AntiLeontiefUtilityModel(UtilityModel):
+    """
+    Implements Anti-Leontief ratio as a scoring utility model.
+
+    Logic: Finds the worst *over-funding* ratio.
+    Formula: U = -max(q_i / p_i) for all i where p_i > 0.
+    Direction: Return negative value (closer to 0 is better).
+
+    Research Context:
+        Models "Over-funding aversion". Users dislike when resources are
+        "wasted" on categories they care little about, disproportionately
+        relative to their preference.
+    """
+
+    @property
+    def name(self) -> str:
+        return "anti_leontief"
+
+    @property
+    def utility_type(self) -> str:
+        return "ratio"
+
+    def calculate(
+        self, user_vec: Tuple[float, ...], candidate_vec: Tuple[float, ...]
+    ) -> float:
+        user_arr = np.array(user_vec, dtype=float)
+        comp_arr = np.array(candidate_vec, dtype=float)
+
+        # Filter p_i > 0 to avoid division by zero
+        non_zero_mask = user_arr > 0
+
+        if not np.any(non_zero_mask):
+            return 0.0
+
+        ratios = comp_arr[non_zero_mask] / user_arr[non_zero_mask]
+        return -float(np.max(ratios))
+
+
+class KLUtilityModel(UtilityModel):
+    """
+    Implements Kullback-Leibler (KL) divergence as a scoring utility model.
+
+    Logic: Information divergence.
+    Formula: U = -sum(p_i * ln(p_i / q_i)).
+    Normalization: Inputs divided by their sum.
+    Stability: Use q_i + epsilon in denominator.
+    Direction: Return negative value (closer to 0 is better).
+
+    Research Context:
+        Models "Information-theoretic asymmetry".
+    """
+
+    @property
+    def name(self) -> str:
+        return "kl"
+
+    @property
+    def utility_type(self) -> str:
+        return "divergence"
+
+    def calculate(
+        self, user_vec: Tuple[float, ...], candidate_vec: Tuple[float, ...]
+    ) -> float:
+        p = np.array(user_vec, dtype=float)
+        q = np.array(candidate_vec, dtype=float)
+
+        # Normalize vectors to ensure they are valid probability distributions
+        # Add epsilon to sum to avoid division by zero if a vector is all zeros
+        p_sum = np.sum(p)
+        q_sum = np.sum(q)
+
+        if p_sum == 0 or q_sum == 0:
+            return 0.0  # Should ideally not happen in valid budget vectors
+
+        p_norm = p / p_sum
+        q_norm = q / q_sum
+
+        # Stability constant
+        epsilon = 1e-10
+
+        # Calculate KL Divergence: sum(p_i * ln(p_i / q_i))
+        # Use a mask for p_i > 0 because if p_i is 0, the term is 0 * ln(0) -> 0 (lim x->0 x*ln(x) = 0)
+        mask = p_norm > 0
+
+        # Add epsilon to q to avoid division by zero inside log
+        # q_norm[mask] could be 0, so we add epsilon.
+        # We compute p * ln(p / (q + eps))
+
+        divergence = np.sum(
+            p_norm[mask] * np.log(p_norm[mask] / (q_norm[mask] + epsilon))
+        )
+
+        return -float(divergence)
