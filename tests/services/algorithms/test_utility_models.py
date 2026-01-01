@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 
 from application.services.algorithms.utility_models import (
+    AntiLeontiefUtilityModel,
+    KLUtilityModel,
     L1UtilityModel,
     L2UtilityModel,
     LeontiefUtilityModel,
@@ -105,3 +107,75 @@ def test_utility_model_statelessness():
     score1 = utility_model.calculate(user_vec, candidate)
     score2 = utility_model.calculate(user_vec, candidate)
     assert score1 == score2 == -20.0
+
+
+def test_anti_leontief_utility_model_calculation():
+    """
+    Test Anti-Leontief Utility Model.
+    Formula: U = -max(q_i / p_i) for all i where p_i > 0.
+    """
+    utility_model = AntiLeontiefUtilityModel()
+    user_vec = (10, 90)
+
+    # Case 1: Max ratio is 3.0
+    # q/p: 30/10 = 3.0, 70/90 = 0.77...
+    # Max is 3.0. Score = -3.0
+    candidate_a = (30, 70)
+    assert pytest.approx(utility_model.calculate(user_vec, candidate_a)) == -3.0
+
+    # Case 2: Max ratio is determined by the other component
+    # q=[5, 95], p=[10, 90]
+    # Ratios: 5/10=0.5, 95/90=1.055...
+    # Max is 1.055... Score = -1.055...
+    candidate_b = (5, 95)
+    assert pytest.approx(utility_model.calculate(user_vec, candidate_b)) == -(95 / 90)
+
+    # Case 3: Ignore p_i = 0
+    # user=[50, 0, 50]
+    # cand=[60, 20, 20]
+    # Ratios: 60/50=1.2, 20/0 (skip), 20/50=0.4
+    # Max is 1.2. Score = -1.2
+    user_vec_zeros = (50, 0, 50)
+    candidate_zeros = (60, 20, 20)
+    assert (
+        pytest.approx(utility_model.calculate(user_vec_zeros, candidate_zeros)) == -1.2
+    )
+
+
+def test_kl_utility_model_calculation():
+    """
+    Test Kullback-Leibler Utility Model.
+    Formula: U = -sum(p_i * ln(p_i / q_i)) after normalization.
+    """
+    utility_model = KLUtilityModel()
+
+    # Case 1: Standard divergence
+    # p=[10, 90] -> normalized [0.1, 0.9]
+    # q=[30, 70] -> normalized [0.3, 0.7]
+    # KL = 0.1 * ln(0.1/0.3) + 0.9 * ln(0.9/0.7)
+    #    = 0.1 * ln(1/3) + 0.9 * ln(9/7)
+    #    = 0.1 * (-1.09861) + 0.9 * (0.25131)
+    #    = -0.10986 + 0.22618 = 0.11632
+    # Score = -0.11632
+    user_vec = (10, 90)
+    candidate_a = (30, 70)
+
+    p_norm = np.array([0.1, 0.9])
+    q_norm = np.array([0.3, 0.7])
+    expected_divergence = np.sum(p_norm * np.log(p_norm / q_norm))
+
+    assert (
+        pytest.approx(utility_model.calculate(user_vec, candidate_a))
+        == -expected_divergence
+    )
+
+    # Case 2: q contains 0 (epsilon handling)
+    # p=[50, 50]
+    # q=[100, 0] -> normalized [1.0, 0.0]
+    # KL = 0.5 * ln(0.5/1.0) + 0.5 * ln(0.5 / epsilon)
+    user_vec_2 = (50, 50)
+    candidate_zero = (100, 0)
+    score = utility_model.calculate(user_vec_2, candidate_zero)
+    epsilon = 1e-10
+    expected_divergence = 0.5 * np.log(0.5) + 0.5 * np.log(0.5 / epsilon)
+    assert pytest.approx(score) == -expected_divergence
