@@ -724,6 +724,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "l1": {"he": "L1", "en": "L1"},
         "l2": {"he": "L2", "en": "L2"},
         "leontief": {"he": "Leontief", "en": "Leontief"},
+        "anti_leontief": {"he": "AntiLeontief", "en": "AntiLeontief"},
+        "kl": {"he": "KL", "en": "KL"},
         "ratio": {"he": "יחס", "en": "Ratio"},
         "root_sum_squared": {"he": "שורש סכום הריבועים", "en": "Root Sum Squared"},
         "weighted_average": {"he": "ממוצע משוקלל", "en": "Weighted Average"},
