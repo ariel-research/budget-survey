@@ -6,6 +6,8 @@ Defines specific utility model combinations (e.g., L1 vs Leontief) used in surve
 import logging
 
 from application.services.algorithms.utility_models import (
+    AntiLeontiefUtilityModel,
+    KLUtilityModel,
     L1UtilityModel,
     L2UtilityModel,
     LeontiefUtilityModel,
@@ -66,6 +68,48 @@ class L2VsLeontiefRankStrategy(GenericRankStrategy):
         super().__init__(
             utility_model_a_class=L2UtilityModel,
             utility_model_b_class=LeontiefUtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+        )
+
+
+class LeontiefVsAntiLeontiefRankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing Leontief (min ratio) against Anti-Leontief (max ratio aversion).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=LeontiefUtilityModel,
+            utility_model_b_class=AntiLeontiefUtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+        )
+
+
+class LeontiefVsKLRankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing Leontief (min ratio) against Kullback-Leibler (information divergence).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=LeontiefUtilityModel,
+            utility_model_b_class=KLUtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+        )
+
+
+class KLVsAntiLeontiefRankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing Kullback-Leibler (information divergence) against Anti-Leontief (max ratio aversion).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=KLUtilityModel,
+            utility_model_b_class=AntiLeontiefUtilityModel,
             grid_step=grid_step,
             min_component=10,
         )

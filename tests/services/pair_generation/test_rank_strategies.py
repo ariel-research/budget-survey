@@ -3,9 +3,12 @@
 import pytest
 
 from application.services.pair_generation.rank_strategies import (
+    KLVsAntiLeontiefRankStrategy,
     L1VsL2RankStrategy,
     L1VsLeontiefRankStrategy,
     L2VsLeontiefRankStrategy,
+    LeontiefVsAntiLeontiefRankStrategy,
+    LeontiefVsKLRankStrategy,
 )
 
 
@@ -22,6 +25,21 @@ def l1_l2_strategy():
 @pytest.fixture
 def l2_leo_strategy():
     return L2VsLeontiefRankStrategy()
+
+
+@pytest.fixture
+def leontief_anti_leo_strategy():
+    return LeontiefVsAntiLeontiefRankStrategy()
+
+
+@pytest.fixture
+def leontief_kl_strategy():
+    return LeontiefVsKLRankStrategy()
+
+
+@pytest.fixture
+def kl_anti_leo_strategy():
+    return KLVsAntiLeontiefRankStrategy()
 
 
 class TestL1VsLeontiefRankStrategy:
@@ -131,3 +149,50 @@ class TestL2VsLeontiefRankStrategy:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
             assert any("L2 Optimized Vector" in d for d in descriptions)
             assert any("Leontief Optimized Vector" in d for d in descriptions)
+
+
+class TestLeontiefVsAntiLeontiefRankStrategy:
+    """Tests for the Leontief vs Anti-Leontief strategy."""
+
+    def test_generate_pairs_integration(self, leontief_anti_leo_strategy):
+        """Verify end-to-end pair generation."""
+        user_vector = (50, 30, 20)
+        n = 2
+        pairs = leontief_anti_leo_strategy.generate_pairs(
+            user_vector, n=n, vector_size=3
+        )
+        assert len(pairs) == n
+        for pair in pairs:
+            descriptions = [k for k in pair.keys() if k != "__metadata__"]
+            assert any("Leontief Optimized Vector" in d for d in descriptions)
+            assert any("AntiLeontief Optimized Vector" in d for d in descriptions)
+
+
+class TestLeontiefVsKLRankStrategy:
+    """Tests for the Leontief vs KL strategy."""
+
+    def test_generate_pairs_integration(self, leontief_kl_strategy):
+        """Verify end-to-end pair generation."""
+        user_vector = (50, 30, 20)
+        n = 2
+        pairs = leontief_kl_strategy.generate_pairs(user_vector, n=n, vector_size=3)
+        assert len(pairs) == n
+        for pair in pairs:
+            descriptions = [k for k in pair.keys() if k != "__metadata__"]
+            assert any("Leontief Optimized Vector" in d for d in descriptions)
+            assert any("KL Optimized Vector" in d for d in descriptions)
+
+
+class TestKLVsAntiLeontiefRankStrategy:
+    """Tests for the KL vs Anti-Leontief strategy."""
+
+    def test_generate_pairs_integration(self, kl_anti_leo_strategy):
+        """Verify end-to-end pair generation."""
+        user_vector = (50, 30, 20)
+        n = 2
+        pairs = kl_anti_leo_strategy.generate_pairs(user_vector, n=n, vector_size=3)
+        assert len(pairs) == n
+        for pair in pairs:
+            descriptions = [k for k in pair.keys() if k != "__metadata__"]
+            assert any("KL Optimized Vector" in d for d in descriptions)
+            assert any("AntiLeontief Optimized Vector" in d for d in descriptions)

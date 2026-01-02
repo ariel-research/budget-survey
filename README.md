@@ -580,7 +580,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      ```
 
 14. **Rank-Based Comparison Strategies**
-   - Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`
+   - Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`, `leontief_vs_anti_leontief_rank_comparison`, `leontief_vs_kl_rank_comparison`, `kl_vs_anti_leontief_rank_comparison`
    - Uses rank-based normalization (percentiles) instead of raw values to generate pairs with optimal trade-offs.
    - **How it works**:
      - Enumerates a discrete simplex grid (default step=5).
@@ -591,6 +591,8 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      - **L1 (Sum)**: Total absolute disagreement.
      - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
      - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
+     - **Anti-Leontief**: Penalizes over-funding (waste aversion).
+     - **Kullback-Leibler (KL)**: Information theoretic divergence (asymmetric penalty for losses).
 
 #### Adding New Strategies
 
