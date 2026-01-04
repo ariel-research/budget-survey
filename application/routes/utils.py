@@ -1,6 +1,7 @@
+from typing import Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from flask import Blueprint, jsonify, redirect, request, url_for
+from flask import Blueprint, current_app, jsonify, redirect, request, url_for
 
 from application.translations import (
     TRANSLATIONS,
@@ -106,3 +107,23 @@ def change_language():
     return redirect(
         f"{parsed_url.scheme}://{parsed_url.netloc}" f"{parsed_url.path}?{new_query}"
     )
+
+
+def redirect_to_panel4all(
+    user_id: str, survey_id: str, status: str = "finish", q: str = None
+) -> str:
+    """Generate Panel4All redirect URL with specified status."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if q is not None:
+        params["q"] = q
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
+
+
+def redirect_to_panel4all_with_pts(
+    user_id: str, survey_id: str, status: str, pts: Optional[str] = None
+) -> str:
+    """Generate Panel4All redirect URL with PTS parameter."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if pts is not None:
+        params["PTS"] = pts
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"

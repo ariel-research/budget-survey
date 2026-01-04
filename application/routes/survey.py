@@ -1,6 +1,5 @@
 import logging
 from typing import Optional, Tuple
-from urllib.parse import urlencode
 
 from flask import (
     Blueprint,
@@ -16,6 +15,10 @@ from flask import (
 
 from application.decorators import check_survey_eligibility
 from application.exceptions import UnsuitableForStrategyError
+from application.routes.utils import (
+    redirect_to_panel4all,
+    redirect_to_panel4all_with_pts,
+)
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
@@ -108,6 +111,21 @@ def index():
         user_id, internal_survey_id
     )
     if not is_eligible:
+        # If user is blacklisted and NOT in demo mode, redirect directly to Panel4All
+        if redirect_url == "blacklisted" and not is_demo:
+            panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                "ATTENTION_FAILED"
+            ]
+            logger.info(f"Redirecting blacklisted user {user_id} directly to Panel4All")
+            return redirect(
+                redirect_to_panel4all(
+                    user_id,
+                    external_survey_id,
+                    status=panel4all_status,
+                    q=external_q_argument,
+                )
+            )
+
         return redirect(
             url_for(
                 f"survey.{redirect_url}",
@@ -791,23 +809,3 @@ def awareness_check_api():
     except (KeyError, TypeError, ValueError) as e:
         logger.warning(f"Invalid awareness check request: {e}")
         return jsonify({"error": "Invalid request"}), 400
-
-
-def redirect_to_panel4all_with_pts(
-    user_id: str, survey_id: str, status: str, pts: Optional[str] = None
-) -> str:
-    """Generate Panel4All redirect URL with PTS parameter."""
-    params = {"surveyID": survey_id, "userID": user_id, "status": status}
-    if pts is not None:
-        params["PTS"] = pts
-    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
-
-
-def redirect_to_panel4all(
-    user_id: str, survey_id: str, status: str = "finish", q: str = None
-) -> str:
-    """Generate Panel4All redirect URL with specified status."""
-    params = {"surveyID": survey_id, "userID": user_id, "status": status}
-    if q is not None:
-        params["q"] = q
-    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
