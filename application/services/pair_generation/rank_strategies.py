@@ -1,6 +1,6 @@
 """
 Concrete implementations of ranking-based pair generation strategies.
-Defines specific utility model combinations (e.g., L1 vs Leontief) used in surveys.
+Defines specific utility model combinations used in surveys.
 """
 
 import logging
@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 class L1VsLeontiefRankStrategy(GenericRankStrategy):
     """
     Strategy comparing L1 distance (Sum) against Leontief ratio (Ratio).
-
     """
 
     def __init__(self, grid_step: int = None):
@@ -36,12 +35,14 @@ class L1VsLeontiefRankStrategy(GenericRankStrategy):
             utility_model_b_class=LeontiefUtilityModel,
             grid_step=grid_step,
             min_component=10,
+            normalization_method="ordinal",
         )
 
 
 class L1VsL2RankStrategy(GenericRankStrategy):
     """
-    Strategy comparing L1 distance (Sum) against L2 distance (Root Sum Squared).
+    Strategy comparing L1 distance (Sum) against
+    L2 distance (Root Sum Squared).
     """
 
     def __init__(self, grid_step: int = None):
@@ -59,7 +60,8 @@ class L1VsL2RankStrategy(GenericRankStrategy):
 
 class L2VsLeontiefRankStrategy(GenericRankStrategy):
     """
-    Strategy comparing L2 distance (Root Sum Squared) against Leontief ratio (Ratio).
+    Strategy comparing L2 distance (Root Sum Squared)
+    against Leontief ratio (Ratio).
     """
 
     def __init__(self, grid_step: int = None):
@@ -71,12 +73,14 @@ class L2VsLeontiefRankStrategy(GenericRankStrategy):
             utility_model_b_class=LeontiefUtilityModel,
             grid_step=grid_step,
             min_component=10,
+            normalization_method="ordinal",
         )
 
 
 class LeontiefVsAntiLeontiefRankStrategy(GenericRankStrategy):
     """
-    Strategy comparing Leontief (min ratio) against Anti-Leontief (max ratio aversion).
+    Strategy comparing Leontief (min ratio) against
+    Anti-Leontief (max ratio aversion).
     """
 
     def __init__(self, grid_step: int = None):
@@ -85,12 +89,14 @@ class LeontiefVsAntiLeontiefRankStrategy(GenericRankStrategy):
             utility_model_b_class=AntiLeontiefUtilityModel,
             grid_step=grid_step,
             min_component=10,
+            normalization_method="ordinal",
         )
 
 
 class LeontiefVsKLRankStrategy(GenericRankStrategy):
     """
-    Strategy comparing Leontief (min ratio) against Kullback-Leibler (information divergence).
+    Strategy comparing Leontief (min ratio) against
+    Kullback-Leibler (information divergence).
     """
 
     def __init__(self, grid_step: int = None):
@@ -99,12 +105,14 @@ class LeontiefVsKLRankStrategy(GenericRankStrategy):
             utility_model_b_class=KLUtilityModel,
             grid_step=grid_step,
             min_component=10,
+            normalization_method="ordinal",
         )
 
 
 class KLVsAntiLeontiefRankStrategy(GenericRankStrategy):
     """
-    Strategy comparing Kullback-Leibler (information divergence) against Anti-Leontief (max ratio aversion).
+    Strategy comparing Kullback-Leibler (information divergence)
+    against Anti-Leontief (max ratio aversion).
     """
 
     def __init__(self, grid_step: int = None):
@@ -113,4 +121,5 @@ class KLVsAntiLeontiefRankStrategy(GenericRankStrategy):
             utility_model_b_class=AntiLeontiefUtilityModel,
             grid_step=grid_step,
             min_component=10,
+            normalization_method="ordinal",
         )
