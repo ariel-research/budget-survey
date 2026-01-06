@@ -53,6 +53,7 @@ class L1VsL2RankStrategy(GenericRankStrategy):
             utility_model_b_class=L2UtilityModel,
             grid_step=grid_step,
             min_component=0,
+            normalization_method="ordinal",
         )
 
 

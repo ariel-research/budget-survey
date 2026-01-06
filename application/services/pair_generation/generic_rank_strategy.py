@@ -10,6 +10,7 @@ import numpy as np
 
 from application.services.algorithms.math_utils import (
     get_cached_simplex_pool,
+    min_max_scale,
     rankdata,
 )
 from application.services.algorithms.utility_model_base import UtilityModel
@@ -40,6 +41,7 @@ class GenericRankStrategy(PairGenerationStrategy):
         utility_model_b_class: Type[UtilityModel],
         grid_step: int = None,
         min_component: int = 10,
+        normalization_method: str = "ordinal",
     ):
         """
         Initialize the strategy with two utility model classes.
@@ -50,11 +52,20 @@ class GenericRankStrategy(PairGenerationStrategy):
             grid_step: Optional step size for grid generation. Defaults to DEFAULT_GRID_STEP.
             min_component: Minimum value required for each vector component (default 0).
                            Example: If 10, no category can have less than 10% budget.
+            normalization_method: Method to normalize scores.
+                                 Either 'ordinal' (default) or 'linear'.
         """
+        if normalization_method not in ["ordinal", "linear"]:
+            raise ValueError(
+                f"Invalid normalization_method: {normalization_method}. "
+                "Must be 'ordinal' or 'linear'."
+            )
+
         self.utility_model_a = utility_model_a_class()
         self.utility_model_b = utility_model_b_class()
         self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
         self.min_component = min_component
+        self.normalization_method = normalization_method
 
     def generate_vector_pool(
         self, size: int, vector_size: int, min_val_override: int = None
@@ -447,8 +458,8 @@ class GenericRankStrategy(PairGenerationStrategy):
         self, scores_a: np.ndarray, scores_b: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Convert raw utility scores into normalized ranks (0.0 to 1.0).
-        Higher rank indicates better match (closer to 1.0).
+        Convert raw utility scores into normalized values (0.0 to 1.0).
+        Higher values indicate a better match (closer to 1.0).
 
         Args:
             scores_a: Raw scores from utility model A.
@@ -456,40 +467,56 @@ class GenericRankStrategy(PairGenerationStrategy):
 
         Returns:
             Tuple of (normalized_ranks_a, normalized_ranks_b)
+        """
+        if self.normalization_method == "ordinal":
+            return self._ordinal_normalization(scores_a, scores_b)
+        elif self.normalization_method == "linear":
+            return self._linear_normalization(scores_a, scores_b)
+
+        raise ValueError(
+            f"Unsupported normalization method: {self.normalization_method}"
+        )
+
+    def _ordinal_normalization(
+        self, scores_a: np.ndarray, scores_b: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Percentile-based ranking (0.0 to 1.0).
+        Maps scores to their relative rank in the distribution.
 
         Example:
-            Input (scores_a): [10, 20, 30] (N=3)
-
-            Step 1 - Ordinal Rank (Smallest to Largest):
-                10 -> Rank 1
-                20 -> Rank 2
-                30 -> Rank 3
-
-            Step 2 - Normalization Formula: (Rank - 1) / (N - 1)
-                Item 1: (1 - 1) / 2 = 0.0
-                Item 2: (2 - 1) / 2 = 0.5
-                Item 3: (3 - 1) / 2 = 1.0
-
-            Output: [0.0, 0.5, 1.0]
+            Scores: [10, 50, 20]
+            Ranks:  [1, 3, 2]
+            Norm:   [(1-1)/2, (3-1)/2, (2-1)/2] -> [0.0, 1.0, 0.5]
         """
         n = len(scores_a)
         if n <= 1:
             # If only 0 or 1 item, rank is max (1.0)
             return np.ones(n), np.ones(n)
 
-        # rankdata returns 1-based ranks (lowest score = 1, highest score = N)
-        # Since utility models guarantee Higher Score = Better Match,
-        # we can directly use rankdata to get ordinal ranks.
+        # rankdata returns 1-based ranks
         raw_ranks_a = rankdata(scores_a)
         raw_ranks_b = rankdata(scores_b)
 
-        # Normalize to 0-1 range: (rank - 1) / (N - 1)
-        # Lowest rank (1) -> 0.0
-        # Highest rank (N) -> 1.0
-        norm_ranks_a = (raw_ranks_a - 1) / (n - 1)
-        norm_ranks_b = (raw_ranks_b - 1) / (n - 1)
+        return (raw_ranks_a - 1) / (n - 1), (raw_ranks_b - 1) / (n - 1)
 
-        return norm_ranks_a, norm_ranks_b
+    def _linear_normalization(
+        self, scores_a: np.ndarray, scores_b: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Min-Max scaling (0.0 to 1.0).
+        Linearly scales scores between the observed minimum and maximum.
+
+        Example:
+            Scores: [10, 50, 20]
+            Min/Max: 10, 50
+            Norm:   [(10-10)/40, (50-10)/40, (20-10)/40] -> [0.0, 1.0, 0.25]
+        """
+        n = len(scores_a)
+        if n <= 1:
+            return np.ones(n), np.ones(n)
+
+        return min_max_scale(scores_a), min_max_scale(scores_b)
 
     def get_strategy_name(self) -> str:
         """

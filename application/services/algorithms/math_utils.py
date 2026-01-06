@@ -129,3 +129,26 @@ def rankdata(a: np.ndarray, method: str = "average") -> np.ndarray:
     else:
         # Default ordinal ranking
         return inv.astype(float) + 1
+
+
+def min_max_scale(a: np.ndarray) -> np.ndarray:
+    """
+    Perform Min-Max scaling on an array to the [0, 1] range.
+
+    Args:
+        a: Array of values to scale.
+
+    Returns:
+        Scaled array. If all values are identical, returns ones.
+
+    Example:
+        >>> min_max_scale([10, 50, 20])
+        array([0.  , 1.  , 0.25])
+    """
+    arr = np.asarray(a)
+    s_min, s_max = np.min(arr), np.max(arr)
+
+    if s_max == s_min:
+        return np.ones(arr.shape)
+
+    return (arr - s_min) / (s_max - s_min)
