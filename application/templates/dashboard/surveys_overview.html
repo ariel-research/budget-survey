@@ -116,8 +116,11 @@
             <div class="survey-card">
                 <div class="survey-header">
                     <span class="survey-number">#{{ survey.id }}</span>
-                    <span class="strategy-badge" data-strategy="{{ survey.strategy_name }}">
-                        {{ survey.strategy_name }}
+                    <span class="strategy-badge" 
+                          data-strategy="{{ survey.strategy_name }}" 
+                          style="background-color:{{ survey.strategy_name | strategy_color }}"
+                          title="{{ survey.strategy_name | replace('_', ' ') | title }}">
+                        {{ survey.strategy_name | replace('_', ' ') | title }}
                     </span>
                 </div>
                 

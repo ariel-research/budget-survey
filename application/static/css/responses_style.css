@@ -199,44 +199,12 @@
    font-weight: 600;
    letter-spacing: 0.5px;
    display: inline-block;
+   max-width: 180px;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   vertical-align: middle;
    background: var(--color-secondary);
-}
-
-.strategy-badge[data-strategy="l1_vs_leontief_comparison"] { 
-   background: var(--color-optimization-metrics);
-}
-.strategy-badge[data-strategy="star_shaped_preference_test"] { 
-   background: var(--color-weighted-average-vector);
-}
-.strategy-badge[data-strategy="star_shaped_preference_test_rounded"] { 
-   background: var(--color-rounded-weighted-average-vector);
-}
-.strategy-badge[data-strategy="l1_vs_l2_comparison"] { 
-   background: var(--color-root-sum-squared-sum);
-}
-.strategy-badge[data-strategy="l2_vs_leontief_comparison"] { 
-   background: var(--color-root-sum-squared-ratio);
-}
-.strategy-badge[data-strategy="peak_linearity_test"] { 
-   background: var(--color-extreme-vectors);
-}
-.strategy-badge[data-strategy="component_symmetry_test"] { 
-   background: var(--color-cyclic-shift);
-}
-.strategy-badge[data-strategy="sign_symmetry_test"] { 
-   background: var(--color-linear-symmetry);
-}
-.strategy-badge[data-strategy="asymmetric_loss_distribution"] { 
-  background: var(--color-asymmetric-loss-distribution);
-}
-.strategy-badge[data-strategy="preference_ranking_survey"] { 
-  background: var(--color-preference-ranking-survey);
-}
-.strategy-badge[data-strategy="biennial_budget_preference"] { 
-   background: var(--color-biennial-budget-preference);
- }
-.strategy-badge[data-strategy="multi_dimensional_single_peaked_test"] {
-   background: var(--color-multi-dimensional-single-peaked);
 }
 
 /* ==========================================================================
