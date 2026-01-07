@@ -49,6 +49,7 @@ cd budget-survey
 
 ### 🛠 For Developers
 - [Features](#features)
+  - [Dynamic Strategy Badge System](#dynamic-strategy-badge-system)
 - [Database](#database)
 - [Docker Guide](#docker-guide)
 - [Testing](#testing)
@@ -728,6 +729,20 @@ The application provides a detailed matrix view showing strategy-specific perfor
 
 - **Data Displayed**: Performance metrics for each user-survey combination, with "-" indicating no participation
 
+### 🎨 Dynamic Strategy Badge System
+
+The application features an automated, maintenance-free system for assigning consistent colors to survey strategy badges.
+
+- **Automatic Coloring**: New strategies added to the database automatically receive a unique, deterministic color based on their name hash. No manual CSS updates are required.
+- **Algorithm**: Uses MD5 hashing with a prime multiplier to generate a consistent HSL Hue (0-360), with fixed Saturation (65%) and Lightness (40%) to ensure WCAG accessibility compliance against white text.
+- **Smart Formatting**: Raw database keys (e.g., `l1_vs_leontief_comparison`) are automatically formatted into human-readable titles (e.g., "L1 Vs Leontief Comparison") in the UI.
+- **Layout Safety**: Badges are CSS-truncated to a single line with an ellipsis (`...`) to prevent grid breakage, while a native tooltip provides the full text on hover.
+
+**Implementation Details**:
+- **Backend**: `strategy_color` Jinja2 filter in `app.py`.
+- **Frontend**: Inline styles in `surveys_overview.html` and `detail.html`.
+- **Data Preservation**: Semantic `data-strategy` attributes are preserved in the DOM for automated testing reliability.
+
 ## Database
 
 The application uses a MySQL database with multilingual support. Here's the schema:
@@ -1222,11 +1237,9 @@ VALUES (
 
 **Security Note**: Only these basic HTML tags are supported. Any other HTML/JavaScript content will be automatically escaped for security.
 
-### Changing Strategy Names and Colors
+### Changing Strategy Names
 
-To change a strategy's name or color, you'll need to update both code and database references.
-
-#### Changing a Strategy Name
+To change a strategy's name, you'll need to update both code and database references.
 
 1. **Update the Strategy Class**:
    - Open the strategy file in `application/services/pair_generation/` (e.g., `optimization_metrics_vector.py`)
@@ -1258,40 +1271,6 @@ To change a strategy's name or color, you'll need to update both code and databa
      ) 
      WHERE id IN (1, 4, 6);  # List all affected survey IDs
      ```
-
-#### Changing a Strategy Color
-
-Strategy badge colors are defined in CSS:
-
-1. Open `application/static/css/dashboard_style.css`
-2. Find the Strategy Badge Colors section:
-   ```css
-   .strategy-badge[data-strategy="l1_vs_leontief_comparison"] { 
-       background: var(--color-primary);
-   }
-   ```
-3. Modify the color using predefined variables or custom colors:
-   ```css
-   /* Using predefined colors */
-   .strategy-badge[data-strategy="new_strategy_name"] { 
-       background: var(--color-purple);  /* Choose from available colors */
-   }
-   
-   /* OR using custom HEX color */
-   .strategy-badge[data-strategy="new_strategy_name"] { 
-       background: #4A5568;  /* Custom gray color */
-   }
-   ```
-
-4. Available color variables include:
-   - `--color-primary` (Blue)
-   - `--color-success` (Green)
-   - `--color-purple` (Purple)
-   - `--color-orange` (Orange)
-   - `--color-teal` (Teal)
-   - `--color-indigo` (Indigo)
-   - `--color-rose` (Rose)
-   - `--color-amber` (Amber)
 
 ### Modifying Awareness Questions
 

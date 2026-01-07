@@ -38,8 +38,11 @@
         
         {% if strategy_name %}
         <div class="strategy-container">
-            <span class="strategy-badge" data-strategy="{{ strategy_name|lower|replace(' ', '_') }}">
-                {{ strategy_name }}
+            <span class="strategy-badge" 
+                  data-strategy="{{ strategy_name|lower|replace(' ', '_') }}" 
+                  style="background-color:{{ strategy_name | strategy_color }}"
+                  title="{{ strategy_name | replace('_', ' ') | title }}">
+                {{ strategy_name | replace('_', ' ') | title }}
             </span>
         </div>
         {% endif %}

@@ -65,19 +65,7 @@
      These colors represent specific survey methodologies and must be consistent
      everywhere they appear (dashboard, responses, analysis, etc.)
      ========================================================================== */
-  --color-linear-symmetry: #EF4444;                            /* Red */
-  --color-asymmetric-loss-distribution: #D946EF;               /* Fuchsia */
-  --color-preference-ranking-survey: #E91E63;                  /* Pink */
-  --color-biennial-budget-preference: #FF7F50;                 /* Coral */
-  --color-triangle-inequality-test: #0EA5E9;                   /* Sky Blue */
-  --color-multi-dimensional-single-peaked: #BE185D;            /* Raspberry */
-  --color-optimization-metrics: #3B82F6;                       /* Blue */
-  --color-weighted-average-vector: #10B981;                    /* Green */
-  --color-rounded-weighted-average-vector: #8B5CF6;            /* Purple */
-  --color-root-sum-squared-sum: #14B8A6;                       /* Teal */
-  --color-root-sum-squared-ratio: #F43F5E;                     /* Rose */
-  --color-extreme-vectors: #6366F1;                            /* Indigo */
-  --color-cyclic-shift: #F59E0B;                               /* Amber */
+  /* Note: Strategy colors are now generated dynamically via the 'strategy_color' template filter */
 
   /* ==========================================================================
      Transitions
