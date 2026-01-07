@@ -205,6 +205,8 @@
    text-overflow: ellipsis;
    vertical-align: middle;
    background: var(--color-secondary);
+   direction: ltr;
+   text-align: left;
 }
 
 /* ==========================================================================

@@ -361,6 +361,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: middle;
+    direction: ltr;
+    text-align: left;
 }
 
 /* ==========================================================================
