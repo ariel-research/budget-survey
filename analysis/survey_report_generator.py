@@ -1,3 +1,8 @@
+"""
+DEPRECATED: This module generates PDF reports and is maintained only for backward compatibility.
+The new web-based report system uses analysis/report_service.py and application/routes/survey_responses.py.
+"""
+
 import logging
 import os
 from datetime import datetime
@@ -7,7 +12,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS, HTML
 
-from analysis.report_content_generators import (
+from analysis.legacy_pdf_support import (
     generate_detailed_user_choices,
     generate_executive_summary,
     generate_individual_analysis,

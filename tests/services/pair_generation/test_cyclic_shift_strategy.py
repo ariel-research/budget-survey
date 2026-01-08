@@ -6,6 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from analysis.logic.stats_calculators import calculate_cyclic_shift_group_consistency
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import CyclicShiftStrategy
 
@@ -547,10 +548,6 @@ def test_difference_generation_properties(strategy):
 
 def test_binary_consistency_calculation():
     """Test that binary consistency is calculated correctly."""
-    from analysis.report_content_generators import (
-        _calculate_cyclic_shift_group_consistency,
-    )
-
     # Mock choices for testing
     # Group 1: All A (consistent)
     # Group 2: Mixed AAB (inconsistent)
@@ -635,7 +632,7 @@ def test_binary_consistency_calculation():
         },
     ]
 
-    result = _calculate_cyclic_shift_group_consistency(mock_choices)
+    result = calculate_cyclic_shift_group_consistency(mock_choices)
 
     # Verify binary consistency
     assert result["group_1"] == 100.0, "Group 1 should be 100% (all A)"
@@ -649,10 +646,6 @@ def test_binary_consistency_calculation():
 
 def test_incomplete_groups_binary_consistency():
     """Test binary consistency with incomplete groups."""
-    from analysis.report_content_generators import (
-        _calculate_cyclic_shift_group_consistency,
-    )
-
     # Only 2 choices in group 1 (incomplete)
     mock_choices = [
         {
@@ -670,7 +663,7 @@ def test_incomplete_groups_binary_consistency():
         # Missing pair 3
     ]
 
-    result = _calculate_cyclic_shift_group_consistency(mock_choices)
+    result = calculate_cyclic_shift_group_consistency(mock_choices)
 
     # Incomplete group should be 0%
     assert result["group_1"] == 0.0, "Incomplete group should be 0% consistent"
