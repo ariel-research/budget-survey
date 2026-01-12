@@ -1883,6 +1883,7 @@ def render_detailed_user_choices(
     sort_order: str = "asc",
     performance_data: List[Dict] = None,
     subjects_map: Dict[int, List[str]] = None,
+    rank_keywords: Tuple[str, str] = None,
 ) -> Dict[str, str]:
     """
     Generate detailed analysis of each user's choices for each survey.
@@ -1898,6 +1899,7 @@ def render_detailed_user_choices(
         sort_order: Current sort order for table headers ('asc', 'desc').
         performance_data: List of performance data dicts.
         subjects_map: Dict mapping survey_id to list of subjects.
+        rank_keywords: Tuple of (keyword_a, keyword_b) for rank comparison strategies.
 
     Returns:
         Dict[str, str]: Dictionary containing HTML components.
@@ -1971,12 +1973,20 @@ def render_detailed_user_choices(
             ):
                 triangle_metrics = calculate_triangle_inequality_metrics(choices)
                 stats.update(triangle_metrics)
+
+            # Handle Generic Rank Comparison Logic (replaces hardcoded l1_vs_leontief)
             if (
                 choices
                 and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "l1_vs_leontief_rank_comparison"
+                and choices[0]["strategy_name"].endswith("_rank_comparison")
             ):
-                rank_metrics = calculate_rank_consistency_metrics(choices)
+                # Use provided keywords or fallback to defaults if not provided
+                kw_a = rank_keywords[0] if rank_keywords else "sum"
+                kw_b = rank_keywords[1] if rank_keywords else "ratio"
+
+                rank_metrics = calculate_rank_consistency_metrics(
+                    choices, keyword_a=kw_a, keyword_b=kw_b
+                )
                 stats.update(rank_metrics)
 
             if (
@@ -2028,7 +2038,7 @@ def render_detailed_user_choices(
     # 1. Overall statistics table (if requested)
     if show_overall_survey_table:
         overall_stats_html = generate_overall_statistics_table(
-            all_summaries, option_labels, strategy_name
+            all_summaries, option_labels, strategy_name, rank_keywords
         )
         all_components.append(overall_stats_html)
 
@@ -2694,7 +2704,10 @@ def generate_detailed_breakdown_table(
 
 
 def generate_overall_statistics_table(
-    summaries: List[Dict], option_labels: Tuple[str, str], strategy_name: str = None
+    summaries: List[Dict],
+    option_labels: Tuple[str, str],
+    strategy_name: str = None,
+    rank_keywords: Tuple[str, str] = None,
 ) -> str:
     """
     Generate overall statistics summary table across all survey responses.
@@ -2703,6 +2716,7 @@ def generate_overall_statistics_table(
         summaries: List of dictionaries containing survey summaries.
         option_labels: Labels for the two options.
         strategy_name: Name of the strategy used for the survey.
+        rank_keywords: Tuple of (keyword_a, keyword_b) for rank strategies.
 
     Returns:
         str: HTML table showing overall statistics.
@@ -2876,9 +2890,14 @@ def generate_overall_statistics_table(
         overall_table = _generate_triangle_overall_consistency_table(
             summaries, title, note
         )
-    elif strategy_name == "l1_vs_leontief_rank_comparison":
+    # Generic Rank Comparison Handling (Replaces hardcoded l1_vs_leontief)
+    elif strategy_name and strategy_name.endswith("_rank_comparison"):
+        # Use option_labels for display (human readable) if available.
+        # Fallback to generic labels if not.
+        labels = option_labels if option_labels else ("Metric A", "Metric B")
+
         overall_table = _generate_rank_overall_consistency_table(
-            summaries, title, note, option_labels
+            summaries, title, note, labels
         )
     elif strategy_name == "biennial_budget_preference":
         # Handle dynamic temporal preference strategy using three consistency breakdown tables
@@ -2950,7 +2969,7 @@ def generate_overall_statistics_table(
         </div>
         """
     elif strategy_name in ["l1_vs_l2_comparison", "l2_vs_leontief_comparison"]:
-        # Handle root sum squared strategies
+        # Handle root sum squared strategies (Legacy/Specific)
         # Calculate overall averages
         total_responses = len(summaries)
         avg_sum = (
@@ -4333,7 +4352,7 @@ def _generate_rank_overall_consistency_table(
     note: str,
     option_labels: Tuple[str, str],
 ) -> str:
-    """Generate consistency breakdown table for rank-based L1 vs Leontief strategy."""
+    """Generate consistency breakdown table for any rank-based strategy."""
     if not summaries:
         no_data_msg = get_translation("no_answers", "answers")
         return f"""
@@ -4348,28 +4367,35 @@ def _generate_rank_overall_consistency_table(
 
     for summary in summaries:
         stats = summary.get("stats", {})
-        sum_count = stats.get("sum_count")
-        ratio_count = stats.get("ratio_count")
-        sum_percent = stats.get("sum_percent")
-        ratio_percent = stats.get("ratio_percent")
+
+        # Try generic keys first (new calculator)
+        metric_a_percent = stats.get("metric_a_percent")
+        metric_b_percent = stats.get("metric_b_percent")
         consistency_percent = stats.get("consistency_percent")
 
+        # Fallback to legacy keys if generic ones are missing (old calculator/data)
+        if metric_a_percent is None:
+            metric_a_percent = stats.get("sum_percent")
+        if metric_b_percent is None:
+            metric_b_percent = stats.get("ratio_percent")
+
         if (
-            sum_count is None
-            or ratio_count is None
-            or sum_percent is None
-            or ratio_percent is None
+            metric_a_percent is None
+            or metric_b_percent is None
             or consistency_percent is None
         ):
             continue
 
-        total_choices = sum_count + ratio_count
-        if total_choices <= 0:
+        # Check if we have valid data (sum of percents should be approx 100 or at least > 0)
+        if float(metric_a_percent) + float(metric_b_percent) <= 0:
             continue
 
         level = round(float(consistency_percent), 1)
         bucket_data.setdefault(level, []).append(
-            {"sum_percent": float(sum_percent), "ratio_percent": float(ratio_percent)}
+            {
+                "metric_a_percent": float(metric_a_percent),
+                "metric_b_percent": float(metric_b_percent),
+            }
         )
 
     if not bucket_data:
@@ -4383,62 +4409,62 @@ def _generate_rank_overall_consistency_table(
 
     rows = []
     total_users = 0
-    total_sum_weighted = 0.0
-    total_ratio_weighted = 0.0
+    total_a_weighted = 0.0
+    total_b_weighted = 0.0
 
     for level in sorted(bucket_data.keys()):
         user_stats = bucket_data[level]
         num_users = len(user_stats)
         total_users += num_users
 
-        avg_sum = sum(item["sum_percent"] for item in user_stats) / num_users
-        avg_ratio = sum(item["ratio_percent"] for item in user_stats) / num_users
+        avg_a = sum(item["metric_a_percent"] for item in user_stats) / num_users
+        avg_b = sum(item["metric_b_percent"] for item in user_stats) / num_users
 
-        total_sum_weighted += avg_sum * num_users
-        total_ratio_weighted += avg_ratio * num_users
+        total_a_weighted += avg_a * num_users
+        total_b_weighted += avg_b * num_users
 
-        sum_class_attr = ' class="highlight-cell"' if avg_sum > avg_ratio else ""
-        ratio_class_attr = ' class="highlight-cell"' if avg_ratio > avg_sum else ""
+        a_class_attr = ' class="highlight-cell"' if avg_a > avg_b else ""
+        b_class_attr = ' class="highlight-cell"' if avg_b > avg_a else ""
 
         rows.append(
             f"""
             <tr>
                 <td>{level:.1f}%</td>
                 <td>{num_users}</td>
-                <td{sum_class_attr}>{avg_sum:.1f}%</td>
-                <td{ratio_class_attr}>{avg_ratio:.1f}%</td>
+                <td{a_class_attr}>{avg_a:.1f}%</td>
+                <td{b_class_attr}>{avg_b:.1f}%</td>
             </tr>
             """
         )
 
     if total_users > 0:
-        overall_sum = total_sum_weighted / total_users
-        overall_ratio = total_ratio_weighted / total_users
+        overall_a = total_a_weighted / total_users
+        overall_b = total_b_weighted / total_users
         total_label = get_translation("total", "answers")
 
-        sum_total_class = (
-            ' class="highlight-cell"' if overall_sum > overall_ratio else ""
-        )
-        ratio_total_class = (
-            ' class="highlight-cell"' if overall_ratio > overall_sum else ""
-        )
+        a_total_class = ' class="highlight-cell"' if overall_a > overall_b else ""
+        b_total_class = ' class="highlight-cell"' if overall_b > overall_a else ""
 
         rows.append(
             f"""
             <tr class="total-row">
                 <td><strong>{total_label}</strong></td>
                 <td><strong>{total_users}</strong></td>
-                <td{sum_total_class}><strong>{overall_sum:.1f}%</strong></td>
-                <td{ratio_total_class}><strong>{overall_ratio:.1f}%</strong></td>
+                <td{a_total_class}><strong>{overall_a:.1f}%</strong></td>
+                <td{b_total_class}><strong>{overall_b:.1f}%</strong></td>
             </tr>
             """
         )
 
     consistency_level_label = get_translation("consistency_level", "answers")
     num_users_label = get_translation("num_of_users", "answers")
-    sum_label = option_labels[0] if option_labels else get_translation("sum", "answers")
-    ratio_label = (
-        option_labels[1] if option_labels else get_translation("ratio", "answers")
+
+    # Use passed labels (which are translated keywords)
+    label_a = (
+        option_labels[0] if option_labels and len(option_labels) > 0 else "Metric A"
+    )
+    label_b = (
+        option_labels[1] if option_labels and len(option_labels) > 1 else "Metric B"
     )
 
     return f"""
@@ -4450,8 +4476,8 @@ def _generate_rank_overall_consistency_table(
                     <tr>
                         <th>{consistency_level_label}</th>
                         <th>{num_users_label}</th>
-                        <th>{sum_label}</th>
-                        <th>{ratio_label}</th>
+                        <th>{label_a}</th>
+                        <th>{label_b}</th>
                     </tr>
                 </thead>
                 <tbody>

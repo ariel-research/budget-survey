@@ -1,6 +1,5 @@
 """
 This module contains pure statistical and mathematical calculation functions.
-It operates on data structures (DataFrames, Lists, Dicts) and performs no I/O or HTML generation.
 """
 
 import json
@@ -1256,55 +1255,61 @@ def calculate_triangle_inequality_metrics(choices: List[Dict]) -> Dict[str, floa
     }
 
 
-def calculate_rank_consistency_metrics(choices: List[Dict]) -> Dict[str, float]:
+def calculate_rank_consistency_metrics(
+    choices: List[Dict], keyword_a: str = "sum", keyword_b: str = "ratio"
+) -> Dict[str, float]:
     """
-    Calculate per-user consistency for rank-based L1 vs Leontief strategy.
-
-    Consistency is defined as the percentage of the dominant choice type
-    (Sum vs Ratio) across all answered pairs.
+    Calculate per-user consistency.
+    Now accepts dynamic keywords (e.g., 'l1', 'leontief') to match against the DB.
     """
     if not choices:
         return {
-            "sum_count": 0,
-            "ratio_count": 0,
-            "sum_percent": 0.0,
-            "ratio_percent": 0.0,
+            "metric_a_count": 0,
+            "metric_b_count": 0,
+            "metric_a_percent": 0.0,
+            "metric_b_percent": 0.0,
             "consistency_percent": 0.0,
         }
 
-    sum_count = 0
-    ratio_count = 0
+    count_a = 0
+    count_b = 0
+
+    # Convert to string and lower case for safe matching
+    kw_a = str(keyword_a).lower()
+    kw_b = str(keyword_b).lower()
 
     for choice in choices:
         chosen_option = choice.get("user_choice")
-        option1_strategy = choice.get("option1_strategy", "") or ""
-        option2_strategy = choice.get("option2_strategy", "") or ""
+        # Get the stored strategy string (e.g., "l1" or "leontief")
+        option1_strategy = str(choice.get("option1_strategy", "")).lower()
+        option2_strategy = str(choice.get("option2_strategy", "")).lower()
 
+        # Determine which string the user actually chose
         chosen_strategy = option1_strategy if chosen_option == 1 else option2_strategy
-        chosen_lower = chosen_strategy.lower()
 
-        if "sum" in chosen_lower:
-            sum_count += 1
-        elif "ratio" in chosen_lower:
-            ratio_count += 1
+        # Simple containment check
+        if kw_a in chosen_strategy:
+            count_a += 1
+        elif kw_b in chosen_strategy:
+            count_b += 1
 
-    total = sum_count + ratio_count
+    total = count_a + count_b
     if total == 0:
         return {
-            "sum_count": 0,
-            "ratio_count": 0,
-            "sum_percent": 0.0,
-            "ratio_percent": 0.0,
+            "metric_a_count": 0,
+            "metric_b_count": 0,
+            "metric_a_percent": 0.0,
+            "metric_b_percent": 0.0,
             "consistency_percent": 0.0,
         }
 
-    sum_percent = (sum_count / total) * 100
-    ratio_percent = (ratio_count / total) * 100
+    percent_a = (count_a / total) * 100
+    percent_b = (count_b / total) * 100
 
     return {
-        "sum_count": sum_count,
-        "ratio_count": ratio_count,
-        "sum_percent": round(sum_percent, 1),
-        "ratio_percent": round(ratio_percent, 1),
-        "consistency_percent": round(max(sum_percent, ratio_percent), 1),
+        "metric_a_count": count_a,
+        "metric_b_count": count_b,
+        "metric_a_percent": round(percent_a, 1),
+        "metric_b_percent": round(percent_b, 1),
+        "consistency_percent": round(max(percent_a, percent_b), 1),
     }

@@ -15,7 +15,6 @@ from application.services.algorithms.math_utils import (
 )
 from application.services.algorithms.utility_model_base import UtilityModel
 from application.services.pair_generation.base import PairGenerationStrategy
-from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -527,12 +526,12 @@ class GenericRankStrategy(PairGenerationStrategy):
 
     def get_option_labels(self) -> Tuple[str, str]:
         """
-        Return human-readable labels for the two options being compared.
+        Return human-readable labels for the two options being compared in the 'Survey Summary' Table.
         Dynamically generated from utility model names via the translation system.
         """
         return (
-            f"{get_translation(self.utility_model_a.name, 'answers')} (Rank)",
-            f"{get_translation(self.utility_model_b.name, 'answers')} (Rank)",
+            f"{self.utility_model_a.name} (Rank)",
+            f"{self.utility_model_b.name} (Rank)",
         )
 
     def get_table_columns(self) -> Dict[str, Dict]:
@@ -542,12 +541,12 @@ class GenericRankStrategy(PairGenerationStrategy):
         """
         return {
             self.utility_model_a.name: {
-                "name": get_translation(self.utility_model_a.name, "answers"),
+                "name": self.utility_model_a.name,
                 "type": "percentage",
                 "highlight": True,
             },
             self.utility_model_b.name: {
-                "name": get_translation(self.utility_model_b.name, "answers"),
+                "name": self.utility_model_b.name,
                 "type": "percentage",
                 "highlight": True,
             },
@@ -555,24 +554,6 @@ class GenericRankStrategy(PairGenerationStrategy):
 
     def _get_metric_name(self, utility_model_identifier: str) -> str:
         """
-        Get the display name for a utility model.
-        Matches by name first, then falls back to utility_type.
+        Get the internal identifier for a utility model to be stored in the DB.
         """
-        if utility_model_identifier == self.utility_model_a.name:
-            label = get_translation(self.utility_model_a.name, "answers")
-            return f"{label} Optimized Vector"
-
-        if utility_model_identifier == self.utility_model_b.name:
-            label = get_translation(self.utility_model_b.name, "answers")
-            return f"{label} Optimized Vector"
-
-        # Fallback to type check
-        if utility_model_identifier == self.utility_model_a.utility_type:
-            label = get_translation(self.utility_model_a.name, "answers")
-            return f"{label} Optimized Vector"
-
-        if utility_model_identifier == self.utility_model_b.utility_type:
-            label = get_translation(self.utility_model_b.name, "answers")
-            return f"{label} Optimized Vector"
-
         return utility_model_identifier

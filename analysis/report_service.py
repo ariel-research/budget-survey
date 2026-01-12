@@ -77,7 +77,20 @@ def generate_detailed_user_choices(
             except Exception as e:
                 logger.warning(f"Failed to fetch subjects for survey {survey_id}: {e}")
 
-    # 3. Call renderer with fetched data
+    # 3. Determine Rank Keywords if applicable
+    rank_keywords = None
+    if strategy_name and strategy_name.endswith("_rank_comparison"):
+        try:
+            # Strategy name format: "l1_vs_leontief_rank_comparison"
+            # We want: "l1", "leontief"
+            base = strategy_name.replace("_rank_comparison", "")
+            parts = base.split("_vs_")
+            if len(parts) == 2:
+                rank_keywords = (parts[0], parts[1])
+        except Exception as e:
+            logger.warning(f"Error parsing strategy name {strategy_name}: {e}")
+
+    # 4. Call renderer with fetched data
     return render_detailed_user_choices(
         user_choices=user_choices,
         option_labels=option_labels,
@@ -89,4 +102,5 @@ def generate_detailed_user_choices(
         sort_order=sort_order,
         performance_data=performance_data,
         subjects_map=subjects_map,
+        rank_keywords=rank_keywords,
     )
