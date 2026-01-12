@@ -1436,7 +1436,7 @@ def get_user_survey_performance_data(
                 strategy_columns = strategy_info.get("strategy_columns", {})
 
                 # Calculate basic choice statistics
-                from analysis.report_content_generators import (
+                from analysis.logic.stats_calculators import (
                     calculate_choice_statistics,
                 )
 
@@ -1447,13 +1447,13 @@ def get_user_survey_performance_data(
 
                 if "consistency" in strategy_columns:
                     # Handle peak_linearity_test strategy
-                    from analysis.report_content_generators import (
-                        _extract_extreme_vector_preferences,
+                    from analysis.logic.stats_calculators import (
+                        extract_extreme_vector_preferences,
                     )
 
                     try:
                         _, processed_pairs, _, consistency_info, _ = (
-                            _extract_extreme_vector_preferences(choices)
+                            extract_extreme_vector_preferences(choices)
                         )
                         if processed_pairs > 0 and consistency_info:
                             total_matches = sum(
@@ -1478,20 +1478,20 @@ def get_user_survey_performance_data(
                     # Handle component_symmetry_test and sign_symmetry_test strategies
                     try:
                         if strategy_name == "component_symmetry_test":
-                            from analysis.report_content_generators import (
-                                _calculate_cyclic_shift_group_consistency,
+                            from analysis.logic.stats_calculators import (
+                                calculate_cyclic_shift_group_consistency,
                             )
 
-                            consistencies = _calculate_cyclic_shift_group_consistency(
+                            consistencies = calculate_cyclic_shift_group_consistency(
                                 choices
                             )
                         elif strategy_name == "sign_symmetry_test":
-                            from analysis.report_content_generators import (
-                                _calculate_linear_symmetry_group_consistency,
+                            from analysis.logic.stats_calculators import (
+                                calculate_linear_symmetry_group_consistency,
                             )
 
-                            consistencies = (
-                                _calculate_linear_symmetry_group_consistency(choices)
+                            consistencies = calculate_linear_symmetry_group_consistency(
+                                choices
                             )
                         else:
                             consistencies = {"overall": 0.0}

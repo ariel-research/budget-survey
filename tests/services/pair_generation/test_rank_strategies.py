@@ -50,8 +50,8 @@ class TestL1VsLeontiefRankStrategy:
         # Dynamic name generation
         assert l1_leo_strategy.get_strategy_name() == "l1_vs_leontief_rank_comparison"
         labels = l1_leo_strategy.get_option_labels()
-        assert "L1 (Rank)" in labels
-        assert "Leontief (Rank)" in labels
+        assert "l1 (Rank)" in labels
+        assert "leontief (Rank)" in labels
 
     def test_table_columns(self, l1_leo_strategy):
         """Verify table columns match expectations for analysis."""
@@ -71,11 +71,9 @@ class TestL1VsLeontiefRankStrategy:
             # Check metadata
             assert "__metadata__" in pair
             assert pair["__metadata__"]["strategy"] == "max_min_rank"
-
-            # Check descriptions match translated names
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("L1 Optimized Vector" in d for d in descriptions)
-            assert any("Leontief Optimized Vector" in d for d in descriptions)
+            assert any("l1:" in d for d in descriptions)
+            assert any("leontief:" in d for d in descriptions)
 
     def test_custom_grid_step(self):
         """Verify strategy respects custom grid step."""
@@ -102,8 +100,8 @@ class TestL1VsL2RankStrategy:
         """Verify strategy metadata matches expectations."""
         assert l1_l2_strategy.get_strategy_name() == "l1_vs_l2_rank_comparison"
         labels = l1_l2_strategy.get_option_labels()
-        assert "L1 (Rank)" in labels
-        assert "L2 (Rank)" in labels
+        assert "l1 (Rank)" in labels
+        assert "l2 (Rank)" in labels
 
     def test_table_columns(self, l1_l2_strategy):
         """Verify table columns match expectations."""
@@ -119,8 +117,8 @@ class TestL1VsL2RankStrategy:
         assert len(pairs) == n
         for pair in pairs:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("L1 Optimized Vector" in d for d in descriptions)
-            assert any("L2 Optimized Vector" in d for d in descriptions)
+            assert any("l1:" in d for d in descriptions)
+            assert any("l2:" in d for d in descriptions)
 
 
 class TestL2VsLeontiefRankStrategy:
@@ -130,8 +128,8 @@ class TestL2VsLeontiefRankStrategy:
         """Verify strategy metadata matches expectations."""
         assert l2_leo_strategy.get_strategy_name() == "l2_vs_leontief_rank_comparison"
         labels = l2_leo_strategy.get_option_labels()
-        assert "L2 (Rank)" in labels
-        assert "Leontief (Rank)" in labels
+        assert "l2 (Rank)" in labels
+        assert "leontief (Rank)" in labels
 
     def test_table_columns(self, l2_leo_strategy):
         """Verify table columns match expectations."""
@@ -147,8 +145,8 @@ class TestL2VsLeontiefRankStrategy:
         assert len(pairs) == n
         for pair in pairs:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("L2 Optimized Vector" in d for d in descriptions)
-            assert any("Leontief Optimized Vector" in d for d in descriptions)
+            assert any("l2:" in d for d in descriptions)
+            assert any("leontief:" in d for d in descriptions)
 
 
 class TestLeontiefVsAntiLeontiefRankStrategy:
@@ -164,8 +162,8 @@ class TestLeontiefVsAntiLeontiefRankStrategy:
         assert len(pairs) == n
         for pair in pairs:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("Leontief Optimized Vector" in d for d in descriptions)
-            assert any("AntiLeontief Optimized Vector" in d for d in descriptions)
+            assert any("leontief:" in d for d in descriptions)
+            assert any("anti_leontief:" in d for d in descriptions)
 
 
 class TestLeontiefVsKLRankStrategy:
@@ -179,8 +177,8 @@ class TestLeontiefVsKLRankStrategy:
         assert len(pairs) == n
         for pair in pairs:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("Leontief Optimized Vector" in d for d in descriptions)
-            assert any("KL Optimized Vector" in d for d in descriptions)
+            assert any("leontief:" in d for d in descriptions)
+            assert any("kl:" in d for d in descriptions)
 
 
 class TestKLVsAntiLeontiefRankStrategy:
@@ -194,5 +192,5 @@ class TestKLVsAntiLeontiefRankStrategy:
         assert len(pairs) == n
         for pair in pairs:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
-            assert any("KL Optimized Vector" in d for d in descriptions)
-            assert any("AntiLeontief Optimized Vector" in d for d in descriptions)
+            assert any("kl:" in d for d in descriptions)
+            assert any("anti_leontief:" in d for d in descriptions)

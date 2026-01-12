@@ -127,7 +127,7 @@ class SurveyService:
             Returns:
                 Tuple of (r, q_balance) where both are valid and different from user_vector
             """
-            max_attempts = 200
+            max_attempts = 1000
 
             for attempt in range(max_attempts):
                 # Generate random vector

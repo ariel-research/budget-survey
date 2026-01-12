@@ -6,6 +6,10 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from analysis.logic.stats_calculators import (
+    calculate_linear_symmetry_group_consistency,
+    parse_linear_pattern_strategy,
+)
 from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import LinearSymmetryStrategy
 
@@ -681,11 +685,7 @@ def test_linear_symmetry_consistency_calculation_mathematical_correctness():
         },
     ]
 
-    from analysis.report_content_generators import (
-        _calculate_linear_symmetry_group_consistency,
-    )
-
-    result = _calculate_linear_symmetry_group_consistency(choices_perfect_symmetry)
+    result = calculate_linear_symmetry_group_consistency(choices_perfect_symmetry)
 
     # Validate perfect symmetry results
     assert (
@@ -728,7 +728,7 @@ def test_linear_symmetry_consistency_calculation_mathematical_correctness():
         },
     ]
 
-    result = _calculate_linear_symmetry_group_consistency(choices_no_symmetry)
+    result = calculate_linear_symmetry_group_consistency(choices_no_symmetry)
 
     # Validate no symmetry results
     assert (
@@ -769,7 +769,7 @@ def test_linear_symmetry_consistency_calculation_mathematical_correctness():
         },
     ]
 
-    result = _calculate_linear_symmetry_group_consistency(choices_mixed_symmetry)
+    result = calculate_linear_symmetry_group_consistency(choices_mixed_symmetry)
 
     # Validate mixed symmetry results
     assert (
@@ -785,10 +785,8 @@ def test_parse_linear_pattern_strategy():
     """
     Test the helper function that parses linear pattern strategy strings.
     """
-    from analysis.report_content_generators import _parse_linear_pattern_strategy
-
     # Test Case 1: Valid positive pattern
-    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+    group_num, sign, vector_choice = parse_linear_pattern_strategy(
         "Linear Pattern + (v1)", "Linear Pattern + (w1)", 1  # User chose option 1 (v)
     )
     assert group_num == 1
@@ -796,7 +794,7 @@ def test_parse_linear_pattern_strategy():
     assert vector_choice == 1  # v=1
 
     # Test Case 2: Valid negative pattern with w choice
-    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+    group_num, sign, vector_choice = parse_linear_pattern_strategy(
         "Linear Pattern - (v3)", "Linear Pattern - (w3)", 2  # User chose option 2 (w)
     )
     assert group_num == 3
@@ -804,7 +802,7 @@ def test_parse_linear_pattern_strategy():
     assert vector_choice == 2  # w=2
 
     # Test Case 3: Invalid pattern (mismatched groups)
-    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+    group_num, sign, vector_choice = parse_linear_pattern_strategy(
         "Linear Pattern + (v1)", "Linear Pattern + (w2)", 1  # Different group!
     )
     assert group_num is None
@@ -812,7 +810,7 @@ def test_parse_linear_pattern_strategy():
     assert vector_choice is None
 
     # Test Case 4: Invalid pattern (malformed string)
-    group_num, sign, vector_choice = _parse_linear_pattern_strategy(
+    group_num, sign, vector_choice = parse_linear_pattern_strategy(
         "Invalid Pattern", "Another Invalid Pattern", 1
     )
     assert group_num is None
@@ -824,12 +822,8 @@ def test_linear_symmetry_edge_cases():
     """
     Test edge cases for linear symmetry consistency calculation.
     """
-    from analysis.report_content_generators import (
-        _calculate_linear_symmetry_group_consistency,
-    )
-
     # Test Case 1: Empty choices
-    result = _calculate_linear_symmetry_group_consistency([])
+    result = calculate_linear_symmetry_group_consistency([])
     assert result["overall"] == 0.0
 
     # Test Case 2: Incomplete group (only positive direction)
@@ -843,7 +837,7 @@ def test_linear_symmetry_edge_cases():
         # Missing negative direction pair for group 1
     ]
 
-    result = _calculate_linear_symmetry_group_consistency(incomplete_choices)
+    result = calculate_linear_symmetry_group_consistency(incomplete_choices)
     assert result["group_1"] == 0.0  # Incomplete group should be 0%
     assert result["overall"] == 0.0
 
@@ -857,5 +851,5 @@ def test_linear_symmetry_edge_cases():
         },
     ]
 
-    result = _calculate_linear_symmetry_group_consistency(malformed_choices)
+    result = calculate_linear_symmetry_group_consistency(malformed_choices)
     assert result["overall"] == 0.0

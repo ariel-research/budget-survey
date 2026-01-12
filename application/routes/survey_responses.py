@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from flask import Blueprint, Response, current_app, render_template, request
 
-from analysis.report_content_generators import (
+from analysis.report_service import (
     generate_aggregated_percentile_breakdown,
     generate_detailed_user_choices,
     generate_user_survey_matrix_html,

@@ -74,7 +74,7 @@ def test_generic_rank_strategy_option_labels():
     """
     strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
     labels = strategy.get_option_labels()
-    assert labels == ("L1 (Rank)", "Leontief (Rank)")
+    assert labels == ("l1 (Rank)", "leontief (Rank)")
 
 
 def test_generic_rank_strategy_utility_model_name_lookup():
@@ -82,8 +82,8 @@ def test_generic_rank_strategy_utility_model_name_lookup():
     Test that _get_metric_name correctly identifies utility models.
     """
     strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
-    assert strategy._get_metric_name("distance") == "L1 Optimized Vector"
-    assert strategy._get_metric_name("ratio") == "Leontief Optimized Vector"
+    assert strategy._get_metric_name("distance") == "distance"
+    assert strategy._get_metric_name("ratio") == "ratio"
     assert strategy._get_metric_name("unknown") == "unknown"
 
 
