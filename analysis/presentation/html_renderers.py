@@ -1,6 +1,6 @@
 """
 This module contains pure HTML rendering logic for the new web-based report system.
-It accepts data as arguments and returns HTML strings. It does NOT perform database queries.
+It accepts data as arguments and returns HTML strings.
 """
 
 import html
