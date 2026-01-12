@@ -7,10 +7,7 @@ import html
 import json
 import logging
 import re
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-
-import pandas as pd
 
 from analysis.logic.stats_calculators import (
     calculate_choice_statistics,
@@ -1920,8 +1917,6 @@ def render_detailed_user_choices(
 
     # Group choices by user and survey
     grouped_choices = {}
-    all_summaries = []
-
     for choice in user_choices:
         user_id = choice["user_id"]
         survey_id = choice["survey_id"]
@@ -1931,99 +1926,131 @@ def render_detailed_user_choices(
             grouped_choices[user_id][survey_id] = []
         grouped_choices[user_id][survey_id].append(choice)
 
+    # Optimize performance data lookup
+    perf_map = {}
+    if performance_data:
+        for perf in performance_data:
+            perf_map[(perf["user_id"], perf["survey_id"])] = perf
+
+    all_summaries = []
+
     # Collect statistics for all surveys
     for user_id, surveys in grouped_choices.items():
         for survey_id, choices in surveys.items():
             # Get strategy for dynamic calculations
             strategy = None
+            current_strategy_name = strategy_name
+
             if choices and "strategy_name" in choices[0]:
+                current_strategy_name = choices[0]["strategy_name"]
                 try:
                     from application.services.pair_generation import StrategyRegistry
 
-                    strategy = StrategyRegistry.get_strategy(
-                        choices[0]["strategy_name"]
-                    )
+                    strategy = StrategyRegistry.get_strategy(current_strategy_name)
                 except Exception:
                     pass
 
+            # 1. Calculate Basic Stats
             stats = calculate_choice_statistics(choices, strategy=strategy)
 
-            # For temporal preference, calculate specific metrics
-            if (
-                choices
-                and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "biennial_budget_preference"
-            ):
+            # 2. Merge Performance Data (DB Cache) - BEFORE specific calculations
+            # This ensures DB data provides defaults, but Live calculations can overwrite them
+            perf_key = (user_id, survey_id)
+            if perf_key in perf_map and perf_map[perf_key].get("strategy_metrics"):
+                stats.update(perf_map[perf_key]["strategy_metrics"])
+
+            # 3. Run Live Strategy-Specific Metric Calculations (The Fix)
+
+            # Temporal Preference
+            if current_strategy_name == "biennial_budget_preference":
                 temporal_metrics = calculate_temporal_preference_metrics(choices)
                 stats.update(temporal_metrics)
-            # For dynamic temporal preference, calculate specific metrics
-            if (
-                choices
-                and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "biennial_budget_preference"
-            ):
                 dynamic_temporal_metrics = calculate_dynamic_temporal_metrics(choices)
                 stats.update(dynamic_temporal_metrics)
 
-            # Add triangle inequality metrics if applicable
-            if (
-                choices
-                and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"] == "triangle_inequality_test"
-            ):
+            # Triangle Inequality
+            elif current_strategy_name == "triangle_inequality_test":
                 triangle_metrics = calculate_triangle_inequality_metrics(choices)
                 stats.update(triangle_metrics)
 
-            # Handle Generic Rank Comparison Logic (replaces hardcoded l1_vs_leontief)
-            if (
-                choices
-                and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"].endswith("_rank_comparison")
+            # Generic Rank Comparison
+            elif current_strategy_name and current_strategy_name.endswith(
+                "_rank_comparison"
             ):
-                # Use provided keywords or fallback to defaults if not provided
                 kw_a = rank_keywords[0] if rank_keywords else "sum"
                 kw_b = rank_keywords[1] if rank_keywords else "ratio"
-
                 rank_metrics = calculate_rank_consistency_metrics(
                     choices, keyword_a=kw_a, keyword_b=kw_b
                 )
                 stats.update(rank_metrics)
 
-            if (
-                choices
-                and "strategy_name" in choices[0]
-                and choices[0]["strategy_name"]
-                == "multi_dimensional_single_peaked_test"
-            ):
+            # Multi-Dimensional Single Peaked
+            elif current_strategy_name == "multi_dimensional_single_peaked_test":
                 single_peaked_metrics = calculate_single_peaked_metrics(choices)
                 stats.update(single_peaked_metrics)
 
-            # Get strategy-specific metrics for enhanced stats
-            if performance_data:
-                user_survey_perf = None
-                for perf in performance_data:
-                    if perf["user_id"] == user_id and perf["survey_id"] == survey_id:
-                        user_survey_perf = perf
-                        break
+            # Peak Linearity Test (Extreme Vectors)
+            elif current_strategy_name == "peak_linearity_test":
+                _, processed_pairs, _, consistency_info, _ = (
+                    extract_extreme_vector_preferences(choices)
+                )
+                total_matches = sum(matches for matches, total, _ in consistency_info)
+                total_pairs = sum(total for _, total, _ in consistency_info)
+                overall_consistency = (
+                    int(round(100 * total_matches / total_pairs))
+                    if total_pairs > 0
+                    else 0
+                )
 
-                if user_survey_perf and user_survey_perf.get("strategy_metrics"):
-                    # Merge strategy-specific metrics into basic stats
-                    stats.update(user_survey_perf["strategy_metrics"])
+                analyzer = TransitivityAnalyzer()
+                transitivity_report = analyzer.get_full_transitivity_report(choices)
 
-            # Add timestamp from the first choice (should be same for response)
+                stats.update(
+                    {
+                        "consistency": overall_consistency,
+                        "transitivity_rate": transitivity_report.get(
+                            "transitivity_rate", 0.0
+                        ),
+                        "order_consistency": transitivity_report.get(
+                            "order_stability_score", 0.0
+                        ),
+                    }
+                )
+
+            # Sign Symmetry Test (Linear Symmetry)
+            elif current_strategy_name == "sign_symmetry_test":
+                consistencies = calculate_linear_symmetry_group_consistency(choices)
+                stats["linear_consistency"] = consistencies.get("overall", 0.0)
+
+            # Component Symmetry Test (Cyclic Shift)
+            elif current_strategy_name == "component_symmetry_test":
+                consistencies = calculate_cyclic_shift_group_consistency(choices)
+                stats["group_consistency"] = consistencies.get("overall", 0.0)
+
+            # Preference Ranking Survey
+            elif current_strategy_name == "preference_ranking_survey":
+                if len(choices) == 12:
+                    deduced_data = deduce_rankings(choices)
+                    if deduced_data:
+                        final_score = calculate_final_consistency_score(deduced_data)
+                        # Convert 0-3 score to percentage
+                        stats["consistency"] = (final_score / 3) * 100
+                    else:
+                        stats["consistency"] = 0.0
+                else:
+                    stats["consistency"] = 0.0
+
+            # Add metadata
             response_created_at = choices[0].get("response_created_at")
             summary = {
                 "user_id": user_id,
                 "survey_id": survey_id,
                 "stats": stats,
                 "response_created_at": response_created_at,
-                "choices": choices,  # Store choices for all strategies
+                "choices": choices,
             }
-            # Add strategy labels from the first choice (same for survey)
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
-
-            # Add strategy name from the first choice (same for survey)
             if choices and "strategy_name" in choices[0]:
                 summary["strategy_name"] = choices[0]["strategy_name"]
 
@@ -2035,24 +2062,23 @@ def render_detailed_user_choices(
     user_details_html = ""
     all_components = []
 
-    # 1. Overall statistics table (if requested)
+    # 1. Overall statistics table
     if show_overall_survey_table:
         overall_stats_html = generate_overall_statistics_table(
             all_summaries, option_labels, strategy_name, rank_keywords
         )
         all_components.append(overall_stats_html)
 
-    # 2. Detailed breakdown table (if requested)
+    # 2. Detailed breakdown table
     if show_detailed_breakdown_table:
         breakdown_html = generate_detailed_breakdown_table(
             all_summaries, option_labels, strategy_name, sort_by, sort_order
         )
         all_components.append(breakdown_html)
 
-    # 3. User-specific details (only if not in tables-only mode)
+    # 3. User-specific details
     if not show_tables_only:
         user_details = []
-
         for user_id, surveys in grouped_choices.items():
             user_details.append(f'<section id="user-{user_id}" class="user-choices">')
             user_details.append(
@@ -2060,43 +2086,34 @@ def render_detailed_user_choices(
             )
 
             for survey_id, choices in surveys.items():
-                # Get survey-specific strategy name if available
                 survey_strategy_name = strategy_name
                 if choices and "strategy_name" in choices[0]:
                     survey_strategy_name = choices[0]["strategy_name"]
 
-                # Check if this is the extreme vectors strategy
                 if survey_strategy_name == "peak_linearity_test":
-                    # Generate the specific summary table for this user/survey
                     extreme_table_html = _generate_extreme_vector_analysis_table(
                         choices
                     )
                     if extreme_table_html:
                         user_details.append(extreme_table_html)
 
-                # Check if this is the preference ranking survey strategy
                 if survey_strategy_name == "preference_ranking_survey":
-                    # Generate the specific consistency analysis for this user/survey
                     ranking_table_html = generate_preference_ranking_consistency_tables(
                         choices
                     )
                     if ranking_table_html:
                         user_details.append(ranking_table_html)
 
-                # Generate the standard survey choices HTML
-                # Pass the strategy_name to _generate_survey_choices_html for specialized summary
                 user_details.append(
                     _generate_survey_choices_html(
                         survey_id, choices, option_labels, survey_strategy_name
                     )
                 )
-
             user_details.append("</section>")
 
         user_details_html = "\n".join(user_details)
         all_components.append(user_details_html)
 
-    # Return structured content components for flexible positioning
     return {
         "overall_stats_html": overall_stats_html,
         "breakdown_html": breakdown_html,
@@ -2114,538 +2131,93 @@ def generate_detailed_breakdown_table(
 ) -> str:
     """
     Generate detailed breakdown tables grouped by survey.
-
-    Args:
-        summaries: List of dictionaries containing survey summaries.
-        option_labels: Default labels (fallback if survey-specific not found).
-        strategy_name: Name of the strategy used for the survey.
-        sort_by: Current sort field for table headers ('user_id', 'created_at').
-        sort_order: Current sort order for table headers ('asc', 'desc').
-
-    Returns:
-        str: HTML tables showing detailed breakdown by survey.
+    Refactored to be generic and data-driven.
     """
     if not summaries:
         return ""
 
-    # Import strategy here to avoid circular imports
     from application.services.pair_generation.base import StrategyRegistry
 
-    # Group summaries by survey_id
+    # 1. Group summaries by survey
     survey_groups = {}
     for summary in summaries:
-        survey_id = summary["survey_id"]
-        if survey_id not in survey_groups:
-            survey_groups[survey_id] = []
-        survey_groups[survey_id].append(summary)
+        survey_groups.setdefault(summary["survey_id"], []).append(summary)
 
-    # Sort survey_groups by survey_id
-    sorted_survey_ids = sorted(survey_groups.keys())
-
-    # Generate table for each survey
     tables = []
-    for survey_id in sorted_survey_ids:
+
+    for survey_id in sorted(survey_groups.keys()):
         survey_summaries = survey_groups[survey_id]
 
-        # Get strategy for this survey
-        survey_strategy_name = None
-
-        # First try to get strategy name from the first summary (preferred)
+        # 2. Determine Strategy and Columns
+        current_strategy_name = strategy_name
         if survey_summaries and "strategy_name" in survey_summaries[0]:
-            survey_strategy_name = survey_summaries[0]["strategy_name"]
-        # Fallback to provided strategy_name parameter if no specific one found
-        elif strategy_name:
-            survey_strategy_name = strategy_name
+            current_strategy_name = survey_summaries[0]["strategy_name"]
 
-        # Get column definitions from strategy
         strategy_columns = {}
-        if survey_strategy_name:
+        if current_strategy_name:
             try:
-                strategy = StrategyRegistry.get_strategy(survey_strategy_name)
+                strategy = StrategyRegistry.get_strategy(current_strategy_name)
                 strategy_columns = strategy.get_table_columns()
             except (ValueError, AttributeError) as e:
                 logger.warning(f"Error getting strategy columns: {e}")
-                # Fall back to default columns based on option labels
 
-        # Sort summaries within the survey group based on user preferences
-        if sort_by and sort_order:
-            reverse_order = sort_order.lower() == "desc"
-            if sort_by == "user_id":
-                sorted_summaries = sorted(
-                    survey_summaries, key=lambda x: x["user_id"], reverse=reverse_order
-                )
-            elif sort_by == "created_at":
-                sorted_summaries = sorted(
-                    survey_summaries,
-                    key=lambda x: x.get("response_created_at", ""),
-                    reverse=reverse_order,
-                )
-            else:
-                # Default fallback (current behavior)
-                sorted_summaries = sorted(
-                    survey_summaries,
-                    key=lambda x: x.get("response_created_at", ""),
-                    reverse=True,  # Most recent first
-                )
-        else:
-            # No sorting specified, use default (current behavior)
-            sorted_summaries = sorted(
-                survey_summaries,
-                key=lambda x: x.get("response_created_at", ""),
-                reverse=True,  # Most recent first
-            )
+        # Fallback columns if strategy didn't provide them
+        if not strategy_columns:
+            # Use option labels or defaults
+            l1 = option_labels[0] if option_labels else "Option 1"
+            l2 = option_labels[1] if len(option_labels) > 1 else "Option 2"
+            strategy_columns = {
+                "option1": {"name": l1, "type": "percentage"},
+                "option2": {"name": l2, "type": "percentage"},
+            }
 
-        # Generate table rows
+        # 3. Sort Logic
+        key_map = {"user_id": "user_id", "created_at": "response_created_at"}
+        sort_key = key_map.get(sort_by, "response_created_at")
+        reverse = (sort_order.lower() == "desc") if sort_by else True
+
+        sorted_summaries = sorted(
+            survey_summaries, key=lambda x: x.get(sort_key, "") or "", reverse=reverse
+        )
+
+        # 4. Generate Rows
         rows = []
         for summary in sorted_summaries:
             user_id = summary["user_id"]
             display_id, is_truncated = _format_user_id(user_id)
 
-            # Generate links
-            all_responses_link = f"/surveys/users/{user_id}/responses"
-            survey_response_link = f"/surveys/{survey_id}/users/{user_id}/responses"
+            # Links & Metadata
+            links = {
+                "all": f"/surveys/users/{user_id}/responses",
+                "survey": f"/surveys/{survey_id}/users/{user_id}/responses",
+            }
 
-            # Format timestamp for display
-            timestamp = ""
-            created_at = summary.get("response_created_at")
-            if created_at:
-                if isinstance(created_at, datetime):
-                    timestamp = created_at.strftime("%d-%m-%Y %H:%M")
-                else:
-                    # Attempt to handle string/other formats if necessary
-                    try:
-                        dt_obj = pd.to_datetime(created_at)
-                        timestamp = dt_obj.strftime("%d-%m-%Y %H:%M")
-                    except (ValueError, TypeError):
-                        timestamp = str(created_at)[:16]  # Fallback: truncate
+            timestamp = _format_timestamp(summary.get("response_created_at"))
+            ideal_budget = _format_ideal_budget(summary.get("choices", []))
 
-            tooltip = (
-                f'<span class="user-id-tooltip">{user_id}</span>'
-                if is_truncated
-                else ""
-            )
+            # Generic Cell Generation
+            data_cells = _generate_strategy_data_cells(summary, strategy_columns)
 
-            # Extract ideal budget if choices are available
-            ideal_budget = "N/A"
-            if "choices" in summary:
-                ideal_budget = _format_ideal_budget(summary["choices"])
-
-            # Generate data cells based on strategy columns
-            data_cells = []
-
-            # If we have strategy-specific columns
-            if strategy_columns:
-                if (
-                    "consistency" in strategy_columns
-                    and summary.get("strategy_name") == "preference_ranking_survey"
-                ) and "choices" in summary:
-                    # Handle preference_ranking_survey strategy with consistency (final score) column
-                    choices = summary["choices"]
-                    if len(choices) == 12:
-                        deduced_data = deduce_rankings(choices)
-                        if deduced_data:
-                            final_score = calculate_final_consistency_score(
-                                deduced_data
-                            )
-                            final_score_percent = (final_score / 3) * 100
-                        else:
-                            final_score_percent = 0
-                    else:
-                        final_score_percent = 0
-
-                    # Highlight if consistency is high (>= 67%, which means 2/3 or 3/3)
-                    highlight = "highlight-row" if final_score_percent >= 67 else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight}">{final_score_percent:.1f}%</td>'
-                    )
-                elif (
-                    "consistency" in strategy_columns
-                    or "transitivity_rate" in strategy_columns
-                    or "order_consistency" in strategy_columns
-                ) and "choices" in summary:
-                    # Handle peak_linearity_test strategy with consistency and transitivity columns
-                    choices = summary["choices"]
-                    _, processed_pairs, _, consistency_info, _ = (
-                        extract_extreme_vector_preferences(choices)
-                    )
-
-                    # Calculate overall consistency
-                    total_matches = sum(
-                        matches for matches, total, _ in consistency_info
-                    )
-                    total_pairs = sum(total for _, total, _ in consistency_info)
-                    overall_consistency = (
-                        int(round(100 * total_matches / total_pairs))
-                        if total_pairs > 0
-                        else 0
-                    )
-
-                    # Get transitivity metrics
-                    analyzer = TransitivityAnalyzer()
-                    transitivity_report = analyzer.get_full_transitivity_report(choices)
-                    transitivity_rate = transitivity_report.get(
-                        "transitivity_rate", 0.0
-                    )
-                    order_stability = transitivity_report.get(
-                        "order_stability_score", 0.0
-                    )
-
-                    # Handle string case for order_stability
-                    if isinstance(order_stability, str):
-                        order_stability = 0.0
-
-                    # Generate cells with highlighting
-                    highlight_consistency = (
-                        "highlight-row" if overall_consistency >= 70 else ""
-                    )
-                    highlight_transitivity = (
-                        "highlight-row" if transitivity_rate >= 75 else ""
-                    )
-                    highlight_order = "highlight-row" if order_stability >= 75 else ""
-
-                    # Add consistency column if requested
-                    if "consistency" in strategy_columns:
-                        data_cells.append(
-                            f'<td class="{highlight_consistency}">{overall_consistency}%</td>'
-                        )
-
-                    # Add transitivity rate column if requested
-                    if "transitivity_rate" in strategy_columns:
-                        data_cells.append(
-                            f'<td class="{highlight_transitivity}">{transitivity_rate:.1f}%</td>'
-                        )
-
-                    # Add order consistency column if requested
-                    if "order_consistency" in strategy_columns:
-                        data_cells.append(
-                            f'<td class="{highlight_order}">{order_stability:.1f}%</td>'
-                        )
-                elif "group_consistency" in strategy_columns and "choices" in summary:
-                    # Handle component_symmetry_test strategy with group consistency
-                    choices = summary["choices"]
-                    if summary.get("strategy_name") == "component_symmetry_test":
-                        consistencies = calculate_cyclic_shift_group_consistency(
-                            choices
-                        )
-                    elif summary.get("strategy_name") == "sign_symmetry_test":
-                        consistencies = calculate_linear_symmetry_group_consistency(
-                            choices
-                        )
-                    else:
-                        consistencies = {"overall": 0.0}
-
-                    overall_consistency = consistencies.get("overall", 0.0)
-
-                    # Highlight row if consistency is high
-                    highlight = "highlight-row" if overall_consistency >= 80 else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight}">{overall_consistency}%</td>'
-                    )
-                elif "linear_consistency" in strategy_columns and "choices" in summary:
-                    # Handle sign_symmetry_test strategy with linear consistency
-                    choices = summary["choices"]
-                    consistencies = calculate_linear_symmetry_group_consistency(choices)
-                    overall_consistency = consistencies.get("overall", 0.0)
-
-                    # Highlight row if consistency is high
-                    highlight = "highlight-row" if overall_consistency >= 80 else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight}">{overall_consistency}%</td>'
-                    )
-                elif all(
-                    f"{k}_percent" in summary["stats"] for k in strategy_columns.keys()
-                ):
-                    # Handle any GenericRankStrategy dynamically
-                    for metric_key, col_config in strategy_columns.items():
-                        percent = summary["stats"].get(f"{metric_key}_percent", 0.0)
-
-                        # Determine if this row should be highlighted
-                        # Highlight the metric with the higher percentage
-                        other_metrics = [
-                            k for k in strategy_columns.keys() if k != metric_key
-                        ]
-                        is_max = True
-                        for other in other_metrics:
-                            if summary["stats"].get(f"{other}_percent", 0.0) >= percent:
-                                is_max = False
-                                break
-
-                        highlight = "highlight-row" if is_max else ""
-                        data_cells.append(
-                            f'<td class="{highlight}">'
-                            f'{format(percent, ".1f")}%</td>'
-                        )
-                elif (
-                    len(strategy_columns) == 2
-                    and "metric_a_percent" in summary["stats"]
-                    and "metric_b_percent" in summary["stats"]
-                ):
-                    # Handle GenericRankStrategy where stats has generic keys but columns have specific names
-                    # Map generic metrics to specific columns based on order (A then B)
-
-                    # Get values
-                    percent_a = summary["stats"]["metric_a_percent"]
-                    percent_b = summary["stats"]["metric_b_percent"]
-
-                    # Determine highlighting
-                    highlight_a = "highlight-row" if percent_a >= percent_b else ""
-                    highlight_b = "highlight-row" if percent_b >= percent_a else ""
-
-                    # Append cells in order
-                    data_cells.append(
-                        f'<td class="{highlight_a}">{format(percent_a, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_b}">{format(percent_b, ".1f")}%</td>'
-                    )
-
-                elif "sum" in strategy_columns and "ratio" in strategy_columns:
-                    # Handle l1_vs_leontief_comparison strategy with sum/ratio columns
-                    sum_percent = summary["stats"]["sum_percent"]
-                    ratio_percent = summary["stats"]["ratio_percent"]
-
-                    highlight_sum = (
-                        "highlight-row" if sum_percent > ratio_percent else ""
-                    )
-                    highlight_ratio = (
-                        "highlight-row" if ratio_percent > sum_percent else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_sum}">{format(sum_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
-                    )
-                elif "rss" in strategy_columns and "sum" in strategy_columns:
-                    # Handle l1_vs_l2_comparison strategy with rss/sum columns
-                    sum_percent = summary["stats"]["sum_percent"]
-                    ratio_percent = summary["stats"]["ratio_percent"]
-
-                    # For this strategy, ratio_percent actually represents rss_percent
-                    rss_percent = 100 - sum_percent
-
-                    highlight_rss = "highlight-row" if rss_percent > sum_percent else ""
-                    highlight_sum = "highlight-row" if sum_percent > rss_percent else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight_rss}">{format(rss_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_sum}">{format(sum_percent, ".1f")}%</td>'
-                    )
-                elif "rss" in strategy_columns and "ratio" in strategy_columns:
-                    # Handle l2_vs_leontief_comparison strategy with rss/ratio columns
-                    sum_percent = summary["stats"]["sum_percent"]
-                    ratio_percent = summary["stats"]["ratio_percent"]
-
-                    # For this strategy, sum_percent actually represents rss_percent
-                    rss_percent = 100 - ratio_percent
-
-                    highlight_rss = (
-                        "highlight-row" if rss_percent > ratio_percent else ""
-                    )
-                    highlight_ratio = (
-                        "highlight-row" if ratio_percent > rss_percent else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_rss}">{format(rss_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_ratio}">{format(ratio_percent, ".1f")}%</td>'
-                    )
-                elif (
-                    "concentrated_changes" in strategy_columns
-                    and "distributed_changes" in strategy_columns
-                ):
-                    # Handle asymmetric_loss_distribution strategy
-                    concentrated_percent = summary["stats"][
-                        "concentrated_changes_percent"
-                    ]
-                    distributed_percent = summary["stats"][
-                        "distributed_changes_percent"
-                    ]
-
-                    highlight_concentrated = (
-                        "highlight-row"
-                        if concentrated_percent > distributed_percent
-                        else ""
-                    )
-                    highlight_distributed = (
-                        "highlight-row"
-                        if distributed_percent > concentrated_percent
-                        else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_concentrated}">'
-                        f'{format(concentrated_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_distributed}">'
-                        f'{format(distributed_percent, ".1f")}%</td>'
-                    )
-                elif (
-                    "ideal_this_year" in strategy_columns
-                    and "ideal_next_year" in strategy_columns
-                ):
-                    # Use pre-calculated metrics from summary
-                    ideal_this_year_percent = summary["stats"].get(
-                        "ideal_this_year_percent", 0
-                    )
-                    ideal_next_year_percent = summary["stats"].get(
-                        "ideal_next_year_percent", 0
-                    )
-
-                    highlight_this_year = (
-                        "highlight-row"
-                        if ideal_this_year_percent > ideal_next_year_percent
-                        else ""
-                    )
-                    highlight_next_year = (
-                        "highlight-row"
-                        if ideal_next_year_percent > ideal_this_year_percent
-                        else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_this_year}">{ideal_this_year_percent:.0f}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_next_year}">{ideal_next_year_percent:.0f}%</td>'
-                    )
-                elif (
-                    "sub1_ideal_y1" in strategy_columns
-                    and "sub2_ideal_y2" in strategy_columns
-                    and "sub3_ideal_y1" in strategy_columns
-                ):
-                    # Handle biennial_budget_preference strategy with three sub-survey columns
-                    sub1_percent = summary["stats"].get("sub1_ideal_y1_percent", 0)
-                    sub2_percent = summary["stats"].get("sub2_ideal_y2_percent", 0)
-                    sub3_percent = summary["stats"].get("sub3_ideal_y1_percent", 0)
-
-                    # Highlight if > 50% (preferring ideal option)
-                    highlight_sub1 = "highlight-row" if sub1_percent > 50 else ""
-                    highlight_sub2 = "highlight-row" if sub2_percent > 50 else ""
-                    highlight_sub3 = "highlight-row" if sub3_percent > 50 else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight_sub1}">{sub1_percent:.0f}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_sub2}">{sub2_percent:.0f}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_sub3}">{sub3_percent:.0f}%</td>'
-                    )
-                elif (
-                    "concentrated_preference" in strategy_columns
-                    and "distributed_preference" in strategy_columns
-                    and "triangle_consistency" in strategy_columns
-                ):
-                    # Handle triangle_inequality_test strategy
-                    concentrated_percent = summary["stats"].get(
-                        "concentrated_percent", 0
-                    )
-                    distributed_percent = summary["stats"].get("distributed_percent", 0)
-                    consistency_percent = summary["stats"].get("consistency_percent", 0)
-
-                    # Highlight dominant preference
-                    highlight_concentrated = (
-                        "highlight-row"
-                        if concentrated_percent > distributed_percent
-                        else ""
-                    )
-                    highlight_distributed = (
-                        "highlight-row"
-                        if distributed_percent > concentrated_percent
-                        else ""
-                    )
-                    # Highlight high consistency (>= 75%)
-                    highlight_consistency = (
-                        "highlight-row" if consistency_percent >= 75 else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_concentrated}">'
-                        f"{concentrated_percent:.1f}%</td>"
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_distributed}">'
-                        f"{distributed_percent:.1f}%</td>"
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_consistency}">'
-                        f"{consistency_percent:.1f}%</td>"
-                    )
-                elif "option_a" in strategy_columns and "option_b" in strategy_columns:
-                    # Handle preference_ranking_survey strategy with option_a/option_b columns
-                    # Map to the standard option1_percent/option2_percent statistics
-                    option_a_percent = summary["stats"]["option1_percent"]
-                    option_b_percent = summary["stats"]["option2_percent"]
-
-                    highlight_a = (
-                        "highlight-row" if option_a_percent > option_b_percent else ""
-                    )
-                    highlight_b = (
-                        "highlight-row" if option_b_percent > option_a_percent else ""
-                    )
-
-                    data_cells.append(
-                        f'<td class="{highlight_a}">{format(option_a_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight_b}">{format(option_b_percent, ".1f")}%</td>'
-                    )
-                elif "option1" in strategy_columns and "option2" in strategy_columns:
-                    # Default case with option1/option2 columns
-                    opt1_percent = summary["stats"]["option1_percent"]
-                    opt2_percent = summary["stats"]["option2_percent"]
-
-                    highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
-                    highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
-
-                    data_cells.append(
-                        f'<td class="{highlight1}">{format(opt1_percent, ".1f")}%</td>'
-                    )
-                    data_cells.append(
-                        f'<td class="{highlight2}">{format(opt2_percent, ".1f")}%</td>'
-                    )
-            else:
-                # Fallback to old behavior if no strategy columns
-                opt1_percent = summary["stats"]["option1_percent"]
-                opt2_percent = summary["stats"]["option2_percent"]
-
-                highlight1 = "highlight-row" if opt1_percent > opt2_percent else ""
-                highlight2 = "highlight-row" if opt2_percent > opt1_percent else ""
-
-                data_cells.append(
-                    f'<td class="{highlight1}">{format(opt1_percent, ".1f")}%</td>'
-                )
-                data_cells.append(
-                    f'<td class="{highlight2}">{format(opt2_percent, ".1f")}%</td>'
-                )
-
-            # Generate view response cell
+            # View Response Button
             view_cell = f"""
                 <td>
-                    <a href="{survey_response_link}" class="survey-response-link" target="_blank">
+                    <a href="{links['survey']}" class="survey-response-link" target="_blank">
                         {get_translation('view_response', 'answers')}
                     </a>
                 </td>
             """
 
-            # Construct the complete row
-            row = f"""
+            # Construct Row
+            tooltip = (
+                f'<span class="user-id-tooltip">{user_id}</span>'
+                if is_truncated
+                else ""
+            )
+            rows.append(
+                f"""
             <tr>
                 <td class="user-id-cell{' truncated' if is_truncated else ''}">
-                    <a href="{all_responses_link}" class="user-link" target="_blank">
-                        {display_id}
-                    </a>
+                    <a href="{links['all']}" class="user-link" target="_blank">{display_id}</a>
                     {tooltip}
                 </td>
                 <td>{timestamp}</td>
@@ -2654,65 +2226,38 @@ def generate_detailed_breakdown_table(
                 {view_cell}
             </tr>
             """
-            rows.append(row)
-
-        # Translations for table header
-        breakdown_title = get_translation("survey_response_breakdown", "answers")
-        user_id_th = get_translation("user_id", "answers")
-        resp_time_th = get_translation("response_time", "answers")
-        ideal_budget_th = get_translation("ideal_budget", "answers")
-        view_resp_th = get_translation("view_response", "answers")
-
-        # Generate header cells based on strategy columns
-        header_cells = []
-
-        if strategy_columns:
-            for col_id, col_def in strategy_columns.items():
-                header_cells.append(f'<th>{col_def["name"]}</th>')
-        else:
-            # Fallback to option labels if no strategy columns
-            survey_specific_labels = None
-            if survey_summaries and "strategy_labels" in survey_summaries[0]:
-                survey_specific_labels = survey_summaries[0]["strategy_labels"]
-
-            labels_to_use = survey_specific_labels or option_labels
-            header_cells.append(f"<th>{labels_to_use[0]}</th>")
-            header_cells.append(f"<th>{labels_to_use[1]}</th>")
-
-        # Generate sortable headers with proper data-order attributes
-        # Each header needs a data-order attribute that specifies the next sort order
-        if sort_by == "user_id":
-            # Currently sorting by user_id, so toggle the order
-            user_id_data_order = (
-                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
             )
-            # Other column defaults to desc when first clicked
-            created_at_data_order = ' data-order="desc"'
-        elif sort_by == "created_at":
-            # Currently sorting by created_at, so toggle the order
-            created_at_data_order = (
-                f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
-            )
-            # Other column defaults to desc when first clicked
-            user_id_data_order = ' data-order="desc"'
-        else:
-            # No current sort, both default to desc when first clicked
-            user_id_data_order = ' data-order="desc"'
-            created_at_data_order = ' data-order="desc"'
 
-        # Generate the complete table
+        # 5. Generate Table Header
+        header_cells = [f'<th>{col["name"]}</th>' for col in strategy_columns.values()]
+
+        # Sorting attributes
+        def get_sort_attr(col_name):
+            if sort_by == col_name:
+                return f' data-order="{"desc" if sort_order == "asc" else "asc"}"'
+            return ' data-order="desc"'
+
+        # Translations
+        trans = {
+            "title": get_translation("survey_response_breakdown", "answers"),
+            "user": get_translation("user_id", "answers"),
+            "time": get_translation("response_time", "answers"),
+            "budget": get_translation("ideal_budget", "answers"),
+            "view": get_translation("view_response", "answers"),
+        }
+
         table = f"""
         <div class="summary-table-container">
-            <h2>{breakdown_title} - Survey {survey_id}</h2>
+            <h2>{trans['title']} - Survey {survey_id}</h2>
             <div class="table-container detailed-breakdown">
                 <table>
                     <thead>
                         <tr>
-                            <th class="sortable" data-sort="user_id"{user_id_data_order}>{user_id_th}</th>
-                            <th class="sortable" data-sort="created_at"{created_at_data_order}>{resp_time_th}</th>
-                            <th>{ideal_budget_th}</th>
+                            <th class="sortable" data-sort="user_id"{get_sort_attr('user_id')}>{trans['user']}</th>
+                            <th class="sortable" data-sort="created_at"{get_sort_attr('created_at')}>{trans['time']}</th>
+                            <th>{trans['budget']}</th>
                             {"".join(header_cells)}
-                            <th>{view_resp_th}</th>
+                            <th>{trans['view']}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2725,6 +2270,118 @@ def generate_detailed_breakdown_table(
         tables.append(table)
 
     return "\n".join(tables)
+
+
+def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
+    """
+    Helper to generate HTML cells for strategy metrics.
+    Handles value extraction, calculation, and highlighting logic.
+    """
+    stats = summary.get("stats", {})
+    col_keys = list(columns.keys())
+    values = {}
+
+    # 1. Extract Values
+    for index, col_key in enumerate(col_keys):
+        val = 0.0
+
+        # Special Case: RSS Calculation (Legacy)
+        if col_key == "rss":
+            if "sum_percent" in stats:
+                val = 100.0 - stats["sum_percent"]
+            elif "ratio_percent" in stats:
+                val = 100.0 - stats["ratio_percent"]
+
+        # Special Case: Triangle Inequality Key Mapping
+        # Strategy uses 'concentrated_preference', calculator uses 'concentrated_percent'
+        elif col_key == "concentrated_preference":
+            val = stats.get("concentrated_percent", 0.0)
+        elif col_key == "distributed_preference":
+            val = stats.get("distributed_percent", 0.0)
+        elif col_key == "triangle_consistency":
+            val = stats.get("consistency_percent", 0.0)
+
+        # Special Case: Generic Rank Fallback (The Bug Fix)
+        elif (
+            f"{col_key}_percent" not in stats
+            and f"metric_{chr(97+index)}_percent" in stats
+        ):
+            # metric_a is index 0, metric_b is index 1
+            val = stats.get(f"metric_{chr(97+index)}_percent", 0.0)
+
+        # Standard Case
+        else:
+            # Try specific key, then key_percent, then key (direct)
+            val = stats.get(f"{col_key}_percent", stats.get(col_key, 0.0))
+
+        values[col_key] = val
+
+    # 2. Determine Highlighting
+    highlights = set()
+
+    # Logic A: Threshold-based (Consistency, Transitivity)
+    threshold_cols = {
+        "consistency": 70,
+        "transitivity_rate": 75,
+        "order_consistency": 75,
+        "group_consistency": 80,
+        "linear_consistency": 80,
+        "triangle_consistency": 75,
+    }
+
+    # Logic B: Max-based (Comparison between columns)
+    # If we have multiple percentage columns that aren't threshold-based, highlight the max
+    comparison_candidates = {
+        k: v
+        for k, v in values.items()
+        if k not in threshold_cols and columns[k].get("type") != "info"
+    }
+
+    if len(comparison_candidates) > 1:
+        max_val = max(comparison_candidates.values())
+        for k, v in comparison_candidates.items():
+            if v == max_val and v > 0:  # Only highlight if it's the winner
+                highlights.add(k)
+
+    # Apply Threshold Logic
+    for k, v in values.items():
+        if k in threshold_cols and v >= threshold_cols[k]:
+            highlights.add(k)
+
+    # Special Case: Preference Ranking (Final Score)
+    if (
+        "consistency" in columns
+        and summary.get("strategy_name") == "preference_ranking_survey"
+    ):
+        # Recalculate specifically for this complex case if needed, or rely on stats
+        pass
+
+    # 3. Render Cells
+    cells = []
+    for col_key in col_keys:
+        val = values[col_key]
+        is_highlight = col_key in highlights
+        css_class = "highlight-row" if is_highlight else ""
+
+        # Formatting
+        formatted_val = f"{val:.1f}%"
+        if isinstance(val, int):
+            formatted_val = f"{val}%"
+
+        cells.append(f'<td class="{css_class}">{formatted_val}</td>')
+
+    return cells
+
+
+def _format_timestamp(created_at) -> str:
+    if not created_at:
+        return ""
+    try:
+        if isinstance(created_at, str):
+            return created_at[:16]
+        return created_at.strftime("%d-%m-%Y %H:%M")
+    except (AttributeError, ValueError, TypeError):
+        return str(created_at)[:16]
 
 
 def generate_overall_statistics_table(
