@@ -2378,6 +2378,30 @@ def generate_detailed_breakdown_table(
                             f'<td class="{highlight}">'
                             f'{format(percent, ".1f")}%</td>'
                         )
+                elif (
+                    len(strategy_columns) == 2
+                    and "metric_a_percent" in summary["stats"]
+                    and "metric_b_percent" in summary["stats"]
+                ):
+                    # Handle GenericRankStrategy where stats has generic keys but columns have specific names
+                    # Map generic metrics to specific columns based on order (A then B)
+
+                    # Get values
+                    percent_a = summary["stats"]["metric_a_percent"]
+                    percent_b = summary["stats"]["metric_b_percent"]
+
+                    # Determine highlighting
+                    highlight_a = "highlight-row" if percent_a >= percent_b else ""
+                    highlight_b = "highlight-row" if percent_b >= percent_a else ""
+
+                    # Append cells in order
+                    data_cells.append(
+                        f'<td class="{highlight_a}">{format(percent_a, ".1f")}%</td>'
+                    )
+                    data_cells.append(
+                        f'<td class="{highlight_b}">{format(percent_b, ".1f")}%</td>'
+                    )
+
                 elif "sum" in strategy_columns and "ratio" in strategy_columns:
                     # Handle l1_vs_leontief_comparison strategy with sum/ratio columns
                     sum_percent = summary["stats"]["sum_percent"]
