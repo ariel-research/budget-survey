@@ -42,9 +42,9 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-dev_password}
       - TEST_MYSQL_DATABASE=${TEST_MYSQL_DATABASE:-test_survey}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret-key}
-      - SURVEY_BASE_URL=http://localhost:5000
+      - SURVEY_BASE_URL=http://localhost:5001
     ports:
-      - "${DEV_APP_PORT:-5000}:5001"
+      - "${APP_PORT:-5001}:5001"
     volumes:
       # Mount source code for live reloading
       - .:/app

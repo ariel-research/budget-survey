@@ -17,9 +17,10 @@ A research tool for collecting data on budget allocation preferences using multi
 ```bash
 git clone https://github.com/ariel-research/budget-survey
 cd budget-survey
+cp .env.example .env  # Edit this file to set your Database credentials
 ./scripts/deploy.sh dev
 ```
-→ Open http://localhost:5000
+→ Open http://localhost:5001
 
 ### Just want to understand it?
 1. **Users allocate** a 100-unit budget across subjects (e.g., Health: 60, Education: 25, Defense: 15)
@@ -101,6 +102,8 @@ This is a **research application** for studying budget allocation preferences. I
    ```
    git clone https://github.com/ariel-research/budget-survey
    cd budget-survey
+   cp .env.example .env
+   Note: Open .env to set your database credentials.
    ```
 
 2. Create and activate a virtual environment:
@@ -123,7 +126,6 @@ This is a **research application** for studying budget allocation preferences. I
 1. Clone the repository:
    ```bash
    git clone https://github.com/ariel-research/budget-survey
-   cd budget-survey
    ```
 
 2. Copy environment file and configure:
@@ -141,7 +143,7 @@ This is a **research application** for studying budget allocation preferences. I
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-4. Access the application at: http://localhost:5000
+4. Access the application at: http://localhost:5001
 
 ## Running the Application
 
@@ -151,17 +153,11 @@ This is a **research application** for studying budget allocation preferences. I
    ```
    python app.py
    ```
-   This will run the application on port 5001.
-
    or
    ```
    flask run
    ```
-   This will run the application on port 5000.
-
-3. Access the application based on the command used:
-   - If using `python app.py`: http://localhost:5001
-   - If using `flask run`: http://localhost:5000
+   This will run the application on port 5001.
 
 ## Common Commands
 
@@ -1025,13 +1021,27 @@ Notes:
   * internalID: Optional, overrides default survey ID from config
 
 ## Modifying the Survey
+The application is designed to be data-driven. You can manage which survey is active using two methods: a global default or dynamic URL overrides.
 
-### Changing the Active Survey
-To modify the survey that users will get, you need to manually update the `SURVEY_ID` value in the file [`config.py`](config.py). Look for the following line and change the number to the desired survey ID:
+### Method A: Setting the Global Default
+Use this method to set the survey that appears when users visit the base URL (e.g., `https://survey.csariel.xyz`).
 
-```python
-SURVEY_ID = 1  # Change this to the desired survey ID
-```
+1. **Identify the Survey ID:** Check your database `surveys` table for the `id` of the survey you wish to use.
+2. **Update Environment:** Open your `.env` file and update the `SURVEY_ID`:
+   ```bash
+   SURVEY_ID=1  # Change this to your desired survey ID
+3. Restart: Restart the application to apply changes.
+
+### Method B: Dynamic Switching (Running Multiple Surveys)
+You can host multiple surveys simultaneously without changing the config file. You can direct different groups of participants to specific surveys by adding the internalID parameter to the URL.
+
+URL Format: https://yourdomain.com/take-survey/?internalID=123&lang=en&demo=true
+
+internalID: Overrides the default SURVEY_ID from the .env file.
+
+lang: Sets the language (he or en).
+
+demo: If set to true, the session is treated as a test and data is not saved to the main results table.
 
 ### Adding or Modifying Surveys
 To add new surveys or modify existing ones, follow these steps:

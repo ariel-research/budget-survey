@@ -212,7 +212,7 @@ deploy_dev() {
     # Check service status
     if $COMPOSE_CMD -f docker-compose.dev.yml ps | grep -q "healthy\|Up"; then
         print_success "Development environment deployed successfully!"
-        print_success "Application: http://localhost:5000"
+        print_success "Application: http://localhost:5001"
         print_success "phpMyAdmin: http://localhost:8080"
         print_success ""
         print_status "Useful commands:"

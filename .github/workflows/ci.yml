@@ -57,7 +57,7 @@ jobs:
       run: |
         echo "Testing application health..."
         sleep 5
-        curl -f http://localhost:5000/health || echo "Health check failed"
+        curl -f http://localhost:5001/health || echo "Health check failed"
     
     # Always cleanup, even if tests fail
     - name: 🧹 Cleanup

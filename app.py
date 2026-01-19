@@ -31,10 +31,10 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     setup_logging()
 
     # Load configuration
-    if config_class is None:
-        app.config.from_object(get_config())
-    else:
-        app.config.from_object(config_class)
+    conf = get_config() if config_class is None else config_class
+    app.config.from_object(conf)
+
+    setup_logging(level=app.config.get("LOG_LEVEL", "INFO"))
 
     app.secret_key = app.config["SECRET_KEY"]
 
