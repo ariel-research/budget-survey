@@ -47,6 +47,7 @@ CREATE TABLE `surveys` (
   `active` BOOLEAN DEFAULT TRUE,
   `pair_generation_config` JSON NOT NULL,
   `awareness_pts` JSON DEFAULT NULL COMMENT 'Per-survey awareness PTS tokens: {\"first\": \"...\", \"second\": \"...\"}',
+  `suitability_rules` JSON DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX (`story_code`), -- Index for the foreign key
