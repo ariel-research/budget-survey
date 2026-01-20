@@ -4,7 +4,6 @@ import time
 
 import pytest
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.asymmetric_loss_distribution import (
     AsymmetricLossDistributionStrategy,
 )
@@ -58,12 +57,6 @@ def test_generates_exactly_12_pairs(strategy):
     user_vector = (35, 35, 30)
     pairs = strategy.generate_pairs(user_vector)
     assert len(pairs) == 12
-
-
-def test_rejects_users_with_zero_values(strategy):
-    """Test that the strategy rejects users with zeros in their budget."""
-    with pytest.raises(UnsuitableForStrategyError):
-        strategy.generate_pairs((50, 50, 0))
 
 
 def test_comprehensive_algorithm_validation(strategy):

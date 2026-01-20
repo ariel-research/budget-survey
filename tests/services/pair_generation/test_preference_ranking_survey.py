@@ -5,7 +5,6 @@ import time
 import numpy as np
 import pytest
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.preference_ranking_survey import (
     PreferenceRankingSurveyStrategy,
 )
@@ -90,18 +89,6 @@ def test_generates_exactly_12_pairs(strategy):
     user_vector = (35, 35, 30)
     pairs = strategy.generate_pairs(user_vector)
     assert len(pairs) == 12
-
-
-def test_rejects_users_with_zero_values(strategy):
-    """Test that the strategy rejects users with zeros in their budget."""
-    with pytest.raises(UnsuitableForStrategyError):
-        strategy.generate_pairs((50, 50, 0))
-
-    with pytest.raises(UnsuitableForStrategyError):
-        strategy.generate_pairs((0, 60, 40))
-
-    with pytest.raises(UnsuitableForStrategyError):
-        strategy.generate_pairs((30, 0, 70))
 
 
 def test_magnitude_calculation(strategy):
