@@ -357,6 +357,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "סגור חלון",
             "en": "Close Window",
         },
+        "unsuitable_vector_error": {
+            "he": "הווקטור שהוזן מכיל יותר מדי ערכי אפס ואינו מתאים לאסטרטגיה זו",
+            "en": "User vector contains too many zero values and is unsuitable for this strategy",
+        },
         "unsuitable_title": {
             "he": "לא מתאים לסקר",
             "en": "Unsuitable for Survey",
