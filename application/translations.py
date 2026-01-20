@@ -1175,8 +1175,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Pair Score",
         },
         "pair_score_explanation": {
-            "he": "ציון = min(היתרון ב-L1, היתרון ב-Leontief). היתרון = כמה וקטור אחד טוב יותר מהשני בכל מדד. ציון גבוה יותר = בחירה ברורה יותר.",
-            "en": "Score = min(L1 advantage, Leontief advantage). Advantage = how much better one vector is than the other in each metric. Higher score = clearer choice.",
+            "he": "ציון = min(היתרון ב-{model_a}, היתרון ב-{model_b}). היתרון = כמה וקטור אחד טוב יותר מהשני בכל מדד. ציון גבוה יותר = בחירה ברורה יותר.",
+            "en": "Score = min({model_a} advantage, {model_b} advantage). Advantage = how much better one vector is than the other in each metric. Higher score = clearer choice.",
         },
     },
     "headers": {

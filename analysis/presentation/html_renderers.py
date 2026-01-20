@@ -415,17 +415,34 @@ def _generate_choice_pair_html(
         target_label = get_translation("target_is", "answers", target_name=target_name)
         header_content += f" ({target_label})"
 
-    # Generate metadata section for l1_vs_leontief_rank_comparison strategy
+    # Generate metadata section for rank comparison strategies
     metadata_html = ""
     if (
-        choice.get("strategy_name") == "l1_vs_leontief_rank_comparison"
+        strategy_name
+        and strategy_name.endswith("_rank_comparison")
         and choice.get("generation_metadata")
         and isinstance(choice.get("generation_metadata"), dict)
         and "score" in choice.get("generation_metadata", {})
     ):
         score = choice["generation_metadata"]["score"]
         score_label = get_translation("pair_score", "answers")
-        score_explanation = get_translation("pair_score_explanation", "answers")
+
+        # Extract model names for the explanation if possible
+        model_a, model_b = "Model A", "Model B"
+        parts = strategy_name.replace("_rank_comparison", "").split("_vs_")
+        if len(parts) == 2:
+
+            def format_model_name(name: str) -> str:
+                if len(name) <= 2:
+                    return name.upper()
+                return name.replace("_", " ").title()
+
+            model_a = format_model_name(parts[0])
+            model_b = format_model_name(parts[1])
+
+        score_explanation = get_translation(
+            "pair_score_explanation", "answers", model_a=model_a, model_b=model_b
+        )
         metadata_html = f"""
         <div class="pair-metadata">
             <div class="pair-metadata-content">
