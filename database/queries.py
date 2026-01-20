@@ -749,6 +749,53 @@ def get_survey_pair_generation_config(survey_id: int) -> Optional[dict]:
         return None
 
 
+def get_survey_suitability_rules(survey_id: int) -> Optional[dict]:
+    """
+    Retrieves the suitability rules for a given survey.
+
+    Args:
+        survey_id (int): The ID of the survey.
+
+    Returns:
+        Optional[dict]: A dictionary containing the suitability rules,
+        or None if no rules are defined or an error occurs.
+    """
+    query = "SELECT suitability_rules FROM surveys WHERE id = %s"
+    logger.debug(f"Retrieving suitability rules for survey: {survey_id}")
+
+    try:
+        result = execute_query(query, (survey_id,), fetch_one=True)
+        if not result:
+            return None
+
+        rules = result.get("suitability_rules")
+        if not rules:
+            return None
+
+        # Handle case where DB driver returns a string (parse it)
+        if isinstance(rules, str):
+            try:
+                return json.loads(rules)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Error parsing suitability rules JSON for survey {survey_id}: {str(e)}"
+                )
+                return None
+
+        # Handle case where DB driver already returned a dict
+        if isinstance(rules, dict):
+            return rules
+
+        logger.warning(f"Unexpected type for suitability_rules: {type(rules)}")
+        return None
+
+    except Exception as e:
+        logger.error(
+            f"Error retrieving suitability rules for survey {survey_id}: {str(e)}"
+        )
+        return None
+
+
 def get_active_surveys() -> List[Dict]:
     """
     Retrieve all active surveys with their configurations and story details.
