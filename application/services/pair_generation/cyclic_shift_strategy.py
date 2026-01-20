@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -22,9 +21,6 @@ class CyclicShiftStrategy(PairGenerationStrategy):
     2. Applying these differences to create the first pair
     3. Creating the second and third pairs by cyclically shifting the
        differences right by one and two positions respectively
-
-    The strategy rejects users whose ideal budget vectors contain zero values
-    by raising UnsuitableForStrategyError.
 
     Example:
         For user_vector = (20, 30, 50):
@@ -338,17 +334,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             List of 12 dictionaries containing comparison pairs
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values
             ValueError: If unable to generate required number of unique pairs
         """
-        # Check for zero values in user vector
-        if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values")
-            raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for "
-                "cyclic shift strategy"
-            )
-
         # Validate inputs
         self._validate_vector(user_vector, vector_size)
 

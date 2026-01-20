@@ -6,7 +6,6 @@ from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -92,15 +91,9 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
             List of dicts mapping option descriptions to allocation vectors.
 
         Raises:
-            UnsuitableForStrategyError: If user_vector contains zero values.
             ValueError: If unable to generate the required number of pairs.
         """
         self._validate_vector(user_vector, vector_size)
-
-        if any(value == 0 for value in user_vector):
-            raise UnsuitableForStrategyError(
-                "User vector has zero entries; unsuitable for MDSP strategy."
-            )
 
         pairs: List[Dict[str, tuple]] = []
         seen_pairs: Set[Tuple[tuple, tuple]] = set()
