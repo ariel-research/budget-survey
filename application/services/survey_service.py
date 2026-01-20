@@ -315,11 +315,11 @@ class SurveyService:
                     f"User vector {user_vector} has {zero_count} zeros, "
                     f"exceeding limit of {max_zeros} for survey {survey_id}"
                 )
-                raise UnsuitableForStrategyError(
-                    get_translation("unsuitable_vector_error", "messages")
-                    if get_translation("unsuitable_vector_error", "messages")
-                    else f"User vector contains {zero_count} zero values and is unsuitable for this strategy"
-                )
+                error_msg = get_translation("unsuitable_vector_error", "messages")
+                if error_msg.startswith("["):
+                    error_msg = f"User vector contains {zero_count} zero values and is unsuitable for this strategy"
+
+                raise UnsuitableForStrategyError(error_msg)
 
     @staticmethod
     def generate_survey_pairs(
