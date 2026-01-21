@@ -688,6 +688,11 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "survey_id": {"he": "מזהה סקר", "en": "Survey ID"},
         "user_id": {"he": "מזהה משתמש", "en": "User ID"},
         "ideal_budget": {"he": "תקציב אידיאלי", "en": "Ideal budget"},
+        "neutral": {"he": "ניטרלי", "en": "Neutral"},
+        "overall_statistics_note": {
+            "he": "הערה: טבלה זו מסווגת משתמשים על סמך העדפתם הדומיננטית. שורת ה'סה\"כ' מייצגת את מספר האנשים, ולא את אחוז התשובות המצטבר.",
+            "en": "Note: This table classifies individuals based on their dominant preference. The 'Total' row represents the count of people, not the aggregate percentage of answers.",
+        },
         # Response count template
         "based_on_responses": {
             "he": "מבוסס על {x} תשובות לסקר",
