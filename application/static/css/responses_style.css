@@ -828,6 +828,42 @@ th.sortable[data-order="desc"]::after {
 }
 
 /* ==========================================================================
+  Consistency Breakdown Table Fix
+  ========================================================================== */
+.consistency-breakdown-container table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* Define column widths: 25% | 15% | 20% | 20% | 20% = 100% */
+.consistency-breakdown-container table th:nth-child(1),
+.consistency-breakdown-container table td:nth-child(1) {
+    width: 25%;
+}
+
+.consistency-breakdown-container table th:nth-child(2),
+.consistency-breakdown-container table td:nth-child(2) {
+    width: 15%;
+}
+
+/* Target data columns 3, 4, and 5 */
+.consistency-breakdown-container table th:nth-child(3),
+.consistency-breakdown-container table td:nth-child(3),
+.consistency-breakdown-container table th:nth-child(4),
+.consistency-breakdown-container table td:nth-child(4),
+.consistency-breakdown-container table th:nth-child(5),
+.consistency-breakdown-container table td:nth-child(5) {
+    width: 20%;
+}
+
+/* Prevent data values from wrapping in data columns */
+.consistency-breakdown-container table td:nth-child(3),
+.consistency-breakdown-container table td:nth-child(4),
+.consistency-breakdown-container table td:nth-child(5) {
+    white-space: nowrap;
+}
+
+/* ==========================================================================
   Detailed Breakdown Table
   ========================================================================== */
 .detailed-breakdown {
