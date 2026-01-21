@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 from analysis.utils.analysis_utils import is_sum_optimized
+from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
@@ -1313,3 +1314,273 @@ def calculate_rank_consistency_metrics(
         "metric_b_percent": round(percent_b, 1),
         "consistency_percent": round(max(percent_a, percent_b), 1),
     }
+
+
+def generate_single_user_asymmetric_matrix_data(
+    choices: List[Dict], survey_id: int, subjects: List[str] = None
+) -> Dict:
+    """
+    Process single user's asymmetric loss distribution choices into matrix format.
+
+    Returns a dictionary with matrix data, totals, type distribution, subjects,
+    ideal budget and magnitude levels present for this user's choices.
+    """
+    try:
+        # Subjects for target categories with fallback labels
+        if not subjects:
+            subjects = [
+                f"Category {i}" for i in range(3)
+            ]  # Fallback if subjects missing
+
+        # Ideal budget
+        ideal_budget: List[int] = []
+        if choices and choices[0].get("optimal_allocation"):
+            try:
+                ideal_budget = list(json.loads(choices[0]["optimal_allocation"]))
+            except Exception:
+                ideal_budget = []
+
+        # Helpers to robustly extract fields
+        def extract_target_category(choice: Dict) -> Optional[int]:
+            tc = choice.get("target_category")
+            if tc is not None:
+                return int(tc)
+            pair_num = choice.get("pair_number")
+            if isinstance(pair_num, int) and pair_num > 0:
+                return min(2, (pair_num - 1) // 4)
+            return None
+
+        magnitude_levels_set = set()
+        type_a_count = 0
+        type_b_count = 0
+
+        # matrix[target][magnitude] = { 'decrease_chosen': bool, 'has_data': bool }
+        matrix: Dict[int, Dict[int, Dict[str, bool]]] = {0: {}, 1: {}, 2: {}}
+
+        # Regex to capture magnitude and type from strategy strings like "(..., Type A)"
+        type_pattern = re.compile(r"Type\s*([AB])", re.IGNORECASE)
+        mag_in_paren_pattern = re.compile(r"\((\d+)\s*,\s*Type\s*[AB]\)")
+
+        for choice in choices:
+            # Determine target category
+            target_category = extract_target_category(choice)
+            if target_category is None or target_category not in (0, 1, 2):
+                logger.warning(
+                    f"Skipping choice without valid target_category: {choice.get('id', '')}"
+                )
+                continue
+
+            # Determine magnitude (prefer explicit field or parse from strategy)
+            magnitude: Optional[int] = None
+            if "magnitude" in choice and isinstance(
+                choice.get("magnitude"), (int, float)
+            ):
+                magnitude = int(choice["magnitude"])
+            else:
+                s1 = str(choice.get("option1_strategy", ""))
+                s2 = str(choice.get("option2_strategy", ""))
+                m = mag_in_paren_pattern.search(s1) or mag_in_paren_pattern.search(s2)
+                if m:
+                    try:
+                        magnitude = int(m.group(1))
+                    except Exception:
+                        magnitude = None
+
+            # Fallback: infer target, type and magnitude from vectors and ideal budget
+            # Initialize pair_type early so it exists for later checks
+            pair_type = str(choice.get("pair_type", "")).upper()
+            # Load ideal allocation robustly (already-parsed list or JSON string)
+            opt_alloc = []
+            raw_opt = choice.get("optimal_allocation")
+            if ideal_budget:
+                opt_alloc = list(ideal_budget)
+            elif isinstance(raw_opt, (list, tuple)):
+                opt_alloc = list(raw_opt)
+            elif isinstance(raw_opt, str):
+                try:
+                    opt_alloc = list(json.loads(raw_opt))
+                except Exception:
+                    opt_alloc = []
+
+            # Load vectors robustly (already list or JSON string)
+            vec1 = None
+            vec2 = None
+            raw_v1 = choice.get("option_1")
+            raw_v2 = choice.get("option_2")
+            if isinstance(raw_v1, (list, tuple)):
+                vec1 = list(raw_v1)
+            elif isinstance(raw_v1, str):
+                try:
+                    vec1 = list(json.loads(raw_v1))
+                except Exception:
+                    vec1 = None
+            if isinstance(raw_v2, (list, tuple)):
+                vec2 = list(raw_v2)
+            elif isinstance(raw_v2, str):
+                try:
+                    vec2 = list(json.loads(raw_v2))
+                except Exception:
+                    vec2 = None
+
+            if (
+                (target_category is None or magnitude is None)
+                and opt_alloc
+                and vec1
+                and vec2
+            ):
+                # Compute deltas relative to ideal
+                d1 = [v - o for v, o in zip(vec1, opt_alloc)]
+                d2 = [v - o for v, o in zip(vec2, opt_alloc)]
+
+                # Infer target index by selecting the largest total movement.
+                # This is robust for both Type A and Type B pairs and avoids
+                # mis-detecting index 0 when equal-opposite patterns are not
+                # strictly present in stored data.
+                inferred_idx = max(
+                    range(len(opt_alloc)), key=lambda i: abs(d1[i]) + abs(d2[i])
+                )
+
+                if target_category is None:
+                    target_category = inferred_idx
+
+                # Infer magnitude and type
+                delta_target_abs = max(abs(d1[inferred_idx]), abs(d2[inferred_idx]))
+                other_idxs = [i for i in range(len(opt_alloc)) if i != inferred_idx]
+                a1 = [abs(d1[i]) for i in other_idxs]
+                a2 = [abs(d2[i]) for i in other_idxs]
+
+                is_type_a_pattern = (
+                    a1[0] == a1[1]
+                    and a2[0] == a2[1]
+                    and a1[0] == a2[0]
+                    and (2 * a1[0]) == delta_target_abs
+                )
+
+                if magnitude is None:
+                    magnitude = (
+                        int(delta_target_abs // 2)
+                        if is_type_a_pattern
+                        else int(delta_target_abs)
+                    )
+
+                # Record inferred pair_type, counting will be handled uniformly later
+                if pair_type not in ("A", "B"):
+                    pair_type = "A" if is_type_a_pattern else "B"
+
+            if magnitude is None:
+                logger.warning(
+                    f"Skipping choice without determinable magnitude: {choice.get('id', '')}"
+                )
+                continue
+
+            magnitude_levels_set.add(magnitude)
+
+            # Determine Type A/B (finalize and count once)
+            pair_type = (
+                str(choice.get("pair_type", "")).upper()
+                if pair_type not in ("A", "B")
+                else pair_type
+            )
+            if pair_type not in ("A", "B"):
+                s1 = str(choice.get("option1_strategy", ""))
+                s2 = str(choice.get("option2_strategy", ""))
+                mt = type_pattern.search(s1) or type_pattern.search(s2)
+                if mt:
+                    pair_type = mt.group(1).upper()
+            if pair_type == "A":
+                type_a_count += 1
+            elif pair_type == "B":
+                type_b_count += 1
+
+            # Determine user choice as decrease vs increase
+            user_choice = choice.get("user_choice")
+            if user_choice not in (1, 2):
+                logger.warning(
+                    f"Skipping choice with invalid user_choice: {choice.get('id', '')}"
+                )
+                continue
+
+            # Prefer vector-based detection of decrease
+            chose_decrease = None
+            if opt_alloc and vec1 and vec2 and target_category is not None:
+                d1 = [v - o for v, o in zip(vec1, opt_alloc)]
+                d2 = [v - o for v, o in zip(vec2, opt_alloc)]
+                chose_decrease = (user_choice == 1 and d1[target_category] < 0) or (
+                    user_choice == 2 and d2[target_category] < 0
+                )
+            else:
+                option1_strategy = str(choice.get("option1_strategy", ""))
+                option2_strategy = str(choice.get("option2_strategy", ""))
+                is_opt1_decrease = "Concentrated" in option1_strategy or (
+                    get_translation("concentrated_changes", "answers")
+                    in option1_strategy
+                )
+                is_opt2_decrease = "Concentrated" in option2_strategy or (
+                    get_translation("concentrated_changes", "answers")
+                    in option2_strategy
+                )
+                chose_decrease = (user_choice == 1 and is_opt1_decrease) or (
+                    user_choice == 2 and is_opt2_decrease
+                )
+
+            matrix[target_category][magnitude] = {
+                "decrease_chosen": bool(chose_decrease),
+                "has_data": True,
+            }
+
+        # Build totals
+        magnitude_levels = sorted(magnitude_levels_set)
+
+        row_totals: Dict[int, Dict[str, float]] = {}
+        col_totals: Dict[int, Dict[str, float]] = {
+            m: {"decrease_count": 0, "total_count": 0, "percentage": 0.0}
+            for m in magnitude_levels
+        }
+        grand_decrease = 0
+        grand_total = 0
+
+        for target in (0, 1, 2):
+            decrease_count = 0
+            total_count = 0
+            for m in magnitude_levels:
+                cell = matrix[target].get(m)
+                if cell and cell.get("has_data"):
+                    total_count += 1
+                    if cell.get("decrease_chosen"):
+                        decrease_count += 1
+                        col_totals[m]["decrease_count"] += 1
+                    col_totals[m]["total_count"] += 1
+            row_totals[target] = {
+                "decrease_count": decrease_count,
+                "total_count": total_count,
+                "percentage": (
+                    (decrease_count / total_count * 100) if total_count else 0.0
+                ),
+            }
+            grand_decrease += decrease_count
+            grand_total += total_count
+
+        for m in magnitude_levels:
+            dc = col_totals[m]["decrease_count"]
+            tc = col_totals[m]["total_count"]
+            col_totals[m]["percentage"] = (dc / tc * 100) if tc else 0.0
+
+        grand = {
+            "decrease_count": grand_decrease,
+            "total_count": grand_total,
+            "percentage": (grand_decrease / grand_total * 100) if grand_total else 0.0,
+        }
+
+        return {
+            "matrix": matrix,
+            "row_totals": row_totals,
+            "col_totals": col_totals,
+            "grand_total": grand,
+            "type_distribution": {"type_a": type_a_count, "type_b": type_b_count},
+            "subjects": subjects,
+            "ideal_budget": ideal_budget,
+            "magnitude_levels": magnitude_levels,
+        }
+    except Exception as e:
+        logger.warning(f"Failed generating asymmetric matrix data: {e}")
+        return {}
