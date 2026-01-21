@@ -4061,21 +4061,16 @@ def _generate_rank_overall_consistency_table(
         """
 
     # Bucket by observed consistency percentages (rounded to 1 decimal)
-    bucket_data: Dict[float, List[Dict[str, float]]] = {}
+    # bucket_data maps consistency level -> { "a": count, "b": count, "neutral": count }
+    bucket_data: Dict[float, Dict[str, int]] = {}
 
     for summary in summaries:
         stats = summary.get("stats", {})
 
-        # Try generic keys first (new calculator)
+        # Strictly use generic keys (new calculator)
         metric_a_percent = stats.get("metric_a_percent")
         metric_b_percent = stats.get("metric_b_percent")
         consistency_percent = stats.get("consistency_percent")
-
-        # Fallback to legacy keys if generic ones are missing (old calculator/data)
-        if metric_a_percent is None:
-            metric_a_percent = stats.get("sum_percent")
-        if metric_b_percent is None:
-            metric_b_percent = stats.get("ratio_percent")
 
         if (
             metric_a_percent is None
@@ -4084,17 +4079,24 @@ def _generate_rank_overall_consistency_table(
         ):
             continue
 
-        # Check if we have valid data (sum of percents should be approx 100 or at least > 0)
-        if float(metric_a_percent) + float(metric_b_percent) <= 0:
+        a = float(metric_a_percent)
+        b = float(metric_b_percent)
+
+        # Check if we have valid data
+        if a + b <= 0:
             continue
 
         level = round(float(consistency_percent), 1)
-        bucket_data.setdefault(level, []).append(
-            {
-                "metric_a_percent": float(metric_a_percent),
-                "metric_b_percent": float(metric_b_percent),
-            }
-        )
+        bucket_data.setdefault(level, {"a": 0, "b": 0, "neutral": 0})
+
+        # Classify user based on dominant preference
+        # Using a small epsilon for floating point comparison
+        if abs(a - b) < 1e-9:
+            bucket_data[level]["neutral"] += 1
+        elif a > b:
+            bucket_data[level]["a"] += 1
+        else:
+            bucket_data[level]["b"] += 1
 
     if not bucket_data:
         no_data_msg = get_translation("no_answers", "answers")
@@ -4105,57 +4107,88 @@ def _generate_rank_overall_consistency_table(
         </div>
         """
 
+    def fmt_cell(count: int, total: int) -> str:
+        if total == 0:
+            return "0 (0.0%)"
+        percent = (count / total) * 100
+        return f"{count} ({percent:.1f}%)"
+
     rows = []
     total_users = 0
-    total_a_weighted = 0.0
-    total_b_weighted = 0.0
+    total_a = 0
+    total_b = 0
+    total_neutral = 0
 
     for level in sorted(bucket_data.keys()):
-        user_stats = bucket_data[level]
-        num_users = len(user_stats)
+        counts = bucket_data[level]
+        num_users = counts["a"] + counts["b"] + counts["neutral"]
         total_users += num_users
+        total_a += counts["a"]
+        total_b += counts["b"]
+        total_neutral += counts["neutral"]
 
-        avg_a = sum(item["metric_a_percent"] for item in user_stats) / num_users
-        avg_b = sum(item["metric_b_percent"] for item in user_stats) / num_users
-
-        total_a_weighted += avg_a * num_users
-        total_b_weighted += avg_b * num_users
-
-        a_class_attr = ' class="highlight-cell"' if avg_a > avg_b else ""
-        b_class_attr = ' class="highlight-cell"' if avg_b > avg_a else ""
+        # Highlight whichever category has the most people
+        max_count = max(counts["a"], counts["b"], counts["neutral"])
+        a_class_attr = (
+            ' class="highlight-cell"'
+            if counts["a"] == max_count and max_count > 0
+            else ""
+        )
+        b_class_attr = (
+            ' class="highlight-cell"'
+            if counts["b"] == max_count and max_count > 0
+            else ""
+        )
+        neutral_class_attr = (
+            ' class="highlight-cell"'
+            if counts["neutral"] == max_count and max_count > 0
+            else ""
+        )
 
         rows.append(
             f"""
             <tr>
                 <td>{level:.1f}%</td>
                 <td>{num_users}</td>
-                <td{a_class_attr}>{avg_a:.1f}%</td>
-                <td{b_class_attr}>{avg_b:.1f}%</td>
+                <td{a_class_attr}>{fmt_cell(counts["a"], num_users)}</td>
+                <td{b_class_attr}>{fmt_cell(counts["b"], num_users)}</td>
+                <td{neutral_class_attr}>{fmt_cell(counts["neutral"], num_users)}</td>
             </tr>
             """
         )
 
     if total_users > 0:
-        overall_a = total_a_weighted / total_users
-        overall_b = total_b_weighted / total_users
         total_label = get_translation("total", "answers")
 
-        a_total_class = ' class="highlight-cell"' if overall_a > overall_b else ""
-        b_total_class = ' class="highlight-cell"' if overall_b > overall_a else ""
+        # Highlight whichever category has the most people overall
+        max_total = max(total_a, total_b, total_neutral)
+        a_total_class = (
+            ' class="highlight-cell"' if total_a == max_total and max_total > 0 else ""
+        )
+        b_total_class = (
+            ' class="highlight-cell"' if total_b == max_total and max_total > 0 else ""
+        )
+        neutral_total_class = (
+            ' class="highlight-cell"'
+            if total_neutral == max_total and max_total > 0
+            else ""
+        )
 
         rows.append(
             f"""
             <tr class="total-row">
                 <td><strong>{total_label}</strong></td>
                 <td><strong>{total_users}</strong></td>
-                <td{a_total_class}><strong>{overall_a:.1f}%</strong></td>
-                <td{b_total_class}><strong>{overall_b:.1f}%</strong></td>
+                <td{a_total_class}><strong>{fmt_cell(total_a, total_users)}</strong></td>
+                <td{b_total_class}><strong>{fmt_cell(total_b, total_users)}</strong></td>
+                <td{neutral_total_class}><strong>{fmt_cell(total_neutral, total_users)}</strong></td>
             </tr>
             """
         )
 
     consistency_level_label = get_translation("consistency_level", "answers")
     num_users_label = get_translation("num_of_users", "answers")
+    neutral_label = get_translation("neutral", "answers")
 
     # Use passed labels (which are translated keywords)
     label_a = (
@@ -4164,6 +4197,8 @@ def _generate_rank_overall_consistency_table(
     label_b = (
         option_labels[1] if option_labels and len(option_labels) > 1 else "Metric B"
     )
+
+    explanatory_note = get_translation("overall_statistics_note", "answers")
 
     return f"""
     <div class="summary-table-container consistency-breakdown-container">
@@ -4176,6 +4211,7 @@ def _generate_rank_overall_consistency_table(
                         <th>{num_users_label}</th>
                         <th>{label_a}</th>
                         <th>{label_b}</th>
+                        <th>{neutral_label}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -4184,6 +4220,7 @@ def _generate_rank_overall_consistency_table(
             </table>
         </div>
         <p class="summary-note">{note}</p>
+        <p class="summary-note"><em>{explanatory_note}</em></p>
     </div>
     """
 
