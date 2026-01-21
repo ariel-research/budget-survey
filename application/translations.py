@@ -160,6 +160,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "אין תשובות זמינות להורדה עבור סקר {survey_id}",
             "en": "No responses available for download for survey {survey_id}",
         },
+        "unsuitable_vector_error": {
+            "he": "הווקטור שהוזן מכיל יותר מדי ערכי אפס ואינו מתאים לאסטרטגיה זו",
+            "en": "User vector contains too many zero values and is unsuitable for this strategy",
+        },
     },
     "pagination": {  # Pagination controls
         "previous": {
@@ -356,10 +360,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "close_window": {
             "he": "סגור חלון",
             "en": "Close Window",
-        },
-        "unsuitable_vector_error": {
-            "he": "הווקטור שהוזן מכיל יותר מדי ערכי אפס ואינו מתאים לאסטרטגיה זו",
-            "en": "User vector contains too many zero values and is unsuitable for this strategy",
         },
         "unsuitable_title": {
             "he": "לא מתאים לסקר",
