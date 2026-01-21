@@ -1,6 +1,6 @@
 """
-This module contains pure HTML rendering logic for the new web-based report system.
-It accepts data as arguments and returns HTML strings.
+This module handles HTML rendering for the web-based report system.
+It accepts survey data (raw choices or pre-calculated statistics) and returns formatted HTML strings.
 """
 
 import html

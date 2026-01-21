@@ -106,7 +106,7 @@ def test_generate_methodology_description():
 
 @patch("analysis.report_service.get_user_survey_performance_data")
 @patch("analysis.report_service.get_subjects")
-@patch("analysis.presentation.html_renderers.get_translation")
+@patch("analysis.report_service.get_translation")
 def test_generate_detailed_user_choices_empty(
     mock_get_translation, mock_get_subjects, mock_get_perf_data, mock_translations
 ):
