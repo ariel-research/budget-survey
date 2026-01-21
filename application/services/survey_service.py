@@ -295,6 +295,10 @@ class SurveyService:
         """
         Validate user's budget allocation vector against dynamic suitability rules.
 
+        Supported Rules (in surveys.suitability_rules JSON):
+        - max_zero_values (int): Max allowed zero values.
+        - min_positive_values (int): Min required positive values.
+
         Args:
             user_vector: User's ideal budget allocation
             survey_id: The internal survey identifier
