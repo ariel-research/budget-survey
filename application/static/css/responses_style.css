@@ -863,6 +863,13 @@ th.sortable[data-order="desc"]::after {
     white-space: nowrap;
 }
 
+/* Highlight the dominant strategy cell in each row */
+.consistency-breakdown-container td.highlight-cell {
+    font-weight: 700;
+    background-color: var(--color-highlight);
+    color: var(--color-primary);
+}
+
 /* ==========================================================================
   Detailed Breakdown Table
   ========================================================================== */
