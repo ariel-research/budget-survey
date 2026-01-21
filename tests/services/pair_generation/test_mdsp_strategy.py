@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import pytest
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import (
     MultiDimensionalSinglePeakedStrategy,
 )
@@ -86,13 +85,6 @@ def test_peak_dimension_edge_cases(strategy):
     assert strategy._is_unambiguously_closer(peak, q_near, q_far)
 
 
-def test_unsuitable_for_zero_entries(strategy):
-    """Zero entries in the user vector remain unsuitable for the strategy."""
-    user_vector = (60, 40, 0)
-    with pytest.raises(UnsuitableForStrategyError):
-        strategy.generate_pairs(user_vector, n=10, vector_size=3)
-
-
 def test_generate_pairs_filters_user_vector(strategy):
     """Generated pairs never reuse the original user vector."""
     user_vector = (40, 35, 25)
@@ -139,7 +131,7 @@ def test_all_valid_vectors_generate_successfully(strategy):
         try:
             pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
             assert len(pairs) == 10
-        except (ValueError, UnsuitableForStrategyError) as error:
+        except ValueError as error:
             failed_vectors.append((user_vector, str(error)))
 
     success_rate = 1 - (len(failed_vectors) / len(valid_vectors))

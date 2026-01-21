@@ -50,19 +50,11 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
             List of 12 dictionaries containing comparison pairs.
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values.
             ValueError: If vector_size is not 3 or pair generation fails.
         """
         if vector_size != 3:
             raise ValueError(
                 "PreferenceRankingSurveyStrategy only supports vector_size=3."
-            )
-
-        if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values, unsuitable.")
-            raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for "
-                "this strategy."
             )
 
         self._validate_vector(user_vector, vector_size)
@@ -183,7 +175,6 @@ class PreferenceRankingSurveyStrategy(PairGenerationStrategy):
 
         Raises:
             ValueError: If vector_size is not 3.
-            UnsuitableForStrategyError: If user_vector contains zero values.
         """
         # Use the same validation as generate_pairs
         if vector_size != 3:

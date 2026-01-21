@@ -7,6 +7,7 @@ A research tool for collecting data on budget allocation preferences using multi
 ---
 
 **Documentation:**
+
 - See the `docs/threshold_detection_research/` directory for research papers and supporting materials related to threshold detection and survey methodology.
 
 ---
@@ -14,17 +15,20 @@ A research tool for collecting data on budget allocation preferences using multi
 ## Quick Start
 
 ### Just want to run it?
+
 ```bash
 git clone https://github.com/ariel-research/budget-survey
 cd budget-survey
 cp .env.example .env  # Edit this file to set your Database credentials
 ./scripts/deploy.sh dev
 ```
+
 → Open http://localhost:5001
 
 ### Just want to understand it?
+
 1. **Users allocate** a 100-unit budget across subjects (e.g., Health: 60, Education: 25, Defense: 15)
-2. **System generates** 10 comparison pairs using research algorithms 
+2. **System generates** 10 comparison pairs using research algorithms
 3. **Users choose** their preference from each pair
 4. **Data reveals** decision-making patterns and algorithmic preferences
 
@@ -33,22 +37,26 @@ cp .env.example .env  # Edit this file to set your Database credentials
 ## Table of Contents
 
 ### 👋 Getting Started
-- [What's This?](#whats-this)
+
+- [What&#39;s This?](#whats-this)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 
 ### 🚀 Running & Using
+
 - [Running the Application](#running-the-application)
 - [Common Commands](#common-commands)
 - [Endpoints](#endpoints)
 - [Live Application Endpoints](#live-application-endpoints)
 
 ### 🔬 For Researchers
+
 - [Modifying the Survey](#modifying-the-survey)
 - [Analysis](#analysis)
 - [Algorithm](#algorithm)
 
 ### 🛠 For Developers
+
 - [Features](#features)
   - [Dynamic Strategy Badge System](#dynamic-strategy-badge-system)
 - [Database](#database)
@@ -63,19 +71,22 @@ cp .env.example .env  # Edit this file to set your Database credentials
 This is a **research application** for studying budget allocation preferences. It's designed for academic research into algorithmic decision-making and preference revelation.
 
 **The Process:**
+
 1. 📝 **Budget Creation**: Users allocate 100 units across subjects (e.g., government ministries)
 2. 🔄 **Pair Generation**: System creates comparison pairs using one of 9 research strategies
 3. 🎯 **Preference Collection**: Users choose between alternatives in each pair
 4. 📊 **Analysis**: Data reveals patterns in decision-making and strategy effectiveness
 
 **Key Features:**
+
 - 9 research-validated pair generation strategies
-- Hebrew/English bilingual support with RTL/LTR layouts  
+- Hebrew/English bilingual support with RTL/LTR layouts
 - Quality control via attention checks and user blacklisting
 - Comprehensive analysis and PDF report generation
 - Production-ready Docker deployment
 
 **Use Cases:**
+
 - Academic research on preference revelation
 - Policy research on budget allocation
 - Algorithm testing and validation
@@ -84,12 +95,14 @@ This is a **research application** for studying budget allocation preferences. I
 ## Prerequisites
 
 ### Local Development
+
 - Python 3.8+
 - MySQL 8.0+
 - pip
 - virtualenv
 
 ### Docker Development (Recommended)
+
 - Docker 20.10+
 - Docker Compose 2.0+
 - Git
@@ -99,42 +112,42 @@ This is a **research application** for studying budget allocation preferences. I
 ### Local Development
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/ariel-research/budget-survey
    cd budget-survey
    cp .env.example .env
    Note: Open .env to set your database credentials.
    ```
-
 2. Create and activate a virtual environment:
+
    ```
    python -m venv venv
    source venv/bin/activate
    ```
-
 3. Install dependencies:
+
    ```
    pip install -r requirements.txt
    ```
-
 4. Set up the MySQL database (see Database section below)
-
 5. Create a `.env` file in the project root and add the necessary environment variables (see `.env.example` for reference)
 
 ### Docker Development
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/ariel-research/budget-survey
    ```
-
 2. Copy environment file and configure:
+
    ```bash
    cp .env.example .env
    # Edit .env with your preferred settings
    ```
-
 3. Start the development environment:
+
    ```bash
    # Using deployment script (Recommended)
    ./scripts/deploy.sh dev
@@ -142,21 +155,23 @@ This is a **research application** for studying budget allocation preferences. I
    # Or manual command (use 'docker compose' for v2 or 'docker-compose' for v1)
    docker compose -f docker-compose.dev.yml up -d
    ```
-
 4. Access the application at: http://localhost:5001
 
 ## Running the Application
 
 1. Activate the virtual environment (if not already activated)
-
 2. Run the Flask application using either of these commands:
+
    ```
    python app.py
    ```
+
    or
+
    ```
    flask run
    ```
+
    This will run the application on port 5001.
 
 ## Common Commands
@@ -188,28 +203,30 @@ docker compose -f docker-compose.dev.yml ps         # View application status
 ## Features
 
 ### Automatic Budget Rescaling
+
 The application includes an automatic rescaling feature that helps users create valid budget allocations:
 
 - **Purpose**: Helps users adjust their budget allocations to:
+
   - Sum to exactly 100
   - Ensure all numbers are divisible by 5
   - Maintain relative proportions between departments
-
 - **How it works**:
+
   1. Proportionally adjusts non-zero values to sum to 100
   2. Rounds each value to the nearest multiple of 5
   3. Makes final adjustments to ensure the total remains exactly 100
   4. Maintains a minimum value of 5 for any non-zero allocation
   5. Preserves zero allocations (does not rescale them)
-
 - **Button States**:
   The "Rescale" button becomes disabled when:
+
   - The total sum is already exactly 100
   - All values are zero
   - Any input contains invalid numbers
   - The total is zero
-
 - **Constraints**:
+
   - Requires at least two departments with non-zero allocations
   - Maintains relative proportions between original values as closely as possible while satisfying the constraints
 
@@ -222,6 +239,7 @@ The application uses the Strategy pattern to support multiple pair generation al
 #### Available Strategies
 
 1. **L1 vs. Leontief Comparison**
+
    - Strategy name: `l1_vs_leontief_comparison`
    - Generates pairs that force users to choose between minimizing sum of differences and maximizing minimal ratio
    - Each pair contains two non-ideal allocations where one is better in terms of sum of differences while the other is better in terms of minimal ratio
@@ -233,8 +251,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 1: (40, 30, 30)  Better minimal ratio (0.67) but worse sum of differences (40)
      # Option 2: (70, 15, 15)  Better sum of differences (20) but worse minimal ratio (0.75)
      ```
-
 2. **Star-Shaped Preference Test**
+
    - Strategy name: `star_shaped_preference_test`
    - Generates pairs by combining user's ideal vector with random vectors using weighted averages
    - Each pair contains:
@@ -254,8 +272,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - Random vector: [40, 40, 20]
      # - Weighted result: [38, 39, 23] (40*0.9 + 20*0.1, 40*0.9 + 30*0.1, 20*0.9 + 50*0.1)
      ```
-
 3. **Star-Shaped Preference Test (Rounded)**
+
    - Strategy name: `star_shaped_preference_test_rounded`
    - Extends the Weighted Vector Strategy to ensure all allocations are multiples of 5
    - Each pair contains:
@@ -272,8 +290,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # - Before rounding: [39, 39, 22] (30*0.7 + 60*0.3, 45*0.7 + 25*0.3, 25*0.7 + 15*0.3)
      # - After rounding to multiples of 5: [40, 40, 20]
      ```
-
 4. **L1 vs. L2 Comparison**
+
    - Strategy name: `l1_vs_l2_comparison`
    - Compares root of sum of squared differences vs regular sum of differences
    - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of regular sum of differences
@@ -285,8 +303,8 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 1: (25, 70, 5)  Better root sum squared (55.23) but worse sum differences (90)
      # Option 2: (10, 25, 65)  Better sum differences (80) but worse root sum squared (56.57)
      ```
-
 5. **L2 vs. Leontief Comparison**
+
    - Strategy name: `l2_vs_leontief_comparison`
    - Compares root of sum of squared differences vs minimal ratio
    - Each pair contains two non-ideal allocations where one is better in terms of root sum squared differences while the other is better in terms of minimal ratio
@@ -298,30 +316,33 @@ The application uses the Strategy pattern to support multiple pair generation al
      # Option 1: (50, 30, 20)  Better minimal ratio (0.83) but worse root sum squared (12.25)
      # Option 2: (65, 25, 10)  Better root sum squared (7.07) but worse minimal ratio (0.67)
      ```
-
 6. **Peak-Linearity Test**
+
    - Strategy name: `peak_linearity_test`
    - Tests user preferences between extreme allocations and their weighted combinations with the ideal vector
    - Generates two types of pairs:
+
      - Extreme vector pairs: Each extreme vector allocates 100% to one department
      - Weighted average pairs: Combines user's ideal vector with extreme vectors using weights of 25%, 50%, and 75%
    - Parameters:
+
      - `num_pairs`: Number of pairs to generate (default: 9)
    - Example:
+
      ```python
      # For vector_size=3 and user_vector = [70, 20, 10]:
-     
+
      # Extreme pairs:
      # [100, 0, 0] vs [0, 100, 0]
      # [100, 0, 0] vs [0, 0, 100]
      # [0, 100, 0] vs [0, 0, 100]
-     
+
      # Weighted average pairs (50% weight):
      # [85, 10, 5] vs [35, 60, 5] (weighted averages with [100,0,0] and [0,100,0])
      ```
    - Purpose: Tests the hypothesis that if a user prefers extreme vector A over extreme vector B, they will also prefer weighted averages that incorporate extreme vector A over those with extreme vector B
-
    - **Analysis Features**:
+
      - Core Preference Analysis: Shows the user's fundamental preferences between extreme vectors (A vs B, A vs C, B vs C)
      - Percentile Breakdown Table: Displays consistency metrics for different weight percentiles (25%, 50%, 75%)
        - Shows how well user choices align with their core preferences at different weight levels
@@ -344,6 +365,7 @@ For peak_linearity_test surveys, the system analyzes logical consistency:
 Note: '>' represents observed choice, which may include cases of user indifference.
 
 7. **Component Symmetry Test**
+
    - Strategy name: `component_symmetry_test`
    - Generates 12 comparison pairs organized into 4 groups using cyclic shifts of difference vectors
    - **Algorithm Overview**:
@@ -376,28 +398,28 @@ Note: '>' represents observed choice, which may include cases of user indifferen
    - Example:
      ```python
      # For user_vector = [20, 30, 50]:
-     
+
      # Group 1 - Generate two independent difference vectors:
      # diff1 = [-10, +5, +5], diff2 = [+20, -25, +5]
-     
+
      # Pair 1 (shift 0): Apply differences directly
      # Option A: [20, 30, 50] + [-10, +5, +5] = [10, 35, 55]
      # Option B: [20, 30, 50] + [+20, -25, +5] = [40, 5, 55]
-     
+
      # Pair 2 (shift 1): Shift differences right by 1 position
      # diff1_shifted = [+5, -10, +5], diff2_shifted = [+5, +20, -25]
      # Option A: [20, 30, 50] + [+5, -10, +5] = [25, 20, 55]
      # Option B: [20, 30, 50] + [+5, +20, -25] = [25, 50, 25]
-     
+
      # Pair 3 (shift 2): Shift differences right by 2 positions
      # diff1_shifted = [+5, +5, -10], diff2_shifted = [-5, +15, +10]
      # Option A: [20, 30, 50] + [+5, +5, -10] = [25, 35, 40]
      # Option B: [20, 30, 50] + [-5, +15, +10] = [15, 45, 60]
-     
+
      # Groups 2-4 repeat this process with different random difference vectors
      ```
-
 8. **Sign Symmetry Test**
+
    - Strategy name: `sign_symmetry_test`
    - Generates 12 comparison pairs organized into 6 groups to test linear symmetry hypothesis
    - **Core Hypothesis**: Tests whether users treat positive and negative distances from their ideal allocation as equivalent
@@ -433,19 +455,19 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      ```python
      # For user_vector = [40, 30, 30]:
      # v1 = [15, -10, -5], v2 = [-10, 5, 5]
-     
+
      # Group 1:
      # Pair A (positive distances): [55, 20, 25] vs [30, 35, 35]  (ideal + v1 vs ideal + v2)
      # Pair B (negative distances): [25, 40, 35] vs [50, 25, 25]  (ideal - v1 vs ideal - v2)
-     
+
      # Groups 2-6 repeat this process with different distance vectors
      ```
    - **Analysis Features**:
      - Linear Consistency Analysis: Measures how consistently users treat positive and negative distances
      - Group-level consistency metrics showing symmetry adherence
      - Helps identify if users have directional biases in budget allocation preferences
-
 9. **Asymmetric Loss Distribution Strategy**
+
    - Strategy name: `asymmetric_loss_distribution`
    - Tests user preferences between concentrated vs. distributed budget changes using a calibrated-magnitude approach.
    - **Algorithm Overview**:
@@ -461,8 +483,8 @@ Note: '>' represents observed choice, which may include cases of user indifferen
      - Preference Consistency: Measures overall preference for distributed vs. concentrated changes.
      - Magnitude Sensitivity: Analyzes how the magnitude of the change affects user preferences.
      - Type A vs. Type B Patterns: Compares user choices in the primary test vs. the fallback scenario.
-
 10. **Preference Ranking Survey Strategy**
+
     - Strategy name: `preference_ranking_survey`
     - Tests user preference order through forced-ranking methodology instead of pairwise comparisons
     - **Algorithm Overview**:
@@ -485,7 +507,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       ```python
       # For user_vector = [60, 25, 15]:
       # X1 = max(1, round(0.2 × 15)) = 3, X2 = max(1, round(0.4 × 15)) = 6
-      
+
       # Question 1 (X1_positive): base_diff = [6, -3, -3]
       # Option A: [60, 25, 15] + [6, -3, -3] = [66, 22, 12]
       # Option B: [60, 25, 15] + [-3, 6, -3] = [57, 31, 12] (shift 1)
@@ -493,8 +515,8 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       # User ranks: A > B > C (creates 3 pairs: A vs B, A vs C, B vs C)
       ```
     - **Core Hypothesis**: User's underlying preference order will be consistently revealed across all ranking questions, providing insights into stable budget allocation priorities
-
 11. **Dynamic Temporal Preference Test**
+
     - Strategy name: `biennial_budget_preference`
     - Tests comprehensive temporal discounting and preference for achieving exact ideal states versus mathematically balanced two-year plans
     - **Algorithm Overview**:
@@ -524,17 +546,17 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       # Sub-Survey 1: Simple Discounting
       # Pair 1: ((60,30,10), (45,25,30)) vs ((45,25,30), (60,30,10))
       #         Ideal Year 1 vs Ideal Year 2
-      
+
       # Sub-Survey 2: Second-Year Choice (B=[50,35,15], C=[70,25,5])  
       # Pair 5: ((50,35,15), (60,30,10)) vs ((50,35,15), (70,25,5))
       #         B,Ideal vs B,C (Year 1 fixed as B)
-      
+
       # Sub-Survey 3: First-Year Choice
       # Pair 9: ((60,30,10), (50,35,15)) vs ((70,25,5), (50,35,15))
       #         Ideal,B vs C,B (Year 2 fixed as B)
       ```
-
 12. **Triangle Inequality Test**
+
     - Strategy name: `triangle_inequality_test`
     - Tests if user preferences for biennial budgets satisfy the triangle inequality by comparing concentrated versus distributed budget changes over two years.
     - **Algorithm Overview**:
@@ -555,7 +577,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       # Positive Variant Pair:
       # Concentrated Option (Year 1: p, Year 2: p+q):
       # ([50, 30, 20], [60, 10, 30])
-      
+
       # Distributed Option (Year 1: p+q1, Year 2: p+q2):
       # ([60, 30, 10], [50, 10, 40])
       ```
@@ -564,66 +586,68 @@ Note: '>' represents observed choice, which may include cases of user indifferen
       - **Analysis Features**:
         - Measures user preference for concentrated vs. distributed changes.
         - Calculates a "Triangle Inequality Consistency" score to see how choices align with the mathematical principle.
-
 13. **Multi-Dimensional Single-Peaked Test**
-   - Strategy name: `multi_dimensional_single_peaked_test`
-   - Generates pairs where the "near" option is weakly closer to the user's peak on every dimension and strictly closer on at least one, ensuring consistent directional deviations.
-   - Rejects user vectors containing zeros and filters out duplicate or peak-identical candidates to keep comparisons informative.
-   - Example:
-     ```python
-     # User's ideal: (50, 30, 20)
-     # Option A (Far): (50, 40, 10)   # Deviations: [0, +10, -10]
-     # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
-     ```
+
+- Strategy name: `multi_dimensional_single_peaked_test`
+- Generates pairs where the "near" option is weakly closer to the user's peak on every dimension and strictly closer on at least one, ensuring consistent directional deviations.
+- Rejects user vectors containing zeros and filters out duplicate or peak-identical candidates to keep comparisons informative.
+- Example:
+  ```python
+  # User's ideal: (50, 30, 20)
+  # Option A (Far): (50, 40, 10)   # Deviations: [0, +10, -10]
+  # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
+  ```
 
 14. **Rank-Based Comparison Strategies**
-   - Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`, `leontief_vs_anti_leontief_rank_comparison`, `leontief_vs_kl_rank_comparison`, `kl_vs_anti_leontief_rank_comparison`
-   - Uses rank-based normalization (percentiles) instead of raw values to generate pairs with optimal trade-offs.
-   - **How it works**:
-     - Enumerates a discrete simplex grid (default step=5).
-     - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
-     - Normalizes utility models to percentile ranks (0.0-1.0) to eliminate scale differences.
-     - Uses a **Max-Min** search to find pairs where one vector is significantly better on Utility Model A, while the other is better on Utility Model B.
-   - **Utility Models Supported**:
-     - **L1 (Sum)**: Total absolute disagreement.
-     - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
-     - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
-     - **Anti-Leontief**: Penalizes over-funding (waste aversion).
-     - **Kullback-Leibler (KL)**: Information theoretic divergence (asymmetric penalty for losses).
+
+- Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`, `leontief_vs_anti_leontief_rank_comparison`, `leontief_vs_kl_rank_comparison`, `kl_vs_anti_leontief_rank_comparison`
+- Uses rank-based normalization (percentiles) instead of raw values to generate pairs with optimal trade-offs.
+- **How it works**:
+  - Enumerates a discrete simplex grid (default step=5).
+  - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
+  - Normalizes utility models to percentile ranks (0.0-1.0) to eliminate scale differences.
+  - Uses a **Max-Min** search to find pairs where one vector is significantly better on Utility Model A, while the other is better on Utility Model B.
+- **Utility Models Supported**:
+  - **L1 (Sum)**: Total absolute disagreement.
+  - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
+  - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
+  - **Anti-Leontief**: Penalizes over-funding (waste aversion).
+  - **Kullback-Leibler (KL)**: Information theoretic divergence (asymmetric penalty for losses).
 
 #### Adding New Strategies
 
 The application uses a **Strategy Pattern** with **Polymorphic Utility Models**. To add a new rank-based strategy:
 
-1.  **Define a Utility Model** (if new): Add a class to `application/services/algorithms/utility_models.py` inheriting from `UtilityModel`.
-2.  **Create Strategy**: In `application/services/pair_generation/rank_strategies.py`, create a thin wrapper:
-    ```python
-    class MyNewRankStrategy(GenericRankStrategy):
-        def __init__(self, grid_step=None):
-            super().__init__(UtilityModelA, UtilityModelB, min_component=10)
-    ```
-3.  **Register**: Add `StrategyRegistry.register(MyNewRankStrategy)` in `application/services/pair_generation/__init__.py`.
-
+1. **Define a Utility Model** (if new): Add a class to `application/services/algorithms/utility_models.py` inheriting from `UtilityModel`.
+2. **Create Strategy**: In `application/services/pair_generation/rank_strategies.py`, create a thin wrapper:
+   ```python
+   class MyNewRankStrategy(GenericRankStrategy):
+       def __init__(self, grid_step=None):
+           super().__init__(UtilityModelA, UtilityModelB, min_component=10)
+   ```
+3. **Register**: Add `StrategyRegistry.register(MyNewRankStrategy)` in `application/services/pair_generation/__init__.py`.
 
 Each strategy can define its own table columns for displaying survey response statistics by implementing the `get_table_columns()` method. This allows the system to dynamically generate strategy-specific tables based on the strategy used for each survey.
 
 For examples of how to configure surveys to use different strategies, see the [Adding or Modifying Surveys](#adding-or-modifying-surveys) section.
 
 ### Language Support
+
 The application provides comprehensive bilingual support:
 
 - **Available Languages**:
+
   - Hebrew (default)
   - English
-
 - **Key Features**:
+
   - Language switcher in the UI header
   - Automatic RTL layout for Hebrew
   - LTR layout for English
   - Language preference persistence across sessions
   - Fallback to Hebrew for missing translations
-
 - **Translation Coverage**:
+
   - User interface elements
   - Error messages
   - Survey questions and instructions
@@ -632,8 +656,8 @@ The application provides comprehensive bilingual support:
   - Button labels and tooltips
   - Form validations
   - Success/failure notifications
-
 - **How to Switch Languages**:
+
   - Via UI: Click the language toggle in the top-right corner
   - Via URL: Add 'lang' parameter to the URL
     - For Hebrew: `?lang=he`
@@ -645,84 +669,91 @@ The application provides comprehensive bilingual support:
 All translations are managed through the translations system, making it easy to maintain and update content in both languages.
 
 ### Attention Check Handling
+
 The application includes an attention check mechanism to ensure survey quality:
 
 - **Purpose**: Validate user attention during survey completion
 - **Implementation**:
+
   - Two attention check questions mixed within comparison pairs
   - Validates that users recognize their own optimal allocation
   - Failed checks are recorded and do not allow retries
 - **Early awareness failures**: Client-side checks catch wrong awareness answers before submission, store `pts_value` in `survey_responses` as awareness codes (`1` = first question failed, `2` = second question failed), and redirect users to the survey company. If per-survey PTS tokens are configured (`surveys.awareness_pts`), the redirect includes the matching token; otherwise the redirect omits the `PTS` param but still sends the status.
-
 - **Panel4All (External survey provider) Integration**:
+
   - Sends "attentionfilter" status for failed attention checks
   - Sends "finish" status for successful completions
   - Uses per-survey PTS tokens when available. Falls back to status-only redirect if tokens are missing
-
 - **Data Storage**:
+
   - Failed checks are stored with `attention_check_failed` flag
   - Maintains data for analysis while excluding from main results
   - Supports research on survey response quality
 
 ### User Blacklist
+
 The application includes a user blacklist feature to automatically enforce quality control in survey responses.
 
 - **Purpose**: Enhance data quality by preventing participation from users who fail to meet attention standards
 - **Implementation**:
+
   - Users who fail attention checks are automatically blacklisted from taking future surveys
   - Blacklist status is checked during survey eligibility verification
   - Blacklisted users are redirected to a dedicated explanation page
   - System records which survey triggered the blacklist
-
 - **Data Storage**:
+
   - Blacklist information is stored in the users table:
     - `blacklisted` flag indicates blacklist status
     - `blacklisted_at` records when user was blacklisted
     - `failed_survey_id` identifies which survey triggered the blacklist
   - Indexed for efficient lookups during eligibility checks
 
-
 ### Demo Mode
+
 The application includes a 'Demo Mode' feature that allows users to explore the survey functionality without affecting the actual data.
 
 - **Purpose**: Provides a sandbox environment for users to familiarize themselves with the survey process.
 - **How it works**:
+
   1. Users can enable 'Demo Mode'.
   2. In 'Demo Mode', all interactions are simulated, and no data is stored permanently.
   3. Users can navigate through the survey, make allocations, and submit responses as they would in a real survey.
   4. The system provides feedback and results based on the simulated data.
-
 - **Limitations**:
+
   - Data generated in 'Demo Mode' is not saved to the database.
   - Some features may be restricted to prevent misuse.
 
 This feature is ideal for training sessions and demonstrations, allowing users to experience the full functionality of the application without impacting real survey data.
 
 ### User Participation Overview
+
 The application provides a comprehensive dashboard showing participation statistics for all users who have completed surveys.
 
 - **Purpose**: Monitor user engagement and survey completion patterns
 - **Key Features**:
+
   - Shows successful and failed survey counts per user
   - Color-coded clickable survey IDs (green for successful, red for failed)
   - Sortable by User ID or Last Activity
   - Accessible via dashboard metric card or direct URL: `/surveys/users`
   - Full bilingual support with RTL/LTR layouts
   - Navigation to Performance Matrix for detailed metrics
-
 - **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
 
 ### User-Survey Performance Matrix
+
 The application provides a detailed matrix view showing strategy-specific performance metrics for each user-survey combination.
 
 - **Purpose**: Analyze user performance patterns across different survey strategies
 - **Key Features**:
+
   - Matrix format with users as rows and surveys as columns
   - Strategy-specific metric labels (e.g., "Random / Weighted Average", "Sum / Ratio")
   - Sticky User ID column for easy navigation
   - Full bilingual support with RTL/LTR layouts
   - Accessible via direct URL: `/surveys/users/matrix`
-
 - **Data Displayed**: Performance metrics for each user-survey combination, with "-" indicating no participation
 
 ### 🎨 Dynamic Strategy Badge System
@@ -735,6 +766,7 @@ The application features an automated, maintenance-free system for assigning con
 - **Layout Safety**: Badges are CSS-truncated to a single line with an ellipsis (`...`) to prevent grid breakage, while a native tooltip provides the full text on hover.
 
 **Implementation Details**:
+
 - **Backend**: `strategy_color` Jinja2 filter in `app.py`.
 - **Frontend**: Inline styles in `surveys_overview.html` and `detail.html`.
 - **Data Preservation**: Semantic `data-strategy` attributes are preserved in the DOM for automated testing reliability.
@@ -752,38 +784,32 @@ You can set up the database using one of two methods:
 ### Method 1: Manual Setup using MySQL Client
 
 1. Connect to your MySQL server using the MySQL client.
-
 2. Create a new database:
 
    ```sql
    CREATE DATABASE survey;
    ```
-
 3. Use the newly created database:
 
    ```sql
    USE survey;
    ```
-
 4. Run the SQL commands from the database/schema.sql file to create the necessary tables and structure:
 
-
-  ```
+```
   
-  ```
+```
 
 ### Method 2: Using Docker Compose
 
 1. Ensure you have Docker and Docker Compose installed on your system.
-
 2. Navigate to the project root directory.
-
 3. Start the database using the development environment:
 
    ```bash
    # Start full development environment (recommended)
    ./scripts/deploy.sh dev
-   
+
    # Or just the database
    docker compose -f docker-compose.dev.yml up -d db
    ```
@@ -791,6 +817,26 @@ You can set up the database using one of two methods:
 This will create a MySQL container, create the database, and run the initialization script (`database/schema.sql`) to set up the necessary tables and structure.
 
 Note: Make sure your .env file is properly configured with the correct database connection details before running either method.
+
+### Strategy Suitability Rules
+
+The `surveys` table includes a JSON column `suitability_rules` to enforce vector validation constraints dynamically per survey.
+
+**Supported Rules:**
+
+* `max_zero_values` (int): Maximum number of zero values allowed in the user's budget vector.
+* `min_positive_values` (int): Minimum number of positive values required.
+
+**Example Configuration:**
+
+```json
+{
+  "max_zero_values": 0,
+  "min_positive_values": 3
+}
+
+Behavior:
+If a user submits a vector violating these rules, the system raises an UnsuitableForStrategyError before generating pairs. If the column is NULL, no validation is performed.
 
 ### Recent Migrations (20251204)
 - Run in order:
@@ -807,14 +853,15 @@ Note: Make sure your .env file is properly configured with the correct database 
 1. **Copy environment file:**
    ```bash
    cp .env.example .env
-   ```
+```
 
 2. **Start development environment:**
+
    ```bash
    ./scripts/deploy.sh dev
    ```
-
 3. **Common development commands:**
+
    ```bash
    # View logs
    docker compose -f docker-compose.dev.yml logs -f app
@@ -832,11 +879,13 @@ Note: Make sure your .env file is properly configured with the correct database 
 ### Production Deployment (AWS EC2)
 
 **Prerequisites:**
+
 - Ubuntu 20.04+ EC2 instance
 - Domain name
 - Docker installed
 
 **Installation:**
+
 ```bash
 # Install Docker on EC2
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -851,6 +900,7 @@ sudo reboot
 ```
 
 **Deployment:**
+
 ```bash
 # Clone and configure
 git clone https://github.com/ariel-research/budget-survey
@@ -876,6 +926,7 @@ sudo chown $USER:$USER ssl/*
 ```
 
 **Management:**
+
 ```bash
 # Update application
 git pull && docker compose -f docker-compose.prod.yml up -d --build
@@ -928,6 +979,7 @@ sudo chown -R $USER:$USER .
 ```
 
 **Health check:**
+
 ```bash
 curl http://localhost:5001/health
 ```
@@ -935,18 +987,20 @@ curl http://localhost:5001/health
 ## Endpoints
 
 ### Main Routes
+
 1. Dashboard (Main Landing Page)
+
    - `/` - Analytics dashboard (Main landing page)
-   
 2. Survey Taking
+
    - `/take-survey/?userID=...&surveyID=...` - Take survey (with default survey ID)
    - `/take-survey/?userID=...&surveyID=...&internalID=N` - Take survey with specific internal ID
    - `/take-survey/create_vector` - Create budget allocation
    - `/take-survey/survey` - Compare budget pairs
    - `/take-survey/thank_you` - Survey completion page
    - `/take-survey/?userID=...&surveyID=...&demo=true` - Take survey in Demo Mode
-
 3. Analysis & Reports
+
    - `/report` - View survey analysis report (PDF)
      * Automatically refreshes based on latest data
      * Updates CSVs and PDF as needed
@@ -955,8 +1009,8 @@ curl http://localhost:5001/health
      * Always generates fresh report
      * Useful for testing template changes
      * Creates 'survey_analysis_report_dev.pdf'
-
 4. Survey Results
+
    - `/surveys/responses` - All survey responses
    - `/surveys/{survey_id}/responses` - Responses for specific survey
      * With filtering: `/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors`
@@ -974,9 +1028,11 @@ curl http://localhost:5001/health
    - `/surveys/{survey_id}/comments` - Comments for specific survey
 
 ### API Endpoints
+
 - `/get_messages` - Returns JSON dictionary of error messages
 
-Notes: 
+Notes:
+
 - For survey taking endpoints, both 'userID' and 'surveyID' parameters are required
 - The 'surveyID' parameter in the URL is required but not used internally
 - The survey ID is determined by either:
@@ -986,18 +1042,19 @@ Notes:
 ## Live Application Endpoints
 
 1. Dashboard
+
    - Dashboard (Main landing page): https://survey.csariel.xyz/
-
 2. Survey Taking
-   - Default survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...>
-   - Custom survey: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&internalID=N>
-   - Demo mode: <https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&demo=true>
 
+   - Default survey: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...)
+   - Custom survey: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...&amp;internalID=N](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&internalID=N)
+   - Demo mode: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...&amp;demo=true](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&demo=true)
 3. Analysis & Reports
+
    - Survey Report: https://survey.csariel.xyz/report
    - Development Report: https://survey.csariel.xyz/dev/report
-
 4. Survey Results
+
    - All Responses: https://survey.csariel.xyz/surveys/responses
    - Survey Responses: https://survey.csariel.xyz/surveys/{survey_id}/responses
      * With filtering: https://survey.csariel.xyz/surveys/{survey_id}/responses?view_filter=v_users_preferring_weighted_vectors
@@ -1015,24 +1072,29 @@ Notes:
    - Survey Comments: https://survey.csariel.xyz/surveys/{survey_id}/comments
 
 Notes:
+
 - URL parameters required for survey taking:
   * userID: Required for user identification
   * surveyID: Required but not used internally
   * internalID: Optional, overrides default survey ID from config
 
 ## Modifying the Survey
+
 The application is designed to be data-driven. You can manage which survey is active using two methods: a global default or dynamic URL overrides.
 
 ### Method A: Setting the Global Default
+
 Use this method to set the survey that appears when users visit the base URL (e.g., `https://survey.csariel.xyz`).
 
 1. **Identify the Survey ID:** Check your database `surveys` table for the `id` of the survey you wish to use.
 2. **Update Environment:** Open your `.env` file and update the `SURVEY_ID`:
    ```bash
    SURVEY_ID=1  # Change this to your desired survey ID
+   ```
 3. Restart: Restart the application to apply changes.
 
 ### Method B: Dynamic Switching (Running Multiple Surveys)
+
 You can host multiple surveys simultaneously without changing the config file. You can direct different groups of participants to specific surveys by adding the internalID parameter to the URL.
 
 URL Format: https://yourdomain.com/take-survey/?internalID=123&lang=en&demo=true
@@ -1044,9 +1106,11 @@ lang: Sets the language (he or en).
 demo: If set to true, the session is treated as a test and data is not saved to the main results table.
 
 ### Adding or Modifying Surveys
+
 To add new surveys or modify existing ones, follow these steps:
 
 1. Connect to the database on the remote server using MySQL Workbench via SSH:
+
    - Create a new connection
    - Choose "Standard TCP/IP over SSH" as the connection method
    - SSH Hostname: [your_server_address]
@@ -1056,10 +1120,10 @@ To add new surveys or modify existing ones, follow these steps:
    - MySQL Server Port: 3306
    - Username: [your_mysql_username]
    - Password: [your_mysql_password]
-
 2. Once connected, you can run SQL queries to add or modify surveys. Here are some example queries:
 
    First, add a new story (if needed):
+
    ```sql
    INSERT INTO stories (
        code,
@@ -1086,6 +1150,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```
 
    Then, add a new survey that uses this story:
+
    ```sql
    -- awareness_pts is optional; include it only if you have per-survey PTS tokens
    INSERT INTO surveys (
@@ -1108,6 +1173,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```
 
    Modify an existing story's content:
+
    ```sql
    UPDATE stories
    SET title = JSON_OBJECT(
@@ -1127,6 +1193,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```
 
    Update just the pair generation strategy for a survey:
+
    ```sql
    UPDATE surveys
    SET pair_generation_config = JSON_OBJECT(
@@ -1137,6 +1204,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```
 
    Deactivate a survey:
+
    ```sql
    UPDATE surveys
    SET active = FALSE
@@ -1144,6 +1212,7 @@ To add new surveys or modify existing ones, follow these steps:
    ```
 
 Remember to:
+
 - Use valid strategy names as defined in the pair generation strategies
 - Include all required parameters for the chosen strategy
 - Update the `SURVEY_ID` in `config.py` after adding or modifying surveys
@@ -1232,12 +1301,14 @@ VALUES (
 ```
 
 **Supported HTML Tags:**
+
 - `<strong>` - **Bold text** (emphasized text)
 - `<em>` - *Italic text* (emphasized text)
-- `<mark>` - <mark>Highlighted text</mark> (yellow background)
-- `<u>` - <u>Underlined text</u> (underlined with primary color)
+- `<mark>` - `<mark>`Highlighted text`</mark>` (yellow background)
+- `<u>` - `<u>`Underlined text`</u>` (underlined with primary color)
 
 **Example with multiple highlighting styles:**
+
 ```sql
 'pair_instructions', JSON_OBJECT(
     'he', 'עליכם לקבוע את התקציב עבור <strong><mark>שתי שנים עוקבות</mark></strong>: <u>השנה הנוכחית</u>, והשנה הבאה.',
@@ -1252,6 +1323,7 @@ VALUES (
 To change a strategy's name, you'll need to update both code and database references.
 
 1. **Update the Strategy Class**:
+
    - Open the strategy file in `application/services/pair_generation/` (e.g., `optimization_metrics_vector.py`)
    - Modify the `get_strategy_name()` method:
      ```python
@@ -1259,8 +1331,8 @@ To change a strategy's name, you'll need to update both code and database refere
          """Get the unique identifier for this strategy."""
          return "new_strategy_name"  # Changed from original name
      ```
-
 2. **Update the Database**:
+
    - Update all surveys using this strategy with this SQL query:
      ```sql
      UPDATE surveys 
@@ -1287,6 +1359,7 @@ To change a strategy's name, you'll need to update both code and database refere
 To modify the awareness check questions in the survey:
 
 1. **Change the Question Text**:
+
    - Open `application/translations.py`
    - Locate and modify the awareness question text in both languages:
      ```python
@@ -1295,8 +1368,8 @@ To modify the awareness check questions in the survey:
          "en": "Please select option 1. This is an attention check question.",
      },
      ```
-
 2. **Change the Answer Options or Expected Answers**:
+
    - Open `application/services/awareness_check.py`
    - Modify the `generate_awareness_questions` function to change how options are created
    - Open `application/schemas/validators.py`
@@ -1311,6 +1384,7 @@ To modify the awareness check questions in the survey:
      ```
 
 ## Algorithm
+
 The core algorithm of this application is implemented in the `generate_user_example` function. The function generates a graph based on the user's optimal budget allocation, creating comparison pairs that optimize for both difference and ratio.
 
 ## Analysis
@@ -1352,20 +1426,22 @@ This command will create a PDF report named 'survey_analysis_report.pdf' in the 
 The analysis package consists of several key components:
 
 1. Data Retrieval and Processing:
-   - `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
 
+   - `get_all_completed_survey_responses()`: Retrieves and processes all completed survey responses from the database.
 2. Statistical Analysis:
+
    - `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
    - `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
-
 3. Report Generation:
+
    - `generate_report()`: Orchestrates the entire report generation process, including data loading, analysis, visualization, and PDF creation.
    - Various functions for generating specific report sections (e.g., executive summary, survey analysis, visualizations).
-
 4. Visualization:
+
    - Multiple functions for creating charts and graphs to visualize survey results and trends.
 
 For a complete list of functions and their descriptions, please refer to the source code in the `analysis` directory.
+
 ### Generated Files
 
 The analysis scripts generate the following files in the `data` directory:
@@ -1378,14 +1454,15 @@ The analysis scripts generate the following files in the `data` directory:
 ### Table Explanations
 
 1. **All Completed Survey Responses**
+
    - Each row represents a single comparison pair from a completed survey.
    - Includes survey ID, user ID, optimal allocation, and details of each comparison pair.
-
 2. **Survey Optimization Stats**
+
    - Each row represents a completed survey response.
    - Shows the number of sum-optimized and ratio-optimized choices for each response.
-
 3. **Summarize Stats by Survey**
+
    - Each row represents aggregate data for a single survey, with a final row summarizing across all surveys.
    - Includes metrics such as unique users, total answers, and percentages of sum/ratio optimized choices.
 
@@ -1396,6 +1473,7 @@ Remember to regularly run both the analysis script and the report generator to k
 The project includes comprehensive test coverage across multiple testing domains. All tests are located in the `tests/` directory.
 
 ### Test Structure
+
 ```python
 tests/
 ├── analysis/                     # Data analysis and reporting tests
@@ -1425,13 +1503,17 @@ tests/
 ### Running Tests
 
 #### Quick Start
+
 Run all tests:
+
 ```bash
 pytest
 ```
 
 #### Automated Testing (CI/CD)
+
 GitHub Actions automatically runs the full test suite on every push and pull request:
+
 - ✅ Builds Docker containers with all dependencies
 - ✅ Runs complete test suite across all categories
 - ✅ Validates production build compatibility
@@ -1440,48 +1522,59 @@ GitHub Actions automatically runs the full test suite on every push and pull req
 #### Test Categories
 
 ##### Analysis Tests
+
 **Description:** Data processing and reporting
+
 ```bash
 pytest tests/analysis/
 ```
 
 ##### API Tests
+
 **Description:** Endpoint functionality and error handling
+
 ```bash
 pytest tests/api/
 ```
 
 ##### Database Tests
+
 **Description:** Data persistence and integrity
+
 ```bash
 pytest tests/database/
 ```
 
 ##### Service Tests
+
 **Description:** Core algorithms and pair generation strategies
+
 ```bash
 pytest tests/services/
 ```
 
 Key features:
+
 - **Comprehensive validation**: Tests all 171 valid budget vectors for algorithmic completeness
 - **Mathematical verification**: Ensures perfect cyclic shifts and linear symmetry relationships
 - **Performance testing**: Validates sub-3-second generation times
 
 ##### UI Tests
+
 **Description:** Frontend functionality
+
 ```bash
 pytest tests/UI/
 ```
 
 ##### Load Testing
+
 **Description:** Performance and scalability testing
 We use Locust for performance testing. The load tests simulate realistic user behavior patterns.
 
 To run the load test, follow these steps:
 
 1. Start your application server if it's not already running.
-
 2. Run Locust in headless mode using the following command:
 
 ```
@@ -1491,6 +1584,7 @@ locust -f tests/performance/load_test.py --headless -u 100 -r 2 -t 1m --host=[yo
 Replace `[your host]` with the appropriate host address (e.g., `http://localhost:5001`).
 
 This command does the following:
+
 - `-f tests/performance/load_test.py`: Specifies the Locust file to use
 - `--headless`: Runs Locust in headless mode (no web UI)
 - `-u 100`: Simulates 100 users
@@ -1499,7 +1593,6 @@ This command does the following:
 - `--host=[your host]`: Specifies the host to load test
 
 3. Locust will run the test and output the results to the console. You'll see real-time statistics including request counts, response times, and failure rates.
-
 4. After the test is completed, Locust will generate a summary of the test results in the console output.
 
 Note: It's crucial to have your application server running before starting the Locust test. The load test will attempt to interact with your live application, so an active server is necessary for accurate results.
@@ -1507,26 +1600,32 @@ Note: It's crucial to have your application server running before starting the L
 ## Development
 
 ### Development Setup & Workflow
+
 - Use the provided `.pre-commit-config.yaml` for code formatting and linting
 - Run tests using `pytest` before committing changes
 - Database migrations are stored in `migrations/` directory
 - Follow timestamp-based naming convention (e.g., `20250216_add_attention_check_column.sql`)
 
 ### Important Directories
+
 - **Logs**: Stored in the `logs` directory
-- **Data**: Analysis outputs stored in `data` directory  
+- **Data**: Analysis outputs stored in `data` directory
 - **Migrations**: Database changes in `migrations/` directory
 - **Tests**: All tests in `tests/` with category-based organization
 
 ### Live Application Updates
+
 To update the live application after code changes:
+
 - Log into the server
 - Inside the `app` folder: `git pull`
 - Check service status: `sudo myservice status`
 - Restart service: `sudo myservice restart`
 
 ### Screen Text Locations
+
 To modify displayed text:
+
 - **Translations**: `application/translations.py` (Hebrew/English)
 - **Templates**: `templates/` directory with translation key usage
 - **Dynamic content**: Loaded from database based on user language preference

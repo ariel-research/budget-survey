@@ -165,22 +165,11 @@ class TestDynamicTemporalPreferenceStrategy:
                     f"expected {self.test_vector[j]}"
                 )
 
-    def test_raises_error_for_vector_with_zero(self):
-        """Test UnsuitableForStrategyError is raised for vectors with zero."""
-        # This strategy does not support vectors with zero values.
-        vector_with_zero = (80, 20, 0)
-        with pytest.raises(
-            UnsuitableForStrategyError,
-            match="User vector contains zero values and is unsuitable for this strategy.",
-        ):
-            self.strategy.generate_pairs(vector_with_zero)
-
     def test_all_possible_vectors_are_handled_correctly(self):
         """
         Exhaustively tests all possible valid user vectors.
 
-        - For vectors without zeros, ensures pair generation succeeds.
-        - For vectors with zeros, ensures the correct error is raised.
+        - Ensures pair generation succeeds for all vectors without zero values.
         """
         all_vectors = _generate_all_possible_vectors()
 
@@ -188,14 +177,7 @@ class TestDynamicTemporalPreferenceStrategy:
         assert len(all_vectors) == 231
 
         for vector in all_vectors:
-            if 0 in vector:
-                # Test that vectors with zero are correctly rejected
-                with pytest.raises(
-                    UnsuitableForStrategyError,
-                    match="User vector contains zero values",
-                ):
-                    self.strategy.generate_pairs(vector)
-            else:
+            if 0 not in vector:
                 # Test that valid vectors (no zeros) generate pairs successfully
                 try:
                     pairs = self.strategy.generate_pairs(vector)

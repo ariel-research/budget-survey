@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -306,17 +305,8 @@ class LinearSymmetryStrategy(PairGenerationStrategy):
             List of 12 dictionaries containing comparison pairs
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values
             ValueError: If unable to generate required number of unique pairs
         """
-        # Check for zero values in user vector
-        if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values")
-            raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for "
-                "linear symmetry strategy"
-            )
-
         # Validate inputs
         self._validate_vector(user_vector, vector_size)
 

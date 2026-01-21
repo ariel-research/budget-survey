@@ -47,17 +47,8 @@ class TriangleInequalityStrategy(PairGenerationStrategy):
             List of 12 dicts containing biennial budget comparison pairs
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values or
-            if suitable pairs cannot be generated
+            UnsuitableForStrategyError: If suitable pairs cannot be generated
         """
-        # Check for zero values
-        if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values")
-            raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for "
-                "triangle inequality strategy"
-            )
-
         # Validate inputs
         self._validate_vector(user_vector, vector_size)
 

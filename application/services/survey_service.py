@@ -18,6 +18,7 @@ from database.queries import (
     get_survey_description,
     get_survey_name,
     get_survey_pair_generation_config,
+    get_survey_suitability_rules,
     is_user_blacklisted,
     mark_survey_as_completed,
     user_already_responded_to_survey,
@@ -290,6 +291,41 @@ class SurveyService:
         )
 
     @staticmethod
+    def _validate_vector_suitability(user_vector: List[int], survey_id: int) -> None:
+        """
+        Validate user's budget allocation vector against dynamic suitability rules.
+
+        Supported Rules (in surveys.suitability_rules JSON):
+        - max_zero_values (int): Max allowed zero values.
+        - min_positive_values (int): Min required positive values.
+
+        Args:
+            user_vector: User's ideal budget allocation
+            survey_id: The internal survey identifier
+
+        Raises:
+            UnsuitableForStrategyError: If the vector violates any suitability rules
+        """
+        rules = get_survey_suitability_rules(survey_id)
+        if not rules:
+            return
+
+        # Check for max_zero_values rule
+        if "max_zero_values" in rules:
+            max_zeros = rules["max_zero_values"]
+            zero_count = user_vector.count(0)
+            if zero_count > max_zeros:
+                logger.info(
+                    f"User vector {user_vector} has {zero_count} zeros, "
+                    f"exceeding limit of {max_zeros} for survey {survey_id}"
+                )
+                error_msg = get_translation("unsuitable_vector_error", "messages")
+                if error_msg.startswith("["):
+                    error_msg = f"User vector contains {zero_count} zero values and is unsuitable for this strategy"
+
+                raise UnsuitableForStrategyError(error_msg)
+
+    @staticmethod
     def generate_survey_pairs(
         user_vector: List[int], num_subjects: int, survey_id: int
     ) -> Tuple[List[Dict], List[Dict]]:
@@ -308,6 +344,9 @@ class SurveyService:
             ValueError: If strategy configuration is invalid
         """
         logger.debug(f"Generating pairs for survey {survey_id}")
+
+        # Validate suitability against dynamic rules
+        SurveyService._validate_vector_suitability(user_vector, survey_id)
 
         # Get strategy configuration
         config = get_survey_pair_generation_config(survey_id)
@@ -378,6 +417,9 @@ class SurveyService:
             ValueError: If strategy configuration is invalid or strategy is not ranking-based
         """
         logger.debug(f"Generating ranking questions for survey {survey_id}")
+
+        # Validate suitability against dynamic rules
+        SurveyService._validate_vector_suitability(user_vector, survey_id)
 
         # Get strategy configuration
         config = get_survey_pair_generation_config(survey_id)

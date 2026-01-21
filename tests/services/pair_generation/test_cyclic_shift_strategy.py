@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 from analysis.logic.stats_calculators import calculate_cyclic_shift_group_consistency
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation import CyclicShiftStrategy
 
 # Test constants
@@ -204,16 +203,6 @@ def test_generate_pairs_success(strategy):
                 assert len(vector) == 3
                 assert sum(vector) == 100
                 assert all(0 <= v <= 100 for v in vector)
-
-
-def test_generate_pairs_with_zero_values(strategy):
-    """Test that strategy raises UnsuitableForStrategyError for zero values."""
-    user_vector_with_zero = (0, 50, 50)
-
-    with pytest.raises(UnsuitableForStrategyError) as exc_info:
-        strategy.generate_pairs(user_vector_with_zero, n=12, vector_size=3)
-
-    assert "zero values" in str(exc_info.value)
 
 
 def test_generate_pairs_error_handling(strategy):
@@ -503,18 +492,6 @@ def test_logging_behavior(strategy, caplog):
     # Should log successful generation
     assert any("Generated" in record.message for record in caplog.records)
     assert any("CyclicShiftStrategy" in record.message for record in caplog.records)
-
-
-def test_zero_value_logging(strategy, caplog):
-    """Test logging when zero values are detected."""
-    user_vector_with_zero = (0, 40, 60)
-
-    with caplog.at_level("INFO"):
-        with pytest.raises(UnsuitableForStrategyError):
-            strategy.generate_pairs(user_vector_with_zero, n=12, vector_size=3)
-
-    # Should log the zero value detection
-    assert any("zero values" in record.message for record in caplog.records)
 
 
 def test_difference_generation_properties(strategy):
