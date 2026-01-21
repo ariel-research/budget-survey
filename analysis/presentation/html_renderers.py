@@ -4107,6 +4107,12 @@ def _generate_rank_overall_consistency_table(
         </div>
         """
 
+    def fmt_cell(count: int, total: int) -> str:
+        if total == 0:
+            return "0 (0.0%)"
+        percent = (count / total) * 100
+        return f"{count} ({percent:.1f}%)"
+
     rows = []
     total_users = 0
     total_a = 0
@@ -4121,14 +4127,23 @@ def _generate_rank_overall_consistency_table(
         total_b += counts["b"]
         total_neutral += counts["neutral"]
 
-        def fmt_cell(count, total):
-            if total == 0:
-                return "0 (0.0%)"
-            percent = (count / total) * 100
-            return f"{count} ({percent:.1f}%)"
-
-        a_class_attr = ' class="highlight-cell"' if counts["a"] > counts["b"] else ""
-        b_class_attr = ' class="highlight-cell"' if counts["b"] > counts["a"] else ""
+        # Highlight whichever category has the most people
+        max_count = max(counts["a"], counts["b"], counts["neutral"])
+        a_class_attr = (
+            ' class="highlight-cell"'
+            if counts["a"] == max_count and max_count > 0
+            else ""
+        )
+        b_class_attr = (
+            ' class="highlight-cell"'
+            if counts["b"] == max_count and max_count > 0
+            else ""
+        )
+        neutral_class_attr = (
+            ' class="highlight-cell"'
+            if counts["neutral"] == max_count and max_count > 0
+            else ""
+        )
 
         rows.append(
             f"""
@@ -4137,7 +4152,7 @@ def _generate_rank_overall_consistency_table(
                 <td>{num_users}</td>
                 <td{a_class_attr}>{fmt_cell(counts["a"], num_users)}</td>
                 <td{b_class_attr}>{fmt_cell(counts["b"], num_users)}</td>
-                <td>{fmt_cell(counts["neutral"], num_users)}</td>
+                <td{neutral_class_attr}>{fmt_cell(counts["neutral"], num_users)}</td>
             </tr>
             """
         )
@@ -4145,14 +4160,19 @@ def _generate_rank_overall_consistency_table(
     if total_users > 0:
         total_label = get_translation("total", "answers")
 
-        a_total_class = ' class="highlight-cell"' if total_a > total_b else ""
-        b_total_class = ' class="highlight-cell"' if total_b > total_a else ""
-
-        def fmt_cell(count, total):
-            if total == 0:
-                return "0 (0.0%)"
-            percent = (count / total) * 100
-            return f"{count} ({percent:.1f}%)"
+        # Highlight whichever category has the most people overall
+        max_total = max(total_a, total_b, total_neutral)
+        a_total_class = (
+            ' class="highlight-cell"' if total_a == max_total and max_total > 0 else ""
+        )
+        b_total_class = (
+            ' class="highlight-cell"' if total_b == max_total and max_total > 0 else ""
+        )
+        neutral_total_class = (
+            ' class="highlight-cell"'
+            if total_neutral == max_total and max_total > 0
+            else ""
+        )
 
         rows.append(
             f"""
@@ -4161,7 +4181,7 @@ def _generate_rank_overall_consistency_table(
                 <td><strong>{total_users}</strong></td>
                 <td{a_total_class}><strong>{fmt_cell(total_a, total_users)}</strong></td>
                 <td{b_total_class}><strong>{fmt_cell(total_b, total_users)}</strong></td>
-                <td><strong>{fmt_cell(total_neutral, total_users)}</strong></td>
+                <td{neutral_total_class}><strong>{fmt_cell(total_neutral, total_users)}</strong></td>
             </tr>
             """
         )
