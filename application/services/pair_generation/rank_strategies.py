@@ -123,3 +123,35 @@ class KLVsAntiLeontiefRankStrategy(GenericRankStrategy):
             min_component=10,
             normalization_method="ordinal",
         )
+
+
+class KLVsL1RankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing Kullback-Leibler (information divergence)
+    against L1 distance (Sum).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=KLUtilityModel,
+            utility_model_b_class=L1UtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+            normalization_method="ordinal",
+        )
+
+
+class KLVsL2RankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing Kullback-Leibler (information divergence)
+    against L2 distance (Root Sum Squared).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=KLUtilityModel,
+            utility_model_b_class=L2UtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+            normalization_method="ordinal",
+        )

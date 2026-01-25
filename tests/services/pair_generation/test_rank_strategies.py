@@ -4,6 +4,8 @@ import pytest
 
 from application.services.pair_generation.rank_strategies import (
     KLVsAntiLeontiefRankStrategy,
+    KLVsL1RankStrategy,
+    KLVsL2RankStrategy,
     L1VsL2RankStrategy,
     L1VsLeontiefRankStrategy,
     L2VsLeontiefRankStrategy,
@@ -40,6 +42,16 @@ def leontief_kl_strategy():
 @pytest.fixture
 def kl_anti_leo_strategy():
     return KLVsAntiLeontiefRankStrategy()
+
+
+@pytest.fixture
+def kl_l1_strategy():
+    return KLVsL1RankStrategy()
+
+
+@pytest.fixture
+def kl_l2_strategy():
+    return KLVsL2RankStrategy()
 
 
 class TestL1VsLeontiefRankStrategy:
@@ -194,3 +206,33 @@ class TestKLVsAntiLeontiefRankStrategy:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
             assert any("kl:" in d for d in descriptions)
             assert any("anti_leontief:" in d for d in descriptions)
+
+
+class TestKLVsL1RankStrategy:
+    """Tests for the KL vs L1 strategy."""
+
+    def test_generate_pairs_integration(self, kl_l1_strategy):
+        """Verify end-to-end pair generation."""
+        user_vector = (50, 30, 20)
+        n = 2
+        pairs = kl_l1_strategy.generate_pairs(user_vector, n=n, vector_size=3)
+        assert len(pairs) == n
+        for pair in pairs:
+            descriptions = [k for k in pair.keys() if k != "__metadata__"]
+            assert any("kl:" in d for d in descriptions)
+            assert any("l1:" in d for d in descriptions)
+
+
+class TestKLVsL2RankStrategy:
+    """Tests for the KL vs L2 strategy."""
+
+    def test_generate_pairs_integration(self, kl_l2_strategy):
+        """Verify end-to-end pair generation."""
+        user_vector = (50, 30, 20)
+        n = 2
+        pairs = kl_l2_strategy.generate_pairs(user_vector, n=n, vector_size=3)
+        assert len(pairs) == n
+        for pair in pairs:
+            descriptions = [k for k in pair.keys() if k != "__metadata__"]
+            assert any("kl:" in d for d in descriptions)
+            assert any("l2:" in d for d in descriptions)

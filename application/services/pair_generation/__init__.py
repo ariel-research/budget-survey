@@ -11,6 +11,8 @@ from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .rank_strategies import (
     KLVsAntiLeontiefRankStrategy,
+    KLVsL1RankStrategy,
+    KLVsL2RankStrategy,
     L1VsL2RankStrategy,
     L1VsLeontiefRankStrategy,
     L2VsLeontiefRankStrategy,
@@ -33,6 +35,8 @@ StrategyRegistry.register(L2VsLeontiefRankStrategy)
 StrategyRegistry.register(LeontiefVsAntiLeontiefRankStrategy)
 StrategyRegistry.register(LeontiefVsKLRankStrategy)
 StrategyRegistry.register(KLVsAntiLeontiefRankStrategy)
+StrategyRegistry.register(KLVsL1RankStrategy)
+StrategyRegistry.register(KLVsL2RankStrategy)
 StrategyRegistry.register(WeightedAverageVectorStrategy)
 StrategyRegistry.register(RoundedWeightedAverageVectorStrategy)
 StrategyRegistry.register(PreferenceRankingSurveyStrategy)
@@ -56,6 +60,8 @@ __all__ = [
     "LeontiefVsAntiLeontiefRankStrategy",
     "LeontiefVsKLRankStrategy",
     "KLVsAntiLeontiefRankStrategy",
+    "KLVsL1RankStrategy",
+    "KLVsL2RankStrategy",
     "WeightedAverageVectorStrategy",
     "RoundedWeightedAverageVectorStrategy",
     "MultiDimensionalSinglePeakedStrategy",
