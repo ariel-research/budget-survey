@@ -3588,6 +3588,11 @@ def _generate_rank_overall_consistency_table(
         percent = (count / total) * 100
         return f"{count} ({percent:.1f}%)"
 
+    # Pre-calculate grand total for percentages in "# of Users" column
+    grand_total_users = sum(
+        counts["a"] + counts["b"] + counts["neutral"] for counts in bucket_data.values()
+    )
+
     rows = []
     total_users = 0
     total_a = 0
@@ -3624,7 +3629,7 @@ def _generate_rank_overall_consistency_table(
             f"""
             <tr>
                 <td>{level:.1f}%</td>
-                <td>{num_users}</td>
+                <td>{fmt_cell(num_users, grand_total_users)}</td>
                 <td{a_class_attr}>{fmt_cell(counts["a"], num_users)}</td>
                 <td{b_class_attr}>{fmt_cell(counts["b"], num_users)}</td>
                 <td{neutral_class_attr}>{fmt_cell(counts["neutral"], num_users)}</td>
@@ -3653,7 +3658,7 @@ def _generate_rank_overall_consistency_table(
             f"""
             <tr class="total-row">
                 <td><strong>{total_label}</strong></td>
-                <td><strong>{total_users}</strong></td>
+                <td><strong>{fmt_cell(total_users, total_users)}</strong></td>
                 <td{a_total_class}><strong>{fmt_cell(total_a, total_users)}</strong></td>
                 <td{b_total_class}><strong>{fmt_cell(total_b, total_users)}</strong></td>
                 <td{neutral_total_class}><strong>{fmt_cell(total_neutral, total_users)}</strong></td>
