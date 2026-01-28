@@ -641,6 +641,10 @@ def generate_survey_choices_html(
         if temporal_sub_tables_html:
             html_parts.append(temporal_sub_tables_html)
 
+    # Special handling for identity_asymmetry strategy - handled by custom widget elsewhere
+    elif strategy_name == "identity_asymmetry":
+        pass
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -4144,6 +4148,10 @@ def generate_identity_asymmetry_analysis(
         if preferred_idx is not None and preferred_idx < len(subjects)
         else "N/A"
     )
+
+    # If consistency <= 50%, show "-" as it's indifferent
+    if consistency <= 50.0:
+        preferred_subject_name = "-"
 
     # Translations
     title = get_translation("identity_asymmetry_summary", "answers")

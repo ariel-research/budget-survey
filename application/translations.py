@@ -1031,8 +1031,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Pain Curve",
         },
         "identity_bias_strength": {
-            "he": "עוצמת הטיה",
-            "en": "Bias Strength",
+            "he": "העדפה דומיננטית",
+            "en": "Dominant Preference",
         },
         "identity_consistency": {
             "he": "עקביות זהות",
