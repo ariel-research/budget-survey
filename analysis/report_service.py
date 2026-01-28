@@ -11,6 +11,7 @@ from analysis.logic.stats_calculators import (
     calculate_cyclic_shift_group_consistency,
     calculate_dynamic_temporal_metrics,
     calculate_final_consistency_score,
+    calculate_identity_asymmetry_metrics,
     calculate_linear_symmetry_group_consistency,
     calculate_rank_consistency_metrics,
     calculate_single_peaked_metrics,
@@ -25,6 +26,7 @@ from analysis.presentation.html_renderers import (
 from analysis.presentation.html_renderers import (
     generate_detailed_breakdown_table,
     generate_extreme_vector_analysis_table,
+    generate_identity_asymmetry_analysis,
     generate_overall_statistics_table,
     generate_preference_ranking_consistency_tables,
     generate_survey_choices_html,
@@ -296,6 +298,11 @@ def render_detailed_user_choices(
                 else:
                     stats["consistency"] = 0.0
 
+            # Identity Asymmetry
+            elif current_strategy_name == "identity_asymmetry":
+                identity_metrics = calculate_identity_asymmetry_metrics(choices)
+                stats.update(identity_metrics)
+
             # Add metadata
             response_created_at = choices[0].get("response_created_at")
             summary = {
@@ -304,6 +311,7 @@ def render_detailed_user_choices(
                 "stats": stats,
                 "response_created_at": response_created_at,
                 "choices": choices,
+                "subjects": subjects_map.get(survey_id, []),
             }
             if choices and "strategy_labels" in choices[0]:
                 summary["strategy_labels"] = choices[0]["strategy_labels"]
@@ -357,6 +365,13 @@ def render_detailed_user_choices(
                     )
                     if ranking_table_html:
                         user_details.append(ranking_table_html)
+
+                if survey_strategy_name == "identity_asymmetry":
+                    identity_analysis_html = generate_identity_asymmetry_analysis(
+                        choices, subjects_map.get(survey_id)
+                    )
+                    if identity_analysis_html:
+                        user_details.append(identity_analysis_html)
 
                 user_details.append(
                     generate_survey_choices_html(

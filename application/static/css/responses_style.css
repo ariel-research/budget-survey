@@ -3450,3 +3450,40 @@ th.sortable[data-order="desc"]::after {
      transition: none;
   }
 }
+
+/* Identity Asymmetry Analysis */
+.identity-asymmetry-analysis {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.identity-asymmetry-analysis .chosen-subject {
+    font-weight: bold;
+    color: #2c3e50;
+    background-color: rgba(44, 62, 80, 0.05);
+}
+
+.identity-asymmetry-analysis .metrics-summary {
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+}
+
+.identity-asymmetry-analysis .metrics-summary p {
+    margin: 5px 0;
+}
+
+.identity-asymmetry-analysis h4 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.identity-asymmetry-analysis h5 {
+    margin: 15px 0 10px 0;
+    color: #7f8c8d;
+}

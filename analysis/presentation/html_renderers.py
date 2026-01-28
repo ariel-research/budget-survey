@@ -641,6 +641,10 @@ def generate_survey_choices_html(
         if temporal_sub_tables_html:
             html_parts.append(temporal_sub_tables_html)
 
+    # Special handling for identity_asymmetry strategy - handled by custom widget elsewhere
+    elif strategy_name == "identity_asymmetry":
+        pass
+
     # Standard summary for other strategies
     else:
         survey_summary = _generate_survey_summary_html(choices, survey_labels)
@@ -1801,6 +1805,35 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
             # metric_a is index 0, metric_b is index 1
             val = stats.get(f"metric_{chr(97+index)}_percent", 0.0)
 
+        # Special Case: Identity Asymmetry Preferred Subject
+        elif col_key == "preferred_subject_idx":
+            idx = stats.get("preferred_subject_idx")
+            consistency = stats.get("identity_consistency", 0.0)
+
+            # If consistency <= 50%, show "-" as it's indifferent
+            if consistency <= 50.0:
+                val = "-"
+            else:
+                subjects = []
+                if "choices" in summary and summary["choices"]:
+                    # Try to get subjects from metadata or look them up
+                    survey_id = summary.get("survey_id")
+                    # We can't easily import here if it causes circular dependency,
+                    # but we can try to find subjects in the summary if they were added
+                    subjects = summary.get("subjects", [])
+                    if not subjects:
+                        try:
+                            from database.queries import get_subjects
+
+                            subjects = get_subjects(survey_id)
+                        except Exception:
+                            pass
+
+                val = subjects[idx] if idx is not None and idx < len(subjects) else "-"
+
+            values[col_key] = val
+            continue
+
         # Standard Case
         else:
             # Try specific key, then key_percent, then key (direct)
@@ -1814,6 +1847,7 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
     # Logic A: Threshold-based (Consistency, Transitivity)
     threshold_cols = {
         "consistency": 70,
+        "identity_consistency": 70,
         "transitivity_rate": 75,
         "order_consistency": 75,
         "group_consistency": 80,
@@ -1826,7 +1860,7 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
     comparison_candidates = {
         k: v
         for k, v in values.items()
-        if k not in threshold_cols and columns[k].get("type") != "info"
+        if k not in threshold_cols and columns[k].get("type") == "percentage"
     }
 
     if len(comparison_candidates) > 1:
@@ -1837,7 +1871,11 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
 
     # Apply Threshold Logic
     for k, v in values.items():
-        if k in threshold_cols and v >= threshold_cols[k]:
+        if (
+            k in threshold_cols
+            and isinstance(v, (int, float))
+            and v >= threshold_cols[k]
+        ):
             highlights.add(k)
 
     # Special Case: Preference Ranking (Final Score)
@@ -1852,13 +1890,19 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
     cells = []
     for col_key in col_keys:
         val = values[col_key]
+        col_config = columns[col_key]
+        col_type = col_config.get("type", "percentage")
+
         is_highlight = col_key in highlights
         css_class = "highlight-row" if is_highlight else ""
 
         # Formatting
-        formatted_val = f"{val:.1f}%"
-        if isinstance(val, int):
-            formatted_val = f"{val}%"
+        if col_type == "percentage" and isinstance(val, (int, float)):
+            formatted_val = f"{val:.1f}%"
+            if isinstance(val, int) or (isinstance(val, float) and val.is_integer()):
+                formatted_val = f"{int(val)}%"
+        else:
+            formatted_val = str(val)
 
         cells.append(f'<td class="{css_class}">{formatted_val}</td>')
 
@@ -2093,6 +2137,75 @@ def generate_overall_statistics_table(
                 <p class="summary-note">No data available for consistency analysis.</p>
             </div>
             """
+
+    # Identity Asymmetry Strategy
+    elif strategy_name == "identity_asymmetry":
+        # Initialize buckets for distribution (50% to 100%)
+        buckets = {50: 0, 60: 0, 70: 0, 80: 0, 90: 0, 100: 0}
+        total_users = 0
+        for summary in summaries:
+            stats = summary.get("stats", {})
+            if "identity_consistency" in stats:
+                consistency = stats["identity_consistency"]
+                # Round to nearest 10 and clamp between 50 and 100 to bin users into readable consistency groups
+                bucket_key = int(round(consistency / 10.0) * 10)
+                bucket_key = max(50, min(100, bucket_key))
+                buckets[bucket_key] += 1
+                total_users += 1
+
+        # Use translations for table headers
+        th_level = get_translation("consistency_level", "answers")
+        th_count = get_translation("num_of_users", "answers")
+        total_label = get_translation("total", "answers")
+
+        # Generate rows for each bucket
+        rows_html = []
+        for level in sorted(buckets.keys()):
+            count = buckets[level]
+            percent = (count / total_users * 100) if total_users > 0 else 0
+
+            # Styling: Highlight 90% and 100% rows ONLY if they have users
+            highlight_class = ""
+            if level >= 90 and count > 0:
+                highlight_class = ' class="highlight-row"'
+
+            rows_html.append(
+                f"""
+                        <tr{highlight_class}>
+                            <td>{level:.1f}%</td>
+                            <td>{count} ({percent:.1f}%)</td>
+                        </tr>"""
+            )
+
+        # Add total row
+        rows_html.append(
+            f"""
+                        <tr class="total-row">
+                            <td>{total_label}</td>
+                            <td>{total_users} (100.0%)</td>
+                        </tr>"""
+        )
+
+        overall_table = f"""
+        <div class="summary-table-container">
+            <h2>{title}</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{th_level}</th>
+                            <th>{th_count}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {"".join(rows_html)}
+                    </tbody>
+                </table>
+            </div>
+            <p class="summary-note">{note}</p>
+        </div>
+        """
+
     elif strategy_name == "preference_ranking_survey":
         # Handle preference ranking survey strategy
         # Calculate average final-score across all users
@@ -4004,3 +4117,113 @@ if __name__ == "__main__":
     # Example: Load data into DataFrames (summary_stats, optimization_stats, responses_df)
     # then call functions like generate_executive_summary(summary_stats, optimization_stats, responses_df)
     # and generate_detailed_user_choices(user_choices_list)
+
+
+def generate_identity_asymmetry_analysis(
+    choices: List[Dict], subjects: List[str] = None
+) -> str:
+    """
+    Generate identity asymmetry analysis HTML for a single user.
+    Includes the Pain Curve table.
+    """
+    if not choices:
+        return ""
+
+    from analysis.logic.stats_calculators import calculate_identity_asymmetry_metrics
+
+    metrics = calculate_identity_asymmetry_metrics(choices)
+    if not metrics:
+        return ""
+
+    pain_curve = metrics.get("pain_curve", {})
+    consistency = metrics.get("identity_consistency", 0.0)
+    preferred_idx = metrics.get("preferred_subject_idx")
+
+    # Subjects
+    if not subjects:
+        subjects = [f"Subject {i}" for i in range(10)]  # Fallback
+
+    preferred_subject_name = (
+        subjects[preferred_idx]
+        if preferred_idx is not None and preferred_idx < len(subjects)
+        else "N/A"
+    )
+
+    # If consistency <= 50%, show "-" as it's indifferent
+    if consistency <= 50.0:
+        preferred_subject_name = "-"
+
+    # Translations
+    title = get_translation("identity_asymmetry_summary", "answers")
+    consistency_label = get_translation("identity_consistency", "answers")
+    bias_strength_label = get_translation("identity_bias_strength", "answers")
+    pain_curve_title = get_translation("pain_curve_title", "answers")
+    th_step = get_translation("step_number", "answers")
+    th_magnitude = get_translation("magnitude", "answers")
+    th_favors = get_translation("preferred_subject", "answers")
+
+    # If translations don't exist, use defaults
+    if th_step.startswith("["):
+        th_step = "Step"
+    if th_magnitude.startswith("["):
+        th_magnitude = "Magnitude"
+    if th_favors.startswith("["):
+        th_favors = "Choice (Favors)"
+
+    # Build Pain Curve Rows
+    rows = []
+    for step in range(1, 11):
+        idx = pain_curve.get(step)
+        subject_name = subjects[idx] if idx is not None and idx < len(subjects) else "-"
+
+        # Determine magnitude from first matching choice
+        magnitude = "-"
+        for choice in choices:
+            metadata = choice.get("generation_metadata")
+            if isinstance(metadata, str):
+                try:
+                    import json
+
+                    metadata = json.loads(metadata)
+                except (ValueError, TypeError, json.JSONDecodeError):
+                    metadata = None
+            if metadata and metadata.get("step_number") == step:
+                magnitude = metadata.get("magnitude", "-")
+                break
+
+        rows.append(
+            f"""
+            <tr>
+                <td>{step}</td>
+                <td>{magnitude}</td>
+                <td class="{'chosen-subject' if idx is not None else ''}">{subject_name}</td>
+            </tr>
+        """
+        )
+
+    html_output = f"""
+    <div class="identity-asymmetry-analysis">
+        <h4>{title}</h4>
+        <div class="metrics-summary">
+            <p><strong>{consistency_label}:</strong> {consistency}%</p>
+            <p><strong>{bias_strength_label}:</strong> {preferred_subject_name}</p>
+        </div>
+
+        <h5>{pain_curve_title}</h5>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{th_step}</th>
+                        <th>{th_magnitude}</th>
+                        <th>{th_favors}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {"".join(rows)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
+    return html_output

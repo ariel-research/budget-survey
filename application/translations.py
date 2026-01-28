@@ -164,6 +164,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "הווקטור שהוזן מכיל יותר מדי ערכי אפס ואינו מתאים לאסטרטגיה זו",
             "en": "User vector contains too many zero values and is unsuitable for this strategy",
         },
+        "no_equal_pair_error": {
+            "he": "הווקטור שהוזן אינו מכיל זוג ערכים שווים (לפחות 10) ואינו מתאים לאסטרטגיה זו",
+            "en": "User vector does not contain an equal pair of values (at least 10) and is unsuitable for this strategy",
+        },
     },
     "pagination": {  # Pagination controls
         "previous": {
@@ -863,6 +867,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מבוזר (הגדלת יעד)",
             "en": "Distributed (Target Increases)",
         },
+        "favor_subject": {
+            "he": "מעדיף את {subject_name}",
+            "en": "Favor {subject_name}",
+        },
         # Temporal preference analysis
         "temporal_preference_summary": {
             "he": "סיכום העדפות זמניות",
@@ -1014,6 +1022,24 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "מטריצת התפלגות הפסד אסימטרי",
             "en": "Asymmetric Loss Distribution Matrix",
         },
+        "identity_asymmetry_summary": {
+            "he": "סיכום ניתוח זהות אסימטרית",
+            "en": "Identity Asymmetry Analysis",
+        },
+        "pain_curve_title": {
+            "he": "עקומת כאב",
+            "en": "Pain Curve",
+        },
+        "identity_bias_strength": {
+            "he": "העדפה דומיננטית",
+            "en": "Dominant Preference",
+        },
+        "identity_consistency": {
+            "he": "עקביות זהות",
+            "en": "Identity Consistency",
+        },
+        "step_number": {"he": "שלב", "en": "Step"},
+        "preferred_subject": {"he": "נושא מועדף", "en": "Preferred Subject"},
         "magnitude_levels_note": {
             "he": "רמות עוצמה (X = יחידת בסיס × מכפיל)",
             "en": "Magnitude Levels (X = base_unit × multiplier)",
