@@ -5,6 +5,7 @@ from .base import PairGenerationStrategy, StrategyRegistry
 from .cyclic_shift_strategy import CyclicShiftStrategy
 from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrategy
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
+from .identity_asymmetry_strategy import IdentityAsymmetryStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
 from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
@@ -49,6 +50,7 @@ StrategyRegistry.register(LinearSymmetryStrategy)
 StrategyRegistry.register(AsymmetricLossDistributionStrategy)
 StrategyRegistry.register(DynamicTemporalPreferenceStrategy)
 StrategyRegistry.register(TriangleInequalityStrategy)
+StrategyRegistry.register(IdentityAsymmetryStrategy)
 
 __all__ = [
     "PairGenerationStrategy",
@@ -74,4 +76,5 @@ __all__ = [
     "PreferenceRankingSurveyStrategy",
     "DynamicTemporalPreferenceStrategy",
     "TriangleInequalityStrategy",
+    "IdentityAsymmetryStrategy",
 ]

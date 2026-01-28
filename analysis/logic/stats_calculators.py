@@ -1584,3 +1584,65 @@ def generate_single_user_asymmetric_matrix_data(
     except Exception as e:
         logger.warning(f"Failed generating asymmetric matrix data: {e}")
         return {}
+
+
+def calculate_identity_asymmetry_metrics(choices: List[Dict]) -> Dict:
+    """
+    Calculate metrics for identity asymmetry strategy.
+
+    Metrics:
+    - identity_consistency: Max(Wins_A, Wins_B) / Total
+    - preferred_subject_idx: The index of the subject that won most often
+    - pain_curve: Map of step_number -> won_subject_idx
+    """
+    if not choices:
+        return {}
+
+    wins = {}  # idx -> count
+    pain_curve = {}  # step -> idx
+    total_questions = 0
+
+    for choice in choices:
+        # generation_metadata might be a dict or a JSON string
+        metadata = choice.get("generation_metadata")
+        if isinstance(metadata, str):
+            try:
+                metadata = json.loads(metadata)
+            except Exception:
+                metadata = None
+
+        if not metadata or metadata.get("pair_type") != "identity_test":
+            continue
+
+        user_choice = choice.get("user_choice")
+        if user_choice not in (1, 2):
+            continue
+
+        total_questions += 1
+        favors_idx = metadata.get(f"option_{user_choice}_favors_idx")
+        step = metadata.get("step_number")
+
+        if favors_idx is not None:
+            wins[favors_idx] = wins.get(favors_idx, 0) + 1
+            if step is not None:
+                pain_curve[step] = favors_idx
+
+    if total_questions == 0:
+        return {}
+
+    # Calculate consistency
+    max_wins = max(wins.values()) if wins else 0
+    consistency = (max_wins / total_questions) * 100
+
+    # Determine preferred subject
+    preferred_idx = None
+    if wins:
+        preferred_idx = max(wins, key=wins.get)
+
+    return {
+        "identity_consistency": round(consistency, 1),
+        "preferred_subject_idx": preferred_idx,
+        "pain_curve": pain_curve,
+        "total_questions": total_questions,
+        "wins": wins,
+    }

@@ -298,6 +298,7 @@ class SurveyService:
         Supported Rules (in surveys.suitability_rules JSON):
         - max_zero_values (int): Max allowed zero values.
         - min_positive_values (int): Min required positive values.
+        - min_equal_value_pair (int): Requires at least one pair of equal values >= this limit.
 
         Args:
             user_vector: User's ideal budget allocation
@@ -323,6 +324,45 @@ class SurveyService:
                 if error_msg.startswith("["):
                     error_msg = f"User vector contains {zero_count} zero values and is unsuitable for this strategy"
 
+                raise UnsuitableForStrategyError(error_msg)
+
+        # Check for min_positive_values rule
+        if "min_positive_values" in rules:
+            min_pos = rules["min_positive_values"]
+            pos_count = sum(1 for v in user_vector if v > 0)
+            if pos_count < min_pos:
+                logger.info(
+                    f"User vector {user_vector} has {pos_count} positive values, "
+                    f"less than required {min_pos} for survey {survey_id}"
+                )
+                error_msg = get_translation("unsuitable_vector_error", "messages")
+                if error_msg.startswith("["):
+                    error_msg = f"User vector contains only {pos_count} positive values and is unsuitable for this strategy"
+                raise UnsuitableForStrategyError(error_msg)
+
+        # Check for min_equal_value_pair rule
+        if "min_equal_value_pair" in rules:
+            min_val = rules["min_equal_value_pair"]
+            has_equal_pair = False
+            for i in range(len(user_vector)):
+                for j in range(i + 1, len(user_vector)):
+                    if user_vector[i] == user_vector[j] and user_vector[i] >= min_val:
+                        has_equal_pair = True
+                        break
+                if has_equal_pair:
+                    break
+
+            if not has_equal_pair:
+                logger.info(
+                    f"User vector {user_vector} does not contain an equal pair >= {min_val} "
+                    f"required for survey {survey_id}"
+                )
+                error_msg = get_translation("no_equal_pair_error", "messages")
+                if error_msg.startswith("["):
+                    error_msg = (
+                        f"User vector does not contain an equal pair of values "
+                        f"(at least {min_val}) and is unsuitable for this strategy"
+                    )
                 raise UnsuitableForStrategyError(error_msg)
 
     @staticmethod
@@ -771,6 +811,30 @@ class SurveySessionData:
 
         provided_opt1 = pair.get("option1_strategy")
         provided_opt2 = pair.get("option2_strategy")
+
+        # Handle Identity Asymmetry Favor Labels
+        if provided_opt1 and str(provided_opt1).startswith("favor_subject_index_"):
+            try:
+                idx = int(str(provided_opt1).split("_")[-1])
+                subject_name = (
+                    self.subjects[idx] if idx < len(self.subjects) else f"Subject {idx}"
+                )
+                provided_opt1 = get_translation(
+                    "favor_subject", "answers", subject_name=subject_name
+                )
+            except Exception:
+                pass
+        if provided_opt2 and str(provided_opt2).startswith("favor_subject_index_"):
+            try:
+                idx = int(str(provided_opt2).split("_")[-1])
+                subject_name = (
+                    self.subjects[idx] if idx < len(self.subjects) else f"Subject {idx}"
+                )
+                provided_opt2 = get_translation(
+                    "favor_subject", "answers", subject_name=subject_name
+                )
+            except Exception:
+                pass
 
         # Prefer provided strategy strings (contain magnitude/type for asymmetric strategy)
         if provided_opt1 and provided_opt2:
