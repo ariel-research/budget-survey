@@ -15,7 +15,9 @@ class TestIdentityAsymmetryStrategy(unittest.TestCase):
 
     def test_find_largest_equal_pair_simple(self):
         vector = (30, 30, 40)
-        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(vector)
+        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(
+            vector, min_val=10
+        )
         self.assertEqual(idx_a, 0)
         self.assertEqual(idx_b, 1)
         self.assertEqual(value, 30)
@@ -23,7 +25,9 @@ class TestIdentityAsymmetryStrategy(unittest.TestCase):
     def test_find_largest_equal_pair_multiple(self):
         # [20, 20, 30, 30] -> should pick indices (2, 3) with value 30
         vector = (20, 20, 30, 30)
-        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(vector)
+        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(
+            vector, min_val=10
+        )
         self.assertEqual(idx_a, 2)
         self.assertEqual(idx_b, 3)
         self.assertEqual(value, 30)
@@ -31,7 +35,9 @@ class TestIdentityAsymmetryStrategy(unittest.TestCase):
     def test_find_largest_equal_pair_tie_value(self):
         # [30, 30, 30] -> should pick (0, 1) with value 30 (deterministic by index)
         vector = (30, 30, 30)
-        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(vector)
+        (idx_a, idx_b), value = self.strategy._find_largest_equal_pair(
+            vector, min_val=10
+        )
         self.assertEqual(idx_a, 0)
         self.assertEqual(idx_b, 1)
         self.assertEqual(value, 30)
