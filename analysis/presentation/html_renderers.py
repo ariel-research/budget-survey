@@ -1804,22 +1804,29 @@ def _generate_strategy_data_cells(summary: Dict, columns: Dict) -> List[str]:
         # Special Case: Identity Asymmetry Preferred Subject
         elif col_key == "preferred_subject_idx":
             idx = stats.get("preferred_subject_idx")
-            subjects = []
-            if "choices" in summary and summary["choices"]:
-                # Try to get subjects from metadata or look them up
-                survey_id = summary.get("survey_id")
-                # We can't easily import here if it causes circular dependency,
-                # but we can try to find subjects in the summary if they were added
-                subjects = summary.get("subjects", [])
-                if not subjects:
-                    try:
-                        from database.queries import get_subjects
+            consistency = stats.get("identity_consistency", 0.0)
 
-                        subjects = get_subjects(survey_id)
-                    except Exception:
-                        pass
+            # If consistency <= 50%, show "-" as it's indifferent
+            if consistency <= 50.0:
+                val = "-"
+            else:
+                subjects = []
+                if "choices" in summary and summary["choices"]:
+                    # Try to get subjects from metadata or look them up
+                    survey_id = summary.get("survey_id")
+                    # We can't easily import here if it causes circular dependency,
+                    # but we can try to find subjects in the summary if they were added
+                    subjects = summary.get("subjects", [])
+                    if not subjects:
+                        try:
+                            from database.queries import get_subjects
 
-            val = subjects[idx] if idx is not None and idx < len(subjects) else "-"
+                            subjects = get_subjects(survey_id)
+                        except Exception:
+                            pass
+
+                val = subjects[idx] if idx is not None and idx < len(subjects) else "-"
+
             values[col_key] = val
             continue
 
@@ -2129,19 +2136,51 @@ def generate_overall_statistics_table(
 
     # Identity Asymmetry Strategy
     elif strategy_name == "identity_asymmetry":
-        total_consistency = 0
-        valid_summaries = 0
+        # Initialize buckets for distribution (50% to 100%)
+        buckets = {50: 0, 60: 0, 70: 0, 80: 0, 90: 0, 100: 0}
+        total_users = 0
         for summary in summaries:
             stats = summary.get("stats", {})
             if "identity_consistency" in stats:
-                total_consistency += stats["identity_consistency"]
-                valid_summaries += 1
+                consistency = stats["identity_consistency"]
+                # Round to nearest 10 and clamp between 50 and 100 to bin users into readable consistency groups
+                bucket_key = int(round(consistency / 10.0) * 10)
+                bucket_key = max(50, min(100, bucket_key))
+                buckets[bucket_key] += 1
+                total_users += 1
 
-        avg_consistency = (
-            total_consistency / valid_summaries if valid_summaries > 0 else 0
+        # Use translations for table headers
+        th_level = get_translation("consistency_level", "answers")
+        th_count = get_translation("num_of_users", "answers")
+        total_label = get_translation("total", "answers")
+
+        # Generate rows for each bucket
+        rows_html = []
+        for level in sorted(buckets.keys()):
+            count = buckets[level]
+            percent = (count / total_users * 100) if total_users > 0 else 0
+
+            # Styling: Highlight 90% and 100% rows ONLY if they have users
+            highlight_class = ""
+            if level >= 90 and count > 0:
+                highlight_class = ' class="highlight-row"'
+
+            rows_html.append(
+                f"""
+                        <tr{highlight_class}>
+                            <td>{level:.1f}%</td>
+                            <td>{count} ({percent:.1f}%)</td>
+                        </tr>"""
+            )
+
+        # Add total row
+        rows_html.append(
+            f"""
+                        <tr class="total-row">
+                            <td>{total_label}</td>
+                            <td>{total_users} (100.0%)</td>
+                        </tr>"""
         )
-
-        identity_consistency_label = get_translation("identity_consistency", "answers")
 
         overall_table = f"""
         <div class="summary-table-container">
@@ -2150,15 +2189,12 @@ def generate_overall_statistics_table(
                 <table>
                     <thead>
                         <tr>
-                            <th>{th_metric}</th>
-                            <th>{th_avg_perc}</th>
+                            <th>{th_level}</th>
+                            <th>{th_count}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="highlight-row">
-                            <td>{identity_consistency_label}</td>
-                            <td>{avg_consistency:.1f}%</td>
-                        </tr>
+                        {"".join(rows_html)}
                     </tbody>
                 </table>
             </div>
