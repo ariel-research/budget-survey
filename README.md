@@ -79,8 +79,8 @@ This is a **research application** for studying budget allocation preferences. I
 
 **Key Features:**
 
-- 9 research-validated pair generation strategies
-- Hebrew/English bilingual support with RTL/LTR layouts
+- Multiple research-validated pair generation strategies
+- Hebrew/English multilingual support with RTL/LTR layouts
 - Quality control via attention checks and user blacklisting
 - Comprehensive analysis and PDF report generation
 - Production-ready Docker deployment
@@ -598,7 +598,22 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
   ```
 
-14. **Rank-Based Comparison Strategies**
+14. **Identity Asymmetry Strategy**
+- Strategy name: `identity_asymmetry`
+- **Core Hypothesis**: Tests whether users consistently prefer one subject over another when the starting budget allocations are **mathematically identical**. This isolates "Project Identity Bias" from numerical utility.
+- **Algorithm Overview**:
+    - Identifies two subjects with equal ideal allocations (e.g., Health=30, Education=30).
+    - Generates exactly `n` pairs (defined in configuration) representing a deterministic "Stress Test".
+    - Each step shifts an increasing magnitude $M$ from Subject A to B, and vice-versa.
+    - `Magnitude = round((TargetValue / n) * step_number)`.
+- **Special Handling**:
+    - Throws `UnsuitableForStrategyError` if the vector does not contain at least one equal pair meeting the minimum value threshold required to generate `n` distinct steps.
+    - Rounds magnitudes to the nearest integer to ensure the budget sum always remains exactly 100.
+- **Analysis Features**:
+    - **Identity Consistency**: Measures the strength of the bias (the percentage of choices favoring one specific subject).
+    - **Pain Curve**: A visualization showing the choice at each magnitude step, identifying the "breaking point" where numerical stress overrides identity bias.
+
+15. **Rank-Based Comparison Strategies**
 
 - Strategy names: `l1_vs_leontief_rank_comparison`, `l1_vs_l2_rank_comparison`, `l2_vs_leontief_rank_comparison`, `leontief_vs_anti_leontief_rank_comparison`, `leontief_vs_kl_rank_comparison`, `kl_vs_anti_leontief_rank_comparison`
 - Uses rank-based normalization (percentiles) instead of raw values to generate pairs with optimal trade-offs.
@@ -826,17 +841,19 @@ The `surveys` table includes a JSON column `suitability_rules` to enforce vector
 
 * `max_zero_values` (int): Maximum number of zero values allowed in the user's budget vector.
 * `min_positive_values` (int): Minimum number of positive values required.
+* `min_equal_value_pair` (int): Requires at least one pair of subjects to have identical ideal values greater than or equal to this limit.
 
 **Example Configuration:**
 
 ```json
 {
-  "max_zero_values": 0,
+  "min_equal_value_pair": 10,
   "min_positive_values": 3
 }
+```
 
-Behavior:
-If a user submits a vector violating these rules, the system raises an UnsuitableForStrategyError before generating pairs. If the column is NULL, no validation is performed.
+**Behavior:**
+If a user submits a vector violating these rules, the system raises an `UnsuitableForStrategyError` before generating pairs. If the column is NULL, no validation is performed.
 
 ### Recent Migrations (20251204)
 - Run in order:
@@ -1492,6 +1509,7 @@ tests/
 │   └── load_test.py
 ├── services/                    # Service layer tests
 │   ├── pair_generation/             # Pair generation strategy tests
+│   │   ├── test_identity_asymmetry_strategy.py # Stress test & math integrity validation
 │   │   ├── test_cyclic_shift_strategy.py      # Comprehensive validation for all 171 valid vectors
 │   │   ├── test_linear_symmetry_strategy.py   # Mathematical relationship verification
 │   │   └── test_*.py            # Other strategy tests
