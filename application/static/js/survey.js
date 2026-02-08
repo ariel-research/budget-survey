@@ -317,7 +317,10 @@ function updateButtonStates(elements, { total, values, nonZeroDepartments, zeroC
 }
 
 /**
- * Handle rescaling of budget values
+ * Orchestrates proportional rescaling of budget inputs to sum exactly to 100.
+ * Updates the UI with normalized values while maintaining proportional weights.
+ *
+ * @param {Object} elements - The budget form DOM elements.
  */
 function handleRescale(elements) {
     const values = Array.from(elements.inputs).map(input => parseInt(input.value) || 0);
@@ -339,7 +342,14 @@ function handleRescale(elements) {
 }
 
 /**
- * Calculate scaled values ensuring minimum allocations and correct total
+ * Normalizes a numeric vector to CONFIG.TOTAL_EXPECTED (100).
+ * Implements a two-pass algorithm: 
+ * 1. Proportional scaling with step rounding and minimum allocation enforcement.
+ * 2. Remainder adjustment applied to the largest category to ensure an exact total.
+ *
+ * @param {number[]} values - Array of raw numeric values.
+ * @param {number} total - Current sum of values.
+ * @returns {number[]} Balanced array of values summing exactly to 100.
  */
 function calculateScaledValues(values, total) {
     // First pass: Calculate scaled values
