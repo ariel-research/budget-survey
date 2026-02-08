@@ -753,8 +753,8 @@ class SurveySessionData:
             for k, v in pair.items()
             if isinstance(v, (list, tuple))
             and (
-                (len(v) == 3 and sum(v) == 100)  # Standard single-year budget
-                or (len(v) == 6 and sum(v) == 200)  # Biennial two-year budget
+                (sum(v) == 100)  # Standard budget (any number of subjects)
+                or (sum(v) == 200)  # Biennial budget (any number of subjects)
             )
         ]
 

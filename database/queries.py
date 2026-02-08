@@ -591,7 +591,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
                    Only includes data from surveys where attention checks were passed.
     """
     query = """
-    SELECT 
+    SELECT
         sr.user_id,
         sr.survey_id,
         sr.id as survey_response_id,
@@ -607,14 +607,14 @@ def retrieve_user_survey_choices() -> List[Dict]:
         cp.option1_differences,
         cp.option2_differences,
         cp.generation_metadata
-    FROM 
+    FROM
         survey_responses sr
-    JOIN 
+    JOIN
         comparison_pairs cp ON sr.id = cp.survey_response_id
     WHERE
         sr.completed = TRUE
         AND sr.attention_check_failed = FALSE
-    ORDER BY 
+    ORDER BY
         sr.user_id,
         sr.survey_id,
         cp.pair_number
@@ -687,7 +687,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
                     result["pair_type"] = t.group(1).upper()
 
                 # Infer target index from vectors when possible
-                if opt_alloc and v1 and v2 and len(opt_alloc) == 3:
+                if opt_alloc and v1 and v2 and len(opt_alloc) >= 3:
                     try:
                         d1 = [a - b for a, b in zip(v1, opt_alloc)]
                         d2 = [a - b for a, b in zip(v2, opt_alloc)]
