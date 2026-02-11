@@ -860,6 +860,16 @@ def get_surveys_for_dashboard() -> List[Dict]:
     """
 
     def parse_json_field(value, default):
+        """
+        Safely parses a value into a Python dict/list, handling strings, None, and existing objects.
+
+        Args:
+            value: The data from the database (can be None, str, dict, or list).
+            default: The fallback value to return if parsing fails or value is None.
+
+        Returns:
+            The parsed Python object (dict/list) or the default value.
+        """
         if value is None:
             return default
         if isinstance(value, (dict, list)):
