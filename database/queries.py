@@ -512,6 +512,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
     WHERE
         sr.completed = TRUE
         AND sr.attention_check_failed = FALSE
+        AND sr.unsuitable_for_strategy = FALSE
     ORDER BY
         sr.id, cp.pair_number
     """
