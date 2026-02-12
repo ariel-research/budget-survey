@@ -540,8 +540,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "strategy": {"he": "אסטרטגיה", "en": "Strategy"},
         "title": {"he": "פאנל הסקרים", "en": "Surveys Overview"},
         "subtitle": {
-            "he": "צפה ונהל את הסקרים הפעילים",
-            "en": "View and manage active surveys",
+            "he": "ניהול ומעקב אחר סקרי המחקר",
+            "en": "View and manage research surveys",
         },
         "total_surveys": {"he": "סך כל הסקרים", "en": "Total Surveys"},
         "total_surveys_description": {
@@ -577,6 +577,15 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "active_data_toggle": {"he": "נתונים פעילים", "en": "Active Data"},
         "all_surveys_toggle": {"he": "כל הסקרים", "en": "All Surveys"},
         "copied_to_clipboard": {"he": "הועתק ללוח", "en": "Copied to clipboard"},
+        "col_id": {"he": "מזהה", "en": "ID"},
+        "col_date": {"he": "תאריך", "en": "Date"},
+        "col_status": {"he": "סטטוס", "en": "Status"},
+        "col_identity": {"he": "אסטרטגיה", "en": "Strategy"},
+        "col_dim": {"he": "מימד", "en": "Dim"},
+        "col_volume": {"he": "כמות", "en": "Volume"},
+        "col_actions": {"he": "פעולות", "en": "Actions"},
+        "filter_all_strategies": {"he": "כל האסטרטגיות", "en": "All Strategies"},
+        "filter_all_dims": {"he": "כל המימדים", "en": "All Dims"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},

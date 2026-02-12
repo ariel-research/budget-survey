@@ -49,8 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (strategySelect) {
+            const allLabel = strategySelect.dataset.allLabel || "All Strategies";
             strategySelect.innerHTML = "";
-            strategySelect.appendChild(new Option("All Strategies", "all"));
+            strategySelect.appendChild(new Option(allLabel, "all"));
 
             Array.from(strategyValues)
                 .sort((a, b) =>
@@ -65,8 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (dimSelect) {
+            const allLabel = dimSelect.dataset.allLabel || "All Dims";
             dimSelect.innerHTML = "";
-            dimSelect.appendChild(new Option("All Dims", "all"));
+            dimSelect.appendChild(new Option(allLabel, "all"));
 
             Array.from(dimValues)
                 .sort((a, b) => Number(a) - Number(b))

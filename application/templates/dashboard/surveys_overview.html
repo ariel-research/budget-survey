@@ -46,12 +46,12 @@
                        data-search-term>
             </div>
 
-            <select id="filterStrategy" class="filter-select">
-                <option value="all">All Strategies</option>
+            <select id="filterStrategy" class="filter-select" data-all-label="{{ translations.filter_all_strategies }}">
+                <option value="all">{{ translations.filter_all_strategies }}</option>
             </select>
 
-            <select id="filterDim" class="filter-select">
-                <option value="all">All Dims</option>
+            <select id="filterDim" class="filter-select" data-all-label="{{ translations.filter_all_dims }}">
+                <option value="all">{{ translations.filter_all_dims }}</option>
             </select>
             
             <div class="toggle-group">
@@ -71,7 +71,7 @@
                     <tr>
                         <th class="sortable" data-sort-key="id" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>ID</span>
+                                <span>{{ translations.col_id }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -82,7 +82,7 @@
                         </th>
                         <th class="sortable" data-sort-key="date" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>Date</span>
+                                <span>{{ translations.col_date }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -93,7 +93,7 @@
                         </th>
                         <th class="sortable" data-sort-key="status" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>Status</span>
+                                <span>{{ translations.col_status }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -104,7 +104,7 @@
                         </th>
                         <th class="sortable" data-sort-key="identity" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>Identity</span>
+                                <span>{{ translations.col_identity }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -115,7 +115,7 @@
                         </th>
                         <th class="sortable" data-sort-key="dim" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>Dim</span>
+                                <span>{{ translations.col_dim }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -126,7 +126,7 @@
                         </th>
                         <th class="sortable" data-sort-key="vol" data-sort-state="none" aria-sort="none">
                             <span class="th-content">
-                                <span>Volume</span>
+                                <span>{{ translations.col_volume }}</span>
                                 <span class="sort-icon" aria-hidden="true">
                                     <svg viewBox="0 0 16 16" width="14" height="14">
                                         <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
@@ -135,7 +135,7 @@
                                 </span>
                             </span>
                         </th>
-                        <th>Actions</th>
+                        <th>{{ translations.col_actions }}</th>
                     </tr>
                 </thead>
                 <tbody>
