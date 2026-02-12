@@ -1,0 +1,594 @@
+/* Import shared variables (shadows, spacing, typography, neutral colors) */
+@import '_variables.css';
+
+/* ==========================================================================
+   Variables & Settings - Dashboard Specific
+   ========================================================================== */
+   :root {
+    /* Dashboard Primary Colors */
+    --color-primary: #3B82F6;    /* Blue */
+    --color-success: #10B981;    /* Green */
+    --color-warning: #F59E0B;    /* Amber */
+    --color-info: #06B6D4;       /* Cyan */
+    --color-purple: #8B5CF6;     /* Purple */
+    --color-orange: #F97316;     /* Orange */
+    --color-teal: #14B8A6;       /* Teal */
+    --color-indigo: #6366F1;     /* Indigo */
+    --color-rose: #F43F5E;       /* Rose */
+    --color-amber: #F59E0B;      /* Amber */
+    
+    /* Note: Survey Strategy Colors are now defined in _variables.css for consistency across all pages */
+
+    /* Text Colors */
+    --color-text-dark: #1f2937;
+    --color-text-light: #6b7280;
+    --color-text-muted: #9ca3af;
+    
+    /* Background Colors */
+    --color-background: #F3F4F6;
+    
+    /* Border Colors */
+    --color-border: #e5e7eb;
+    --color-border-light: #f3f4f6;
+    
+    /* Font Sizes */
+    --text-xs: 0.8125rem;     /* 13px */
+    --text-sm: 0.875rem;      /* 14px */
+    --text-base: 1rem;        /* 16px */
+    --text-lg: 1.125rem;      /* 18px */
+    --text-xl: 1.25rem;       /* 20px */
+    --text-2xl: 1.875rem;     /* 30px */
+    --text-3xl: 2.25rem;      /* 36px */
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-base: all 0.2s ease;
+    --transition-fast: all 0.15s ease;
+}
+
+/* ==========================================================================
+   Base Dashboard Layout
+   ========================================================================== */
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: var(--color-background);
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+/* ==========================================================================
+   Header Styles
+   ========================================================================== */
+.dashboard-header {
+    text-align: center;
+    margin: var(--spacing-lg) auto var(--spacing-xl);
+    max-width: 600px;
+}
+
+.header-content h1 {
+    margin: 0;
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--text-2xl);
+    color: var(--color-text-dark);
+    font-weight: 600;
+}
+
+.header-description {
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+    margin: 0 auto;
+    max-width: 450px;
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   Metrics Summary - Improved Design
+   ========================================================================== */
+.metrics-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-xl) auto;
+    max-width: 1200px;
+}
+
+.metric-card {
+    background: var(--color-background-light);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-light);
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-card:hover .metric-icon svg {
+    transform: scale(1.1);
+}
+
+/* Metric card variants with color coding */
+.metric-card.metric-surveys {
+    border-left: 4px solid var(--color-primary);
+}
+
+.metric-card.metric-participants {
+    border-left: 4px solid var(--color-success);
+}
+
+.metric-card.metric-blocked {
+    border-left: 4px solid var(--color-warning);
+}
+
+.metric-card.metric-all {
+    border-left: 4px solid var(--color-info);
+}
+
+/* Clickable metric card styling */
+.metric-card.clickable {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition-base);
+}
+
+.metric-card.clickable:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.metric-card.clickable:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Click indicator */
+.metric-card.clickable::after {
+    content: "";
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 24px;
+    height: 24px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: var(--transition-base);
+}
+
+.metric-card.clickable::before {
+    content: "→";
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    z-index: 2;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: var(--transition-base);
+}
+
+.metric-card.clickable:hover::after,
+.metric-card.clickable:hover::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Improved metric content layout */
+.metric-content {
+    text-align: left;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xl);
+    flex-shrink: 0;
+}
+
+.metric-icon svg {
+    width: 24px;
+    height: 24px;
+    transition: var(--transition-fast);
+}
+
+/* Icon variants with themed backgrounds */
+.metric-surveys .metric-icon {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: var(--color-primary);
+}
+
+.metric-participants .metric-icon {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: var(--color-success);
+}
+
+.metric-blocked .metric-icon {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: var(--color-warning);
+}
+
+.metric-all .metric-icon {
+    background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+    color: var(--color-info);
+}
+
+.metric-label {
+    color: var(--color-text-dark);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.metric-main {
+    margin-bottom: var(--spacing-sm);
+}
+
+.metric-value {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--color-text-dark);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-description {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Loading state for metric cards */
+.metric-card.loading {
+    pointer-events: none;
+}
+
+.metric-card.loading .metric-value {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius-sm);
+    color: transparent;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ==========================================================================
+   Survey Cards Grid
+   ========================================================================== */
+.surveys-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-xl);
+    max-width: 1200px;
+    margin: var(--spacing-xl) auto;
+    padding: 0;
+}
+
+.survey-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-background-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.survey-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==========================================================================
+   Card Header Styles
+   ========================================================================== */
+.survey-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background-alt);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.survey-number {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+.strategy-badge {
+    font-size: var(--text-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-full);
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    direction: ltr;
+    text-align: left;
+}
+
+/* ==========================================================================
+   Strategy Badge Colors
+   ========================================================================== */
+.strategy-badge {
+    background: var(--color-indigo);
+}
+
+/* ==========================================================================
+   Card Content
+   ========================================================================== */
+.survey-content {
+    flex: 1;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+}
+
+.survey-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin: 0 0 var(--spacing-sm);
+    line-height: 1.4;
+}
+
+.survey-description {
+    color: var(--color-text-light);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ==========================================================================
+   Card Actions
+   ========================================================================== */
+.survey-actions {
+    padding: var(--spacing-md);
+    background-color: var(--color-background-alt);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    transition: var(--transition-base);
+    text-decoration: none;
+    white-space: nowrap;
+    height: 32px;
+    width: 45%;
+}
+
+.btn-responses {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn-participate {
+    background-color: var(--color-success);
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    opacity: 0.95;
+}
+
+.btn-icon {
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon svg {
+    width: 16px;
+    height: 16px;
+    transition: var(--transition-fast);
+}
+
+.btn:hover .btn-icon svg {
+    transform: scale(1.1);
+}
+
+/* ==========================================================================
+   RTL Support
+   ========================================================================== */
+.rtl .btn-icon {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .survey-actions {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .metric-card.clickable::before {
+    content: "←";
+    right: auto;
+    left: var(--spacing-md);
+}
+
+[dir="rtl"] .metric-card.clickable::after {
+    right: auto;
+    left: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (min-width: 1200px) {
+    .surveys-grid {
+        grid-template-columns: repeat(3, minmax(280px, 1fr));  /* Force 3 columns maximum */
+    }
+    
+    .metrics-summary {
+        grid-template-columns: repeat(4, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .surveys-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        padding: 0 var(--spacing-md);
+    }
+    
+    .metrics-summary {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: var(--spacing-md);
+    }
+    
+    .dashboard-header {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .header-content h1 {
+        font-size: var(--text-xl);
+    }
+    
+    .surveys-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    .metrics-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+    }
+
+    .metric-card {
+        padding: var(--spacing-lg);
+    }
+
+    .metric-value {
+        font-size: var(--text-2xl);
+    }
+
+    .survey-content {
+        padding: var(--spacing-md);
+    }
+    
+    .survey-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .btn {
+        width: 80%;
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-summary {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .metric-card {
+        padding: var(--spacing-md);
+    }
+
+    .metric-header {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .metric-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .metric-value {
+        font-size: var(--text-xl);
+    }
+
+    .survey-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .strategy-badge {
+        align-self: flex-start;
+    }
+
+    .btn {
+        width: 90%;
+    }
+}

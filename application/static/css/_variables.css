@@ -45,6 +45,11 @@
   --color-background-light: #ffffff;
   --color-background-alt: #f8fafc;
   
+  /* Semantic Dashboard Colors */
+  --color-bg-page: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-text-emphasis: #1e293b;
+  
   /* Grays and text */
   --color-black: #000000;
   --color-disabled: #708090;

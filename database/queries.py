@@ -512,6 +512,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
     WHERE
         sr.completed = TRUE
         AND sr.attention_check_failed = FALSE
+        AND sr.unsuitable_for_strategy = FALSE
     ORDER BY
         sr.id, cp.pair_number
     """
@@ -846,6 +847,105 @@ def get_active_surveys() -> List[Dict]:
         return processed_results
     except Exception as e:
         logger.error(f"Error retrieving active surveys: {str(e)}")
+        return []
+
+
+def get_surveys_for_dashboard() -> List[Dict]:
+    """
+    Retrieve all surveys (active and inactive) with story metadata
+    and participant volume for dashboard rendering.
+
+    Returns:
+        List[Dict]: Survey rows with parsed JSON fields and participant counts.
+    """
+
+    def parse_json_field(value, default):
+        """
+        Safely parses a value into a Python dict/list, handling strings, None, and existing objects.
+
+        Args:
+            value: The data from the database (can be None, str, dict, or list).
+            default: The fallback value to return if parsing fails or value is None.
+
+        Returns:
+            The parsed Python object (dict/list) or the default value.
+        """
+        if value is None:
+            return default
+        if isinstance(value, (dict, list)):
+            return value
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return default
+        return default
+
+    query = """
+        SELECT
+            s.id,
+            s.story_code,
+            s.active,
+            s.created_at,
+            s.pair_generation_config,
+            st.title,
+            st.description,
+            st.subjects,
+            COALESCE(
+                COUNT(
+                    DISTINCT CASE
+                        WHEN sr.completed = TRUE
+                             AND sr.attention_check_failed = FALSE
+                             AND sr.unsuitable_for_strategy = FALSE
+                        THEN sr.user_id
+                    END
+                ),
+                0
+            ) AS participant_count
+        FROM surveys s
+        LEFT JOIN stories st ON s.story_code = st.code
+        LEFT JOIN survey_responses sr ON sr.survey_id = s.id
+        GROUP BY
+            s.id,
+            s.story_code,
+            s.active,
+            s.created_at,
+            s.pair_generation_config,
+            st.title,
+            st.description,
+            st.subjects
+        ORDER BY s.id
+    """
+    logger.debug("Retrieving all surveys for dashboard")
+
+    try:
+        results = execute_query(query)
+        if not results:
+            logger.info("No surveys found for dashboard")
+            return []
+
+        processed_results = []
+        for result in results:
+            processed_results.append(
+                {
+                    "id": result["id"],
+                    "story_code": result.get("story_code"),
+                    "active": bool(result.get("active")),
+                    "created_at": result.get("created_at"),
+                    "pair_generation_config": parse_json_field(
+                        result.get("pair_generation_config"), {}
+                    ),
+                    "title": parse_json_field(result.get("title"), {}),
+                    "description": parse_json_field(result.get("description"), {}),
+                    "subjects": parse_json_field(result.get("subjects"), []),
+                    "participant_count": int(result.get("participant_count") or 0),
+                }
+            )
+
+        logger.info("Retrieved %s surveys for dashboard", len(processed_results))
+        return processed_results
+    except Exception as e:
+        logger.error("Error retrieving surveys for dashboard: %s", str(e))
         return []
 
 
