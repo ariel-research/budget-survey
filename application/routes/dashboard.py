@@ -83,6 +83,17 @@ def parse_survey_data(survey):
     dimension_count = len(subjects)
     dimension_label = f"{dimension_count}D" if dimension_count > 0 else "N/A"
 
+    # Three-Tier Maturity Model Logic
+    if participant_count == 0:
+        ui_status = "gray"
+        ui_status_tooltip = "Inactive (N=0)"
+    elif participant_count < 30:
+        ui_status = "orange"
+        ui_status_tooltip = "Gathering Data (N<30)"
+    else:
+        ui_status = "green"
+        ui_status_tooltip = "Sufficient Data (N>=30)"
+
     ui_share_link = url_for(
         "survey.index",
         userID="test",
@@ -96,7 +107,8 @@ def parse_survey_data(survey):
     return {
         "id": survey.get("id"),
         "ui_date": date_label,
-        "ui_status": "active" if is_active_data else "inactive",
+        "ui_status": ui_status,
+        "ui_status_tooltip": ui_status_tooltip,
         "is_active_data": is_active_data,
         "ui_strategy": strategy_name,
         "ui_context": context,

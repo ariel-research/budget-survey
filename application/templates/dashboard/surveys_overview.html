@@ -235,14 +235,14 @@
                         
                         <td class="col-status">
                             <span class="status-dot {{ survey.ui_status }}" 
-                                  title="{{ survey.ui_status | title }}"></span>
+                                  title="{{ survey.ui_status_tooltip }}"></span>
                         </td>
                         
-                        <td class="col-strategy">
+                        <td class="col-strategy" title="{{ survey.ui_strategy }}">
                             <div class="strategy-name">{{ survey.ui_strategy }}</div>
                         </td>
 
-                        <td class="col-story">
+                        <td class="col-story" title="{{ survey.ui_context }}">
                             <div class="context-text">{{ survey.ui_context }}</div>
                         </td>
                         
@@ -251,7 +251,7 @@
                         </td>
                         
                         <td class="col-volume center-align tabular-nums">
-                            <span class="volume-count" data-volume="{{ survey.ui_volume }}">{{ survey.ui_volume }}</span>
+                            <span class="volume-count {{ 'sufficient' if survey.ui_volume >= 30 else '' }}" data-volume="{{ survey.ui_volume }}">{{ survey.ui_volume }}</span>
                         </td>
                         
                         <td class="col-actions">

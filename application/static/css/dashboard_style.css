@@ -250,16 +250,18 @@
 .master-table thead th {
     position: sticky;
     top: 0;
-    z-index: 10;
-    background: var(--color-bg-page);
+    z-index: 20;
+    background-color: var(--color-bg-page);
     border-bottom: 2px solid var(--dashboard-border);
+    box-shadow: 0 1px 0 var(--dashboard-border);
     color: var(--dashboard-text-muted);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-align: start;
-    padding: 1rem 0.75rem;
+    padding-block: 1rem;
+    padding-inline: 0.75rem;
     white-space: nowrap;
 }
 
@@ -315,8 +317,9 @@
 .master-table tbody td {
     border-bottom: 1px solid var(--dashboard-border);
     color: var(--dashboard-text);
-    font-size: 0.875rem;
-    padding: 0.75rem;
+    font-size: 0.85rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
     vertical-align: middle;
 }
 
@@ -336,8 +339,18 @@
 .col-id { width: 80px; }
 .col-date { width: 100px; }
 .col-status { width: 60px; }
-.col-strategy { min-width: 180px; }
-.col-story { min-width: 200px; }
+.col-strategy { 
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.col-story { 
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .col-dim { width: 80px; }
 .col-volume { width: 80px; }
 .col-actions { width: 100px; }
@@ -352,13 +365,19 @@
 
 .strategy-name {
     font-weight: 400 !important;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--color-text-emphasis);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .context-text {
     color: var(--dashboard-text-muted);
     font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ID & Copy */
@@ -415,34 +434,61 @@
     pointer-events: none;
 }
 
-/* Status Dot */
+/* Status Dot (Traffic Light System) */
 .status-dot {
-    width: 0.56rem;
-    height: 0.56rem;
+    width: 0.65rem;
+    height: 0.65rem;
     border-radius: 50%;
     display: inline-block;
     vertical-align: middle;
+    position: relative;
 }
 
-.status-dot.active {
-    background: var(--dashboard-success);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
-    animation: statusPulse 1.6s infinite;
+.status-dot.gray {
+    background: #9ca3af;
 }
 
-.status-dot.inactive {
-    background: var(--dashboard-text-soft);
+.status-dot.orange {
+    background: #f59e0b;
+}
+
+.status-dot.green {
+    background: #10b981;
+}
+
+/* Pulse Animation for active data states */
+.status-dot.orange,
+.status-dot.green {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    animation: statusPulse 2s infinite;
+}
+
+.status-dot.orange {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    animation-name: statusPulseOrange;
 }
 
 @keyframes statusPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+        box-shadow: 0 0 0 0 rgba(10, 185, 129, 0.4);
     }
     70% {
-        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
     }
     100% {
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes statusPulseOrange {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
     }
 }
 
@@ -479,10 +525,17 @@
     display: inline-block;
     min-width: 2rem;
     text-align: center;
-    font-weight: 700;
+    font-weight: 400;
+    color: var(--dashboard-text-muted);
     border-radius: 999px;
-    padding: 0.12rem 0.5rem;
+    padding-block: 0.12rem;
+    padding-inline: 0.5rem;
     background: var(--color-bg-page);
+}
+
+.volume-count.sufficient {
+    font-weight: 700;
+    color: var(--dashboard-text);
 }
 
 /* Actions */
