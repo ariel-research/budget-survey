@@ -76,7 +76,7 @@ def parse_survey_data(survey):
             created_dt = None
 
     if created_dt:
-        date_label = created_dt.strftime("%d/%m/%y")
+        date_label = created_dt.strftime("%d %b %y")
         sort_date = created_dt.strftime("%Y-%m-%d")
 
     is_active_data = participant_count > 0

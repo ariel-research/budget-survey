@@ -232,7 +232,10 @@
 /* Master Table */
 .table-responsive {
     width: 100%;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
     overflow-x: auto;
+    position: relative;
     -webkit-overflow-scrolling: touch;
     border: 1px solid var(--dashboard-border);
     border-radius: 10px;
@@ -251,7 +254,7 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background-color: var(--color-bg-page);
+    background: var(--color-bg-surface);
     border-bottom: 2px solid var(--dashboard-border);
     box-shadow: 0 1px 0 var(--dashboard-border);
     color: var(--dashboard-text-muted);
