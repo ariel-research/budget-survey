@@ -78,13 +78,13 @@ def parse_survey_data(survey):
 
     return {
         "id": survey.get("id"),
-        "date_label": date_label,
-        "status": "active" if is_active_data else "inactive",
+        "ui_date": date_label,
+        "ui_status": "active" if is_active_data else "inactive",
         "is_active_data": is_active_data,
-        "strategy_name": strategy_name,
-        "context": context,
-        "dimension": dimension_label,
-        "participant_count": participant_count,
+        "ui_strategy": strategy_name,
+        "ui_context": context,
+        "ui_dimension": dimension_label,
+        "ui_volume": participant_count,
     }
 
 
@@ -133,6 +133,11 @@ def view_dashboard():
             "last_updated": get_translation("last_updated", "dashboard"),
             "view_responses": get_translation("view_responses", "dashboard"),
             "take_survey": get_translation("take_survey", "dashboard"),
+            "blocked_users": get_translation("blocked_users", "dashboard"),
+            "search_placeholder": get_translation("search_placeholder", "dashboard"),
+            "active_data_toggle": get_translation("active_data_toggle", "dashboard"),
+            "all_surveys_toggle": get_translation("all_surveys_toggle", "dashboard"),
+            "copied_to_clipboard": get_translation("copied_to_clipboard", "dashboard"),
         }
 
         return render_template(

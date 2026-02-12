@@ -569,6 +569,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "view_details": {"he": "צפה בפרטים", "en": "View Details"},
         "view_responses": {"he": "צפה בתשובות", "en": "View Responses"},
         "take_survey": {"he": "מלא סקר", "en": "Take Survey"},
+        "blocked_users": {"he": "משתמשים חסומים", "en": "Blocked Users"},
+        "search_placeholder": {
+            "he": "חיפוש לפי מזהה, אסטרטגיה...",
+            "en": "Search ID, strategy...",
+        },
+        "active_data_toggle": {"he": "נתונים פעילים", "en": "Active Data"},
+        "all_surveys_toggle": {"he": "כל הסקרים", "en": "All Surveys"},
+        "copied_to_clipboard": {"he": "הועתק ללוח", "en": "Copied to clipboard"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},

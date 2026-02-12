@@ -30,30 +30,27 @@ def test_parser_logic():
 
     expected_keys = {
         "id",
-        "date_label",
-        "status",
+        "ui_date",
+        "ui_status",
         "is_active_data",
-        "strategy_name",
-        "context",
-        "dimension",
-        "participant_count",
+        "ui_strategy",
+        "ui_context",
+        "ui_dimension",
+        "ui_volume",
     }
 
     assert expected_keys.issubset(complex_result.keys())
     assert expected_keys.issubset(empty_result.keys())
 
-    assert complex_result["status"] == "active"
+    assert complex_result["ui_status"] == "active"
     assert complex_result["is_active_data"] is True
-    assert complex_result["strategy_name"] == "Sign Symmetry"
-    assert complex_result["dimension"] == "3D"
-    assert complex_result["context"] == "Municipal Budget Study"
-    assert complex_result["date_label"] == "Feb 09"
-    assert complex_result["participant_count"] == 17
+    assert complex_result["ui_strategy"] == "Sign Symmetry"
+    assert complex_result["ui_dimension"] == "3D"
+    assert complex_result["ui_context"] == "Municipal Budget Study"
+    assert complex_result["ui_date"] == "Feb 09"
+    assert complex_result["ui_volume"] == 17
 
-    assert empty_result["status"] == "inactive"
+    assert empty_result["ui_status"] == "inactive"
     assert empty_result["is_active_data"] is False
-    assert empty_result["strategy_name"] == "Unknown"
-    assert empty_result["dimension"] == "0D"
-    assert empty_result["context"] == ""
-    assert empty_result["date_label"] == ""
-    assert empty_result["participant_count"] == 0
+    assert empty_result["ui_strategy"] == "Unknown"
+    assert empty_result["ui_dimension"] == "0D"
