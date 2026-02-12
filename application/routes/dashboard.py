@@ -10,6 +10,14 @@ from application.translations import get_translation
 logger = logging.getLogger(__name__)
 dashboard_routes = Blueprint("dashboard", __name__)
 
+# Constants for external vendor handover and testing purposes.
+# These values are intentionally fixed to allow vendors to perform technical tests,
+# while allowing the system to identify and filter test responses.
+VENDOR_TEST_USER = "test"
+VENDOR_TEST_SURVEY_ID = "link_copy"
+VENDOR_TEST_LANG = "he"
+VENDOR_TEST_DEMO = "false"
+
 
 def _safe_json(value, default):
     """Safely parse a JSON-like value (str/dict/list) with fallback."""
@@ -96,11 +104,11 @@ def parse_survey_data(survey):
 
     ui_share_link = url_for(
         "survey.index",
-        userID="test",
-        surveyID="link_copy",
+        userID=VENDOR_TEST_USER,
+        surveyID=VENDOR_TEST_SURVEY_ID,
         internalID=survey.get("id"),
-        lang="he",
-        demo="false",
+        lang=VENDOR_TEST_LANG,
+        demo=VENDOR_TEST_DEMO,
         _external=True,
     )
 
