@@ -53,4 +53,4 @@ def test_parser_logic():
     assert empty_result["ui_status"] == "inactive"
     assert empty_result["is_active_data"] is False
     assert empty_result["ui_strategy"] == "Unknown"
-    assert empty_result["ui_dimension"] == "0D"
+    assert empty_result["ui_dimension"] == "N/A"

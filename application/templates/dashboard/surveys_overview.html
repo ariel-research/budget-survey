@@ -61,12 +61,72 @@
             <table class="master-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Identity</th>
-                        <th>Dim</th>
-                        <th>Volume</th>
+                        <th class="sortable" data-sort-key="id" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>ID</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
+                        <th class="sortable" data-sort-key="date" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>Date</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
+                        <th class="sortable" data-sort-key="status" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>Status</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
+                        <th class="sortable" data-sort-key="identity" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>Identity</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
+                        <th class="sortable" data-sort-key="dim" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>Dim</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
+                        <th class="sortable" data-sort-key="vol" data-sort-state="none" aria-sort="none">
+                            <span class="th-content">
+                                <span>Volume</span>
+                                <span class="sort-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 16 16" width="14" height="14">
+                                        <path class="icon-up" d="M8 3 L11 6 H5 Z" fill="currentColor"></path>
+                                        <path class="icon-down" d="M8 13 L5 10 H11 Z" fill="currentColor"></path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -75,6 +135,12 @@
                     <tr class="survey-row" 
                         data-survey-id="{{ survey.id }}"
                         data-is-active="{{ 'true' if survey.is_active_data else 'false' }}"
+                        data-val-id="{{ survey.id }}"
+                        data-val-date="{{ survey.sort_date }}"
+                        data-val-status="{{ 1 if survey.is_active_data else 0 }}"
+                        data-val-identity="{{ survey.sort_identity }}"
+                        data-val-dim="{{ survey.sort_dim }}"
+                        data-val-vol="{{ survey.ui_volume }}"
                         data-search-term="{{ survey.id }} {{ survey.ui_strategy | lower }} {{ survey.ui_context | lower }}">
                         
                         <td class="col-id">

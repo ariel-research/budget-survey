@@ -63,18 +63,25 @@ def parse_survey_data(survey):
         participant_count = 0
 
     created_at = survey.get("created_at")
+    created_dt = None
     date_label = ""
+    sort_date = ""
     if isinstance(created_at, datetime):
-        date_label = created_at.strftime("%b %d")
+        created_dt = created_at
     elif isinstance(created_at, str):
         try:
-            date_label = datetime.fromisoformat(created_at).strftime("%b %d")
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
         except ValueError:
             # Keep empty when date is malformed; do not break rendering.
-            date_label = ""
+            created_dt = None
+
+    if created_dt:
+        date_label = created_dt.strftime("%b %d")
+        sort_date = created_dt.strftime("%Y-%m-%d")
 
     is_active_data = participant_count > 0
-    dimension_label = f"{len(subjects)}D"
+    dimension_count = len(subjects)
+    dimension_label = f"{dimension_count}D" if dimension_count > 0 else "N/A"
 
     return {
         "id": survey.get("id"),
@@ -85,6 +92,9 @@ def parse_survey_data(survey):
         "ui_context": context,
         "ui_dimension": dimension_label,
         "ui_volume": participant_count,
+        "sort_date": sort_date,
+        "sort_identity": strategy_name,
+        "sort_dim": dimension_count,
     }
 
 

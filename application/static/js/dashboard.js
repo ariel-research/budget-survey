@@ -1,20 +1,40 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const table = document.querySelector(".master-table");
+    const tbody = table?.querySelector("tbody");
     const searchInput = document.querySelector(".search-input");
     const toggleButtons = Array.from(document.querySelectorAll(".btn-toggle"));
-    const rows = Array.from(document.querySelectorAll(".survey-row"));
+    const sortableHeaders = Array.from(
+        table?.querySelectorAll("th.sortable") || []
+    );
 
     let searchQuery = "";
     let filterMode =
         document.querySelector(".btn-toggle.active")?.dataset.filter || "active";
+    let sortKey = null;
+    let sortDirection = "asc";
 
-    const normalize = (value) => (value || "").toLowerCase().trim();
+    const numericSortKeys = new Set(["id", "status", "dim", "vol"]);
+
+    const normalize = (value) => String(value || "").toLowerCase().trim();
+    const getRows = () => Array.from(tbody?.querySelectorAll(".survey-row") || []);
+
+    const getSortValue = (row, key) => {
+        const datasetKey = `val${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+        const raw = row.dataset[datasetKey] || "";
+
+        if (numericSortKeys.has(key)) {
+            const asNumber = Number(raw);
+            return Number.isNaN(asNumber) ? 0 : asNumber;
+        }
+
+        return normalize(raw);
+    };
 
     const matchesSearch = (row) => {
         if (!searchQuery) {
             return true;
         }
-        const searchable = normalize(row.dataset.searchTerm);
-        return searchable.includes(searchQuery);
+        return normalize(row.dataset.searchTerm).includes(searchQuery);
     };
 
     const matchesToggle = (row) => {
@@ -25,10 +45,56 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const applyFilters = () => {
-        rows.forEach((row) => {
-            const visible = matchesSearch(row) && matchesToggle(row);
-            row.hidden = !visible;
+        getRows().forEach((row) => {
+            row.hidden = !(matchesSearch(row) && matchesToggle(row));
         });
+    };
+
+    const updateSortHeaderState = () => {
+        sortableHeaders.forEach((header) => {
+            const state =
+                header.dataset.sortKey === sortKey ? sortDirection : "none";
+            header.dataset.sortState = state;
+            if (state === "asc") {
+                header.setAttribute("aria-sort", "ascending");
+            } else if (state === "desc") {
+                header.setAttribute("aria-sort", "descending");
+            } else {
+                header.setAttribute("aria-sort", "none");
+            }
+        });
+    };
+
+    const handleSort = (columnKey) => {
+        if (!tbody || !columnKey) {
+            return;
+        }
+
+        if (sortKey === columnKey) {
+            sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+            sortKey = columnKey;
+            sortDirection = "asc";
+        }
+
+        const direction = sortDirection === "asc" ? 1 : -1;
+        const sortedRows = getRows().sort((rowA, rowB) => {
+            const valueA = getSortValue(rowA, columnKey);
+            const valueB = getSortValue(rowB, columnKey);
+
+            if (typeof valueA === "number" && typeof valueB === "number") {
+                return (valueA - valueB) * direction;
+            }
+
+            return valueA.localeCompare(valueB, undefined, {
+                numeric: true,
+                sensitivity: "base",
+            }) * direction;
+        });
+
+        sortedRows.forEach((row) => tbody.appendChild(row));
+        updateSortHeaderState();
+        applyFilters();
     };
 
     if (searchInput) {
@@ -38,18 +104,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (toggleButtons.length > 0) {
-        toggleButtons.forEach((button) => {
-            button.addEventListener("click", () => {
-                filterMode = button.dataset.filter || "active";
+    toggleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            filterMode = button.dataset.filter || "active";
 
-                toggleButtons.forEach((btn) => btn.classList.remove("active"));
-                button.classList.add("active");
+            toggleButtons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
 
-                applyFilters();
-            });
+            applyFilters();
         });
-    }
+    });
+
+    sortableHeaders.forEach((header) => {
+        header.addEventListener("click", () => {
+            handleSort(header.dataset.sortKey);
+        });
+    });
 
     const copyWithFallback = async (value) => {
         if (navigator.clipboard && window.isSecureContext) {
@@ -71,7 +141,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const showCopyFeedback = (button, message) => {
         const feedback = message || "Copied";
-        const originalTitle = button.dataset.originalTitle || button.getAttribute("title") || "";
+        const originalTitle =
+            button.dataset.originalTitle || button.getAttribute("title") || "";
 
         if (!button.dataset.originalTitle) {
             button.dataset.originalTitle = originalTitle;
@@ -118,5 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    updateSortHeaderState();
     applyFilters();
 });
