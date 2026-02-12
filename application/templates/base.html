@@ -16,12 +16,16 @@ It defines the common elements and layout that will be inherited by other templa
     {% block additional_css %}{% endblock %}
 </head>
 <body class="{{ 'rtl' if get_current_language() == 'he' else 'ltr' }}">
-    <div class="language-switcher">
-        <a href="{{ url_for('utils.change_language', lang='he', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
-           class="lang-btn {% if get_current_language() == 'he' %}active{% endif %}">עברית</a>
-        <a href="{{ url_for('utils.change_language', lang='en', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
-           class="lang-btn {% if get_current_language() == 'en' %}active{% endif %}">English</a>
-    </div>
+    <header class="global-utility-bar">
+        <div class="utility-container">
+            <div class="language-toggle">
+                <a href="{{ url_for('utils.change_language', lang='he', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
+                   class="lang-link {% if get_current_language() == 'he' %}active{% endif %}">עברית</a>
+                <a href="{{ url_for('utils.change_language', lang='en', userID=user_id, surveyID=external_survey_id, internalID=internal_survey_id) }}" 
+                   class="lang-link {% if get_current_language() == 'en' %}active{% endif %}">English</a>
+            </div>
+        </div>
+    </header>
     
     <div class="container {% if get_current_language() == 'he' %}rtl{% endif %}">
         {% block content %}{% endblock %}
