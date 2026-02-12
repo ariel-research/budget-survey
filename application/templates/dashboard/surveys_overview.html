@@ -45,6 +45,14 @@
                        placeholder="{{ translations.search_placeholder }}"
                        data-search-term>
             </div>
+
+            <select id="filterStrategy" class="filter-select">
+                <option value="all">All Strategies</option>
+            </select>
+
+            <select id="filterDim" class="filter-select">
+                <option value="all">All Dims</option>
+            </select>
             
             <div class="toggle-group">
                 <button class="btn-toggle active" data-filter="active">
@@ -148,8 +156,8 @@
                                 <span class="id-text">#{{ survey.id }}</span>
                                 <button class="btn-copy-id" 
                                         type="button"
-                                        title="{{ translations.copied_to_clipboard }}"
-                                        data-survey-id="{{ survey.id }}"
+                                        title="Copy Link"
+                                        data-copy-text="{{ survey.ui_share_link }}"
                                         data-msg-copied="{{ translations.copied_to_clipboard }}">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -187,6 +195,7 @@
                             <div class="actions-wrapper">
                                 <a href="{{ url_for('responses.get_survey_responses', survey_id=survey.id) }}" 
                                    class="btn-action btn-view" 
+                                   target="_blank"
                                    title="{{ translations.view_responses }}">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

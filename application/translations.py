@@ -549,8 +549,8 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "Active surveys in the system",
         },
         "total_participants": {
-            "he": "עברו בדיקות איכות (בדיקות ערנות)",
-            "en": "Passed Quality Checks (Attention Checks)",
+            "he": "משתמשים תקינים (עברו את בדיקות הקשב)",
+            "en": "Valid Participants (Passed Attention Checks)",
         },
         "excluded_users": {"he": "משתמשים חסומים", "en": "Blocked Users"},
         "all_participants": {"he": "כל המשתתפים", "en": "All Survey Completers"},

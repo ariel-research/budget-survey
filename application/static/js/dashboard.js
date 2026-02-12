@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const table = document.querySelector(".master-table");
     const tbody = table?.querySelector("tbody");
     const searchInput = document.querySelector(".search-input");
+    const strategySelect = document.getElementById("filterStrategy");
+    const dimSelect = document.getElementById("filterDim");
     const toggleButtons = Array.from(document.querySelectorAll(".btn-toggle"));
     const sortableHeaders = Array.from(
         table?.querySelectorAll("th.sortable") || []
@@ -10,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let searchQuery = "";
     let filterMode =
         document.querySelector(".btn-toggle.active")?.dataset.filter || "active";
+    let selectedStrategy = "all";
+    let selectedDim = "all";
     let sortKey = null;
     let sortDirection = "asc";
 
@@ -17,6 +21,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const normalize = (value) => String(value || "").toLowerCase().trim();
     const getRows = () => Array.from(tbody?.querySelectorAll(".survey-row") || []);
+    const formatDimLabel = (rawValue) => {
+        const value = String(rawValue || "").trim();
+        const asNumber = Number(value);
+
+        if (!Number.isNaN(asNumber) && asNumber > 0) {
+            return `${asNumber}D`;
+        }
+        return "N/A";
+    };
+
+    const populateFilters = () => {
+        const rows = getRows();
+        const strategyValues = new Set();
+        const dimValues = new Set();
+
+        rows.forEach((row) => {
+            const identityValue = String(row.dataset.valIdentity || "").trim();
+            const dimValue = String(row.dataset.valDim || "").trim();
+
+            if (identityValue) {
+                strategyValues.add(identityValue);
+            }
+            if (dimValue) {
+                dimValues.add(dimValue);
+            }
+        });
+
+        if (strategySelect) {
+            strategySelect.innerHTML = "";
+            strategySelect.appendChild(new Option("All Strategies", "all"));
+
+            Array.from(strategyValues)
+                .sort((a, b) =>
+                    a.localeCompare(b, undefined, {
+                        sensitivity: "base",
+                        numeric: true,
+                    })
+                )
+                .forEach((value) => {
+                    strategySelect.appendChild(new Option(value, value));
+                });
+        }
+
+        if (dimSelect) {
+            dimSelect.innerHTML = "";
+            dimSelect.appendChild(new Option("All Dims", "all"));
+
+            Array.from(dimValues)
+                .sort((a, b) => Number(a) - Number(b))
+                .forEach((value) => {
+                    dimSelect.appendChild(new Option(formatDimLabel(value), value));
+                });
+        }
+    };
 
     const getSortValue = (row, key) => {
         const datasetKey = `val${key.charAt(0).toUpperCase()}${key.slice(1)}`;
@@ -44,9 +102,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return row.dataset.isActive === "true";
     };
 
+    const matchesStrategy = (row) => {
+        if (selectedStrategy === "all") {
+            return true;
+        }
+        return (row.dataset.valIdentity || "") === selectedStrategy;
+    };
+
+    const matchesDim = (row) => {
+        if (selectedDim === "all") {
+            return true;
+        }
+        return (row.dataset.valDim || "") === selectedDim;
+    };
+
     const applyFilters = () => {
         getRows().forEach((row) => {
-            row.hidden = !(matchesSearch(row) && matchesToggle(row));
+            row.hidden = !(
+                matchesSearch(row) &&
+                matchesToggle(row) &&
+                matchesStrategy(row) &&
+                matchesDim(row)
+            );
         });
     };
 
@@ -115,6 +192,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    if (strategySelect) {
+        strategySelect.addEventListener("change", (event) => {
+            selectedStrategy = event.target.value || "all";
+            applyFilters();
+        });
+    }
+
+    if (dimSelect) {
+        dimSelect.addEventListener("change", (event) => {
+            selectedDim = event.target.value || "all";
+            applyFilters();
+        });
+    }
+
     sortableHeaders.forEach((header) => {
         header.addEventListener("click", () => {
             handleSort(header.dataset.sortKey);
@@ -175,20 +266,22 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const surveyId = copyButton.dataset.surveyId || "";
+        const copyText =
+            copyButton.dataset.copyText || copyButton.dataset.surveyId || "";
         const copiedMessage = copyButton.dataset.msgCopied || "Copied";
-        if (!surveyId) {
+        if (!copyText) {
             return;
         }
 
         try {
-            await copyWithFallback(surveyId);
+            await copyWithFallback(copyText);
             showCopyFeedback(copyButton, copiedMessage);
         } catch (error) {
-            console.error("Failed to copy survey id:", error);
+            console.error("Failed to copy:", error);
         }
     });
 
+    populateFilters();
     updateSortHeaderState();
     applyFilters();
 });

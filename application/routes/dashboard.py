@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from json import JSONDecodeError, loads
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, url_for
 
 from application.services.dashboard_service import get_dashboard_metrics
 from application.translations import get_translation
@@ -76,12 +76,22 @@ def parse_survey_data(survey):
             created_dt = None
 
     if created_dt:
-        date_label = created_dt.strftime("%b %d")
+        date_label = created_dt.strftime("%d/%m/%y")
         sort_date = created_dt.strftime("%Y-%m-%d")
 
     is_active_data = participant_count > 0
     dimension_count = len(subjects)
     dimension_label = f"{dimension_count}D" if dimension_count > 0 else "N/A"
+
+    ui_share_link = url_for(
+        "survey.index",
+        userID="test",
+        surveyID="link_copy",
+        internalID=survey.get("id"),
+        lang="he",
+        demo="false",
+        _external=True,
+    )
 
     return {
         "id": survey.get("id"),
@@ -95,6 +105,7 @@ def parse_survey_data(survey):
         "sort_date": sort_date,
         "sort_identity": strategy_name,
         "sort_dim": dimension_count,
+        "ui_share_link": ui_share_link,
     }
 
 
