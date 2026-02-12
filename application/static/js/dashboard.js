@@ -3,7 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const tbody = table?.querySelector("tbody");
     const searchInput = document.querySelector(".search-input");
     const strategySelect = document.getElementById("filterStrategy");
+    const storySelect = document.getElementById("filterStory");
     const dimSelect = document.getElementById("filterDim");
+    const resetBtn = document.getElementById("resetFilters");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+    const noResultsRow = document.getElementById("noResultsRow");
     const toggleButtons = Array.from(document.querySelectorAll(".btn-toggle"));
     const sortableHeaders = Array.from(
         table?.querySelectorAll("th.sortable") || []
@@ -13,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let filterMode =
         document.querySelector(".btn-toggle.active")?.dataset.filter || "active";
     let selectedStrategy = "all";
+    let selectedStory = "all";
     let selectedDim = "all";
     let sortKey = null;
     let sortDirection = "asc";
@@ -21,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const normalize = (value) => String(value || "").toLowerCase().trim();
     const getRows = () => Array.from(tbody?.querySelectorAll(".survey-row") || []);
+    
     const formatDimLabel = (rawValue) => {
         const value = String(rawValue || "").trim();
         const asNumber = Number(value);
@@ -34,48 +40,47 @@ document.addEventListener("DOMContentLoaded", () => {
     const populateFilters = () => {
         const rows = getRows();
         const strategyValues = new Set();
+        const storyValues = new Set();
         const dimValues = new Set();
 
         rows.forEach((row) => {
-            const identityValue = String(row.dataset.valIdentity || "").trim();
+            const strategyValue = String(row.dataset.valStrategy || "").trim();
+            const storyValue = String(row.dataset.valStory || "").trim();
             const dimValue = String(row.dataset.valDim || "").trim();
 
-            if (identityValue) {
-                strategyValues.add(identityValue);
-            }
-            if (dimValue) {
-                dimValues.add(dimValue);
-            }
+            if (strategyValue) strategyValues.add(strategyValue);
+            if (storyValue) storyValues.add(storyValue);
+            if (dimValue) dimValues.add(dimValue);
         });
 
-        if (strategySelect) {
-            const allLabel = strategySelect.dataset.allLabel || "All Strategies";
-            strategySelect.innerHTML = "";
-            strategySelect.appendChild(new Option(allLabel, "all"));
+        const setupSelect = (select, values, allLabel, formatter = (v) => v) => {
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = "";
+            select.appendChild(new Option(allLabel, "all"));
 
-            Array.from(strategyValues)
-                .sort((a, b) =>
-                    a.localeCompare(b, undefined, {
+            Array.from(values)
+                .sort((a, b) => {
+                    if (select === dimSelect) return Number(a) - Number(b);
+                    return a.localeCompare(b, undefined, {
                         sensitivity: "base",
                         numeric: true,
-                    })
-                )
+                    });
+                })
                 .forEach((value) => {
-                    strategySelect.appendChild(new Option(value, value));
+                    select.appendChild(new Option(formatter(value), value));
                 });
-        }
+            
+            if (Array.from(values).includes(current)) {
+                select.value = current;
+            } else {
+                select.value = "all";
+            }
+        };
 
-        if (dimSelect) {
-            const allLabel = dimSelect.dataset.allLabel || "All Dims";
-            dimSelect.innerHTML = "";
-            dimSelect.appendChild(new Option(allLabel, "all"));
-
-            Array.from(dimValues)
-                .sort((a, b) => Number(a) - Number(b))
-                .forEach((value) => {
-                    dimSelect.appendChild(new Option(formatDimLabel(value), value));
-                });
-        }
+        setupSelect(strategySelect, strategyValues, strategySelect?.dataset.allLabel || "All Strategies");
+        setupSelect(storySelect, storyValues, storySelect?.dataset.allLabel || "All Stories");
+        setupSelect(dimSelect, dimValues, dimSelect?.dataset.allLabel || "All Dims", formatDimLabel);
     };
 
     const getSortValue = (row, key) => {
@@ -90,43 +95,46 @@ document.addEventListener("DOMContentLoaded", () => {
         return normalize(raw);
     };
 
-    const matchesSearch = (row) => {
-        if (!searchQuery) {
-            return true;
-        }
-        return normalize(row.dataset.searchTerm).includes(searchQuery);
-    };
-
-    const matchesToggle = (row) => {
-        if (filterMode === "all") {
-            return true;
-        }
-        return row.dataset.isActive === "true";
-    };
-
-    const matchesStrategy = (row) => {
-        if (selectedStrategy === "all") {
-            return true;
-        }
-        return (row.dataset.valIdentity || "") === selectedStrategy;
-    };
-
-    const matchesDim = (row) => {
-        if (selectedDim === "all") {
-            return true;
-        }
-        return (row.dataset.valDim || "") === selectedDim;
-    };
-
     const applyFilters = () => {
-        getRows().forEach((row) => {
-            row.hidden = !(
-                matchesSearch(row) &&
-                matchesToggle(row) &&
-                matchesStrategy(row) &&
-                matchesDim(row)
-            );
+        let visibleCount = 0;
+        const rows = getRows();
+        
+        rows.forEach((row) => {
+            const matchesSearch = !searchQuery || normalize(row.dataset.searchTerm).includes(searchQuery);
+            const matchesToggle = filterMode === "all" || row.dataset.isActive === "true";
+            const matchesStrategy = selectedStrategy === "all" || row.dataset.valStrategy === selectedStrategy;
+            const matchesStory = selectedStory === "all" || row.dataset.valStory === selectedStory;
+            const matchesDim = selectedDim === "all" || row.dataset.valDim === selectedDim;
+
+            const isVisible = matchesSearch && matchesToggle && matchesStrategy && matchesStory && matchesDim;
+            row.hidden = !isVisible;
+            if (isVisible) visibleCount++;
         });
+
+        if (noResultsRow) {
+            noResultsRow.hidden = visibleCount > 0;
+        }
+    };
+
+    const resetAllFilters = () => {
+        searchQuery = "";
+        if (searchInput) searchInput.value = "";
+        
+        selectedStrategy = "all";
+        if (strategySelect) strategySelect.value = "all";
+        
+        selectedStory = "all";
+        if (storySelect) storySelect.value = "all";
+        
+        selectedDim = "all";
+        if (dimSelect) dimSelect.value = "all";
+
+        filterMode = "active";
+        toggleButtons.forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.filter === "active");
+        });
+
+        applyFilters();
     };
 
     const updateSortHeaderState = () => {
@@ -145,9 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const handleSort = (columnKey) => {
-        if (!tbody || !columnKey) {
-            return;
-        }
+        if (!tbody || !columnKey) return;
 
         if (sortKey === columnKey) {
             sortDirection = sortDirection === "asc" ? "desc" : "asc";
@@ -165,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return (valueA - valueB) * direction;
             }
 
-            return valueA.localeCompare(valueB, undefined, {
+            return String(valueA).localeCompare(String(valueB), undefined, {
                 numeric: true,
                 sensitivity: "base",
             }) * direction;
@@ -176,50 +182,57 @@ document.addEventListener("DOMContentLoaded", () => {
         applyFilters();
     };
 
+    // Event Listeners
     if (searchInput) {
-        searchInput.addEventListener("input", (event) => {
-            searchQuery = normalize(event.target.value);
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = normalize(e.target.value);
             applyFilters();
         });
     }
 
-    toggleButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            filterMode = button.dataset.filter || "active";
-
-            toggleButtons.forEach((btn) => btn.classList.remove("active"));
-            button.classList.add("active");
-
+    if (strategySelect) {
+        strategySelect.addEventListener("change", (e) => {
+            selectedStrategy = e.target.value;
             applyFilters();
         });
-    });
+    }
 
-    if (strategySelect) {
-        strategySelect.addEventListener("change", (event) => {
-            selectedStrategy = event.target.value || "all";
+    if (storySelect) {
+        storySelect.addEventListener("change", (e) => {
+            selectedStory = e.target.value;
             applyFilters();
         });
     }
 
     if (dimSelect) {
-        dimSelect.addEventListener("change", (event) => {
-            selectedDim = event.target.value || "all";
+        dimSelect.addEventListener("change", (e) => {
+            selectedDim = e.target.value;
             applyFilters();
         });
     }
 
-    sortableHeaders.forEach((header) => {
-        header.addEventListener("click", () => {
-            handleSort(header.dataset.sortKey);
+    if (resetBtn) resetBtn.addEventListener("click", resetAllFilters);
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener("click", resetAllFilters);
+
+    toggleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            filterMode = button.dataset.filter || "active";
+            toggleButtons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+            applyFilters();
         });
     });
 
+    sortableHeaders.forEach((header) => {
+        header.addEventListener("click", () => handleSort(header.dataset.sortKey));
+    });
+
+    // Copy functionality
     const copyWithFallback = async (value) => {
         if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(value);
             return;
         }
-
         const textarea = document.createElement("textarea");
         textarea.value = value;
         textarea.setAttribute("readonly", "");
@@ -234,17 +247,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const showCopyFeedback = (button, message) => {
         const feedback = message || "Copied";
-        const originalTitle =
-            button.dataset.originalTitle || button.getAttribute("title") || "";
-
-        if (!button.dataset.originalTitle) {
-            button.dataset.originalTitle = originalTitle;
-        }
+        const originalTitle = button.dataset.originalTitle || button.getAttribute("title") || "";
+        if (!button.dataset.originalTitle) button.dataset.originalTitle = originalTitle;
 
         const previousTimeout = Number(button.dataset.copyTimeoutId || "0");
-        if (previousTimeout) {
-            window.clearTimeout(previousTimeout);
-        }
+        if (previousTimeout) window.clearTimeout(previousTimeout);
 
         button.classList.add("is-copied");
         button.dataset.feedback = feedback;
@@ -258,23 +265,15 @@ document.addEventListener("DOMContentLoaded", () => {
             button.removeAttribute("aria-label");
             button.dataset.copyTimeoutId = "";
         }, 2000);
-
         button.dataset.copyTimeoutId = String(timeoutId);
     };
 
     document.addEventListener("click", async (event) => {
         const copyButton = event.target.closest(".btn-copy-id");
-        if (!copyButton) {
-            return;
-        }
-
-        const copyText =
-            copyButton.dataset.copyText || copyButton.dataset.surveyId || "";
+        if (!copyButton) return;
+        const copyText = copyButton.dataset.copyText || copyButton.dataset.surveyId || "";
         const copiedMessage = copyButton.dataset.msgCopied || "Copied";
-        if (!copyText) {
-            return;
-        }
-
+        if (!copyText) return;
         try {
             await copyWithFallback(copyText);
             showCopyFeedback(copyButton, copiedMessage);

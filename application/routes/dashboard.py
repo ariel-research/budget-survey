@@ -159,6 +159,7 @@ def view_dashboard():
             "active_data_toggle": get_translation("active_data_toggle", "dashboard"),
             "all_surveys_toggle": get_translation("all_surveys_toggle", "dashboard"),
             "copied_to_clipboard": get_translation("copied_to_clipboard", "dashboard"),
+            "copy_link": get_translation("copy_link", "dashboard"),
             "col_id": get_translation("col_id", "dashboard"),
             "col_date": get_translation("col_date", "dashboard"),
             "col_status": get_translation("col_status", "dashboard"),
@@ -169,7 +170,11 @@ def view_dashboard():
             "filter_all_strategies": get_translation(
                 "filter_all_strategies", "dashboard"
             ),
+            "filter_all_stories": get_translation("filter_all_stories", "dashboard"),
             "filter_all_dims": get_translation("filter_all_dims", "dashboard"),
+            "col_story": get_translation("col_story", "dashboard"),
+            "no_results_found": get_translation("no_results_found", "dashboard"),
+            "clear_all_filters": get_translation("clear_all_filters", "dashboard"),
         }
 
         return render_template(

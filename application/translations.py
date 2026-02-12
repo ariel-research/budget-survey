@@ -577,6 +577,7 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "active_data_toggle": {"he": "נתונים פעילים", "en": "Active Data"},
         "all_surveys_toggle": {"he": "כל הסקרים", "en": "All Surveys"},
         "copied_to_clipboard": {"he": "הועתק ללוח", "en": "Copied to clipboard"},
+        "copy_link": {"he": "העתק קישור", "en": "Copy Link"},
         "col_id": {"he": "מזהה", "en": "ID"},
         "col_date": {"he": "תאריך", "en": "Date"},
         "col_status": {"he": "סטטוס", "en": "Status"},
@@ -585,7 +586,14 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "col_volume": {"he": "כמות", "en": "Volume"},
         "col_actions": {"he": "פעולות", "en": "Actions"},
         "filter_all_strategies": {"he": "כל האסטרטגיות", "en": "All Strategies"},
+        "filter_all_stories": {"he": "כל הסיפורים", "en": "All Stories"},
         "filter_all_dims": {"he": "כל המימדים", "en": "All Dims"},
+        "col_story": {"he": "סיפור", "en": "Story"},
+        "no_results_found": {
+            "he": "לא נמצאו סקרים התואמים את הסינון",
+            "en": "No surveys found matching your filters.",
+        },
+        "clear_all_filters": {"he": "נקה את כל המסננים", "en": "Clear All Filters"},
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},
