@@ -466,6 +466,12 @@ def download_survey_responses_csv(survey_id: int):
         # 3. Flatten the detailed data into a list of dicts for the CSV
         csv_data = []
         for choice in user_choices_from_function:
+            # Extract Pair Score from generation_metadata if available
+            pair_score = None
+            gen_metadata = choice.get("generation_metadata")
+            if isinstance(gen_metadata, dict):
+                pair_score = gen_metadata.get("score")
+
             csv_data.append(
                 {
                     "user_id": choice.get("user_id"),
@@ -473,6 +479,7 @@ def download_survey_responses_csv(survey_id: int):
                     "response_created_at": choice.get("response_created_at"),
                     "optimal_allocation": str(choice.get("optimal_allocation")),
                     "pair_number": choice.get("pair_number"),
+                    "pair_score": pair_score,
                     "option_1": str(choice.get("option_1")),
                     "option_2": str(choice.get("option_2")),
                     "user_choice": choice.get("user_choice"),
