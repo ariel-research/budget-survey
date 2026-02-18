@@ -522,6 +522,10 @@
     background: #9ca3af;
 }
 
+.status-dot.red {
+    background: #ef4444;
+}
+
 .status-dot.orange {
     background: #f59e0b;
 }
@@ -531,10 +535,16 @@
 }
 
 /* Pulse Animation for active data states */
+.status-dot.red,
 .status-dot.orange,
 .status-dot.green {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
     animation: statusPulse 2s infinite;
+}
+
+.status-dot.red {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    animation-name: statusPulseRed;
 }
 
 .status-dot.orange {
@@ -544,13 +554,25 @@
 
 @keyframes statusPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(10, 185, 129, 0.4);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
     }
     70% {
         box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
     }
     100% {
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes statusPulseRed {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     }
 }
 

@@ -594,6 +594,16 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "en": "No surveys found matching your filters.",
         },
         "clear_all_filters": {"he": "נקה את כל המסננים", "en": "Clear All Filters"},
+        "status_disabled": {"he": "מופסק", "en": "Disabled"},
+        "status_no_responses": {"he": "אין מענים (N=0)", "en": "No responses (N=0)"},
+        "status_gathering_data": {
+            "he": "איסוף נתונים (N<30)",
+            "en": "Gathering Data (N<30)",
+        },
+        "status_sufficient_data": {
+            "he": "מספיק נתונים (N>=30)",
+            "en": "Sufficient Data (N>=30)",
+        },
     },
     "answers": {  # Answers page
         "title": {"he": "תשובות לכל הסקרים", "en": "Survey Answers"},

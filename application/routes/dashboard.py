@@ -87,20 +87,28 @@ def parse_survey_data(survey):
         date_label = created_dt.strftime("%d %b %y")
         sort_date = created_dt.strftime("%Y-%m-%d")
 
-    is_active_data = participant_count > 0
+    is_survey_active = bool(survey.get("active"))
+    is_active_data = is_survey_active and participant_count > 0
     dimension_count = len(subjects)
     dimension_label = f"{dimension_count}D" if dimension_count > 0 else "N/A"
 
-    # Three-Tier Maturity Model Logic
-    if participant_count == 0:
+    # Four-Tier Maturity Model Logic
+    if not is_survey_active:
         ui_status = "gray"
-        ui_status_tooltip = "Inactive (N=0)"
+        ui_status_priority = 0
+        ui_status_tooltip = get_translation("status_disabled", "dashboard")
+    elif participant_count == 0:
+        ui_status = "red"
+        ui_status_priority = 1
+        ui_status_tooltip = get_translation("status_no_responses", "dashboard")
     elif participant_count < 30:
         ui_status = "orange"
-        ui_status_tooltip = "Gathering Data (N<30)"
+        ui_status_priority = 2
+        ui_status_tooltip = get_translation("status_gathering_data", "dashboard")
     else:
         ui_status = "green"
-        ui_status_tooltip = "Sufficient Data (N>=30)"
+        ui_status_priority = 3
+        ui_status_tooltip = get_translation("status_sufficient_data", "dashboard")
 
     ui_share_link = url_for(
         "survey.index",
@@ -116,6 +124,7 @@ def parse_survey_data(survey):
         "id": survey.get("id"),
         "ui_date": date_label,
         "ui_status": ui_status,
+        "ui_status_priority": ui_status_priority,
         "ui_status_tooltip": ui_status_tooltip,
         "is_active_data": is_active_data,
         "ui_strategy": strategy_name,

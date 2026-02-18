@@ -206,7 +206,7 @@
                         data-is-active="{{ 'true' if survey.is_active_data else 'false' }}"
                         data-val-id="{{ survey.id }}"
                         data-val-date="{{ survey.sort_date }}"
-                        data-val-status="{{ 1 if survey.is_active_data else 0 }}"
+                        data-val-status="{{ survey.ui_status_priority }}"
                         data-val-strategy="{{ survey.ui_strategy }}"
                         data-val-story="{{ survey.ui_context }}"
                         data-val-dim="{{ survey.sort_dim }}"
