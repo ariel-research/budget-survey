@@ -5,7 +5,7 @@ Implements Strategy pattern for flexible pair generation algorithms.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Set, Tuple, Type, Union
+from typing import Dict, List, Optional, Set, Tuple, Type, Union
 
 import numpy as np
 
@@ -181,7 +181,11 @@ class PairGenerationStrategy(ABC):
 
     @abstractmethod
     def generate_pairs(
-        self, user_vector: tuple, n: int, vector_size: int
+        self,
+        user_vector: tuple,
+        n: int,
+        vector_size: int,
+        min_score_threshold: Optional[float] = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate pairs based on strategy's logic.
@@ -190,6 +194,7 @@ class PairGenerationStrategy(ABC):
             user_vector: User's ideal budget allocation
             n: Number of pairs to generate
             vector_size: Size of each allocation vector
+            min_score_threshold: Minimum score required for a pair to be included
 
         Returns:
             List of dicts containing {'option_description': vector} pairs,
