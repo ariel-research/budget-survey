@@ -5,7 +5,7 @@ Uses utility-model-based scoring and normalized ranking to select optimal pairs.
 
 import functools
 import logging
-from typing import Dict, List, Set, Tuple, Type
+from typing import Dict, List, Optional, Set, Tuple, Type
 
 import numpy as np
 
@@ -232,7 +232,11 @@ class GenericRankStrategy(PairGenerationStrategy):
         return pool
 
     def generate_pairs(
-        self, user_vector: tuple, n: int, vector_size: int
+        self,
+        user_vector: tuple,
+        n: int,
+        vector_size: int,
+        min_score_threshold: Optional[float] = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate pairs based on the generic ranking logic.
@@ -241,6 +245,7 @@ class GenericRankStrategy(PairGenerationStrategy):
             user_vector: The user's ideal budget allocation.
             n: Number of pairs to generate.
             vector_size: Size of each vector.
+            min_score_threshold: Minimum score required for a pair to be included.
 
         Returns:
             List of dicts containing vectors and embedded __metadata__ key
@@ -278,36 +283,49 @@ class GenericRankStrategy(PairGenerationStrategy):
         else:
             current_min = self.min_component
 
+        # Cache key inputs must be immutable
+        user_vector_tuple = tuple(user_vector)
+        utility_a_class = type(self.utility_model_a)
+        utility_b_class = type(self.utility_model_b)
+
+        top_n = []
         while True:
             try:
                 msg = f"Attempting pair generation with min_component={current_min}"
                 logger.debug(msg)
 
-                # 1. Generate Pool
-                vector_pool_set = self.generate_vector_pool(
-                    size=self.grid_step,
+                # Use cached ranking computation
+                ranked_pairs = _compute_all_ranked_pairs(
+                    user_vector=user_vector_tuple,
                     vector_size=vector_size,
-                    min_val_override=current_min,
+                    grid_step=self.grid_step,
+                    current_floor=current_min,
+                    utility_model_a_class=utility_a_class,
+                    utility_model_b_class=utility_b_class,
+                    normalization_method=self.normalization_method,
+                    strategy_name=self.get_strategy_name(),
                 )
 
-                # 2. Calculate Utility Scores
-                scores_a, scores_b, pool_list = self._calculate_utility_scores(
-                    vector_pool_set, user_vector
-                )
+                if len(ranked_pairs) >= n:
+                    top_n = ranked_pairs[:n]
+                    if min_score_threshold is not None:
+                        # Check n-th score
+                        nth_score = top_n[-1][2]
+                        if nth_score < min_score_threshold:
+                            from application.exceptions import (
+                                UnsuitableForStrategyError,
+                            )
 
-                # 3. Compute Ranks (Normalized 0-1)
-                ranks_a, ranks_b = self._compute_ranks(scores_a, scores_b)
-
-                # 4. Select Pairs (MaxMin Logic)
-                pair_indices = self._select_pairs(pool_list, ranks_a, ranks_b, n)
-
-                if len(pair_indices) >= n:
-                    # Found enough pairs, proceed to formatting
+                            raise UnsuitableForStrategyError(
+                                f"Best available pair score {nth_score:.4f} is below "
+                                f"threshold {min_score_threshold:.4f} for {self.__class__.__name__}"
+                            )
+                    # Found enough valid pairs
                     break
 
                 # If we found some pairs but not enough, retry with relaxed floor.
                 logger.info(
-                    f"Only found {len(pair_indices)}/{n} pairs with "
+                    f"Only found {len(ranked_pairs)}/{n} pairs with "
                     f"min_component={current_min}. Attempting to relax."
                 )
 
@@ -332,9 +350,26 @@ class GenericRankStrategy(PairGenerationStrategy):
                     "provided preferences."
                 )
 
-        # 5. Format Output using the successful pair_indices
+        # Format output using the successful top_n
+        pool_list = list(
+            get_cached_simplex_pool(
+                num_variables=vector_size,
+                side_length=100,
+                step=self.grid_step,
+                min_value=current_min,
+            )
+        )
+
+        # Recalculate raw scores for formatting (numpy vectorized)
+        scores_a = np.array(
+            [self.utility_model_a.calculate(user_vector_tuple, v) for v in pool_list]
+        )
+        scores_b = np.array(
+            [self.utility_model_b.calculate(user_vector_tuple, v) for v in pool_list]
+        )
+
         result_pairs = []
-        for idx_a, idx_b, score in pair_indices:
+        for idx_a, idx_b, score in top_n:
             pair = self._create_pair_output(
                 pool_list[idx_a],
                 pool_list[idx_b],
@@ -343,7 +378,7 @@ class GenericRankStrategy(PairGenerationStrategy):
                 scores_a[idx_b],
                 scores_b[idx_a],
                 scores_b[idx_b],
-                ranks_a[idx_a] > ranks_a[idx_b],
+                True,  # idx_a is always better for model A in _compute_all_ranked_pairs
             )
 
             # Add generation metadata
