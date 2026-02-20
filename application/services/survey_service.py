@@ -404,11 +404,19 @@ class SurveyService:
 
             # Get and execute strategy
             strategy = StrategyRegistry.get_strategy(strategy_name)
-            comparison_pairs = strategy.generate_pairs(
-                tuple(user_vector),
-                n=params.get("num_pairs", 10),
-                vector_size=num_subjects,
-            )
+
+            # Build generation arguments
+            generation_kwargs = {
+                "user_vector": tuple(user_vector),
+                "n": params.get("num_pairs", 10),
+                "vector_size": num_subjects,
+            }
+
+            # Only inject min_score_threshold if explicitly requested in config
+            if "min_score_threshold" in config:
+                generation_kwargs["min_score_threshold"] = config["min_score_threshold"]
+
+            comparison_pairs = strategy.generate_pairs(**generation_kwargs)
             first_metadata = (
                 comparison_pairs[0].get("__metadata__") if comparison_pairs else None
             )
