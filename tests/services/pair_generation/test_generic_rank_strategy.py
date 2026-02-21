@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -8,6 +10,7 @@ from application.services.algorithms.utility_models import (
 )
 from application.services.pair_generation.generic_rank_strategy import (
     GenericRankStrategy,
+    _compute_all_ranked_pairs,
 )
 
 
@@ -252,3 +255,91 @@ def test_generate_pairs_no_tradeoff():
     # Expect UnsuitableForStrategyError because L1 vs L1 has no trade-offs
     with pytest.raises(UnsuitableForStrategyError):
         strategy.generate_pairs(user_vector, n=2, vector_size=2)
+
+
+def test_compute_all_ranked_pairs_cache_hit():
+    """
+    Test that _compute_all_ranked_pairs correctly hits the LRU cache.
+    """
+    # Clear cache to ensure a fresh start
+    _compute_all_ranked_pairs.cache_clear()
+
+    args = {
+        "user_vector": (50, 25, 25),
+        "vector_size": 3,
+        "grid_step": 5,
+        "current_floor": 10,
+        "utility_model_a_class": L1UtilityModel,
+        "utility_model_b_class": LeontiefUtilityModel,
+        "normalization_method": "ordinal",
+        "strategy_name": "test_strategy",
+    }
+
+    # First call - cache miss
+    _compute_all_ranked_pairs(**args)
+    info = _compute_all_ranked_pairs.cache_info()
+    assert info.hits == 0
+    assert info.misses == 1
+
+    # Second call - cache hit
+    _compute_all_ranked_pairs(**args)
+    info = _compute_all_ranked_pairs.cache_info()
+    assert info.hits == 1
+    assert info.misses == 1
+
+
+def test_generate_pairs_threshold_rejection():
+    """
+    Test that generate_pairs raises UnsuitableForStrategyError if n-th pair is below threshold.
+    """
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
+    user_vector = (50, 25, 25)
+    n = 2
+    threshold = 0.5
+
+    # Mock _compute_all_ranked_pairs to return two pairs where the 2nd one is below threshold
+    # format: (idx_a, idx_b, score)
+    mock_pairs = [(0, 1, 0.9), (2, 3, 0.4)]
+
+    with patch(
+        "application.services.pair_generation.generic_rank_strategy._compute_all_ranked_pairs",
+        return_value=mock_pairs,
+    ):
+        with pytest.raises(UnsuitableForStrategyError) as excinfo:
+            strategy.generate_pairs(
+                user_vector, n=n, vector_size=3, min_score_threshold=threshold
+            )
+
+        assert (
+            f"Best available pair score 0.4000 is below threshold {threshold:.4f}"
+            in str(excinfo.value)
+        )
+
+
+def test_generate_pairs_threshold_pass():
+    """
+    Test that generate_pairs succeeds if n-th pair is at or above threshold.
+    """
+    strategy = GenericRankStrategy(L1UtilityModel, LeontiefUtilityModel)
+    user_vector = (50, 25, 25)
+    n = 2
+    threshold = 0.4
+
+    # Mock _compute_all_ranked_pairs to return two pairs where the 2nd one is at threshold
+    mock_pairs = [(0, 1, 0.9), (2, 3, 0.4)]
+
+    with (
+        patch(
+            "application.services.pair_generation.generic_rank_strategy._compute_all_ranked_pairs",
+            return_value=mock_pairs,
+        ),
+        patch(
+            "application.services.pair_generation.generic_rank_strategy.get_cached_simplex_pool",
+            return_value=[(50, 25, 25)] * 10,
+        ),
+    ):
+        # Should not raise
+        results = strategy.generate_pairs(
+            user_vector, n=n, vector_size=3, min_score_threshold=threshold
+        )
+        assert len(results) == n

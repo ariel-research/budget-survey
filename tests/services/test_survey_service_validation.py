@@ -88,3 +88,27 @@ def test_generate_pairs_skips_check_if_no_rules(
 
     # Act: Should proceed
     SurveyService.generate_survey_pairs(user_vector, 3, survey_id=1)
+
+
+def test_generate_survey_pairs_threshold_wiring(
+    mock_get_rules, mock_get_config, mock_strategy_registry
+):
+    """Ensure service passes min_score_threshold to strategy when configured."""
+    # Setup: config contains a threshold
+    mock_get_config.return_value = {
+        "strategy": "generic_rank_strategy",
+        "params": {"num_pairs": 5},
+        "min_score_threshold": 0.25,
+    }
+    user_vector = [50, 25, 25]
+    survey_id = 123
+
+    # Act
+    SurveyService.generate_survey_pairs(user_vector, 3, survey_id=survey_id)
+
+    # Assert: strategy's generate_pairs was called with the threshold
+    mock_strategy = mock_strategy_registry.get_strategy.return_value
+    mock_strategy.generate_pairs.assert_called()
+    call_args = mock_strategy.generate_pairs.call_args[1]
+    assert call_args["min_score_threshold"] == 0.25
+    assert call_args["n"] == 5
