@@ -299,6 +299,8 @@ class SurveyService:
         - max_zero_values (int): Max allowed zero values.
         - min_positive_values (int): Min required positive values.
         - min_equal_value_pair (int): Requires at least one pair of equal values >= this limit.
+        - min_score_threshold (float): Minimum score required for the n-th generated pair.
+                                      Enforced during the pair generation phase.
 
         Args:
             user_vector: User's ideal budget allocation
