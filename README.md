@@ -622,6 +622,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
   - Normalizes utility models to percentile ranks (0.0-1.0) to eliminate scale differences.
   - Uses a **Max-Min** search to find pairs where one vector is significantly better on Utility Model A, while the other is better on Utility Model B.
+  - Supports an optional `min_score_threshold` (configured in the top-level `pair_generation_config`). If the $n$-th best pair's score is below this threshold, the strategy raises `UnsuitableForStrategyError`.
 - **Utility Models Supported**:
   - **L1 (Sum)**: Total absolute disagreement.
   - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
@@ -842,6 +843,7 @@ The `surveys` table includes a JSON column `suitability_rules` to enforce vector
 * `max_zero_values` (int): Maximum number of zero values allowed in the user's budget vector.
 * `min_positive_values` (int): Minimum number of positive values required.
 * `min_equal_value_pair` (int): Requires at least one pair of subjects to have identical ideal values greater than or equal to this limit.
+* `min_score_threshold` (float, in `pair_generation_config`): Minimum score required for the $n$-th best pair. If not met, raises `UnsuitableForStrategyError`.
 
 **Example Configuration:**
 

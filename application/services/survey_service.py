@@ -299,6 +299,8 @@ class SurveyService:
         - max_zero_values (int): Max allowed zero values.
         - min_positive_values (int): Min required positive values.
         - min_equal_value_pair (int): Requires at least one pair of equal values >= this limit.
+        - min_score_threshold (float): Minimum score required for the n-th generated pair.
+                                      Enforced during the pair generation phase.
 
         Args:
             user_vector: User's ideal budget allocation
@@ -404,11 +406,19 @@ class SurveyService:
 
             # Get and execute strategy
             strategy = StrategyRegistry.get_strategy(strategy_name)
-            comparison_pairs = strategy.generate_pairs(
-                tuple(user_vector),
-                n=params.get("num_pairs", 10),
-                vector_size=num_subjects,
-            )
+
+            # Build generation arguments
+            generation_kwargs = {
+                "user_vector": tuple(user_vector),
+                "n": params.get("num_pairs", 10),
+                "vector_size": num_subjects,
+            }
+
+            # Only inject min_score_threshold if explicitly requested in config
+            if "min_score_threshold" in config:
+                generation_kwargs["min_score_threshold"] = config["min_score_threshold"]
+
+            comparison_pairs = strategy.generate_pairs(**generation_kwargs)
             first_metadata = (
                 comparison_pairs[0].get("__metadata__") if comparison_pairs else None
             )
