@@ -1,3 +1,35 @@
+"""
+Compares three pair-scoring strategies for the GenericRankStrategy:
+  - max_min:      score = min(gain_a, gain_b)
+  - weighted_cc:  score = min(gain_a, gain_b) + λ * (max(gain_a, gain_b) - min(gain_a, gain_b))
+  - harmonic_mean: score = 2 * gain_a * gain_b / (gain_a + gain_b)
+
+For each test vector, the script reports:
+
+JACCARD SIMILARITY (top-10 overlap)
+  Measures whether two strategies pick the same 10 pairs to show users.
+  Calculated as: |intersection| / |union| of the two top-10 sets.
+  Range: 0.0 (no shared pairs) to 1.0 (identical top-10).
+  This is the most practically important metric — it directly answers
+  "would a user see different questions depending on which formula we use?"
+
+SPEARMAN ρ (full ranking correlation)
+  Measures whether two strategies agree on the ordering of ALL valid pairs,
+  not just the top 10. Calculated by ranking each strategy's scores and
+  computing the correlation between those rank lists.
+  Range: -1.0 (reversed order) to 1.0 (identical order). In practice,
+  values above 0.95 mean the strategies are interchangeable.
+  This catches subtle divergence that Jaccard misses when the top-10 agree
+  but the ordering below the cutoff differs.
+
+VERDICT
+  A one-line interpretation based on valid pair count and minimum Spearman ρ:
+  ✓ AGREEMENT  — strategies are interchangeable for this vector
+  ~ PARTIAL    — top-10 is identical but full ordering differs slightly
+  ✗ DIVERGENCE — formula choice would change which pairs users see
+  ⚠ DEGENERATE — too few valid pairs to draw reliable conclusions
+"""
+
 import numpy as np
 
 from application.services.algorithms.math_utils import rankdata
@@ -53,8 +85,6 @@ def run_comparison(user_vector: tuple):
             **params, scoring_method=method, scoring_lambda=lam
         )
 
-        # We need all valid pairs to compute Spearman rho
-        # We can call the cached function directly to get all pairs
         all_pairs = _compute_all_ranked_pairs(
             user_vector=user_vector,
             vector_size=vector_size,
@@ -68,40 +98,32 @@ def run_comparison(user_vector: tuple):
             scoring_lambda=lam,
         )
 
-        # Store top-k pairs (only the vector indices as unique identifier for the pair)
-        # frozenset is safe here because _compute_all_ranked_pairs always assigns idx_a
-        # as the vector better on model A, so the same logical pair always maps to the
-        # same frozenset across all scoring strategies.
         top_k_pairs = {frozenset((p[0], p[1])) for p in all_pairs[:k]}
         results[name] = top_k_pairs
 
-        # For Spearman, we need a consistent set of pairs across all strategies.
-        # But different strategies might have different "valid" pairs?
-        # Actually, the set of valid pairs (gains_a > 0 and gains_b > 0) is the same
-        # for all scoring methods because it's determined before the scoring function.
-        # Let's create a map of (idx_a, idx_b) -> score
-        full_rankings[name] = {(frozenset((p[0], p[1]))): p[2] for p in all_pairs}
+        full_rankings[name] = {frozenset((p[0], p[1])): p[2] for p in all_pairs}
 
-    # Verify that all scoring methods produced the same valid pair sets
     assert (
         full_rankings["max_min"].keys()
         == full_rankings["weighted_cc"].keys()
         == full_rankings["harmonic_mean"].keys()
     ), "Scoring methods produced different valid pair sets — this should never happen"
 
-    # Print results
-    print(f"\nUser vector: {user_vector}")
-
     n_valid = len(full_rankings["max_min"])
-    print(f"Valid discriminating pairs found: {n_valid}")
+    print(f"\nUser vector: {user_vector}")
+    print(
+        f"  Strategy: L1 vs L2  |  Valid discriminating pairs: {n_valid}  |  Pairs needed for survey: {k}"
+    )
+
     if n_valid < 20:
         print(
-            "  ⚠  Low pair count — top-10 selection may reflect arbitrary "
+            "  ⚠  Low pair count — top-k selection may reflect arbitrary "
             "tiebreaking rather than genuine formula divergence"
         )
 
-    # 1. Jaccard Similarity List
-    print("\nTop-10 Jaccard similarity:")
+    print(
+        f"\nTop-{k} Jaccard similarity  (1.0 = identical pairs selected, 0.0 = no overlap):"
+    )
 
     def get_jaccard(s1, s2):
         set1 = results[s1]
@@ -120,11 +142,9 @@ def run_comparison(user_vector: tuple):
         f"  weighted_cc  vs harmonic_mean: {get_jaccard('weighted_cc', 'harmonic_mean'):.3f}"
     )
 
-    # 2. Spearman Correlation
-    print("\nSpearman ρ (full ranking):")
-    # To compute spearman, we need the scores of all pairs that are valid in ANY strategy.
-    # Since the validity criteria (gains_a > 0 and gains_b > 0) is the same,
-    # the set of pairs should be identical.
+    print(
+        "\nSpearman ρ — full ranking correlation  (1.0 = identical ordering, 0.95+ = effectively equivalent):"
+    )
     all_valid_pairs = list(full_rankings["max_min"].keys())
 
     def get_spearman(n1, n2):
@@ -140,7 +160,6 @@ def run_comparison(user_vector: tuple):
     print(f"  max_min vs harmonic_mean: {s_m_h:.2f}")
     print(f"  weighted_cc vs harmonic_mean: {s_w_h:.2f}")
 
-    # 3. Verdict
     spearman_values = [s_m_w, s_m_h, s_w_h]
     min_spearman = min(spearman_values)
 
@@ -156,7 +175,7 @@ def run_comparison(user_vector: tuple):
         verdict = "✗  DIVERGENCE: formula choice meaningfully affects pair selection"
 
     print(f"\nVerdict: {verdict}\n")
-    print("-" * 60)  # separator between vectors
+    print("-" * 60)
 
 
 if __name__ == "__main__":
