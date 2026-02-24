@@ -31,19 +31,29 @@ SPEARMAN ρ (full ranking correlation)
   but the ordering below the cutoff differs.
 
 VERDICT
-  A one-line interpretation based on valid pair count, minimum Jaccard, and
-  minimum Spearman ρ. Jaccard takes priority — it reflects what users actually
-  experience. Spearman is used as a secondary signal for full-ranking divergence.
-  ✓ AGREEMENT  — top-k is identical AND full ordering is equivalent
-  ~ PARTIAL    — top-k is identical but full ordering differs slightly
+  A one-line interpretation. Jaccard takes priority since it reflects what
+  users actually experience. Spearman distinguishes AGREEMENT from PARTIAL
+  when Jaccard is already acceptable.
+  ✓ AGREEMENT  — top-k identical AND full ordering equivalent (Spearman ≥ 0.95)
+  ~ PARTIAL    — top-k identical but full ordering differs slightly
   ✗ DIVERGENCE — formula choice would change which pairs users see
   ⚠ DEGENERATE — too few valid pairs to draw reliable conclusions
+  Note: DIVERGENCE with Spearman ≥ 0.97 and very high pair counts (>50k)
+  likely indicates a tiebreaking artifact rather than genuine disagreement.
+
+NOTE ON HIGH PAIR COUNTS
+  When the valid pair count exceeds ~50,000, Jaccard divergence often reflects
+  arbitrary tiebreaking at the top of a very dense score distribution, not
+  genuine formula disagreement. In these cases, all formulas agree the same
+  broad cluster of pairs is best — but minor score differences determine the
+  exact top-10 cutoff. The Spearman ρ is the more reliable signal in this regime.
 """
 
 import numpy as np
 
 from application.services.algorithms.math_utils import rankdata
 from application.services.algorithms.utility_models import (
+    KLUtilityModel,
     L1UtilityModel,
     L2UtilityModel,
     LeontiefUtilityModel,
@@ -80,6 +90,7 @@ def run_comparison(
     utility_model_a_class,
     utility_model_b_class,
     model_pair_label: str,
+    min_component: int = 0,
 ):
     """
     Run the three-way scoring strategy comparison for a single user vector and model pair.
@@ -92,7 +103,7 @@ def run_comparison(
         "utility_model_a_class": utility_model_a_class,
         "utility_model_b_class": utility_model_b_class,
         "grid_step": 5,
-        "min_component": 0,  # no restriction — use the full simplex pool
+        "min_component": min_component,
         "normalization_method": "ordinal",
     }
 
@@ -209,6 +220,30 @@ def run_comparison(
     min_jaccard = min(j_m_w, j_m_h, j_w_h)
     min_spearman = min(s_m_w, s_m_h, s_w_h)
 
+    # --- Detail Display for Divergence ---
+
+    if min_jaccard < 0.8 and n_valid >= 20:
+        print(
+            f"\n  Low Jaccard detected — top-{min(5, k)} pairs per formula (score reflects gain balance):"
+        )
+        print(
+            "  max_min score = min(gain_a, gain_b), so low score = lopsided pair, high score = balanced pair\n"
+        )
+
+        for name in ["max_min", "weighted_cc", "harmonic_mean"]:
+            sorted_by_score = sorted(
+                full_rankings[name].items(), key=lambda x: x[1], reverse=True
+            )[: min(5, k)]
+            scores_str = ",  ".join(f"{score:.3f}" for _, score in sorted_by_score)
+            # Also show the max_min score for the same pairs (reveals lopsidedness)
+            maxmin_scores_str = ",  ".join(
+                f"{full_rankings['max_min'].get(pair, 0.0):.3f}"
+                for pair, _ in sorted_by_score
+            )
+            print(f"  {name:<16} scores:         {scores_str}")
+            print(f"  {'':16} maxmin scores:  {maxmin_scores_str}")
+            print()
+
     if n_valid < 20:
         verdict = "⚠  DEGENERATE: too few valid pairs — conclusions unreliable"
     elif min_jaccard < 0.8:
@@ -228,28 +263,41 @@ if __name__ == "__main__":
     # agree too strongly in that region to generate enough discriminating pairs.
     test_vectors = [
         # --- 3D vectors ---
-        # Moderate concentration — most frequent suitable 3D vector in production
+        # Symmetric concentration: most frequent suitable 3D vector in production
         (50, 25, 25),
-        # High single-issue concentration — models most likely to diverge here
+        # Higher symmetric concentration
         (60, 20, 20),
-        # Very high concentration — tests near-extreme simplex behavior
+        # Near-extreme symmetric concentration
         (70, 15, 15),
+        # Asymmetric 3D — tests whether formula behavior differs
+        # when issues have genuinely different weights (not just one dominant + two equal).
+        # Note: suitability not verified against production data — may produce low pair counts
+        # for some model pairs.
+        (50, 30, 20),
         # --- 4D vectors ---
-        # Most frequent suitable 4D vector in production
+        # Symmetric — most frequent suitable 4D vector in production
         (25, 25, 25, 25),
+        # Asymmetric — tests whether 4D agreement holds beyond the symmetric case
+        (40, 30, 20, 10),
         # --- 5D vectors ---
-        # Most frequent suitable 5D vector in production
+        # Uniform 5D — included for completeness, but results are dominated
+        # by tiebreaking artifacts at this scale (millions of valid pairs)
         (20, 20, 20, 20, 20),
     ]
 
+    # (model_a_class, model_b_class, label, min_component)
     model_pairs = [
-        (L1UtilityModel, L2UtilityModel, "L1 vs L2"),
-        (L1UtilityModel, LeontiefUtilityModel, "L1 vs Leontief"),
+        (L1UtilityModel, L2UtilityModel, "L1 vs L2", 0),
+        (L1UtilityModel, LeontiefUtilityModel, "L1 vs Leontief", 10),
+        (L2UtilityModel, LeontiefUtilityModel, "L2 vs Leontief", 10),
+        (KLUtilityModel, L1UtilityModel, "KL vs L1", 10),
+        (KLUtilityModel, L2UtilityModel, "KL vs L2", 10),
+        (LeontiefUtilityModel, KLUtilityModel, "Leontief vs KL", 10),
     ]
 
-    for model_a, model_b, label in model_pairs:
+    for model_a, model_b, label, min_comp in model_pairs:
         print(f"\n{'='*60}")
         print(f"  SCORING STRATEGY COMPARISON: {label}")
         print(f"{'='*60}")
         for vec in test_vectors:
-            run_comparison(vec, model_a, model_b, label)
+            run_comparison(vec, model_a, model_b, label, min_comp)
