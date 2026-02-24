@@ -4,54 +4,46 @@ Compares three pair-scoring strategies for the GenericRankStrategy:
   - weighted_cc:   score = min(gain_a, gain_b) + λ * (max(gain_a, gain_b) - min(gain_a, gain_b))
   - harmonic_mean: score = 2 * gain_a * gain_b / (gain_a + gain_b)
 
-For each test vector, the script reports:
+For each (user vector × model pair), the script checks whether the three
+formulas select the same top-k survey pairs. When they don't, the script
+classifies the disagreement:
 
-VALID DISCRIMINATING PAIRS
-  A pair of budget vectors (A, B) is valid for discrimination if the two utility
-  models being compared disagree about which vector is better — model A prefers
-  vector A, and model B prefers vector B. Only these pairs are useful in a survey:
-  if both models agreed, the user's choice would reveal nothing about their
-  underlying utility function. The count reported here is the total number of such
-  pairs found in the full simplex grid for this user vector.
+  • Genuine divergence — the formulas have structurally different opinions
+    about which pairs are most informative. Example: MaxMin picks a balanced
+    pair (gain_a=0.06, gain_b=0.06), while HarmonicMean picks a lopsided one
+    (gain_a=0.09, gain_b=0.05). Choosing a formula changes the survey.
 
-JACCARD SIMILARITY (top-k overlap)
-  Measures whether two strategies pick the same k pairs to show users.
-  Calculated as: |intersection| / |union| of the two top-k sets.
-  Range: 0.0 (no shared pairs) to 1.0 (identical top-k).
-  This is the most practically important metric — it directly answers:
-  "would a user see different questions depending on which formula we use?"
+  • Tiebreaking artifact — all formulas agree the same broad cluster of pairs
+    is best, but hundreds of pairs share nearly identical scores. The exact
+    10 picked depend on arbitrary tiebreaking, not genuine formula disagreement.
+    Diagnosed by: low Jaccard (different top-10) but high Spearman (same full ordering).
 
-SPEARMAN ρ (full ranking correlation)
-  Measures whether two strategies agree on the ordering of ALL valid pairs,
-  not just the top k. Calculated by ranking each strategy's scores and
-  computing the correlation between those rank lists.
-  Range: -1.0 (reversed order) to 1.0 (identical order). In practice,
-  values above 0.95 mean the strategies are interchangeable.
-  This catches subtle divergence that Jaccard misses when the top-k agree
-  but the ordering below the cutoff differs.
+Output sections:
+  1. Per-vector results — compact for agreement, detailed for divergence
+  2. Summary table — one row per (vector × model pair), scannable at a glance
+  3. Automatic recommendations — classified divergence cases with suggested actions
 
-VERDICT
-  A one-line interpretation. Jaccard takes priority since it reflects what
-  users actually experience. Spearman distinguishes AGREEMENT from PARTIAL
-  when Jaccard is already acceptable.
-  ✓ AGREEMENT  — top-k identical AND full ordering equivalent (Spearman ≥ 0.95)
-  ~ PARTIAL    — top-k identical but full ordering differs slightly
-  ✗ DIVERGENCE — formula choice would change which pairs users see
-  ⚠ DEGENERATE — too few valid pairs to draw reliable conclusions
-  Note: DIVERGENCE with Spearman ≥ 0.97 and very high pair counts (>50k)
-  likely indicates a tiebreaking artifact rather than genuine disagreement.
+Key metrics:
+  • Valid pairs — pairs where the two utility models disagree about which budget
+    vector is better. Only these are useful in a survey; if both models agreed,
+    the user's choice reveals nothing about their utility function.
+  • Jaccard similarity — do two formulas pick the same 10 pairs to show users?
+    1.0 = identical selection, 0.0 = no overlap. Directly answers: "would a user
+    see different survey questions depending on the formula?"
+  • Spearman ρ — do two formulas agree on the ordering of ALL valid pairs, not
+    just the top 10? Values above 0.95 mean the formulas are interchangeable.
+    Distinguishes genuine divergence (low Spearman) from tiebreaking artifacts
+    (high Spearman despite low Jaccard).
 
-NOTE ON HIGH PAIR COUNTS
-  When the valid pair count exceeds ~50,000, Jaccard divergence often reflects
-  arbitrary tiebreaking at the top of a very dense score distribution, not
-  genuine formula disagreement. In these cases, all formulas agree the same
-  broad cluster of pairs is best — but minor score differences determine the
-  exact top-10 cutoff. The Spearman ρ is the more reliable signal in this regime.
+Results are saved to: scripts/scoring_results.txt
 """
 
 import numpy as np
 
-from application.services.algorithms.math_utils import rankdata
+from application.services.algorithms.math_utils import (
+    get_cached_simplex_pool,
+    rankdata,
+)
 from application.services.algorithms.utility_models import (
     KLUtilityModel,
     L1UtilityModel,
@@ -62,230 +54,435 @@ from application.services.pair_generation.generic_rank_strategy import (
     SCORING_HARMONIC_MEAN,
     SCORING_MAX_MIN,
     SCORING_WEIGHTED_CC,
-    GenericRankStrategy,
-    _compute_all_ranked_pairs,
+    _compute_pair_scores,
 )
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+K = 10  # Number of pairs selected for surveys (matches production)
+SPEARMAN_THRESHOLD = 0.95
+JACCARD_THRESHOLD = 0.8
+
+SCORING_METHODS = [
+    ("max_min", SCORING_MAX_MIN, 0.0),
+    ("weighted_cc", SCORING_WEIGHTED_CC, 0.1),
+    ("harmonic_mean", SCORING_HARMONIC_MEAN, 0.0),
+]
+
+METHOD_NAMES = [name for name, _, _ in SCORING_METHODS]
+
+ROW_FMT = "  {vec:<22} {valid:>8} {jacc:>10} {spear:>10}   {verdict}"
+
+# ---------------------------------------------------------------------------
+# Core computation — shared across all three formulas
+# ---------------------------------------------------------------------------
+
+
+def _compute_valid_pairs(
+    user_vector: tuple,
+    grid_step: int,
+    min_component: int,
+    utility_model_a_class,
+    utility_model_b_class,
+):
+    """
+    Find all valid discriminating pairs and compute their scores under all
+    three formulas in a single pass.
+
+    A pair (i, j) is "valid" when the two utility models disagree about which
+    vector is better — model A prefers one, model B prefers the other.
+
+    Returns:
+        pool: list of budget vectors (tuples)
+        pairs: list of dicts, each with keys:
+            idx_a, idx_b, gain_a, gain_b, max_min, weighted_cc, harmonic_mean
+    """
+    model_a = utility_model_a_class()
+    model_b = utility_model_b_class()
+
+    pool = list(
+        get_cached_simplex_pool(
+            num_variables=len(user_vector),
+            side_length=100,
+            step=grid_step,
+            min_value=min_component,
+        )
+    )
+    n_pool = len(pool)
+    if n_pool < 2:
+        return pool, []
+
+    # Compute utility scores and normalized ranks (ordinal)
+    scores_a = np.array([model_a.calculate(user_vector, v) for v in pool])
+    scores_b = np.array([model_b.calculate(user_vector, v) for v in pool])
+
+    raw_ranks_a = rankdata(scores_a)
+    raw_ranks_b = rankdata(scores_b)
+    ranks_a = (raw_ranks_a - 1) / (n_pool - 1)
+    ranks_b = (raw_ranks_b - 1) / (n_pool - 1)
+
+    ranks_a_f32 = ranks_a.astype(np.float32)
+    ranks_b_f32 = ranks_b.astype(np.float32)
+
+    # Collect valid pairs with gains
+    all_idx_a, all_idx_b = [], []
+    all_gain_a, all_gain_b = [], []
+
+    for i in range(n_pool - 1):
+        ga = ranks_a_f32[i] - ranks_a_f32[i + 1 :]
+        gb = ranks_b_f32[i + 1 :] - ranks_b_f32[i]
+
+        # Case 1: i better on model A, candidate better on model B
+        mask1 = (ga > 0) & (gb > 0)
+        if np.any(mask1):
+            idx = np.where(mask1)[0]
+            all_idx_a.append(np.full(len(idx), i, dtype=np.int32))
+            all_idx_b.append(idx + i + 1)
+            all_gain_a.append(ga[idx])
+            all_gain_b.append(gb[idx])
+
+        # Case 2: candidate better on model A, i better on model B
+        mask2 = (ga < 0) & (gb < 0)
+        if np.any(mask2):
+            idx = np.where(mask2)[0]
+            all_idx_a.append(idx + i + 1)
+            all_idx_b.append(np.full(len(idx), i, dtype=np.int32))
+            all_gain_a.append(-ga[idx])
+            all_gain_b.append(-gb[idx])
+
+    if not all_gain_a:
+        return pool, []
+
+    final_idx_a = np.concatenate(all_idx_a)
+    final_idx_b = np.concatenate(all_idx_b)
+    final_gain_a = np.concatenate(all_gain_a)
+    final_gain_b = np.concatenate(all_gain_b)
+
+    # Score under all three formulas
+    scores = {}
+    for name, method, lam in SCORING_METHODS:
+        scores[name] = _compute_pair_scores(final_gain_a, final_gain_b, method, lam)
+
+    pairs = []
+    for k in range(len(final_idx_a)):
+        pairs.append(
+            {
+                "idx_a": int(final_idx_a[k]),
+                "idx_b": int(final_idx_b[k]),
+                "gain_a": float(final_gain_a[k]),
+                "gain_b": float(final_gain_b[k]),
+                "max_min": float(scores["max_min"][k]),
+                "weighted_cc": float(scores["weighted_cc"][k]),
+                "harmonic_mean": float(scores["harmonic_mean"][k]),
+            }
+        )
+
+    return pool, pairs
+
+
+# ---------------------------------------------------------------------------
+# Metrics
+# ---------------------------------------------------------------------------
 
 
 def _spearman_rho(x: list, y: list) -> float:
-    """
-    Compute Spearman's rank correlation using Pearson correlation of ranks.
-
-    Spearman ρ measures whether two lists agree on the *relative ordering*
-    of items, regardless of the absolute score values. It works by converting
-    both score lists into rank lists and then computing their Pearson correlation.
-
-    Returns 1.0 if either ranking is constant (all pairs tied — trivial agreement).
-    """
+    """Spearman rank correlation. Returns 1.0 for trivial (constant) rankings."""
     rx = rankdata(np.array(x))
     ry = rankdata(np.array(y))
-    # If either ranking is constant, all pairs are tied — formulas trivially agree
     if np.std(rx) == 0 or np.std(ry) == 0:
         return 1.0
     return float(np.corrcoef(rx, ry)[0, 1])
 
 
-def run_comparison(
-    user_vector: tuple,
-    utility_model_a_class,
-    utility_model_b_class,
-    model_pair_label: str,
-    min_component: int = 0,
-):
-    """
-    Run the three-way scoring strategy comparison for a single user vector and model pair.
-    Prints valid pair count, Jaccard similarity, Spearman ρ, and a verdict to stdout.
-    """
-    vector_size = len(user_vector)
-    k = 10
+def _jaccard(set_a: set, set_b: set) -> float:
+    if not set_a and not set_b:
+        return 1.0
+    return len(set_a & set_b) / len(set_a | set_b)
 
-    params = {
-        "utility_model_a_class": utility_model_a_class,
-        "utility_model_b_class": utility_model_b_class,
-        "grid_step": 5,
-        "min_component": min_component,
-        "normalization_method": "ordinal",
+
+# ---------------------------------------------------------------------------
+# Single comparison
+# ---------------------------------------------------------------------------
+
+
+def run_comparison(user_vector, model_a_class, model_b_class, label, min_component):
+    """
+    Run the three-way scoring comparison for one (vector × model pair).
+    Returns a result dict for the summary table.
+    """
+    pool, pairs = _compute_valid_pairs(
+        user_vector,
+        grid_step=5,
+        min_component=min_component,
+        utility_model_a_class=model_a_class,
+        utility_model_b_class=model_b_class,
+    )
+    n_valid = len(pairs)
+
+    # --- Early exit: degenerate ---
+    if n_valid < 20:
+        verdict = "⚠ DEGENERATE"
+        print(f"  {str(user_vector):<22}  pairs: {n_valid:<8}  → {verdict}")
+        if n_valid == 0:
+            print(
+                f"  {'':22}  Models agree completely — no discriminating pairs exist.\n"
+            )
+        else:
+            print(f"  {'':22}  Too few valid pairs for reliable comparison.\n")
+        return {
+            "vector": user_vector,
+            "label": label,
+            "n_valid": n_valid,
+            "min_jaccard": None,
+            "min_spearman": None,
+            "verdict": verdict,
+        }
+
+    # --- Top-k sets and full scores per formula ---
+    top_k = {}
+    for name in METHOD_NAMES:
+        sorted_pairs = sorted(pairs, key=lambda p: p[name], reverse=True)
+        top_k[name] = sorted_pairs[:K]
+
+    top_k_sets = {
+        name: {frozenset((p["idx_a"], p["idx_b"])) for p in top_k[name]}
+        for name in METHOD_NAMES
     }
 
-    strategies = [
-        ("max_min", SCORING_MAX_MIN, 0.0),
-        ("weighted_cc", SCORING_WEIGHTED_CC, 0.1),
-        (
-            "harmonic_mean",
-            SCORING_HARMONIC_MEAN,
-            0.0,
-        ),  # lambda ignored for harmonic mean
-    ]
-
-    results = {}
-    full_rankings = {}
-
-    for name, method, lam in strategies:
-        strategy = GenericRankStrategy(
-            **params, scoring_method=method, scoring_lambda=lam
-        )
-
-        all_pairs = _compute_all_ranked_pairs(
-            user_vector=user_vector,
-            vector_size=vector_size,
-            grid_step=strategy.grid_step,
-            current_floor=strategy.min_component,
-            utility_model_a_class=params["utility_model_a_class"],
-            utility_model_b_class=params["utility_model_b_class"],
-            normalization_method=strategy.normalization_method,
-            strategy_name=strategy.get_strategy_name(),
-            scoring_method=method,
-            scoring_lambda=lam,
-        )
-
-        # frozenset is used instead of a plain tuple so that pair (i, j) and pair (j, i)
-        # map to the same key regardless of which index comes first.
-        # _compute_all_ranked_pairs always returns idx_a as the winner on model A,
-        # so in practice the order is consistent — but frozenset makes this robust
-        # to any future change in that internal ordering guarantee.
-        results[name] = {frozenset((p[0], p[1])) for p in all_pairs[:k]}
-        full_rankings[name] = {frozenset((p[0], p[1])): p[2] for p in all_pairs}
-
-    # Sanity check: all strategies must evaluate the same set of valid pairs.
-    # The validity criterion (model A prefers A, model B prefers B) is determined
-    # before scoring, so it must be identical across all three formulas.
-    assert (
-        full_rankings["max_min"].keys()
-        == full_rankings["weighted_cc"].keys()
-        == full_rankings["harmonic_mean"].keys()
-    ), "Scoring methods produced different valid pair sets — this should never happen"
-
-    n_valid = len(full_rankings["max_min"])
-
-    # --- Output ---
-
-    print(f"\nUser vector: {user_vector}")
-    print(
-        f"  Strategy: {model_pair_label}  |  "
-        f"Valid discriminating pairs: {n_valid} (pairs where the two models prefer opposite vectors)  |  "
-        f"Pairs needed for survey: {k}"
-    )
-
-    if n_valid < 20:
-        print(
-            "  ⚠  Low pair count — top-k selection may reflect arbitrary "
-            "tiebreaking rather than genuine formula divergence"
-        )
-
-    # --- Jaccard Similarity ---
-
-    def get_jaccard(s1, s2):
-        set1 = results[s1]
-        set2 = results[s2]
-        intersection = len(set1.intersection(set2))
-        union = len(set1.union(set2))
-        return intersection / union if union > 0 else 1.0
-
-    j_m_w = get_jaccard("max_min", "weighted_cc")
-    j_m_h = get_jaccard("max_min", "harmonic_mean")
-    j_w_h = get_jaccard("weighted_cc", "harmonic_mean")
-
-    print(
-        f"\nTop-{k} Jaccard similarity  (1.0 = identical pairs selected, 0.0 = no overlap):"
-    )
-    print(f"  max_min      vs weighted_cc:   {j_m_w:.3f}")
-    print(f"  max_min      vs harmonic_mean: {j_m_h:.3f}")
-    print(f"  weighted_cc  vs harmonic_mean: {j_w_h:.3f}")
-
-    # --- Spearman ρ ---
-
-    all_valid_pairs = list(full_rankings["max_min"].keys())
-
-    def get_spearman(n1, n2):
-        scores1 = [full_rankings[n1][p] for p in all_valid_pairs]
-        scores2 = [full_rankings[n2][p] for p in all_valid_pairs]
-        return _spearman_rho(scores1, scores2)
-
-    s_m_w = get_spearman("max_min", "weighted_cc")
-    s_m_h = get_spearman("max_min", "harmonic_mean")
-    s_w_h = get_spearman("weighted_cc", "harmonic_mean")
-
-    print(
-        "\nSpearman ρ — full ranking correlation  (1.0 = identical ordering, 0.95+ = effectively equivalent):"
-    )
-    print(f"  max_min      vs weighted_cc:   {s_m_w:.2f}")
-    print(f"  max_min      vs harmonic_mean: {s_m_h:.2f}")
-    print(f"  weighted_cc  vs harmonic_mean: {s_w_h:.2f}")
-
-    # --- Verdict ---
-    # Jaccard is evaluated first because it reflects what users actually experience
-    # (do they see the same pairs?). Spearman is a secondary signal that catches
-    # full-ranking divergence even when the top-k happen to be identical.
-
+    # Jaccard
+    j_m_w = _jaccard(top_k_sets["max_min"], top_k_sets["weighted_cc"])
+    j_m_h = _jaccard(top_k_sets["max_min"], top_k_sets["harmonic_mean"])
+    j_w_h = _jaccard(top_k_sets["weighted_cc"], top_k_sets["harmonic_mean"])
     min_jaccard = min(j_m_w, j_m_h, j_w_h)
+
+    # Spearman
+    scores_by_method = {name: [p[name] for p in pairs] for name in METHOD_NAMES}
+
+    s_m_w = _spearman_rho(scores_by_method["max_min"], scores_by_method["weighted_cc"])
+    s_m_h = _spearman_rho(
+        scores_by_method["max_min"], scores_by_method["harmonic_mean"]
+    )
+    s_w_h = _spearman_rho(
+        scores_by_method["weighted_cc"], scores_by_method["harmonic_mean"]
+    )
     min_spearman = min(s_m_w, s_m_h, s_w_h)
 
-    # --- Detail Display for Divergence ---
-
-    if min_jaccard < 0.8 and n_valid >= 20:
-        print(
-            f"\n  Low Jaccard detected — top-{min(5, k)} pairs per formula (score reflects gain balance):"
-        )
-        print(
-            "  max_min score = min(gain_a, gain_b), so low score = lopsided pair, high score = balanced pair\n"
-        )
-
-        for name in ["max_min", "weighted_cc", "harmonic_mean"]:
-            sorted_by_score = sorted(
-                full_rankings[name].items(), key=lambda x: x[1], reverse=True
-            )[: min(5, k)]
-            scores_str = ",  ".join(f"{score:.3f}" for _, score in sorted_by_score)
-            # Also show the max_min score for the same pairs (reveals lopsidedness)
-            maxmin_scores_str = ",  ".join(
-                f"{full_rankings['max_min'].get(pair, 0.0):.3f}"
-                for pair, _ in sorted_by_score
-            )
-            print(f"  {name:<16} scores:         {scores_str}")
-            print(f"  {'':16} maxmin scores:  {maxmin_scores_str}")
-            print()
-
-    if n_valid < 20:
-        verdict = "⚠  DEGENERATE: too few valid pairs — conclusions unreliable"
-    elif min_jaccard < 0.8:
-        verdict = "✗  DIVERGENCE: formula choice would change which pairs users see"
-    elif min_spearman >= 0.95:
-        verdict = "✓  AGREEMENT: all formulas effectively equivalent for this vector"
+    # --- Verdict ---
+    if min_jaccard >= JACCARD_THRESHOLD and min_spearman >= SPEARMAN_THRESHOLD:
+        verdict = "✓ AGREEMENT"
+    elif min_jaccard >= JACCARD_THRESHOLD:
+        verdict = "~ PARTIAL"
+    elif min_spearman >= SPEARMAN_THRESHOLD:
+        verdict = "△ TIEBREAK"  # Low Jaccard but high Spearman = tiebreaking artifact
     else:
-        verdict = "~  PARTIAL: same pairs selected, minor divergence in full ranking"
+        verdict = "✗ DIVERGENCE"
 
-    print(f"\nVerdict: {verdict}\n")
-    print("-" * 60)
+    # --- Compact output line ---
+    print(
+        ROW_FMT.format(
+            vec=str(user_vector),
+            valid=str(n_valid),
+            jacc=f"{min_jaccard:.2f}",
+            spear=f"{min_spearman:.2f}",
+            verdict=verdict,
+        )
+    )
+
+    # --- Detail block for divergence / tiebreak cases ---
+    if min_jaccard < JACCARD_THRESHOLD:
+        # Determine if tiebreaking: check if MaxMin top-k scores are all identical
+        mm_top_scores = [p["max_min"] for p in top_k["max_min"]]
+        mm_score_spread = max(mm_top_scores) - min(mm_top_scores)
+        is_flat_top = mm_score_spread < 0.001
+
+        if is_flat_top and min_spearman >= SPEARMAN_THRESHOLD:
+            print(
+                f"  {'':22}  MaxMin top-{K} scores all ≈{mm_top_scores[0]:.3f} "
+                f"(flat cluster → arbitrary tiebreaking)"
+            )
+        else:
+            # Show cross-score matrix for top-K pairs per formula.
+            row_fmt = "      {rank:>4}  {va:>18} vs {vb:>18}  {mm:>7} {wcc:>7} {hm:>7}  {ga:>7} {gb:>7}"
+
+            print(f"\n      Cross-score matrix — each formula's top-{K} pairs:\n")
+            print(
+                row_fmt.format(
+                    rank="",
+                    va="Vector A",
+                    vb="Vector B",
+                    mm="MM",
+                    wcc="WCC",
+                    hm="HM",
+                    ga="gain_a",
+                    gb="gain_b",
+                )
+            )
+            print(f"      {'-' * 105}")
+
+            for name in METHOD_NAMES:
+                print(f"      {name}'s top-{K}:")
+                for rank, p in enumerate(top_k[name], 1):
+                    print(
+                        row_fmt.format(
+                            rank=f"#{rank}",
+                            va=str(pool[p["idx_a"]]),
+                            vb=str(pool[p["idx_b"]]),
+                            mm=f"{p['max_min']:.3f}",
+                            wcc=f"{p['weighted_cc']:.3f}",
+                            hm=f"{p['harmonic_mean']:.3f}",
+                            ga=f"{p['gain_a']:.3f}",
+                            gb=f"{p['gain_b']:.3f}",
+                        )
+                    )
+                print()
+
+    print()
+
+    return {
+        "vector": user_vector,
+        "label": label,
+        "n_valid": n_valid,
+        "min_jaccard": min_jaccard,
+        "min_spearman": min_spearman,
+        "verdict": verdict,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Summary and recommendations
+# ---------------------------------------------------------------------------
+
+
+def print_summary(all_results):
+    """Print the summary table and automatic recommendations."""
+
+    print(f"\n{'=' * 100}")
+    print("  SUMMARY TABLE")
+    print(f"{'=' * 100}\n")
+    print(
+        f"  {'Model Pair':<22} {'Vector':<22} {'Valid':>7} "
+        f"{'Jaccard':>9} {'Spearman':>10}  {'Verdict'}"
+    )
+    print(f"  {'-' * 95}")
+
+    for r in all_results:
+        j_str = f"{r['min_jaccard']:.2f}" if r["min_jaccard"] is not None else "  —"
+        s_str = f"{r['min_spearman']:.2f}" if r["min_spearman"] is not None else "  —"
+        print(
+            f"  {r['label']:<22} {str(r['vector']):<22} {r['n_valid']:>7} "
+            f"{j_str:>9} {s_str:>10}  {r['verdict']}"
+        )
+
+    # --- Classify results ---
+    genuine = []
+    tiebreak = []
+    degenerate = []
+    agreement = []
+
+    for r in all_results:
+        v = r["verdict"]
+        if v == "⚠ DEGENERATE":
+            degenerate.append(r)
+        elif v == "✗ DIVERGENCE":
+            genuine.append(r)
+        elif v == "△ TIEBREAK":
+            tiebreak.append(r)
+        else:
+            agreement.append(r)
+
+    # --- Recommendations ---
+    print(f"\n{'=' * 100}")
+    print("  RECOMMENDATIONS")
+    print(f"{'=' * 100}")
+
+    if genuine:
+        print(
+            f"\n  ✗ GENUINE DIVERGENCE ({len(genuine)} cases) — formula choice affects survey pairs:"
+        )
+        for r in genuine:
+            print(
+                f"    • {r['label']}, {r['vector']}: "
+                f"Spearman {r['min_spearman']:.2f}, {r['n_valid']} valid pairs"
+            )
+        print(
+            "    → WeightedCC (λ=0.1) recommended: stays close to MaxMin while adding"
+        )
+        print(
+            "      principled tiebreaking. HarmonicMean promotes lopsided pairs in these cases."
+        )
+
+    if tiebreak:
+        print(
+            f"\n  △ TIEBREAKING ARTIFACTS ({len(tiebreak)} cases) — low Jaccard from flat score clusters:"
+        )
+        for r in tiebreak:
+            print(
+                f"    • {r['label']}, {r['vector']}: "
+                f"Spearman {r['min_spearman']:.2f}, {r['n_valid']} valid pairs"
+            )
+        print("    → Any formula works. WeightedCC provides deterministic tiebreaking.")
+
+    if degenerate:
+        print(
+            f"\n  ⚠ DEGENERATE ({len(degenerate)} cases) — too few or no valid pairs:"
+        )
+        for r in degenerate:
+            print(f"    • {r['label']}, {r['vector']}: " f"{r['n_valid']} valid pairs")
+        print("    → Flag as unsuitable_for_strategy in production.")
+
+    if agreement:
+        print(
+            f"\n  ✓ AGREEMENT ({len(agreement)} cases) — all formulas equivalent, no action needed."
+        )
+
+    n_total = len(all_results)
+    n_safe = len(agreement) + len(tiebreak)
+    print(
+        f"\n  Overall: {n_safe}/{n_total} cases are formula-independent. "
+        f"{len(genuine)} require attention."
+    )
+    print()
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
-    # Test vectors confirmed suitable from production data (unsuitable_for_strategy=0).
-    # Balanced 3D vectors (e.g. [40,30,30]) are excluded — the compared utility models
-    # agree too strongly in that region to generate enough discriminating pairs.
+    import io
+    import os
+    import sys
+
+    # Tee stdout: print to terminal AND capture for file output
+    output_buffer = io.StringIO()
+
+    class Tee:
+        def __init__(self, *streams):
+            self.streams = streams
+
+        def write(self, data):
+            for s in self.streams:
+                s.write(data)
+
+        def flush(self):
+            for s in self.streams:
+                s.flush()
+
+    sys.stdout = Tee(sys.__stdout__, output_buffer)
+
     test_vectors = [
-        # --- 3D vectors ---
-        # Symmetric concentration: most frequent suitable 3D vector in production
         (50, 25, 25),
-        # Higher symmetric concentration
         (60, 20, 20),
-        # Near-extreme symmetric concentration
         (70, 15, 15),
-        # Asymmetric 3D — tests whether formula behavior differs
-        # when issues have genuinely different weights (not just one dominant + two equal).
-        # Note: suitability not verified against production data — may produce low pair counts
-        # for some model pairs.
         (50, 30, 20),
-        # --- 4D vectors ---
-        # Symmetric — most frequent suitable 4D vector in production
         (25, 25, 25, 25),
-        # Asymmetric — tests whether 4D agreement holds beyond the symmetric case
         (40, 30, 20, 10),
-        # --- 5D vectors ---
-        # Uniform 5D — included for completeness, but results are dominated
-        # by tiebreaking artifacts at this scale (millions of valid pairs)
         (20, 20, 20, 20, 20),
     ]
 
-    # (model_a_class, model_b_class, label, min_component)
     model_pairs = [
         (L1UtilityModel, L2UtilityModel, "L1 vs L2", 0),
         (L1UtilityModel, LeontiefUtilityModel, "L1 vs Leontief", 10),
@@ -295,9 +492,30 @@ if __name__ == "__main__":
         (LeontiefUtilityModel, KLUtilityModel, "Leontief vs KL", 10),
     ]
 
+    all_results = []
+
     for model_a, model_b, label, min_comp in model_pairs:
-        print(f"\n{'='*60}")
-        print(f"  SCORING STRATEGY COMPARISON: {label}")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 100}")
+        print(f"  {label}  (min_component={min_comp})")
+        print(f"{'=' * 100}")
+        print(
+            ROW_FMT.format(
+                vec="Vector",
+                valid="Valid",
+                jacc="Jaccard",
+                spear="Spearman",
+                verdict="Verdict",
+            )
+        )
+        print(f"  {'-' * 85}")
+
         for vec in test_vectors:
-            run_comparison(vec, model_a, model_b, label, min_comp)
+            result = run_comparison(vec, model_a, model_b, label, min_comp)
+            all_results.append(result)
+
+    print_summary(all_results)
+
+    output_path = os.path.join(os.path.dirname(__file__), "scoring_results.txt")
+    with open(output_path, "w") as f:
+        f.write(output_buffer.getvalue())
+    print(f"Results saved to: {output_path}")
