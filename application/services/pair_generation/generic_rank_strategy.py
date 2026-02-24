@@ -20,6 +20,49 @@ from application.services.pair_generation.base import PairGenerationStrategy
 logger = logging.getLogger(__name__)
 
 
+# Scoring methods
+SCORING_MAX_MIN = "max_min"
+SCORING_WEIGHTED_CC = "weighted_cc"
+SCORING_HARMONIC_MEAN = "harmonic_mean"
+
+VALID_SCORING_METHODS = {SCORING_MAX_MIN, SCORING_WEIGHTED_CC, SCORING_HARMONIC_MEAN}
+
+
+def _compute_pair_scores(
+    gains_a: np.ndarray,
+    gains_b: np.ndarray,
+    method: str,
+    lam: float = 0.1,
+) -> np.ndarray:
+    """
+    Compute scores for pairs based on their gains on two utility models.
+
+    Args:
+        gains_a: Array of gains (normalized rank differences) for model A.
+        gains_b: Array of gains (normalized rank differences) for model B.
+        method: Scoring strategy ('max_min', 'weighted_cc', or 'harmonic_mean').
+        lam: Lambda parameter for 'weighted_cc'.
+
+    Returns:
+        Array of scores.
+    """
+    if method == SCORING_MAX_MIN:
+        return np.minimum(gains_a, gains_b)
+    elif method == SCORING_WEIGHTED_CC:
+        min_g = np.minimum(gains_a, gains_b)
+        max_g = np.maximum(gains_a, gains_b)
+        return min_g + lam * (max_g - min_g)
+    elif method == SCORING_HARMONIC_MEAN:
+        # Guard against division by zero, safe to return 0.0 since both gains are 0 in that case
+        sum_g = gains_a + gains_b
+        return np.where(sum_g > 0, (2 * gains_a * gains_b) / sum_g, 0.0)
+    else:
+        raise ValueError(
+            f"Unknown scoring method: '{method}'. "
+            f"Must be one of {VALID_SCORING_METHODS}."
+        )
+
+
 @functools.lru_cache(maxsize=1024)
 def _compute_all_ranked_pairs(
     user_vector: Tuple[int, ...],
@@ -30,6 +73,8 @@ def _compute_all_ranked_pairs(
     utility_model_b_class: Type[UtilityModel],
     normalization_method: str,
     strategy_name: str,
+    scoring_method: str = "max_min",
+    scoring_lambda: float = 0.1,
 ) -> List[Tuple[int, int, float]]:
     """
     Perform the heavy pure-math computation for pair generation.
@@ -44,6 +89,8 @@ def _compute_all_ranked_pairs(
         utility_model_b_class: Class for the second utility model.
         normalization_method: Method to normalize scores ('ordinal' or 'linear').
         strategy_name: Unique identifier for this strategy (part of cache key).
+        scoring_method: Method to score pairs ('max_min', 'weighted_cc', 'harmonic_mean').
+        scoring_lambda: Lambda parameter for 'weighted_cc'.
 
     Returns:
         List of (index_a, index_b, score) tuples, sorted by score descending.
@@ -125,7 +172,14 @@ def _compute_all_ranked_pairs(
             indices_rel = np.where(mask_i_better_on_a)[0]
             all_idx_a.append(np.full(len(indices_rel), i, dtype=np.int32))
             all_idx_b.append(indices_rel + i + 1)
-            all_scores.append(np.minimum(gains_a[indices_rel], gains_b[indices_rel]))
+            all_scores.append(
+                _compute_pair_scores(
+                    gains_a[indices_rel],
+                    gains_b[indices_rel],
+                    scoring_method,
+                    scoring_lambda,
+                )
+            )
 
         # Case 2: Candidate is better on Utility Model A, 'i' is better on Utility Model B
         mask_candidate_better_on_a = (gains_a < 0) & (gains_b < 0)
@@ -133,7 +187,14 @@ def _compute_all_ranked_pairs(
             indices_rel = np.where(mask_candidate_better_on_a)[0]
             all_idx_a.append(indices_rel + i + 1)
             all_idx_b.append(np.full(len(indices_rel), i, dtype=np.int32))
-            all_scores.append(np.minimum(-gains_a[indices_rel], -gains_b[indices_rel]))
+            all_scores.append(
+                _compute_pair_scores(
+                    -gains_a[indices_rel],
+                    -gains_b[indices_rel],
+                    scoring_method,
+                    scoring_lambda,
+                )
+            )
 
     if not all_scores:
         return []
@@ -175,6 +236,8 @@ class GenericRankStrategy(PairGenerationStrategy):
         grid_step: int = None,
         min_component: int = 10,
         normalization_method: str = "ordinal",
+        scoring_method: str = "max_min",
+        scoring_lambda: float = 0.1,
     ):
         """
         Initialize the strategy with two utility model classes.
@@ -187,6 +250,9 @@ class GenericRankStrategy(PairGenerationStrategy):
                            Example: If 10, no category can have less than 10% budget.
             normalization_method: Method to normalize scores.
                                  Either 'ordinal' (default) or 'linear'.
+            scoring_method: Method to score pairs.
+                            'max_min', 'weighted_cc', or 'harmonic_mean'.
+            scoring_lambda: Lambda parameter for 'weighted_cc' (default 0.1).
         """
         if normalization_method not in ["ordinal", "linear"]:
             raise ValueError(
@@ -194,11 +260,24 @@ class GenericRankStrategy(PairGenerationStrategy):
                 "Must be 'ordinal' or 'linear'."
             )
 
+        if scoring_method not in VALID_SCORING_METHODS:
+            raise ValueError(
+                f"Invalid scoring_method: {scoring_method}. "
+                f"Must be one of {list(VALID_SCORING_METHODS)}."
+            )
+
+        if not (0 <= scoring_lambda <= 1):
+            raise ValueError(
+                f"Invalid scoring_lambda: {scoring_lambda}. " "Must be between 0 and 1."
+            )
+
         self.utility_model_a = utility_model_a_class()
         self.utility_model_b = utility_model_b_class()
         self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
         self.min_component = min_component
         self.normalization_method = normalization_method
+        self.scoring_method = scoring_method
+        self.scoring_lambda = scoring_lambda
 
     def generate_vector_pool(
         self, size: int, vector_size: int, min_val_override: int = None
@@ -304,6 +383,8 @@ class GenericRankStrategy(PairGenerationStrategy):
                     utility_model_b_class=utility_b_class,
                     normalization_method=self.normalization_method,
                     strategy_name=self.get_strategy_name(),
+                    scoring_method=self.scoring_method,
+                    scoring_lambda=self.scoring_lambda,
                 )
 
                 if len(ranked_pairs) >= n:
@@ -536,7 +617,12 @@ class GenericRankStrategy(PairGenerationStrategy):
                 all_idx_a.append(np.full(len(indices_rel), i, dtype=np.int32))
                 all_idx_b.append(indices_rel + i + 1)
                 all_scores.append(
-                    np.minimum(gains_a[indices_rel], gains_b[indices_rel])
+                    _compute_pair_scores(
+                        gains_a[indices_rel],
+                        gains_b[indices_rel],
+                        self.scoring_method,
+                        self.scoring_lambda,
+                    )
                 )
 
             # Case 2: Candidate is better on Utility Model A, 'i' is better on Utility Model B
@@ -547,7 +633,12 @@ class GenericRankStrategy(PairGenerationStrategy):
                 all_idx_a.append(indices_rel + i + 1)
                 all_idx_b.append(np.full(len(indices_rel), i, dtype=np.int32))
                 all_scores.append(
-                    np.minimum(-gains_a[indices_rel], -gains_b[indices_rel])
+                    _compute_pair_scores(
+                        -gains_a[indices_rel],
+                        -gains_b[indices_rel],
+                        self.scoring_method,
+                        self.scoring_lambda,
+                    )
                 )
 
         if not all_scores:
