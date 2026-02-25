@@ -219,6 +219,11 @@ class GenericRankStrategy(PairGenerationStrategy):
     A generic engine that generates pairs by comparing two utility models.
     It ranks all candidates in a grid using both utility models, then selects pairs
     that maximize the minimum rank (MaxMin).
+
+    Expected Configuration (passed via pair_generation_config['params']):
+        - num_pairs (int): The number of comparison pairs to generate.
+        - min_score_threshold (float): The minimum acceptable utility score for a pair.
+          Evaluated during generation. (Note: Do not place this in suitability_rules).
     """
 
     # Step size for discrete simplex grid (5% increments)

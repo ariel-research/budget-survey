@@ -45,6 +45,7 @@ CREATE TABLE `surveys` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `story_code` VARCHAR(50) NOT NULL, -- FK to stories.code
   `active` BOOLEAN DEFAULT TRUE,
+  -- Example config: {"strategy": "l1_vs_leontief_rank_comparison", "params": {"num_pairs": 10, "min_score_threshold": 0.85}}
   `pair_generation_config` JSON NOT NULL,
   `awareness_pts` JSON DEFAULT NULL COMMENT 'Per-survey awareness PTS tokens: {\"first\": \"...\", \"second\": \"...\"}',
   `suitability_rules` JSON DEFAULT NULL,

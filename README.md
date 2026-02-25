@@ -622,7 +622,9 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   - Enforces a `min_component` (e.g., 10%) so every category gets a realistic minimum budget.
   - Normalizes utility models to percentile ranks (0.0-1.0) to eliminate scale differences.
   - Uses a **Max-Min** search to find pairs where one vector is significantly better on Utility Model A, while the other is better on Utility Model B.
-  - Supports an optional `min_score_threshold` (configured in the top-level `pair_generation_config`). If the $n$-th best pair's score is below this threshold, the strategy raises `UnsuitableForStrategyError`.
+- **Strategy Parameters (`pair_generation_config.params`)**:
+  - `num_pairs` (int): Number of pairs to generate (default: 10).
+  - `min_score_threshold` (float, optional): The minimum acceptable mathematical score for a generated pair. If the generated pair's score falls below this threshold, the strategy will abort and raise an `UnsuitableForStrategyError`. Note: This belongs in `pair_generation_config`, NOT in `suitability_rules`.
 - **Utility Models Supported**:
   - **L1 (Sum)**: Total absolute disagreement.
   - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
