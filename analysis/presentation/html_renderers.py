@@ -599,9 +599,25 @@ def generate_survey_choices_html(
     html_parts = [
         '<div class="survey-choices">',
         f"<h4>{survey_id_label}: {survey_id}</h4>",
-        f'<div class="ideal-budget">{ideal_budget_label}: '
-        f"{optimal_allocation}</div>",
+        '<div class="metadata-row" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">',
+        f'<div class="ideal-budget">{ideal_budget_label}: {optimal_allocation}</div>',
     ]
+
+    # Add Response Time badge if available
+    total_response_time = first_choice.get("total_response_time_seconds")
+    if total_response_time is not None:
+        rounded_time = round(float(total_response_time))
+        response_time_label = get_translation("response_time", "answers")
+        html_parts.append(
+            f'<div class="ideal-budget" title="Total time spent on the survey page">⏱️ {response_time_label}: {rounded_time}s</div>'
+        )
+    else:
+        response_time_label = get_translation("response_time", "answers")
+        html_parts.append(
+            f'<div class="ideal-budget" title="Time not recorded (e.g., legacy data or early failure)">⏱️ {response_time_label}: N/A</div>'
+        )
+
+    html_parts.append("</div>")
 
     # Special handling for peak_linearity_test strategy
     if strategy_name == "peak_linearity_test":
