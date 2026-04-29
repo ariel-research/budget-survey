@@ -477,6 +477,9 @@ def download_survey_responses_csv(survey_id: int):
                     "user_id": choice.get("user_id"),
                     "survey_response_id": choice.get("survey_response_id"),
                     "response_created_at": choice.get("response_created_at"),
+                    "total_response_time_seconds": choice.get(
+                        "total_response_time_seconds"
+                    ),
                     "optimal_allocation": str(choice.get("optimal_allocation")),
                     "pair_number": choice.get("pair_number"),
                     "pair_score": pair_score,

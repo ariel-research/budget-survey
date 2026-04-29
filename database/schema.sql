@@ -66,6 +66,7 @@ CREATE TABLE `survey_responses` (
   `user_comment` TEXT DEFAULT NULL,
   `completed` BOOLEAN DEFAULT FALSE,
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
+  `total_response_time_seconds` FLOAT DEFAULT NULL COMMENT 'Total time spent on the survey page in seconds',
   `pts_value` INT DEFAULT NULL COMMENT 'Awareness failure code (1=first awareness, 2=second awareness)',
   `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
   `unsuitable_for_strategy` BOOLEAN DEFAULT FALSE COMMENT 'Indicates if user vector was unsuitable for pair generation strategy',

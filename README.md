@@ -82,6 +82,7 @@ This is a **research application** for studying budget allocation preferences. I
 - Multiple research-validated pair generation strategies
 - Hebrew/English multilingual support with RTL/LTR layouts
 - Quality control via attention checks and user blacklisting
+- Cognitive load tracking via client-side response time measurement
 - Comprehensive analysis and PDF report generation
 - Production-ready Docker deployment
 
@@ -727,6 +728,15 @@ The application includes a user blacklist feature to automatically enforce quali
     - `failed_survey_id` identifies which survey triggered the blacklist
   - Indexed for efficient lookups during eligibility checks
 
+### Cognitive Load Tracking
+
+The application measures the "cognitive load" users experience by tracking their total response time:
+
+- **Client-Side Measurement**: Time is measured entirely client-side using `performance.now()` from the moment the survey page fully loads (`DOMContentLoaded`) until the user clicks the final submit button.
+- **Accuracy**: This approach isolates the actual time the user spends thinking and interacting with the UI, eliminating inaccuracies caused by network latency or server processing times.
+- **Data Export**: The total response time (in seconds) is stored in the database and included in the CSV data exports for academic analysis.
+- **Exclusions**: Response times are only recorded for successful, completed surveys. Early failures or unsuitability rejections do not record a response time.
+
 ### Demo Mode
 
 The application includes a 'Demo Mode' feature that allows users to explore the survey functionality without affecting the actual data.
@@ -863,6 +873,7 @@ If a user submits a vector violating these rules, the system raises an `Unsuitab
 - Run in order:
   - `python migrations/run_migration.py migrations/20251204_add_pts_value_column.sql`
   - `python migrations/run_migration.py migrations/20251204_add_survey_response_uniqueness.sql`
+  - `python migrations/run_migration.py migrations/20260414_add_total_response_time.sql`
 - Note: The uniqueness migration will fail if duplicates already exist for `(user_id, survey_id)`; clean them first if needed.
 
 ## Docker Guide
