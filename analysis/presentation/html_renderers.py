@@ -24,6 +24,10 @@ from analysis.logic.stats_calculators import (
 from analysis.transitivity_analyzer import TransitivityAnalyzer
 from analysis.utils import is_sum_optimized
 from application.translations import get_translation
+from config import get_config
+
+# Initialize config
+config = get_config()
 
 logger = logging.getLogger(__name__)
 
@@ -1684,13 +1688,27 @@ def generate_detailed_breakdown_table(
             }
 
         # 3. Sort Logic
-        key_map = {"user_id": "user_id", "created_at": "response_created_at"}
+        key_map = {
+            "user_id": "user_id",
+            "created_at": "response_created_at",
+            "duration": "duration",
+        }
         sort_key = key_map.get(sort_by, "response_created_at")
         reverse = (sort_order.lower() == "desc") if sort_by else True
 
-        sorted_summaries = sorted(
-            survey_summaries, key=lambda x: x.get(sort_key, "") or "", reverse=reverse
-        )
+        def get_sort_value(x):
+            if sort_key == "duration":
+                # Handle duration sorting: extract from choices and handle None
+                choices = x.get("choices", [])
+                val = choices[0].get("total_response_time_seconds") if choices else None
+                return (
+                    float(val)
+                    if val is not None
+                    else (float("-inf") if reverse else float("inf"))
+                )
+            return x.get(sort_key, "") or ""
+
+        sorted_summaries = sorted(survey_summaries, key=get_sort_value, reverse=reverse)
 
         # 4. Generate Rows
         rows = []
@@ -1706,6 +1724,31 @@ def generate_detailed_breakdown_table(
 
             timestamp = _format_timestamp(summary.get("response_created_at"))
             ideal_budget = _format_ideal_budget(summary.get("choices", []))
+
+            # Handle Response Time (Duration)
+            choices = summary.get("choices", [])
+            duration_val = (
+                choices[0].get("total_response_time_seconds") if choices else None
+            )
+            if duration_val is not None:
+                duration_seconds = round(float(duration_val))
+                duration_display = f"{duration_seconds}s"
+
+                # Threshold for suspiciously fast responses
+                is_suspicious = (
+                    duration_seconds < config.SUSPICIOUS_RESPONSE_TIME_THRESHOLD_SECONDS
+                )
+
+                duration_class = "suspicious-time" if is_suspicious else ""
+                duration_title = (
+                    get_translation("suspiciously_fast", "answers")
+                    if is_suspicious
+                    else ""
+                )
+            else:
+                duration_display = "N/A"
+                duration_class = ""
+                duration_title = ""
 
             # Generic Cell Generation
             data_cells = _generate_strategy_data_cells(summary, strategy_columns)
@@ -1733,6 +1776,7 @@ def generate_detailed_breakdown_table(
                     {tooltip}
                 </td>
                 <td>{timestamp}</td>
+                <td class="duration-cell {duration_class}" title="{duration_title}">{duration_display}</td>
                 <td class="ideal-budget-cell">{ideal_budget}</td>
                 {"".join(data_cells)}
                 {view_cell}
@@ -1753,7 +1797,8 @@ def generate_detailed_breakdown_table(
         trans = {
             "title": get_translation("survey_response_breakdown", "answers"),
             "user": get_translation("user_id", "answers"),
-            "time": get_translation("response_time", "answers"),
+            "time": get_translation("submitted_at", "answers"),
+            "duration": get_translation("duration", "answers"),
             "budget": get_translation("ideal_budget", "answers"),
             "view": get_translation("view_response", "answers"),
         }
@@ -1767,6 +1812,7 @@ def generate_detailed_breakdown_table(
                         <tr>
                             <th class="sortable" data-sort="user_id"{get_sort_attr('user_id')}>{trans['user']}</th>
                             <th class="sortable" data-sort="created_at"{get_sort_attr('created_at')}>{trans['time']}</th>
+                            <th class="sortable" data-sort="duration"{get_sort_attr('duration')}>{trans['duration']}</th>
                             <th>{trans['budget']}</th>
                             {"".join(header_cells)}
                             <th>{trans['view']}</th>

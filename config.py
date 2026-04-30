@@ -22,6 +22,7 @@ class Config:
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     PAGINATION_PER_PAGE: int = 10
+    SUSPICIOUS_RESPONSE_TIME_THRESHOLD_SECONDS: int = 60
 
     # Security settings
     SECRET_KEY = os.getenv(

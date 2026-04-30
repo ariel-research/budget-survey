@@ -44,6 +44,12 @@
                   title="{{ strategy_name | replace('_', ' ') | title }}">
                 {{ strategy_name | replace('_', ' ') | title }}
             </span>
+            
+            {% if avg_response_time is not none %}
+            <span class="strategy-badge duration-badge" title="Average time spent on the survey page">
+                ⏱️ {{ get_translation('avg_duration', 'answers') }}: {{ avg_response_time|round|int }}s
+            </span>
+            {% endif %}
         </div>
         {% endif %}
         

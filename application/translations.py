@@ -723,6 +723,13 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "percentage": {"he": "אחוז", "en": "Percentage"},
         "choice": {"he": "בחירה", "en": "Choice"},
         "response_time": {"he": "זמן מענה", "en": "Response Time"},
+        "duration": {"he": "משך זמן", "en": "Duration"},
+        "submitted_at": {"he": "הוגש ב-", "en": "Submitted At"},
+        "avg_duration": {"he": "משך זמן ממוצע", "en": "Avg. Duration"},
+        "suspiciously_fast": {
+            "he": "זמן מענה מהיר באופן חשוד. עשוי להעיד על בחירות אקראיות.",
+            "en": "Suspiciously fast response time. May indicate random clicking.",
+        },
         # Identifiers and metadata
         "survey_id": {"he": "מזהה סקר", "en": "Survey ID"},
         "user_id": {"he": "מזהה משתמש", "en": "User ID"},
