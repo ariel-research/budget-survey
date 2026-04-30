@@ -39,6 +39,7 @@ def create_survey_response(
     user_comment: str,
     attention_check_failed: bool = False,
     unsuitable_for_strategy: bool = False,
+    total_response_time_seconds: Optional[float] = None,
 ) -> int:
     """
     Inserts a new survey response into the survey_responses table.
@@ -50,19 +51,20 @@ def create_survey_response(
         user_comment (str): The user's comment on the survey.
         attention_check_failed (bool): Whether the user failed the attention check.
         unsuitable_for_strategy (bool): Whether user was unsuitable for strategy.
+        total_response_time_seconds (Optional[float]): Total time spent on the survey page.
 
     Returns:
         int: The ID of the newly created survey response, or None if an error occurs.
     """
     query = """
         INSERT INTO survey_responses 
-        (user_id, survey_id, optimal_allocation, user_comment, attention_check_failed, unsuitable_for_strategy)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        (user_id, survey_id, optimal_allocation, user_comment, attention_check_failed, unsuitable_for_strategy, total_response_time_seconds)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
     optimal_allocation_json = json.dumps(optimal_allocation)
     logger.debug(
         f"Inserting survey response for user_id: {user_id}, survey_id: {survey_id}, "
-        f"unsuitable: {unsuitable_for_strategy}"
+        f"unsuitable: {unsuitable_for_strategy}, total_response_time: {total_response_time_seconds}"
     )
 
     try:
@@ -75,6 +77,7 @@ def create_survey_response(
                 user_comment,
                 attention_check_failed,
                 unsuitable_for_strategy,
+                total_response_time_seconds,
             ),
         )
     except Exception as e:
@@ -498,6 +501,7 @@ def retrieve_completed_survey_responses() -> List[Dict]:
         sr.optimal_allocation,
         sr.completed,
         sr.created_at AS response_created_at,
+        sr.total_response_time_seconds,
         COALESCE(sr.user_comment, '') as user_comment,
         cp.pair_number,
         cp.option_1,
@@ -598,6 +602,7 @@ def retrieve_user_survey_choices() -> List[Dict]:
         sr.id as survey_response_id,
         sr.optimal_allocation,
         sr.created_at as response_created_at,
+        sr.total_response_time_seconds,
         cp.pair_number,
         cp.option_1,
         cp.option_2,

@@ -68,6 +68,7 @@ class SurveySubmission:
     survey_id: int
     user_vector: List[int] = field(default_factory=list)
     user_comment: Optional[str] = ""
+    total_response_time_seconds: Optional[float] = None
     awareness_answers: List[Union[int, str]] = field(default_factory=list)
     comparison_pairs: List[ComparisonPair] = field(default_factory=list)
     expected_pairs: int = 10  # Default for backward compatibility
@@ -443,11 +444,23 @@ class SurveySubmission:
                 pairs[0].generation_metadata if pairs else None,
             )
 
+            # Parse total_response_time_seconds
+            total_response_time_seconds = None
+            total_response_time_str = form_data.get("total_response_time_seconds", "")
+            if total_response_time_str:
+                try:
+                    total_response_time_seconds = float(total_response_time_str)
+                except ValueError:
+                    logger.warning(
+                        f"Invalid total_response_time_seconds: {total_response_time_str}"
+                    )
+
             return cls(
                 user_id=user_id,
                 survey_id=survey_id,
                 user_vector=user_vector,
                 user_comment=form_data.get("user_comment", "").strip(),
+                total_response_time_seconds=total_response_time_seconds,
                 awareness_answers=awareness_answers,
                 comparison_pairs=pairs,
                 expected_pairs=expected_pairs,

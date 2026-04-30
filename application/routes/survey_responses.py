@@ -51,7 +51,7 @@ def validate_sort_params(sort_by, sort_order):
     Returns:
         tuple: (valid_sort_by, valid_sort_order)
     """
-    allowed_sort_fields = ["user_id", "created_at"]
+    allowed_sort_fields = ["user_id", "created_at", "duration"]
     allowed_sort_orders = ["asc", "desc"]
 
     valid_sort_by = sort_by if sort_by in allowed_sort_fields else None
@@ -171,6 +171,17 @@ def get_user_responses(
                     user_choices.sort(
                         key=lambda x: x["response_created_at"], reverse=reverse
                     )
+                elif sort_by == "duration":
+                    # Handle None values by putting them at the end
+                    def get_duration(x):
+                        val = x.get("total_response_time_seconds")
+                        return (
+                            float(val)
+                            if val is not None
+                            else (float("-inf") if reverse else float("inf"))
+                        )
+
+                    user_choices.sort(key=get_duration, reverse=reverse)
 
             # Handle the case where we have a view filter but no matching
             # choices for the survey
@@ -358,6 +369,20 @@ def get_survey_responses(survey_id: int):
             view_filter=view_filter,
         )
 
+        # Calculate average response time
+        avg_response_time = None
+        if data.get("responses"):
+            # We need to get unique users and their response times
+            user_times = {}
+            for response in data["responses"]:
+                user_id = response.get("user_id")
+                time = response.get("total_response_time_seconds")
+                if user_id and time is not None and user_id not in user_times:
+                    user_times[user_id] = float(time)
+
+            if user_times:
+                avg_response_time = sum(user_times.values()) / len(user_times)
+
         # Fetch the survey description
         survey_description = get_survey_description(survey_id)
 
@@ -410,6 +435,7 @@ def get_survey_responses(survey_id: int):
             strategy_name=strategy_name,
             view_filter=view_filter,
             percentile_breakdown=percentile_breakdown,
+            avg_response_time=avg_response_time,
         )
 
     except SurveyNotFoundError as e:
@@ -477,6 +503,9 @@ def download_survey_responses_csv(survey_id: int):
                     "user_id": choice.get("user_id"),
                     "survey_response_id": choice.get("survey_response_id"),
                     "response_created_at": choice.get("response_created_at"),
+                    "total_response_time_seconds": choice.get(
+                        "total_response_time_seconds"
+                    ),
                     "optimal_allocation": str(choice.get("optimal_allocation")),
                     "pair_number": choice.get("pair_number"),
                     "pair_score": pair_score,

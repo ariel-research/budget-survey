@@ -383,6 +383,9 @@ function initializeSurveyForm() {
         return;
     }
 
+    // Initialize response time tracking
+    initializeResponseTimeTracking(form, submitBtn);
+
     // Check if this is a ranking-based survey
     const rankingQuestions = document.querySelectorAll('.ranking-question');
     if (rankingQuestions.length > 0) {
@@ -407,6 +410,29 @@ function initializeSurveyForm() {
     
     // Setup live awareness check detection
     setupAwarenessLiveChecks();
+}
+
+/**
+ * Initialize response time tracking
+ */
+function initializeResponseTimeTracking(form, submitBtn) {
+    const startTime = performance.now();
+    const responseTimeInput = document.getElementById("response_time_input");
+
+    if (!responseTimeInput) return;
+
+    function updateResponseTime() {
+        const endTime = performance.now();
+        const deltaSeconds = (endTime - startTime) / 1000;
+        responseTimeInput.value = deltaSeconds.toFixed(3);
+    }
+
+    // Update on hover/focus to ensure value is captured before any potential submit event interception
+    submitBtn.addEventListener("mouseenter", updateResponseTime);
+    submitBtn.addEventListener("focus", updateResponseTime);
+    
+    // Also update on actual submit as a fallback
+    form.addEventListener("submit", updateResponseTime);
 }
 
 /**

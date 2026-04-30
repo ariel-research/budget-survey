@@ -49,6 +49,9 @@
    --color-orange: #F97316;  /* Orange for partial consistency */
    --color-danger: #DC2626;  /* Darker red for danger */
    
+   /* Suspicious Time Color */
+   --color-suspicious: #DC2626; /* Red for suspiciously fast times */
+   
    /* Pagination Colors */
    --pagination-background: #ffffff;
    --pagination-border: #dee2e6;
@@ -56,6 +59,28 @@
    --pagination-active: var(--color-primary);
    --pagination-disabled: #6c757d;
    --pagination-text: var(--color-text);
+}
+
+/* ==========================================================================
+   Suspicious Time Highlighting
+   ========================================================================== */
+.duration-cell {
+    text-align: center;
+}
+
+.suspicious-time {
+    color: var(--color-suspicious);
+    font-weight: 600;
+}
+.suspicious-time::before {
+    content: "⚠️ ";
+    font-size: 0.9em;
+}
+
+.duration-badge {
+    background-color: var(--color-background-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
 }
 
 /* ==========================================================================

@@ -513,6 +513,9 @@ class SurveyService:
         Process and store a survey submission.
         Creates user if needed, stores responses, and marks survey as complete.
 
+        Note: Early awareness failures and unsuitability rejections do not reach this logic,
+        so their total_response_time_seconds will correctly remain NULL in the database.
+
         Args:
             submission: Validated survey submission data
             attention_check_failed: Whether the submission failed attention checks
@@ -533,6 +536,8 @@ class SurveyService:
                 submission.user_vector,
                 submission.user_comment,
                 attention_check_failed,
+                unsuitable_for_strategy=False,
+                total_response_time_seconds=submission.total_response_time_seconds,
             )
             logger.info(
                 f"Created survey response: {survey_response_id} "

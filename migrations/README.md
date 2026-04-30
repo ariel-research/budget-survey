@@ -90,6 +90,7 @@ In chronological order:
 - `20251125_add_pair_generation_metadata.sql` - Adds generation_metadata JSON column to comparison_pairs for storing pair generation metadata
 - `20251204_add_pts_value_column.sql` - Adds pts_value column to survey_responses to record early awareness failures (PTS=7/10)
 - `20251204_add_survey_response_uniqueness.sql` - Adds unique constraint on (user_id, survey_id) to prevent duplicate survey responses
+- `20260414_add_total_response_time.sql` - Adds total_response_time_seconds column to survey_responses table to track total time spent on the survey page
 =======
 - `20251125_add_pair_generation_metadata.sql` - Adds generation_metadata JSON column to comparison_pairs table for storing pair generation metadata (e.g., relaxation level, epsilon)
 >>>>>>> 3a1a967 (feat: Add rank-based optimization metrics strategy with adaptive relaxation)
