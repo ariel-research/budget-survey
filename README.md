@@ -390,10 +390,16 @@ This feature is ideal for training sessions and demonstrations, allowing users t
    cd budget-survey
    ```
 
-2. Create and activate a virtual environment:
+2. Create a virtual environment:
    ```
    python -m venv venv
-   source venv/bin/activate
+   ```
+
+   Activate the virtual environment, depending on your OS:
+   ```
+   source venv/bin/activate [on Linux]
+   venv\Scripts\activate.bat [on Windows]
+   venv\Scripts\activate.ps1 [on Windows PowerShell]
    ```
 
 3. Install dependencies:
