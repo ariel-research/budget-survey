@@ -3,6 +3,10 @@
 import pytest
 
 from application.services.pair_generation.rank_strategies import (
+    CosineSimilarityVsKLRankStrategy,
+    CosineSimilarityVsL1RankStrategy,
+    CosineSimilarityVsL2RankStrategy,
+    CosineSimilarityVsLeontiefRankStrategy,
     KLVsAntiLeontiefRankStrategy,
     KLVsL1RankStrategy,
     KLVsL2RankStrategy,
@@ -27,6 +31,26 @@ def l1_l2_strategy():
 @pytest.fixture
 def l2_leo_strategy():
     return L2VsLeontiefRankStrategy()
+
+
+@pytest.fixture
+def cosine_l1_strategy():
+    return CosineSimilarityVsL1RankStrategy()
+
+
+@pytest.fixture
+def cosine_l2_strategy():
+    return CosineSimilarityVsL2RankStrategy()
+
+
+@pytest.fixture
+def cosine_leontief_strategy():
+    return CosineSimilarityVsLeontiefRankStrategy()
+
+
+@pytest.fixture
+def cosine_kl_strategy():
+    return CosineSimilarityVsKLRankStrategy()
 
 
 @pytest.fixture
@@ -159,6 +183,60 @@ class TestL2VsLeontiefRankStrategy:
             descriptions = [k for k in pair.keys() if k != "__metadata__"]
             assert any("l2:" in d for d in descriptions)
             assert any("leontief:" in d for d in descriptions)
+
+
+@pytest.mark.parametrize(
+    ("strategy_fixture", "strategy_name", "other_model", "expected_min_component"),
+    [
+        (
+            "cosine_l1_strategy",
+            "cosine_similarity_vs_l1_rank_comparison",
+            "l1",
+            0,
+        ),
+        (
+            "cosine_l2_strategy",
+            "cosine_similarity_vs_l2_rank_comparison",
+            "l2",
+            0,
+        ),
+        (
+            "cosine_leontief_strategy",
+            "cosine_similarity_vs_leontief_rank_comparison",
+            "leontief",
+            10,
+        ),
+        (
+            "cosine_kl_strategy",
+            "cosine_similarity_vs_kl_rank_comparison",
+            "kl",
+            10,
+        ),
+    ],
+)
+def test_cosine_similarity_rank_strategies(
+    request, strategy_fixture, strategy_name, other_model, expected_min_component
+):
+    """Verify cosine similarity rank strategies use the generic rank pipeline."""
+    strategy = request.getfixturevalue(strategy_fixture)
+
+    assert strategy.get_strategy_name() == strategy_name
+    assert strategy.min_component == expected_min_component
+    assert strategy.get_option_labels() == (
+        "cosine_similarity (Rank)",
+        f"{other_model} (Rank)",
+    )
+
+    columns = strategy.get_table_columns()
+    assert "cosine_similarity" in columns
+    assert other_model in columns
+
+    pairs = strategy.generate_pairs((50, 30, 20), n=2, vector_size=3)
+    assert len(pairs) == 2
+    for pair in pairs:
+        descriptions = [k for k in pair.keys() if k != "__metadata__"]
+        assert any("cosine_similarity:" in d for d in descriptions)
+        assert any(f"{other_model}:" in d for d in descriptions)
 
 
 class TestLeontiefVsAntiLeontiefRankStrategy:

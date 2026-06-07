@@ -778,6 +778,10 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
         "sum": {"he": "סכום", "en": "Sum"},
         "l1": {"he": "L1", "en": "L1"},
         "l2": {"he": "L2", "en": "L2"},
+        "cosine_similarity": {
+            "he": "Cosine Similarity",
+            "en": "Cosine Similarity",
+        },
         "leontief": {"he": "Leontief", "en": "Leontief"},
         "anti_leontief": {"he": "AntiLeontief", "en": "AntiLeontief"},
         "kl": {"he": "KL", "en": "KL"},

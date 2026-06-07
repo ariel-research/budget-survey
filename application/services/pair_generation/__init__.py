@@ -11,6 +11,10 @@ from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrateg
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .rank_strategies import (
+    CosineSimilarityVsKLRankStrategy,
+    CosineSimilarityVsL1RankStrategy,
+    CosineSimilarityVsL2RankStrategy,
+    CosineSimilarityVsLeontiefRankStrategy,
     KLVsAntiLeontiefRankStrategy,
     KLVsL1RankStrategy,
     KLVsL2RankStrategy,
@@ -33,6 +37,10 @@ StrategyRegistry.register(OptimizationMetricsStrategy)
 StrategyRegistry.register(L1VsLeontiefRankStrategy)
 StrategyRegistry.register(L1VsL2RankStrategy)
 StrategyRegistry.register(L2VsLeontiefRankStrategy)
+StrategyRegistry.register(CosineSimilarityVsL1RankStrategy)
+StrategyRegistry.register(CosineSimilarityVsL2RankStrategy)
+StrategyRegistry.register(CosineSimilarityVsLeontiefRankStrategy)
+StrategyRegistry.register(CosineSimilarityVsKLRankStrategy)
 StrategyRegistry.register(LeontiefVsAntiLeontiefRankStrategy)
 StrategyRegistry.register(LeontiefVsKLRankStrategy)
 StrategyRegistry.register(KLVsAntiLeontiefRankStrategy)
@@ -59,6 +67,10 @@ __all__ = [
     "L1VsLeontiefRankStrategy",
     "L1VsL2RankStrategy",
     "L2VsLeontiefRankStrategy",
+    "CosineSimilarityVsL1RankStrategy",
+    "CosineSimilarityVsL2RankStrategy",
+    "CosineSimilarityVsLeontiefRankStrategy",
+    "CosineSimilarityVsKLRankStrategy",
     "LeontiefVsAntiLeontiefRankStrategy",
     "LeontiefVsKLRankStrategy",
     "KLVsAntiLeontiefRankStrategy",

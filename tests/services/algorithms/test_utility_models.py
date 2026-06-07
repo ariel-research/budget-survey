@@ -3,6 +3,7 @@ import pytest
 
 from application.services.algorithms.utility_models import (
     AntiLeontiefUtilityModel,
+    CosineSimilarityUtilityModel,
     KLUtilityModel,
     L1UtilityModel,
     L2UtilityModel,
@@ -43,6 +44,30 @@ def test_l2_utility_model_calculation():
     )
 
 
+def test_cosine_similarity_utility_model_calculation():
+    """
+    Test cosine similarity utility model.
+    Formula: U = dot(p, q) / (||p|| * ||q||).
+    """
+    utility_model = CosineSimilarityUtilityModel()
+
+    assert utility_model.name == "cosine_similarity"
+    assert utility_model.utility_type == "similarity"
+
+    # Identical direction is the best possible similarity score.
+    assert pytest.approx(utility_model.calculate((50, 30, 20), (50, 30, 20))) == 1.0
+
+    # Orthogonal non-negative budget vectors have no directional overlap.
+    assert utility_model.calculate((100, 0), (0, 100)) == 0.0
+
+    # 45-degree case: dot=50, ||p||=100, ||q||=sqrt(50^2 + 50^2).
+    expected = 1 / np.sqrt(2)
+    assert pytest.approx(utility_model.calculate((100, 0), (50, 50))) == expected
+
+    # Degenerate zero vectors are not valid budgets, but the model remains safe.
+    assert utility_model.calculate((0, 0), (50, 50)) == 0.0
+
+
 def test_leontief_utility_model_calculation():
     utility_model = LeontiefUtilityModel()
     user_vec = (10, 90)
@@ -75,6 +100,7 @@ def test_perfect_match():
     vec = (33.3, 33.3, 33.4)
     assert L1UtilityModel().calculate(vec, vec) == 0.0
     assert L2UtilityModel().calculate(vec, vec) == 0.0
+    assert pytest.approx(CosineSimilarityUtilityModel().calculate(vec, vec)) == 1.0
     assert LeontiefUtilityModel().calculate(vec, vec) == 1.0
 
 
