@@ -624,6 +624,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   - **L1 (Sum)**: Total absolute disagreement.
   - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
   - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
+  - **Cosine Similarity**: Alignment of relative budget priorities.
   - **Anti-Leontief**: Penalizes over-funding (waste aversion).
   - **Kullback-Leibler (KL)**: Information theoretic divergence (asymmetric penalty for losses).
 

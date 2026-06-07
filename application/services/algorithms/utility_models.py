@@ -80,6 +80,38 @@ class L2UtilityModel(UtilityModel):
         return -float(dist)
 
 
+class CosineSimilarityUtilityModel(UtilityModel):
+    """
+    Implements cosine similarity as a scoring utility model.
+
+    Cosine similarity compares the direction of two budget vectors rather than
+    their absolute distance. In this context, it measures whether a candidate
+    budget preserves the user's relative priority pattern.
+
+    Higher Score = Better Match (1.0 means identical direction).
+    """
+
+    @property
+    def name(self) -> str:
+        return "cosine_similarity"
+
+    @property
+    def utility_type(self) -> str:
+        return "similarity"
+
+    def calculate(
+        self, user_vec: Tuple[float, ...], candidate_vec: Tuple[float, ...]
+    ) -> float:
+        user_arr = np.array(user_vec, dtype=float)
+        comp_arr = np.array(candidate_vec, dtype=float)
+
+        denominator = np.linalg.norm(user_arr) * np.linalg.norm(comp_arr)
+        if denominator == 0:
+            return 0.0
+
+        return float(np.dot(user_arr, comp_arr) / denominator)
+
+
 class LeontiefUtilityModel(UtilityModel):
     """
     Implements Leontief ratio as a scoring utility model.
