@@ -38,16 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add a "sorted" class to highlight it
             header.classList.add('sorted');
             
-            // Store the sort order on the element
+            // Store the sort order on the element for CSS to use
             header.dataset.order = sortOrder;
-            
-            // Create an arrow indicator (↑ or ↓)
-            const indicator = document.createElement('span');
-            indicator.className = 'sort-indicator';
-            indicator.textContent = sortOrder === 'asc' ? ' ↑' : ' ↓';
-            
-            // Add the arrow indicator to the header
-            header.appendChild(indicator);
         }
     });
 });

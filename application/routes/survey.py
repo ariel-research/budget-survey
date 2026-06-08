@@ -1,12 +1,12 @@
 import logging
-from typing import Tuple
-from urllib.parse import urlencode
+from typing import Optional, Tuple
 
 from flask import (
     Blueprint,
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -15,6 +15,10 @@ from flask import (
 
 from application.decorators import check_survey_eligibility
 from application.exceptions import UnsuitableForStrategyError
+from application.routes.utils import (
+    redirect_to_panel4all,
+    redirect_to_panel4all_with_pts,
+)
 from application.schemas.validators import SurveySubmission
 from application.services.survey_service import SurveyService, SurveySessionData
 from application.translations import get_current_language, get_translation, set_language
@@ -107,6 +111,21 @@ def index():
         user_id, internal_survey_id
     )
     if not is_eligible:
+        # If user is blacklisted and NOT in demo mode, redirect directly to Panel4All
+        if redirect_url == "blacklisted" and not is_demo:
+            panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                "ATTENTION_FAILED"
+            ]
+            logger.info(f"Redirecting blacklisted user {user_id} directly to Panel4All")
+            return redirect(
+                redirect_to_panel4all(
+                    user_id,
+                    external_survey_id,
+                    status=panel4all_status,
+                    q=external_q_argument,
+                )
+            )
+
         return redirect(
             url_for(
                 f"survey.{redirect_url}",
@@ -168,18 +187,37 @@ def create_vector():
                 )
 
             logger.info(f"Valid vector created by user {user_id}: {user_vector}")
-            return redirect(
-                url_for(
-                    "survey.survey",
-                    vector=",".join(map(str, user_vector)),
-                    userID=user_id,
-                    surveyID=external_survey_id,
-                    internalID=internal_survey_id,
-                    lang=current_lang,
-                    q=external_q_argument,
-                    demo="true" if is_demo else None,
+
+            # Check if strategy requires screening (triangle_inequality_test)
+            strategy_name = survey_data.get("strategy_name", "")
+            if strategy_name == "triangle_inequality_test":
+                # Redirect to screening questions
+                return redirect(
+                    url_for(
+                        "survey.screening",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
                 )
-            )
+            else:
+                # Redirect directly to survey
+                return redirect(
+                    url_for(
+                        "survey.survey",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
+                )
 
         except ValueError as e:
             logger.error(f"Invalid vector data: {str(e)}")
@@ -231,6 +269,7 @@ def survey():
             internal_survey_id,
             survey_data["subjects"],
             is_demo,
+            external_q_argument,
         )
     elif request.method == "POST":
         return handle_survey_post(
@@ -250,9 +289,43 @@ def handle_survey_get(
     internal_survey_id: int,
     subjects: list[str],
     is_demo: bool,
+    external_q_argument: Optional[str] = None,
 ) -> str:
     """Handle GET request for survey page."""
     try:
+        # Check if user has already responded to this survey (prevent duplicates)
+        # FAIL-SAFE: If we can't verify, block access (don't let them through)
+        if not is_demo:
+            try:
+                if SurveyService.check_user_already_responded(
+                    user_id, internal_survey_id
+                ):
+                    logger.warning(
+                        f"User {user_id} attempted to retake survey {internal_survey_id}"
+                    )
+                    # Redirect to thank you page - they've already completed this survey
+                    return redirect(
+                        url_for(
+                            "survey.thank_you",
+                            is_demo=False,
+                        )
+                    )
+            except Exception as e:
+                logger.error(
+                    f"CRITICAL: Error checking duplicate response for user {user_id}: {str(e)}",
+                    exc_info=True,
+                )
+                # FAIL-SAFE: Block access - don't let them through if we can't verify
+                logger.warning(
+                    f"BLOCKING USER {user_id} - Could not verify survey participation status"
+                )
+                return redirect(
+                    url_for(
+                        "survey.thank_you",
+                        is_demo=False,
+                    )
+                )
+
         user_vector = list(map(int, request.args.get("vector", "").split(",")))
         current_lang = get_current_language()
 
@@ -279,20 +352,45 @@ def handle_survey_get(
         template_data = session_data.to_template_data()
         template_data["internal_survey_id"] = internal_survey_id
         template_data["is_demo"] = is_demo
+        template_data["external_q_argument"] = external_q_argument
 
         return render_template("survey.html", **template_data)
 
     except UnsuitableForStrategyError as e:
         logger.info(f"User {user_id} unsuitable for strategy: {str(e)}")
-        return redirect(
-            url_for(
-                "survey.unsuitable",
-                userID=user_id,
-                surveyID=external_survey_id,
-                internalID=internal_survey_id,
-                demo="true" if is_demo else None,
+
+        # Record unsuitable failure in database (but don't blacklist)
+        # Note: We record it only if not in demo mode (similar to attention failures)
+        if not is_demo:
+            SurveyService.record_unsuitable_failure(
+                user_id=user_id,
+                survey_id=internal_survey_id,
+                user_vector=user_vector,
             )
-        )
+
+        if is_demo:
+            # In demo mode, show the unsuitable page
+            return redirect(
+                url_for(
+                    "survey.unsuitable",
+                    userID=user_id,
+                    surveyID=external_survey_id,
+                    internalID=internal_survey_id,
+                    demo="true",
+                )
+            )
+        else:
+            # In regular mode, redirect to Panel4All with filterout status
+            external_q_argument = request.args.get("q")
+            panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"]
+            return redirect(
+                redirect_to_panel4all(
+                    user_id,
+                    external_survey_id,
+                    status=panel4all_status,
+                    q=external_q_argument,
+                )
+            )
     except Exception as e:
         logger.error(f"Error in survey GET: {str(e)}", exc_info=True)
         abort(400, description=get_translation("survey_processing_error", "messages"))
@@ -365,6 +463,28 @@ def handle_survey_post(
         str: Redirect response to appropriate destination
     """
     try:
+        # Check if user has already responded to this survey (prevent duplicates from back button)
+        # FAIL-SAFE: If we can't verify, block submission (don't let them through)
+        if not is_demo:
+            try:
+                if SurveyService.check_user_already_responded(
+                    user_id, internal_survey_id
+                ):
+                    logger.warning(
+                        f"User {user_id} attempted to resubmit survey {internal_survey_id}"
+                    )
+                    # Redirect to thank you page - they've already completed this survey
+                    return redirect(url_for("survey.thank_you", is_demo=False))
+            except Exception as e:
+                logger.error(
+                    f"CRITICAL: Error checking duplicate response on POST for user {user_id}: {str(e)}",
+                    exc_info=True,
+                )
+                # FAIL-SAFE: Block submission - don't let them through if we can't verify
+                logger.warning(
+                    f"BLOCKING SUBMISSION from user {user_id} - Could not verify survey participation status"
+                )
+                return redirect(url_for("survey.thank_you", is_demo=False))
         # Get the total number of questions from the form data
         total_questions = 0
         for key in request.form:
@@ -457,6 +577,150 @@ def handle_survey_post(
         )
 
 
+@survey_routes.route("/screening", methods=["GET", "POST"])
+@check_survey_eligibility
+def screening():
+    """Screening questions route handler for triangle inequality test."""
+    user_id, external_survey_id, internal_survey_id, external_q_argument, is_demo = (
+        get_required_params()
+    )
+    current_lang = get_current_language()
+
+    # Get survey data
+    survey_exists, error, survey_data = SurveyService.check_survey_exists(
+        internal_survey_id
+    )
+    if not survey_exists:
+        error_key, error_params = error
+        abort(404, description=get_translation(error_key, "messages", **error_params))
+
+    # Get user vector from URL
+    try:
+        user_vector = list(map(int, request.args.get("vector", "").split(",")))
+        if not SurveyService.validate_vector(user_vector, len(survey_data["subjects"])):
+            return redirect(
+                url_for(
+                    "survey.create_vector",
+                    userID=user_id,
+                    surveyID=external_survey_id,
+                    internalID=internal_survey_id,
+                    lang=current_lang,
+                    demo="true" if is_demo else None,
+                )
+            )
+    except ValueError:
+        return redirect(
+            url_for(
+                "survey.create_vector",
+                userID=user_id,
+                surveyID=external_survey_id,
+                internalID=internal_survey_id,
+                lang=current_lang,
+                demo="true" if is_demo else None,
+            )
+        )
+
+    if request.method == "POST":
+        # Validate screening answers
+        try:
+            answer1 = int(request.form.get("screening_answer_0", 0))
+            answer2 = int(request.form.get("screening_answer_1", 0))
+
+            # Check if both answers are correct (1 for Q1, 2 for Q2)
+            if answer1 == 1 and answer2 == 2:
+                # User passed - redirect to main survey
+                logger.info(f"User {user_id} passed screening questions")
+                return redirect(
+                    url_for(
+                        "survey.survey",
+                        vector=",".join(map(str, user_vector)),
+                        userID=user_id,
+                        surveyID=external_survey_id,
+                        internalID=internal_survey_id,
+                        lang=current_lang,
+                        q=external_q_argument,
+                        demo="true" if is_demo else None,
+                    )
+                )
+            else:
+                # User failed - handle based on demo mode
+                logger.info(f"User {user_id} failed screening questions")
+                if is_demo:
+                    # In demo mode, show the unsuitable page
+                    return redirect(
+                        url_for(
+                            "survey.unsuitable",
+                            userID=user_id,
+                            surveyID=external_survey_id,
+                            internalID=internal_survey_id,
+                            demo="true",
+                        )
+                    )
+                else:
+                    # In regular mode, redirect to Panel4All with filterout status
+                    panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                        "FILTEROUT"
+                    ]
+                    return redirect(
+                        redirect_to_panel4all(
+                            user_id,
+                            external_survey_id,
+                            status=panel4all_status,
+                            q=external_q_argument,
+                        )
+                    )
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error processing screening answers: {str(e)}")
+            flash(get_translation("validation_error", "messages"), "error")
+
+    # GET request - generate and display screening questions
+    try:
+        screening_questions = SurveyService.generate_screening_questions(
+            user_vector, survey_data["subjects"]
+        )
+    except UnsuitableForStrategyError as e:
+        logger.info(
+            "User %s unsuitable for triangle inequality screening: %s",
+            user_id,
+            str(e),
+        )
+
+        if is_demo:
+            redirect_kwargs = {
+                "userID": user_id,
+                "surveyID": external_survey_id,
+                "internalID": internal_survey_id,
+                "demo": "true",
+            }
+            if current_lang:
+                redirect_kwargs["lang"] = current_lang
+
+            return redirect(url_for("survey.unsuitable", **redirect_kwargs))
+
+        panel4all_status = current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"]
+        return redirect(
+            redirect_to_panel4all(
+                user_id,
+                external_survey_id,
+                status=panel4all_status,
+                q=external_q_argument,
+            )
+        )
+
+    return render_template(
+        "screening.html",
+        screening_questions=screening_questions,
+        subjects=survey_data["subjects"],
+        user_vector=user_vector,
+        user_id=user_id,
+        external_survey_id=external_survey_id,
+        internal_survey_id=internal_survey_id,
+        external_q_argument=external_q_argument,
+        is_demo=is_demo,
+        zip=zip,
+    )
+
+
 @survey_routes.route("/thank_you")
 def thank_you():
     """Thank you page route handler."""
@@ -465,11 +729,83 @@ def thank_you():
     return render_template("thank_you.html", is_demo=is_demo)
 
 
-def redirect_to_panel4all(
-    user_id: str, survey_id: str, status: str = "finish", q: str = None
-) -> str:
-    """Generate Panel4All redirect URL with specified status."""
-    params = {"surveyID": survey_id, "userID": user_id, "status": status}
-    if q is not None:
-        params["q"] = q
-    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
+@survey_routes.route("/api/awareness/check", methods=["POST"])
+def awareness_check_api():
+    """
+    Validate awareness check answer and return redirect URL if failed.
+
+    Request JSON:
+        user_id, internal_survey_id, external_survey_id,
+        question_index (0 or 1), answer (1 or 2), user_vector
+
+    Response JSON:
+        Success: {"valid": true}
+        Failure: {"valid": false, "redirect_url": "...", "pts_value": 1|2}
+    """
+    try:
+        payload = request.get_json(force=True)
+
+        user_id = payload["user_id"]
+        internal_survey_id = payload["internal_survey_id"]
+        external_survey_id = payload["external_survey_id"]
+        question_index = payload["question_index"]  # 0 = first, 1 = second
+        answer = payload["answer"]  # 1 or 2
+        user_vector = payload["user_vector"]
+
+        # Determine expected answer: first awareness = 1, second = 2
+        expected_answer = question_index + 1
+
+        if answer == expected_answer:
+            logger.debug(
+                f"Correct awareness answer from user {user_id} at question {question_index}"
+            )
+            return jsonify({"valid": True})
+
+        # Failed - determine awareness code and build redirect
+        awareness_code = 1 if question_index == 0 else 2
+        token = SurveyService.get_awareness_token(internal_survey_id, question_index)
+
+        # Record early failure in database
+        SurveyService.record_early_awareness_failure(
+            user_id=user_id,
+            survey_id=internal_survey_id,
+            user_vector=user_vector,
+            pts_value=awareness_code,
+        )
+
+        # Blacklist the user for failing awareness checks
+        blacklist_user(user_id, internal_survey_id)
+
+        if token is None:
+            logger.warning(
+                "Missing awareness token for survey_id=%s question_index=%s; "
+                "redirecting without PTS parameter",
+                internal_survey_id,
+                question_index,
+            )
+
+        # Build redirect URL
+        redirect_url = redirect_to_panel4all_with_pts(
+            user_id,
+            external_survey_id,
+            status=current_app.config["PANEL4ALL"]["STATUS"]["FILTEROUT"],
+            pts=token,
+        )
+
+        logger.info(
+            f"Early awareness failure detected: user_id={user_id}, "
+            f"question_index={question_index}, awareness_code={awareness_code}, "
+            f"token_present={'yes' if token else 'no'}"
+        )
+
+        return jsonify(
+            {
+                "valid": False,
+                "redirect_url": redirect_url,
+                "pts_value": awareness_code,
+            }
+        )
+
+    except (KeyError, TypeError, ValueError) as e:
+        logger.warning(f"Invalid awareness check request: {e}")
+        return jsonify({"error": "Invalid request"}), 400

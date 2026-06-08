@@ -8,8 +8,6 @@ load_dotenv()
 
 
 class Config:
-    """Base configuration with common settings."""
-
     # Database settings
     MYSQL_HOST: str = os.getenv("MYSQL_HOST", "localhost")
     MYSQL_PORT: int = int(os.getenv("MYSQL_PORT", "3306"))
@@ -18,9 +16,13 @@ class Config:
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD")
 
     # Application settings
-    SURVEY_ID: int = 4
-    PORT: int = 5001
+    SURVEY_ID = int(os.getenv("SURVEY_ID", 1))
+    PORT = 5001
     DEBUG: bool = os.getenv("FLASK_ENV", "development") == "development"
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+    PAGINATION_PER_PAGE: int = 10
+    SUSPICIOUS_RESPONSE_TIME_THRESHOLD_SECONDS: int = 60
 
     # Security settings
     SECRET_KEY = os.getenv(
@@ -36,24 +38,23 @@ class Config:
     PANEL4ALL = {
         "BASE_URL": "http://www.panel4all.co.il/survey_runtime/external_survey_status.php",
         "STATUS": {
-            "COMPLETE": "finish", 
-            # "COMPLETE": "run",   # By request from Shaked 
-            "ATTENTION_FAILED": "attentionfilter"
+            "COMPLETE": "finish",  # For users who completed the survey successfully
+            "ATTENTION_FAILED": "attentionfilter",  # For users who faild the attention check
+            "FILTEROUT": "filterout",  # For users who do not qualify for the survey
         },
+        # "PTS": {
+        #     "FIRST_AWARENESS": 7,  # User fails first awareness question
+        #     "SECOND_AWARENESS": 10,  # User fails second awareness question
+        # },
     }
 
-    # Survey base URL
-    SURVEY_BASE_URL: str = (
-        "http://127.0.0.1:5000"
-        if os.getenv("FLASK_ENV") == "development"
-        else "https://survey.csariel.xyz"
-    )
+    SURVEY_BASE_URL = os.getenv("SURVEY_BASE_URL", "http://localhost:5001")
 
 
 class TestConfig(Config):
     """Test-specific configuration."""
 
-    MYSQL_DATABASE: str = "test_survey"
+    MYSQL_DATABASE: str = os.getenv("TEST_MYSQL_DATABASE", "test_survey")
     TESTING: bool = True
 
 

@@ -4,19 +4,19 @@
  * excluding dashboard-specific styles which are in dashboard_style.css
  */
 
+/* Import shared variables (shadows, spacing, typography, neutral colors) */
+@import '_variables.css';
+
 /* ==========================================================================
    1. Color Variables & Theme Settings
-   Purpose: Define reusable color schemes and theme variables
-   Used by: All components for consistent styling
+   Purpose: Define application-specific color schemes and theme variables
+   Used by: Main survey and vector creation pages
    ========================================================================== */
    :root {
-    /* Primary Colors */
+    /* Primary Colors - Main app specific */
     --color-primary: #3498db;
     --color-primary-dark: #2980b9;
-    --color-success: #27ae60;
     --color-success-dark: #219a52;
-    --color-warning: #e67e22;
-    --color-error: #e74c3c;
     
     /* Text Colors */
     --color-text-dark: #2c3e50;
@@ -24,21 +24,9 @@
     
     /* Background Colors */
     --color-background: #f4f4f4;
-    --color-background-light: #fff;
-    --color-background-alt: #f9f9f9;
     --color-background-info: #e8f6f3;
     
-    /* Border Colors */
-    --color-border: #bdc3c7;
-    --color-border-light: #e2e8f0;
-    
-    /* States */
-    --color-disabled: #708090;
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    /* Note: Shadows, spacing, borders, and state colors are inherited from _variables.css */
 }
 
 /* ==========================================================================
@@ -551,64 +539,568 @@ input[type="radio"] {
     text-align: left;
 }
 
-.language-switcher {
+/* ==========================================================================
+   8. Global Utility Bar & Language Toggle
+   Purpose: Integrated utility bar for language switching and global actions
+   Used by: All pages (base.html)
+   ========================================================================== */
+.global-utility-bar {
+    background-color: var(--color-bg-page);
+    border-bottom: 1px solid var(--color-border-light);
+    padding: var(--spacing-sm) 0;
+}
+
+.utility-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
     display: flex;
-    gap: 10px;
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    z-index: 1000;
+    justify-content: flex-end;
 }
 
-.lang-btn {
-    border: 1px solid var(--color-primary);
-    border-radius: 4px;
-    color: var(--color-primary);
-    font-size: 14px;
-    padding: 5px 15px;
+.language-toggle {
+    background-color: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    display: flex;
+    gap: 4px;
+}
+
+.lang-link {
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
     text-decoration: none;
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    transition: var(--transition-fast);
 }
 
-.lang-btn.active {
-    background: var(--color-primary);
-    color: white;
+.lang-link:hover {
+    color: var(--dashboard-primary);
 }
 
-.lang-btn:hover {
-    background: var(--color-primary-dark);
-    color: white;
+.lang-link.active {
+    background-color: #ffffff;
+    color: var(--dashboard-primary);
+    box-shadow: var(--shadow-sm);
 }
 
-/* RTL Specific Adjustments */
-.rtl .input-group label {
-    margin-left: 10px;
-    margin-right: 0;
-}
-
-.rtl .language-switcher {
-    left: 10px;
-    right: auto;
-}
+/* RTL support - flex-end naturally handles the flip to left */
 
 .rtl .button-container {
     flex-direction: row;
 }
 
+/* RTL support for integrated ranking interface */
+.rtl .ranking-layout {
+    direction: rtl;
+}
+
+/* RTL support for horizontal grid layout */
+.rtl .option-cards {
+    direction: rtl;
+}
+
+.rtl .option-rank-dropdown {
+    background-position: left 0.6rem center;
+    padding-left: 2.5rem;
+    padding-right: 0.8rem;
+}
+
+.rtl .budget-item {
+    direction: rtl;
+}
+
+/* RTL support for Olympic medal colors */
+.rtl .option-card.ranked-1,
+.rtl .option-card.ranked-2,
+.rtl .option-card.ranked-3 {
+    border-top: none;
+    border-bottom: 4px solid;
+}
+
+.rtl .option-card.ranked-1 { border-bottom-color: #FEE101; }
+.rtl .option-card.ranked-2 { border-bottom-color: #95a5a6; }
+.rtl .option-card.ranked-3 { border-bottom-color: #cd7f32; }
+
+/* ==========================================================================
+   17. Ranking Survey Interface Styles - HORIZONTAL GRID LAYOUT
+   Purpose: Enhanced UX styles for preference ranking surveys with horizontal 3-column grid
+   Used by: Survey template when is_ranking_based is true
+   ========================================================================== */
+
+.option-card {
+    display: block;
+    background: var(--color-background-alt);
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.option-header {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+    gap: 0.75rem;
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item .subject {
+    display: block;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.budget-item .value {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+}
+
+.option-ranking {
+    display: block;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-light);
+}
+
+.ranking-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-dark);
+    font-size: 0.9rem;
+}
+
+.option-rank-dropdown {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+/* Option letter badges for clearer identification */
+.option-header h4[data-option-letter]::before {
+    content: attr(data-option-letter);
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* RTL support for option badges */
+.rtl .option-header h4[data-option-letter]::before {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+/* Highlight option when user focuses on corresponding dropdown */
+.option-card.highlight {
+    border-color: var(--color-primary);
+    background: rgba(52, 152, 219, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Progress indicator for completed rankings */
+.rank-selector.completed {
+    position: relative;
+}
+
+.rank-selector.completed::after {
+    content: "✓";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--color-success);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* RTL support for progress indicator */
+.rtl .rank-selector.completed::after {
+    right: auto;
+    left: 0.5rem;
+}
+
+/* Enhanced visual hierarchy for ranking controls */
+.rank-selector[data-rank="1"] {
+    border-left: 4px solid #FEE101; /* Gold for 1st place */
+}
+
+.rank-selector[data-rank="2"] {
+    border-left: 4px solid #95a5a6; /* Silver for 2nd place */
+}
+
+.rank-selector[data-rank="3"] {
+    border-left: 4px solid #cd7f32; /* Bronze for 3rd place */
+}
+
+/* RTL support for ranking borders */
+.rtl .rank-selector[data-rank="1"],
+.rtl .rank-selector[data-rank="2"],
+.rtl .rank-selector[data-rank="3"] {
+    border-left: none;
+    border-right: 4px solid;
+}
+
+.rtl .rank-selector[data-rank="1"] { border-right-color: #f39c12; }
+.rtl .rank-selector[data-rank="2"] { border-right-color: #95a5a6; }
+.rtl .rank-selector[data-rank="3"] { border-right-color: #cd7f32; }
+
+/* Question completion indicator */
+.ranking-question.question-complete {
+    border-color: var(--color-success);
+    background: linear-gradient(135deg, var(--color-background-light) 0%, rgba(39, 174, 96, 0.02) 100%);
+}
+
+/* Main ranking question container */
+.ranking-question {
+    background: var(--color-background-light);
+    border-radius: 8px;
+    border: 1px solid var(--color-border-light);
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease;
+    min-height: auto;
+    overflow: visible;
+}
+
+.ranking-question:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Question header styles */
+.question-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid var(--color-border-light);
+    padding-bottom: 0.75rem;
+}
+
+.question-header h3 {
+    color: var(--color-text-dark);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+}
+
+.ranking-instructions {
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0.75rem;
+    background: var(--color-background-info);
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
+}
+
+/* Text highlighting for instructions */
+.temporal-instruction {
+    color: var(--color-text);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0;
+    margin-bottom: 20px;
+    padding: 1rem;
+    background: var(--color-background-info);
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
+}
+
+.rtl .temporal-instruction {
+    border-left: none;
+    border-right: 3px solid var(--color-primary);
+}
+
+.temporal-instruction strong {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.temporal-instruction em {
+    font-style: italic;
+    color: var(--color-text);
+}
+
+.temporal-instruction mark {
+    background-color: var(--color-highlight);
+    color: var(--color-text);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.temporal-instruction u {
+    text-decoration: underline;
+    text-decoration-color: var(--color-primary);
+    text-decoration-thickness: 2px;
+}
+
+/* Main layout container - simplified flexbox */
+.ranking-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: auto;
+}
+
+/* Option cards container - HORIZONTAL GRID LAYOUT FOR DESKTOP */
+.ranking-question .option-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+/* Individual option card */
+.option-card {
+    background: var(--color-background-alt);
+    border: 2px solid var(--color-border-light);
+    border-radius: 6px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.option-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.option-card.selected {
+    border-color: var(--color-primary);
+    background: var(--color-background-info);
+    box-shadow: var(--shadow-md);
+}
+
+.option-card.selected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-primary);
+}
+
+/* Option header */
+.option-header {
+    margin-bottom: 0.75rem;
+}
+
+.option-header h4 {
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Budget breakdown within each option */
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--color-border-light);
+    gap: 0.75rem;
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item .subject {
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.budget-item .value {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 1.1rem;
+}
+
+/* Integrated ranking within option cards */
+.option-ranking {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border-light);
+}
+
+.ranking-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-dark);
+    font-size: 0.9rem;
+}
+
+.option-rank-dropdown {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9em;
+}
+
+/* Dropdown focus and interaction states */
+.option-rank-dropdown:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.option-rank-dropdown:hover {
+    border-color: var(--color-primary);
+}
+
+.option-rank-dropdown.completed {
+    border-color: var(--color-success);
+    background-color: var(--color-background-info);
+}
+
+.option-rank-dropdown.error {
+    border-color: var(--color-error);
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Olympic medal colors for ranked option cards */
+.option-card.ranked-1 {
+    border-top: 4px solid #FEE101; /* Gold */
+    background: linear-gradient(135deg, rgba(254, 225, 1, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+.option-card.ranked-2 {
+    border-top: 4px solid #95a5a6; /* Silver */
+    background: linear-gradient(135deg, rgba(149, 165, 166, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+.option-card.ranked-3 {
+    border-top: 4px solid #cd7f32; /* Bronze */
+    background: linear-gradient(135deg, rgba(205, 127, 50, 0.1) 0%, var(--color-background-alt) 100%);
+}
+
+/* Error state for option cards */
+.option-card.ranking-error {
+    border-color: var(--color-error);
+    background: rgba(231, 76, 60, 0.05);
+}
+
+/* Completed state for option cards */
+.option-card.ranking-completed {
+    box-shadow: var(--shadow-md);
+}
+
+/* Validation feedback styles */
+.ranking-feedback {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.ranking-feedback.error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid var(--color-error);
+    color: var(--color-error);
+}
+
+.ranking-feedback.success {
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+}
+
+/* Progress indicators */
+.rank-selector[data-rank="1"] .rank-label::before {
+    content: "";
+}
+
+.rank-selector[data-rank="2"] .rank-label::before {
+    content: "";
+}
+
+.rank-selector[data-rank="3"] .rank-label::before {
+    content: "";
+}
+
 /* ==========================================================================
    9. Responsive Design
-   Purpose: Mobile and tablet adaptations
-   Used by: All components for responsive behavior
    ========================================================================== */
-@media (max-width: 768px) {
+   @media (max-width: 768px) {
     .options-container {
         flex-direction: column;
     }
     
-    .language-switcher {
+    .global-utility-bar .utility-container {
         justify-content: center;
-        margin-bottom: 20px;
-        position: relative;
     }
     
     .input-group {
@@ -628,6 +1120,181 @@ input[type="radio"] {
     .btn {
         width: 100%;
         min-width: auto;
+    }
+
+    /* Mobile adjustments for enhancements */
+    .option-header h4[data-option-letter]::before {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        margin-right: 0.25rem;
+    }
+    
+    .rtl .option-header h4[data-option-letter]::before {
+        margin-right: 0;
+        margin-left: 0.25rem;
+    }
+    
+    .rank-selector.completed::after {
+        width: 16px;
+        height: 16px;
+        font-size: 0.7rem;
+        top: 0.25rem;
+        right: 0.25rem;
+    }
+    
+    .rtl .rank-selector.completed::after {
+        right: auto;
+        left: 0.25rem;
+    }
+    
+    /* Mobile optimization for integrated ranking layout */
+    .ranking-layout {
+        gap: 1rem;
+    }
+
+    .ranking-question {
+        padding: 1rem;
+    }
+    
+    /*
+     * CORRECTED SECTION FOR MOBILE RESPONSIVENESS
+     * This rule switches the 3-column grid to a single vertical column
+     * on screens 768px wide or smaller, fixing the horizontal overflow.
+     */
+    .ranking-question .option-cards {
+        display: grid;
+        grid-template-columns: 1fr; /* Use a single column for vertical stacking */
+        gap: 1rem; /* Adjust gap for vertical layout */
+    }
+    
+    .option-card {
+        padding: 0.75rem;
+    }
+    
+    .option-ranking {
+        margin-top: 0.75rem;
+        padding-top: 0.5rem;
+    }
+    
+    .ranking-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .option-rank-dropdown {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.8rem;
+        min-height: 44px; /* Touch-friendly */
+    }
+    
+    /* Mobile option card styling */
+    .option-card {
+        padding: 0.75rem;
+        margin-bottom: 0;
+    }
+    
+    .option-header h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .budget-breakdown {
+        gap: 0.25rem;
+    }
+    
+    .budget-item {
+        padding: 0.25rem 0;
+        font-size: 0.8rem;
+    }
+    
+    .budget-item .subject {
+        font-size: 0.8rem;
+    }
+    
+    .budget-item .value {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .rank-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+    
+    .rank-description {
+        font-size: 0.8rem;
+        line-height: 1.1;
+    }
+    
+    /* Enhanced visual feedback */
+    .rank-dropdown.completed {
+        font-weight: 600;
+        border-width: 3px;
+        background-color: var(--color-background-info);
+    }
+    
+    .rank-selector.completed {
+        background: linear-gradient(135deg, var(--color-background-info) 0%, var(--color-background-light) 100%);
+        border-color: var(--color-success);
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+    }
+    
+    .rank-selector.completed .rank-label::after {
+        content: " ✓";
+        color: var(--color-success);
+        font-weight: bold;
+    }
+    
+    /* Mobile Olympic medal colors - use left border for vertical layout */
+    .option-card.ranked-1 {
+        border-top: none;
+        border-left: 4px solid #FEE101;
+    }
+    
+    .option-card.ranked-2 {
+        border-top: none;
+        border-left: 4px solid #95a5a6;
+    }
+    
+    .option-card.ranked-3 {
+        border-top: none;
+        border-left: 4px solid #cd7f32;
+    }
+
+    /* RTL Support for mobile integrated ranking */
+    .rtl .option-rank-dropdown {
+        background-position: left 0.6rem center;
+        padding-left: 2rem;
+        padding-right: 0.8rem;
+    }
+
+    .rtl .ranking-layout {
+        direction: rtl;
+    }
+    
+    .rtl .option-cards {
+        direction: rtl;
+    }
+    
+    /* RTL Mobile Olympic medal colors - use right border for RTL vertical layout */
+    .rtl .option-card.ranked-1 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #FEE101;
+    }
+    
+    .rtl .option-card.ranked-2 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #95a5a6;
+    }
+    
+    .rtl .option-card.ranked-3 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #cd7f32;
     }
 }
 
@@ -650,6 +1317,121 @@ input[type="radio"] {
         padding: 10px 20px;
         font-size: 1rem;
     }
+
+    /* Enhanced 480px Compact Layout for Integrated Ranking */
+    .ranking-question {
+        margin: 0.75rem 0;
+        padding: 0.5rem;
+    }
+    
+    .question-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .ranking-instructions {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+    
+    .ranking-layout {
+        gap: 0.75rem;
+    }
+    
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        max-height: none;
+    }
+    
+    .option-ranking {
+        margin-top: 0.5rem;
+        padding-top: 0.4rem;
+    }
+    
+    .ranking-label {
+        font-size: 0.75rem; /* Smaller label for small screens */
+        margin-bottom: 0.3rem;
+    }
+    
+    .option-rank-dropdown {
+        font-size: 0.8rem; /* Readable text for small screens */
+        padding: 0.4rem 0.7rem; /* Compact padding optimized for small screens */
+        min-height: 40px; /* Maintain touch-friendly size */
+    }
+    
+    .option-card {
+        padding: 0.5rem; /* Even more compact */
+    }
+    
+    .option-header h4 {
+        font-size: 0.85rem; /* Smaller option titles */
+    }
+    
+    .budget-item {
+        font-size: 0.75rem; /* Smaller budget text */
+        padding: 0.2rem 0;
+    }
+    
+    .budget-item .value {
+        font-size: 0.85rem; /* Smaller values */
+    }
+    
+    /* 480px Olympic medal colors - use left border for vertical layout */
+    .option-card.ranked-1 {
+        border-top: none;
+        border-left: 4px solid #FEE101;
+    }
+    
+    .option-card.ranked-2 {
+        border-top: none;
+        border-left: 4px solid #95a5a6;
+    }
+    
+    .option-card.ranked-3 {
+        border-top: none;
+        border-left: 4px solid #cd7f32;
+    }
+
+    /* Additional mobile positioning fix for 480px */
+    .ranking-controls {
+        position: static;
+        top: auto; /* Reset sticky positioning for small mobile */
+    }
+
+    /* RTL Support for 480px breakpoint - Integrated Ranking Layout */
+    .rtl .option-rank-dropdown {
+        background-position: left 0.5rem center; /* Adjusted for small screen mobile layout */
+        padding-left: 1.8rem;
+        padding-right: 0.7rem;
+    }
+
+    .rtl .ranking-layout {
+        direction: rtl;
+    }
+    
+    .rtl .option-cards {
+        direction: rtl;
+    }
+    
+    /* RTL 480px Olympic medal colors - use right border for RTL vertical layout */
+    .rtl .option-card.ranked-1 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #FEE101;
+    }
+    
+    .rtl .option-card.ranked-2 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #95a5a6;
+    }
+    
+    .rtl .option-card.ranked-3 {
+        border-left: none;
+        border-bottom: none;
+        border-right: 4px solid #cd7f32;
+    }
+
 }
 
 /* ==========================================================================
@@ -662,7 +1444,7 @@ input[type="radio"] {
         background: white;
     }
     
-    .language-switcher,
+    .global-utility-bar,
     .btn {
         display: none;
     }
@@ -692,6 +1474,18 @@ input[type="radio"] {
         outline: 2px solid #000;
         outline-offset: 2px;
     }
+
+    .option-card {
+        border-width: 3px;
+    }
+    
+    .option-card.selected {
+        border-width: 4px;
+    }
+    
+    .rank-dropdown {
+        border-width: 3px;
+    }
 }
 
 /* ==========================================================================
@@ -699,51 +1493,470 @@ input[type="radio"] {
    Purpose: Styles for custom alert popups
    Used by: Alert dialogs across the application
    ========================================================================== */
-   .custom-alert {
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.5);
+.custom-alert {
+    align-items: flex-start;
+    background-color: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
     display: none;
     height: 100%;
     justify-content: center;
     left: 0;
+    opacity: 0;
+    padding-top: 70px;
     position: fixed;
     top: 0;
     width: 100%;
-    z-index: 1000;
+    z-index: 1200;
+    transition: opacity 0.2s ease;
+}
+
+.custom-alert.visible {
+    display: flex;
+    opacity: 1;
 }
 
 .alert-content {
     background-color: white;
-    border-radius: 8px;
-    box-shadow: var(--shadow-lg);
-    max-width: 400px;
-    padding: 20px;
-    text-align: center;
-    width: 90%;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg), 0 12px 35px rgba(0, 0, 0, 0.12);
+    max-width: 460px;
+    padding: 22px 22px 18px;
+    text-align: left;
+    width: 92%;
+    margin: 0 auto;
+    position: relative;
+    animation: slideDown 180ms ease;
 }
 
-.alert-content p {
+.alert-header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: white;
+    background: var(--color-primary);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.25);
+}
+
+.alert-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
     color: var(--color-text-dark);
-    font-size: 1.1em;
-    margin-bottom: 20px;
 }
 
-#alertClose {
+.alert-body {
+    margin: 6px 0 0 0;
+    color: var(--color-text);
+    line-height: 1.55;
+    font-size: 1rem;
+}
+
+.alert-content button {
     background-color: var(--color-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     color: white;
     cursor: pointer;
-    font-size: 1em;
-    padding: 8px 16px;
-    transition: background-color 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 10px 18px;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    width: 100%;
 }
 
-#alertClose:hover {
+.alert-content button:hover {
     background-color: var(--color-primary-dark);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.alert-content button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Special styling for early awareness failure alerts */
+.custom-alert.awareness-failed .alert-content {
+    background: linear-gradient(135deg, #fff8f8 0%, #ffecec 100%);
+    border: 1px solid rgba(231, 76, 60, 0.15);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(231, 76, 60, 0.18);
+}
+
+.custom-alert.awareness-failed .alert-icon {
+    background: #e74c3c;
+    box-shadow: 0 6px 18px rgba(231, 76, 60, 0.3);
+}
+
+.custom-alert.awareness-failed .alert-title,
+.custom-alert.awareness-failed .alert-body {
+    color: #c0392b;
+}
+
+.awareness-check-countdown {
+    color: #e74c3c;
+    font-size: 0.95em;
+    font-weight: 700;
+    margin: 8px 0 14px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: rgba(231, 76, 60, 0.08);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    text-align: center;
+}
+
+.custom-alert.alert-error .alert-icon {
+    background: #e74c3c;
+    box-shadow: 0 6px 18px rgba(231, 76, 60, 0.25);
+}
+
+.custom-alert.alert-info .alert-icon {
+    background: var(--color-primary);
 }
 
 /* RTL support for custom alert */
 .rtl .alert-content {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .alert-header {
+    flex-direction: row-reverse;
+}
+
+.rtl .custom-alert.awareness-failed .alert-content {
+    border-left: none;
+    border-right: 1px solid rgba(231, 76, 60, 0.15);
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ==========================================================================
+   Height-Based Optimization for Very Small Screens
+   Purpose: Additional space savings for constrained viewports
+   ========================================================================== */
+@media (max-height: 700px) {
+    /* Ultra-compact mode for small laptop screens */
+    .ranking-question {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .question-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    .question-header h3 {
+        font-size: 1.2rem;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .ranking-instructions {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .ranking-layout {
+        gap: 1.5rem;
+    }
+    
+    .option-cards {
+        gap: 0.5rem;
+    }
+    
+    .option-card {
+        padding: 0.75rem;
+    }
+    
+    .budget-item {
+        padding: 0.2rem 0;
+    }
+    
+    .ranking-controls {
+        gap: 0.75rem;
+    }
+    
+    .rank-selector {
+        padding: 0.75rem;
+    }
+    
+    .rank-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .rank-dropdown {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Motion support */
+@media (prefers-reduced-motion: reduce) {
+    .option-card,
+    .rank-selector,
+    .rank-dropdown,
+    .ranking-question {
+        transition: none;
+    }
+    
+    .option-card:hover {
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   Triangle Inequality Test & Biennial Budget Styles
+   Purpose: Styles for screening questions and biennial budget display
+   Used by: screening.html and survey.html (triangle_inequality_test)
+   ========================================================================== */
+
+/* Screening Questions */
+.screening-instruction {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.screening-question {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.screening-question h3 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.question-prompt {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--color-bg-light);
+    border-radius: 6px;
+    border-left: 4px solid var(--color-primary);
+}
+
+.fixed-budget-display {
+    background: var(--color-bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fixed-budget-display h4 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.choice-section {
+    margin-top: 1.5rem;
+}
+
+.choice-section h4 {
+    color: var(--color-text);
+    margin-bottom: 1rem;
+    font-size: 1.05rem;
+}
+
+.screening-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.screening-option {
+    position: relative;
+}
+
+.screening-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.screening-option .option-card {
+    display: block;
+    background: var(--color-white);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 180px;
+}
+
+.screening-option .option-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.screening-option input[type="radio"]:checked + .option-card {
+    border-color: var(--color-primary);
+    background: var(--color-bg-light);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.screening-option .option-card h5 {
+    color: var(--color-text);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.submit-button {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border: none;
+    border-radius: 6px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Biennial Budget Display */
+.biennial-budget-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    background: var(--color-bg-light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.budget-year-section {
+    padding: 1rem;
+    background: var(--color-white);
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+}
+
+.budget-year-section:first-of-type {
+    border-bottom: 2px solid var(--color-primary);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.budget-year-section:last-of-type {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.budget-year-section h5 {
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.budget-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.budget-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: var(--color-bg-light);
+    border-radius: 4px;
+}
+
+.budget-item .subject {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.budget-item .value {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.year-separator {
+    display: none;
+}
+
+.triangle-instruction {
+    font-size: 1.05rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--color-bg-light);
+    border-radius: 6px;
+    border-left: 4px solid var(--color-primary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .biennial-budget-container {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .budget-year-section {
+        padding: 0.75rem;
+    }
+    
+    .budget-year-section h5 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .screening-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .screening-question {
+        padding: 1.5rem;
+    }
+}
+
+/* RTL support for biennial display */
+[dir="rtl"] .budget-item {
+    direction: rtl;
+}
+
+[dir="rtl"] .biennial-budget-container {
     direction: rtl;
 }

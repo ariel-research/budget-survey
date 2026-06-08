@@ -160,7 +160,7 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "extreme_vectors"
+        return "peak_linearity_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get labels for the two options being compared."""
@@ -185,5 +185,15 @@ class ExtremeVectorsStrategy(PairGenerationStrategy):
                 "name": get_translation("overall_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
-            }
+            },
+            "transitivity_rate": {
+                "name": get_translation("transitivity_rate", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "order_consistency": {
+                "name": get_translation("order_consistency", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
         }

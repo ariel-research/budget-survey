@@ -122,6 +122,87 @@ def generate_awareness_questions(
     raise ValueError("Could not generate two different awareness questions")
 
 
+def generate_ranking_awareness_question(
+    user_vector: List[int], num_of_subjects: int
+) -> Dict[str, Any]:
+    """
+    Generate a single awareness check question for ranking surveys.
+
+    Creates a 3-option ranking question where:
+    - Option A: Clearly inferior allocation
+    - Option B: User's exact ideal allocation (correct answer)
+    - Option C: Another clearly inferior allocation
+
+    Args:
+        user_vector: The user's original budget allocation vector
+        num_of_subjects: The number of subjects in the budget allocation
+
+    Returns:
+        Dictionary containing ranking question with options A, B, C
+
+    Raises:
+        ValueError: If input validation fails
+    """
+    logger.debug(
+        f"Generating ranking awareness question for user vector: {user_vector}"
+    )
+
+    # Validate inputs using existing validation
+    if len(user_vector) != num_of_subjects:
+        raise ValueError(
+            f"Vector length {len(user_vector)} does not match number of subjects {num_of_subjects}"
+        )
+
+    if sum(user_vector) != 100:
+        raise ValueError(f"Vector sum must be 100, got {sum(user_vector)}")
+
+    if any(v < 0 or v > 95 for v in user_vector):
+        raise ValueError("Vector values must be between 0 and 95")
+
+    if any(v < 5 for v in user_vector if v != 0):
+        raise ValueError("Non-zero vector values must be at least 5")
+
+    # Get valid modifications to create inferior options
+    valid_mods = _get_valid_modifications(user_vector, num_of_subjects)
+    if len(valid_mods) < 2:
+        raise ValueError(
+            "Need at least 2 valid modifications to create awareness question"
+        )
+
+    # Shuffle modifications to ensure randomness
+    random.shuffle(valid_mods)
+
+    # Create two clearly inferior options
+    option_a = user_vector.copy()
+    inc_idx, dec_idx, amount = valid_mods[0]
+    option_a[inc_idx] += amount
+    option_a[dec_idx] -= amount
+
+    option_c = user_vector.copy()
+    inc_idx, dec_idx, amount = valid_mods[1]
+    option_c[inc_idx] += amount
+    option_c[dec_idx] -= amount
+
+    # Create the ranking awareness question
+    question = {
+        "question_number": 3,  # Renumbered dynamically in survey service
+        "question_label": "awareness_check",
+        "is_awareness": True,
+        "option_a": tuple(option_a),
+        "option_b": tuple(user_vector),  # User's exact ideal (correct answer)
+        "option_c": tuple(option_c),
+        "correct_answer": "B",  # User should rank Option B as #1
+        "option_a_differences": None,  # Not applicable for awareness
+        "option_b_differences": None,
+        "option_c_differences": None,
+    }
+
+    logger.debug(
+        f"Generated ranking awareness question: Option B (correct) = {user_vector}"
+    )
+    return question
+
+
 def generate_awareness_check(
     user_vector: List[int], num_of_subjects: int
 ) -> Dict[str, Any]:

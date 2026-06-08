@@ -237,7 +237,7 @@ class OptimizationMetricsStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "optimization_metrics"
+        return "l1_vs_leontief_comparison"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get the unique labels for this strategy's options."""

@@ -314,4 +314,7 @@ examples/*
 # Ignore the data files (CSV files and PDF files)
 /data/
 
+# Cursor rules
+.cursor/
+
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,flask,react

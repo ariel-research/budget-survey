@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>{{ translations.title }}</h1>
+                <p class="header-description">{{ translations.subtitle }}</p>
+            </div>
+        </header>
+
+        <!-- Metrics Summary Section -->
+        <div class="metrics-summary" role="region" aria-label="Dashboard metrics overview">
+            <!-- Total Surveys Metric -->
+            <div class="metric-card metric-surveys" role="article" aria-labelledby="metric-surveys-label">
+                <div class="metric-header">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-label" id="metric-surveys-label">
+                        {{ translations.total_surveys }}
+                    </div>
+                </div>
+                <div class="metric-main">
+                    <div class="metric-value" aria-describedby="metric-surveys-desc">
+                        {{ total_surveys }}
+                    </div>
+                </div>
+                <p class="metric-description" id="metric-surveys-desc">
+                    {{ translations.total_surveys_description }}
+                </p>
+            </div>
+
+            <!-- Passed Attention Checks Metric -->
+            <div class="metric-card metric-participants" role="article" aria-labelledby="metric-participants-label">
+                <div class="metric-header">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.98 1.98 0 0 0 18.05 7h-2.1c-.8 0-1.54.5-1.85 1.26l-1.92 5.74A2 2 0 0 0 14.1 16H16v6h4zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm2 16v-7H9l-1.5-4.5A1.5 1.5 0 0 0 6 9.5H3.5A1.5 1.5 0 0 0 2 11v5.5c0 .83.67 1.5 1.5 1.5H5V22h2.5z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-label" id="metric-participants-label">
+                        {{ translations.total_participants }}
+                    </div>
+                </div>
+                <div class="metric-main">
+                    <div class="metric-value" aria-describedby="metric-participants-desc">
+                        {{ total_participants }}
+                    </div>
+                </div>
+                <p class="metric-description" id="metric-participants-desc">
+                    {{ translations.total_participants_description }}
+                </p>
+            </div>
+            
+            <!-- Blocked Users Metric -->
+            <div class="metric-card metric-blocked" role="article" aria-labelledby="metric-blocked-label">
+                <div class="metric-header">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20c-4.41 0-8-3.59-8-8zm14.31 4.9L7.1 5.69C8.45 4.63 10.15 4 12 4c4.41 0 8 3.59 8 8 0 1.85-.63 3.55-1.69 4.9z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-label" id="metric-blocked-label">
+                        {{ translations.excluded_users }}
+                    </div>
+                </div>
+                <div class="metric-main">
+                    <div class="metric-value" aria-describedby="metric-blocked-desc">
+                        {{ unaware_users_count }}
+                    </div>
+                </div>
+                <p class="metric-description" id="metric-blocked-desc">
+                    {{ translations.excluded_users_description }}
+                </p>
+            </div>
+
+            <!-- All Participants Metric (Clickable) -->
+            <a href="{{ url_for('responses.get_users_overview') }}" 
+               class="metric-card metric-all clickable" 
+               role="article" 
+               aria-labelledby="metric-all-label"
+               aria-describedby="metric-all-desc">
+                <div class="metric-header">
+                    <div class="metric-icon" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-label" id="metric-all-label">
+                        {{ translations.all_participants }}
+                    </div>
+                </div>
+                <div class="metric-main">
+                    <div class="metric-value" aria-describedby="metric-all-desc">
+                        {{ users_with_surveys }}
+                    </div>
+                </div>
+                <p class="metric-description" id="metric-all-desc">
+                    {{ translations.all_participants_description }}
+                </p>
+            </a>
+        </div>
+
+        <!-- Surveys Grid -->
+        <div class="surveys-grid">
+            {% for survey in surveys %}
+            <div class="survey-card">
+                <div class="survey-header">
+                    <span class="survey-number">#{{ survey.id }}</span>
+                    <span class="strategy-badge" 
+                          data-strategy="{{ survey.strategy_name }}" 
+                          style="background-color:{{ survey.strategy_name | strategy_color }}"
+                          title="{{ survey.strategy_name | replace('_', ' ') | title }}">
+                        {{ survey.strategy_name | replace('_', ' ') | title }}
+                    </span>
+                </div>
+                
+                <div class="survey-content">
+                    <div class="survey-info">
+                        <h2 class="survey-title">{{ survey.name[get_current_language()] }}</h2>
+                        {% if survey.description %}
+                        <p class="survey-description">
+                            {{ survey.description[get_current_language()] }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="survey-actions">
+                    <a href="{{ url_for('responses.get_survey_responses', survey_id=survey.id) }}" 
+                       class="btn btn-responses" 
+                       aria-label="{{ translations.view_responses }} for survey {{ survey.id }}">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+                            </svg>
+                        </span>
+                        <span class="btn-text">{{ translations.view_responses }}</span>
+                    </a>
+                    
+                    <a href="{{ url_for('survey.index', userID='...', surveyID='...', internalID=survey.id, lang=get_current_language(), demo='true') }}" 
+                        class="btn btn-participate"
+                        target="_blank"
+                        aria-label="{{ translations.take_survey }} {{ survey.id }} (opens in new tab)">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                        </span>
+                        <span class="btn-text">{{ translations.take_survey }}</span>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

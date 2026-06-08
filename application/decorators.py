@@ -3,6 +3,7 @@ from functools import wraps
 
 from flask import current_app, redirect, request, url_for
 
+from application.routes.utils import redirect_to_panel4all
 from application.services.survey_service import SurveyService
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,29 @@ def check_survey_eligibility(f):
             )
 
             if not is_eligible:
+                # Check for demo parameter
+                is_demo_args = request.args.get("demo", "").lower() == "true"
+                is_demo_form = request.form.get("demo", "").lower() == "true"
+                is_demo = is_demo_args or is_demo_form
+
+                # If user is blacklisted and NOT in demo mode, redirect directly to Panel4All
+                if redirect_url == "blacklisted" and not is_demo:
+                    panel4all_status = current_app.config["PANEL4ALL"]["STATUS"][
+                        "ATTENTION_FAILED"
+                    ]
+                    external_q_argument = request.args.get("q")
+                    logger.info(
+                        f"Redirecting blacklisted user {user_id} directly to Panel4All"
+                    )
+                    return redirect(
+                        redirect_to_panel4all(
+                            user_id,
+                            external_survey_id,
+                            status=panel4all_status,
+                            q=external_q_argument,
+                        )
+                    )
+
                 # Add lang parameter to the redirect if present in the original request
                 lang = request.args.get("lang")
                 redirect_kwargs = {
@@ -57,6 +81,8 @@ def check_survey_eligibility(f):
                     redirect_kwargs["internalID"] = internal_survey_id
                 if lang:
                     redirect_kwargs["lang"] = lang
+                if is_demo:
+                    redirect_kwargs["demo"] = "true"
 
                 return redirect(url_for(f"survey.{redirect_url}", **redirect_kwargs))
 

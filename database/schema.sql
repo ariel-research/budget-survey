@@ -1,6 +1,5 @@
 -- Database Schema for budget-survey
--- Reflects state AFTER migration 20250401_add_stories_table.sql
--- 20250501_add_user_blacklist.sql
+-- Reflects state AFTER migration 20251226_add_unsuitable_for_strategy_column.sql
 
 -- WARNING! Running this script will DROP existing tables
 -- (users, stories, surveys, survey_responses, comparison_pairs)
@@ -46,7 +45,10 @@ CREATE TABLE `surveys` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `story_code` VARCHAR(50) NOT NULL, -- FK to stories.code
   `active` BOOLEAN DEFAULT TRUE,
+  -- Example config: {"strategy": "l1_vs_leontief_rank_comparison", "params": {"num_pairs": 10, "min_score_threshold": 0.85}}
   `pair_generation_config` JSON NOT NULL,
+  `awareness_pts` JSON DEFAULT NULL COMMENT 'Per-survey awareness PTS tokens: {\"first\": \"...\", \"second\": \"...\"}',
+  `suitability_rules` JSON DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX (`story_code`), -- Index for the foreign key
@@ -64,9 +66,15 @@ CREATE TABLE `survey_responses` (
   `user_comment` TEXT DEFAULT NULL,
   `completed` BOOLEAN DEFAULT FALSE,
   `attention_check_failed` BOOLEAN DEFAULT FALSE,
+  `total_response_time_seconds` FLOAT DEFAULT NULL COMMENT 'Total time spent on the survey page in seconds',
+  `pts_value` INT DEFAULT NULL COMMENT 'Awareness failure code (1=first awareness, 2=second awareness)',
+  `transitivity_analysis` JSON DEFAULT NULL COMMENT 'Transitivity metrics for extreme vector responses',
+  `unsuitable_for_strategy` BOOLEAN DEFAULT FALSE COMMENT 'Indicates if user vector was unsuitable for pair generation strategy',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX (`user_id`), -- Index for potential joins/lookups
   INDEX (`survey_id`), -- Index for potential joins/lookups
+  INDEX `idx_unsuitable_strategy` (`unsuitable_for_strategy`),
+  UNIQUE KEY `unique_user_survey` (`user_id`, `survey_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   FOREIGN KEY (`survey_id`) REFERENCES `surveys` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -83,7 +91,10 @@ CREATE TABLE `comparison_pairs` (
   `user_choice` INT NOT NULL,
   `option1_strategy` VARCHAR(100) DEFAULT NULL,
   `option2_strategy` VARCHAR(100) DEFAULT NULL,
+  `option1_differences` JSON DEFAULT NULL,
+  `option2_differences` JSON DEFAULT NULL,
   `raw_user_choice` INT DEFAULT NULL,
+  `generation_metadata` JSON DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`survey_response_id`) REFERENCES `survey_responses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

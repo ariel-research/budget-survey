@@ -3,14 +3,18 @@ Survey responses route module.
 Handles all survey response related endpoints including responses and comments.
 """
 
+import io
 import logging
+import math
 from typing import Any, Dict, List, Optional
 
-from flask import Blueprint, render_template, request
+import pandas as pd
+from flask import Blueprint, Response, current_app, render_template, request
 
-from analysis.report_content_generators import (
+from analysis.report_service import (
     generate_aggregated_percentile_breakdown,
     generate_detailed_user_choices,
+    generate_user_survey_matrix_html,
 )
 from application.exceptions import (
     ResponseProcessingError,
@@ -21,9 +25,12 @@ from application.services.pair_generation.base import StrategyRegistry
 from application.services.response_formatter import ResponseFormatter
 from application.translations import get_translation
 from database.queries import (
+    get_paginated_user_ids,
     get_survey_description,
     get_survey_pair_generation_config,
     get_survey_response_counts,
+    get_user_participation_overview,
+    get_user_survey_performance_data,
     get_users_from_view,
     retrieve_completed_survey_responses,
     retrieve_user_survey_choices,
@@ -44,7 +51,7 @@ def validate_sort_params(sort_by, sort_order):
     Returns:
         tuple: (valid_sort_by, valid_sort_order)
     """
-    allowed_sort_fields = ["user_id", "created_at"]
+    allowed_sort_fields = ["user_id", "created_at", "duration"]
     allowed_sort_orders = ["asc", "desc"]
 
     valid_sort_by = sort_by if sort_by in allowed_sort_fields else None
@@ -97,8 +104,9 @@ def get_user_responses(
 
             if not temp_user_ids:
                 log_msg = (
-                    f"No users found matching general criteria of view '{view_filter}'. "
-                    f"No responses will be shown for survey {survey_id} with this filter."
+                    f"No users found matching general criteria of view "
+                    f"'{view_filter}'. No responses will be shown for survey "
+                    f"{survey_id} with this filter."
                 )
                 logger.info(log_msg)
 
@@ -138,7 +146,7 @@ def get_user_responses(
                 ]
                 logger.debug(
                     f"Applied view filter '{view_filter}': "
-                    f"{original_choice_count} initial choices -> {len(user_choices)} choices."
+                    f"{original_choice_count} initial -> {len(user_choices)} choices."
                 )
 
             # Filter by the specific survey ID of the request
@@ -163,8 +171,20 @@ def get_user_responses(
                     user_choices.sort(
                         key=lambda x: x["response_created_at"], reverse=reverse
                     )
+                elif sort_by == "duration":
+                    # Handle None values by putting them at the end
+                    def get_duration(x):
+                        val = x.get("total_response_time_seconds")
+                        return (
+                            float(val)
+                            if val is not None
+                            else (float("-inf") if reverse else float("inf"))
+                        )
 
-            # Handle the case where we have a view filter but no matching choices for the survey
+                    user_choices.sort(key=get_duration, reverse=reverse)
+
+            # Handle the case where we have a view filter but no matching
+            # choices for the survey
             if survey_id is not None and not user_choices and view_filter:
                 logger.info(
                     f"No responses found for survey {survey_id} with "
@@ -255,6 +275,8 @@ def get_user_responses(
             show_tables_only=show_tables_only,
             show_detailed_breakdown_table=show_detailed_breakdown_table,
             show_overall_survey_table=show_overall_survey_table,
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
         # For backward compatibility
@@ -347,6 +369,20 @@ def get_survey_responses(survey_id: int):
             view_filter=view_filter,
         )
 
+        # Calculate average response time
+        avg_response_time = None
+        if data.get("responses"):
+            # We need to get unique users and their response times
+            user_times = {}
+            for response in data["responses"]:
+                user_id = response.get("user_id")
+                time = response.get("total_response_time_seconds")
+                if user_id and time is not None and user_id not in user_times:
+                    user_times[user_id] = float(time)
+
+            if user_times:
+                avg_response_time = sum(user_times.values()) / len(user_times)
+
         # Fetch the survey description
         survey_description = get_survey_description(survey_id)
 
@@ -362,7 +398,7 @@ def get_survey_responses(survey_id: int):
 
         # Generate aggregated percentile breakdown table for extreme vector surveys
         percentile_breakdown = ""
-        if strategy_name == "extreme_vectors":
+        if strategy_name == "peak_linearity_test":
             # Get all choices for this survey for aggregated analysis
             choices = retrieve_user_survey_choices()
             survey_choices = [c for c in choices if c["survey_id"] == survey_id]
@@ -399,6 +435,7 @@ def get_survey_responses(survey_id: int):
             strategy_name=strategy_name,
             view_filter=view_filter,
             percentile_breakdown=percentile_breakdown,
+            avg_response_time=avg_response_time,
         )
 
     except SurveyNotFoundError as e:
@@ -419,6 +456,91 @@ def get_survey_responses(survey_id: int):
                 "error.html",
                 message=get_translation("survey_retrieval_error", "messages"),
             ),
+            500,
+        )
+
+
+@responses_routes.route("/<int:survey_id>/responses/download")
+def download_survey_responses_csv(survey_id: int):
+    """
+    Generates and serves a CSV file of survey responses,
+    respecting the view_filter query parameter by reusing existing logic.
+    """
+    try:
+        # 1. Reuse the existing get_user_responses function to get filtered data
+        # We pass user_choices=None so it fetches from the DB.
+        data_dict = get_user_responses(
+            survey_id=survey_id,
+            user_choices=None,
+            show_tables_only=False,  # Ensure we get the full data structure
+            view_filter=request.args.get("view_filter"),
+        )
+
+        # 2. Check if the function returned any response data
+        user_choices_from_function = data_dict.get("responses")
+        if not user_choices_from_function:
+            return (
+                render_template(
+                    "error.html",
+                    message=get_translation(
+                        "no_responses_to_download", "messages", survey_id=survey_id
+                    ),
+                ),
+                404,
+            )
+
+        # 3. Flatten the detailed data into a list of dicts for the CSV
+        csv_data = []
+        for choice in user_choices_from_function:
+            # Extract Pair Score from generation_metadata if available
+            pair_score = None
+            gen_metadata = choice.get("generation_metadata")
+            if isinstance(gen_metadata, dict):
+                pair_score = gen_metadata.get("score")
+
+            csv_data.append(
+                {
+                    "user_id": choice.get("user_id"),
+                    "survey_response_id": choice.get("survey_response_id"),
+                    "response_created_at": choice.get("response_created_at"),
+                    "total_response_time_seconds": choice.get(
+                        "total_response_time_seconds"
+                    ),
+                    "optimal_allocation": str(choice.get("optimal_allocation")),
+                    "pair_number": choice.get("pair_number"),
+                    "pair_score": pair_score,
+                    "option_1": str(choice.get("option_1")),
+                    "option_2": str(choice.get("option_2")),
+                    "user_choice": choice.get("user_choice"),
+                    "raw_user_choice": choice.get("raw_user_choice"),
+                    "option1_strategy": choice.get("option1_strategy"),
+                    "option2_strategy": choice.get("option2_strategy"),
+                }
+            )
+
+        # 4. Generate CSV using pandas
+        df = pd.DataFrame(csv_data)
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        csv_string = output.getvalue()
+
+        # 5. Create the dynamic filename and Flask Response
+        view_filter = request.args.get("view_filter")
+        filename = f"survey_{survey_id}_responses"
+        if view_filter:
+            filename += f"_{view_filter}"
+        filename += ".csv"
+
+        return Response(
+            csv_string,
+            mimetype="text/csv",
+            headers={"Content-disposition": f"attachment; filename={filename}"},
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating CSV for survey {survey_id}: {e}", exc_info=True)
+        return (
+            render_template("error.html", message="Failed to generate CSV file."),
             500,
         )
 
@@ -632,6 +754,170 @@ def list_all_comments():
             render_template(
                 "error.html",
                 message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
+@responses_routes.route("/users")
+def get_users_overview():
+    """
+    Get user participation overview showing statistics for all users
+    who have completed surveys with pagination.
+
+    Returns:
+        Rendered template with user participation data
+    """
+    try:
+        # Define pagination settings from the app config
+        per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+        # Get current page number from request args, default to 1
+        page = request.args.get("page", 1, type=int)
+        if page < 1:
+            page = 1
+
+        # Get and validate sort parameters
+        sort_by = request.args.get("sort")
+        sort_order = request.args.get("order", "asc")
+
+        # Validate sorting parameters - allow user_id and last_activity
+        allowed_sort_fields = ["user_id", "last_activity"]
+        if sort_by not in allowed_sort_fields:
+            sort_by = None
+
+        allowed_sort_orders = ["asc", "desc"]
+        if sort_order not in allowed_sort_orders:
+            sort_order = "asc"
+
+        # Get paginated user IDs and total count with sorting
+        user_ids, total_users = get_paginated_user_ids(
+            page, per_page, sort_by or "last_activity", sort_order
+        )
+
+        if not user_ids:
+            # No users found, render empty overview
+            logger.info("No user participation data found")
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": 0,
+            }
+            return render_template(
+                "responses/users_overview.html",
+                users=[],
+                sort_by=sort_by,
+                sort_order=sort_order,
+                pagination=pagination,
+            )
+
+        # Get user participation data for the current page of users
+        user_data = get_user_participation_overview(user_ids)
+
+        # Process survey IDs for template display
+        for user in user_data:
+            # Convert successful survey IDs to list
+            if user["successful_survey_ids"]:
+                user["successful_survey_ids_list"] = [
+                    int(sid) for sid in user["successful_survey_ids"].split(",")
+                ]
+            else:
+                user["successful_survey_ids_list"] = []
+
+            # Convert failed survey IDs to list
+            if user["failed_survey_ids"]:
+                user["failed_survey_ids_list"] = [
+                    int(sid) for sid in user["failed_survey_ids"].split(",")
+                ]
+            else:
+                user["failed_survey_ids_list"] = []
+
+        # Calculate pagination info
+        total_pages = math.ceil(total_users / per_page)
+
+        pagination = {
+            "page": page,
+            "per_page": per_page,
+            "total_users": total_users,
+            "total_pages": total_pages,
+        }
+
+        logger.info(
+            f"Retrieved participation data for {len(user_data)} users "
+            f"(page {page} of {total_pages})"
+        )
+
+        return render_template(
+            "responses/users_overview.html",
+            users=user_data,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            pagination=pagination,
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving user participation overview: {str(e)}")
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("survey_retrieval_error", "messages"),
+            ),
+            500,
+        )
+
+
+@responses_routes.route("/users/matrix")
+def users_matrix():
+    """Get detailed matrix view of user participation across surveys with
+    pagination"""
+    try:
+        # Define pagination settings from the app config
+        per_page = current_app.config["PAGINATION_PER_PAGE"]
+
+        # Get current page number from request args, default to 1
+        page = request.args.get("page", 1, type=int)
+        if page < 1:
+            page = 1
+
+        # Get paginated user IDs and total count
+        user_ids, total_users = get_paginated_user_ids(page, per_page)
+
+        if not user_ids:
+            # No users found, render empty matrix
+            matrix_html = "<p>No user data available.</p>"
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": 0,
+            }
+        else:
+            # Get performance data for the current page of users
+            performance_data = get_user_survey_performance_data(user_ids)
+            matrix_html = generate_user_survey_matrix_html(performance_data)
+
+            # Calculate pagination info
+            total_pages = math.ceil(total_users / per_page)
+
+            pagination = {
+                "page": page,
+                "per_page": per_page,
+                "total_users": total_users,
+                "total_pages": total_pages,
+            }
+
+        return render_template(
+            "responses/users_matrix.html",
+            matrix_html=matrix_html,
+            pagination=pagination,
+        )
+    except Exception as e:
+        logger.error(f"Error generating user-survey matrix: {e}", exc_info=True)
+        return (
+            render_template(
+                "error.html",
+                message=get_translation("matrix_generation_error", "messages"),
             ),
             500,
         )

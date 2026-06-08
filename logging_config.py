@@ -4,7 +4,7 @@ import os
 import traceback
 
 
-def setup_logging():
+def setup_logging(level="INFO"):
     """Configures the logging system with console and file handlers."""
 
     try:
@@ -44,7 +44,7 @@ def setup_logging():
                     },
                 },
                 "root": {
-                    "level": "INFO",
+                    "level": level,
                     "handlers": ["console", "file"],
                 },
             }

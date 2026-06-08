@@ -5,7 +5,7 @@ Implements Strategy pattern for flexible pair generation algorithms.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Set, Tuple, Type
+from typing import Dict, List, Optional, Set, Tuple, Type, Union
 
 import numpy as np
 
@@ -105,12 +105,56 @@ class PairGenerationStrategy(ABC):
         Returns:
             tuple: Vector of integers summing to 100, each divisible by 5
         """
-        vector = np.random.rand(size)
-        vector = np.floor(vector / vector.sum() * 20).astype(int)
-        vector[-1] = 20 - vector[:-1].sum()
+        # Maximum value before multiplying by 5 is 19 (to ensure final <= 95)
+        max_value = 19
+        max_attempts = 100
+
+        for attempt in range(max_attempts):
+            vector = np.random.rand(size)
+            vector = np.floor(vector / vector.sum() * 20).astype(int)
+            vector[-1] = 20 - vector[:-1].sum()
+
+            # Check if all values are within the acceptable range
+            if np.all(vector >= 0) and np.all(vector <= max_value):
+                np.random.shuffle(vector)
+                vector = vector * 5
+                return tuple(vector)
+
+        # Fallback: Generate a more evenly distributed vector
+        # This ensures we don't get stuck in an infinite loop
+        base_value = 20 // size
+        remainder = 20 % size
+        vector = np.full(size, base_value)
+
+        # Distribute remainder randomly
+        if remainder > 0:
+            indices = np.random.choice(size, remainder, replace=False)
+            vector[indices] += 1
+
         np.random.shuffle(vector)
         vector = vector * 5
         return tuple(vector)
+
+    def _create_random_vector_sticks(self, size: int = 3) -> tuple:
+        """
+        Generate a random vector using the sticks (broken-stick) method.
+
+        This produces uniformly distributed vectors on the simplex by drawing
+        random breakpoints on the [0, 1] interval and using the resulting
+        segments as proportions of the total budget.
+        """
+        breaks = np.sort(np.random.rand(size - 1))
+        breaks = np.concatenate([[0], breaks, [1]])
+        proportions = np.diff(breaks)
+        vector = np.round(proportions * 100).astype(int)
+
+        diff = 100 - vector.sum()
+        if diff != 0:
+            idx = np.random.randint(0, size)
+            vector[idx] += diff
+
+        vector = np.clip(vector, 0, 100)
+        return tuple(int(v) for v in vector)
 
     def generate_vector_pool(self, size: int, vector_size: int) -> Set[tuple]:
         """
@@ -137,7 +181,11 @@ class PairGenerationStrategy(ABC):
 
     @abstractmethod
     def generate_pairs(
-        self, user_vector: tuple, n: int, vector_size: int
+        self,
+        user_vector: tuple,
+        n: int,
+        vector_size: int,
+        min_score_threshold: Optional[float] = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate pairs based on strategy's logic.
@@ -146,6 +194,7 @@ class PairGenerationStrategy(ABC):
             user_vector: User's ideal budget allocation
             n: Number of pairs to generate
             vector_size: Size of each allocation vector
+            min_score_threshold: Minimum score required for a pair to be included
 
         Returns:
             List of dicts containing {'option_description': vector} pairs,
@@ -162,6 +211,54 @@ class PairGenerationStrategy(ABC):
     def get_option_labels(self) -> Tuple[str, str]:
         """Return labels for the two options being compared."""
         pass
+
+    def is_ranking_based(self) -> bool:
+        """
+        Identify if this strategy uses ranking questions instead of pairs.
+
+        Returns:
+            bool: False by default. Override to return True for
+                ranking-based strategies.
+        """
+        return False
+
+    def _are_absolute_canonical_identical(
+        self,
+        v1: Union[np.ndarray, list, tuple],
+        v2: Union[np.ndarray, list, tuple],
+    ) -> bool:
+        """
+        Check if vectors have identical absolute value canonical forms.
+
+        This detects patterns that are equivalent in terms of absolute
+        distances, preventing degenerate pairs that could compromise
+        research validity.
+
+        Args:
+            v1: First vector to compare
+            v2: Second vector to compare
+
+        Returns:
+            bool: True if vectors have same absolute canonical form
+
+        Examples:
+            Additive inverses are identical:
+            >>> _are_absolute_canonical_identical(
+            ...     [10, -5, -5],
+            ...     [-10, 5, 5],
+            ... )
+            True  # Both become [5, 5, 10] when sorted by absolute value
+
+            Different patterns are distinct:
+            >>> _are_absolute_canonical_identical(
+            ...     [20, -10, -10],
+            ...     [15, -10, -5],
+            ... )
+            False  # Different canonical forms
+        """
+        v1_abs_canonical = tuple(sorted(abs(x) for x in v1))
+        v2_abs_canonical = tuple(sorted(abs(x) for x in v2))
+        return v1_abs_canonical == v2_abs_canonical
 
     def get_option_description(self, **kwargs) -> str:
         """
@@ -185,7 +282,10 @@ class PairGenerationStrategy(ABC):
             logger.warning("Kwargs received: %s", json.dumps(kwargs, indent=2))
             return "Unknown Vector"
 
-        return f"{self._get_metric_name(metric_type)}: {{best: {best_value:.2f}, worst: {worst_value:.2f}}}"
+        metric_name = self._get_metric_name(metric_type)
+        return (
+            f"{metric_name}: {{best: {best_value:.2f}, " f"worst: {worst_value:.2f}}}"
+        )
 
     @abstractmethod
     def _get_metric_name(self, metric_type: str) -> str:

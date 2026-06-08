@@ -1,3 +1,8 @@
+"""
+DEPRECATED: This module generates PDF reports and is maintained only for backward compatibility.
+The new web-based report system uses analysis/report_service.py and application/routes/survey_responses.py.
+"""
+
 import logging
 import os
 from datetime import datetime
@@ -7,7 +12,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import CSS, HTML
 
-from analysis.report_content_generators import (
+from analysis.legacy_pdf_support import (
     generate_detailed_user_choices,
     generate_executive_summary,
     generate_individual_analysis,
@@ -178,8 +183,11 @@ def generate_pdf(
         css_path = os.path.abspath("analysis/templates/report_style.css")
         css = CSS(filename=css_path)
         base_url = os.path.dirname(css_path)
+
+        # Workaround for Alpine Linux WeasyPrint font optimization crash
+        # Disable font optimization to prevent segfault with Hebrew text
         HTML(string=html_content, base_url=base_url).write_pdf(
-            output_path, stylesheets=[css]
+            output_path, stylesheets=[css], optimize_size=()
         )
         logger.info(f"PDF saved to {output_path}")
     except Exception as e:

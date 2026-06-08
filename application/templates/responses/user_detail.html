@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block title %}
+    {% if full_title and survey_id %}
+        {{ get_translation('user_responses_title', 'answers', user_id=user_id, survey_id=survey_id) }}
+    {% else %}
+        {{ get_translation('user_responses_title_short', 'answers', user_id=user_id) }}
+    {% endif %}
+{% endblock %}
+
 {% block additional_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/responses_style.css') }}">
 {% endblock %}

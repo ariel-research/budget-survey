@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from application.exceptions import UnsuitableForStrategyError
 from application.services.pair_generation.base import PairGenerationStrategy
 from application.translations import get_translation
 
@@ -23,9 +22,6 @@ class CyclicShiftStrategy(PairGenerationStrategy):
     3. Creating the second and third pairs by cyclically shifting the
        differences right by one and two positions respectively
 
-    The strategy rejects users whose ideal budget vectors contain zero values
-    by raising UnsuitableForStrategyError.
-
     Example:
         For user_vector = (20, 30, 50):
 
@@ -42,45 +38,32 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         self, user_vector: tuple, vector_size: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Generate two random difference vectors that sum to zero and produce
-        meaningfully different results.
+        Generate two random difference vectors for cyclic shift strategy.
+
+        Creates difference vectors that sum to zero and are not absolute
+        canonical identical, ensuring meaningful comparisons across all
+        cyclic shifts.
 
         Args:
-            user_vector: User's ideal budget allocation
-            vector_size: Size of each vector
+            user_vector: User's ideal budget allocation (must sum to 100)
+            vector_size: Size of each vector (typically 3)
 
         Returns:
-            Tuple of two difference vectors that sum to zero
+            Tuple[np.ndarray, np.ndarray]: Two difference vectors that:
+                - Sum to zero
+                - Are not absolute canonical identical
+                - Produce valid budget vectors when added to user_vector
 
         Raises:
-            ValueError: If unable to generate valid differences after many
-                attempts
+            ValueError: If unable to generate valid differences after 1000 attempts
 
         Example:
-            User vector: [20, 30, 50] (sum = 100)
-            Min value in vector = 20, Max value = 50
-
-            Step 1: Generate first difference vector
-            - For [20, 30, 50]: min=20, max=50, so range is [-20, +50] for all
-            - Ensure at least one element has meaningful difference (>=5)
-            - Generate random diffs: [+10, -15, ?]
-            - Adjust last element so sum = 0: [+10, -15, +5]
-
-            Step 2: Generate second difference vector independently
-            - Generate new random values within constraints
-            - Ensure it's canonically different from first (sorted vectors
-              differ)
-            - Example: [+20, -25, +5] (sorted: [-25, +5, +20])
-            - Must be different from diff1 sorted: [-15, +5, +10]
-
-            Step 3: Validate both vectors
-            - Check meaningful differences (at least one |diff| >= 5)
-            - Ensure resulting vectors are valid
-
-            Result:
-            - diff1 = [+10, -15, +5] → vector1 = [30, 15, 55]
-            - diff2 = [+20, -25, +5] → vector2 = [40, 5, 55]
-            Both vectors sum to 100 and have different patterns
+            >>> user_vector = (30, 40, 30)
+            >>> diff1, diff2 = _generate_random_differences(user_vector, 3)
+            >>> sum(diff1), sum(diff2)  # Both sum to zero
+            (0, 0)
+            >>> tuple(sorted(abs(x) for x in diff1)) != tuple(sorted(abs(x) for x in diff2))
+            True  # Different absolute canonical forms
         """
         user_array = np.array(user_vector)
 
@@ -88,8 +71,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         min_val = min(user_vector)
         max_val = max(user_vector)
 
-        for _ in range(1000):  # Try up to 1000 times
-            # Step 1: Generate first difference vector
+        for _ in range(1000):  # Outer loop attempts
+            # Generate first difference vector
             diff1 = []
             for _ in range(vector_size - 1):  # All except last element
                 min_diff = -min_val
@@ -110,9 +93,8 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             if not (np.all(vec1 >= 0) and np.all(vec1 <= 100) and np.sum(vec1) == 100):
                 continue
 
-            # Step 2: Generate second difference vector independently
-            # Try to generate a canonically different diff2
-            for _ in range(100):  # Inner loop for diff2 generation
+            # Try to find a valid diff2
+            for _ in range(100):  # Inner loop for diff2
                 diff2 = []
                 for _ in range(vector_size - 1):
                     min_diff = -min_val
@@ -128,9 +110,9 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                 if not any(abs(d) >= 5 for d in diff2):
                     continue
 
-                # Check if canonically different (sorted vectors must differ)
-                if np.array_equal(np.sort(diff1), np.sort(diff2)):
-                    continue  # Try again, they're the same pattern
+                # Check absolute canonical form
+                if self._are_absolute_canonical_identical(diff1, diff2):
+                    continue
 
                 # Validate second vector
                 vec2 = user_array + diff2
@@ -138,7 +120,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
                     np.all(vec2 >= 0)
                     and np.all(vec2 <= 100)
                     and np.sum(vec2) == 100
-                    and not np.array_equal(vec1, vec2)  # Ensure vectors differ
+                    and not np.array_equal(vec1, vec2)
                 ):
                     return diff1, diff2
 
@@ -186,28 +168,72 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             and np.sum(vec2) == 100
         )
 
+    def _validate_cyclic_relationships(self, group_pairs: List[Dict]) -> bool:
+        """
+        Validate perfect cyclic relationships within a group.
+
+        Args:
+            group_pairs: List of pairs in a group
+
+        Returns:
+            True if perfect cyclic relationships are maintained,
+            False otherwise
+        """
+        if len(group_pairs) != 3:
+            return False
+
+        # Extract base differences from first pair
+        base_diff1 = np.array(group_pairs[0]["option1_differences"])
+        base_diff2 = np.array(group_pairs[0]["option2_differences"])
+
+        # Verify perfect cyclic shifts for remaining pairs
+        for shift in range(1, 3):
+            expected_diff1 = self._apply_cyclic_shift(base_diff1, shift)
+            expected_diff2 = self._apply_cyclic_shift(base_diff2, shift)
+
+            actual_diff1 = np.array(group_pairs[shift]["option1_differences"])
+            actual_diff2 = np.array(group_pairs[shift]["option2_differences"])
+
+            if not (
+                np.array_equal(actual_diff1, expected_diff1)
+                and np.array_equal(actual_diff2, expected_diff2)
+            ):
+                return False
+
+        return True
+
     def _generate_group(
         self,
         user_vector: tuple,
         vector_size: int,
         group_num: int,
-        used_pairs: set = None,
+        used_differences: set = None,
     ) -> List[Dict[str, tuple]]:
         """
         Generate one group of 3 pairs using cyclic shift pattern.
 
+        Creates 3 pairs by applying cyclic shifts (0, 1, 2 positions) to
+        the same base difference vectors. Tracks uniqueness by difference
+        vectors rather than final budget vectors to maintain cyclic
+        relationships within groups.
+
         Args:
             user_vector: User's ideal budget allocation
             vector_size: Size of each vector
-            group_num: Group number for labeling (1-4)
-            used_pairs: Set of already used pair combinations to avoid
-                duplicates
+            group_num: Group number for labeling
+            used_differences: Set of already used difference combinations
 
         Returns:
-            List of 3 unique pairs for this group
+            List[Dict[str, tuple]]: List of 3 pairs with proper cyclic shifts
+
+        Example:
+            For base differences [-20, +15, +5] and [-30, -10, +40]:
+            - Shift 0: [-20, +15, +5] and [-30, -10, +40]
+            - Shift 1: [+5, -20, +15] and [+40, -30, -10]
+            - Shift 2: [+15, +5, -20] and [-10, +40, -30]
         """
-        if used_pairs is None:
-            used_pairs = set()
+        if used_differences is None:
+            used_differences = set()
 
         user_array = np.array(user_vector)
         max_attempts = 1000
@@ -216,58 +242,80 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             diff1, diff2 = self._generate_random_differences(user_vector, vector_size)
 
             group_pairs = []
-            temp_used = set()  # Track pairs within this group attempt
+            temp_used_diffs = set()
+            all_shifts_valid = True
 
-            # Generate 3 pairs with different shift amounts
             for shift in range(3):
                 shifted_diff1 = self._apply_cyclic_shift(diff1, shift)
                 shifted_diff2 = self._apply_cyclic_shift(diff2, shift)
 
-                # Verify the shifted differences are still valid
+                # Check if shifted patterns are absolute canonical identical
+                if self._are_absolute_canonical_identical(shifted_diff1, shifted_diff2):
+                    all_shifts_valid = False
+                    break
+
+                # Verify shifted differences produce valid vectors
                 if not self._verify_differences(
                     user_vector, shifted_diff1, shifted_diff2
                 ):
+                    all_shifts_valid = False
                     break
 
                 vec1 = user_array + shifted_diff1
                 vec2 = user_array + shifted_diff2
 
-                # Ensure multiples of 5 constraint unless user vector
-                # contains 5
-                if 5 not in user_vector:
-                    vec1 = np.round(vec1 / 5) * 5
-                    vec2 = np.round(vec2 / 5) * 5
+                # Store the actual shifted differences (perfect cyclic relationships)
+                final_diff1 = shifted_diff1
+                final_diff2 = shifted_diff2
 
-                    # Adjust to ensure sum is exactly 100
-                    vec1[-1] = 100 - np.sum(vec1[:-1])
-                    vec2[-1] = 100 - np.sum(vec2[:-1])
-
-                # Convert to integers and tuples
+                # Convert to tuples
                 vec1 = tuple(int(v) for v in vec1)
                 vec2 = tuple(int(v) for v in vec2)
 
-                # Check if rounding made the vectors identical
+                # Check for identical vectors
                 if vec1 == vec2:
-                    break  # Skip this pair and try again
-
-                # Check for duplicates by creating a canonical representation
-                vectors = tuple(sorted([vec1, vec2]))
-                if vectors in used_pairs or vectors in temp_used:
+                    all_shifts_valid = False
                     break
 
-                temp_used.add(vectors)
+                # Check uniqueness by difference vectors (not final vectors)
+                def to_tuple(diff):
+                    return tuple(
+                        diff.tolist() if isinstance(diff, np.ndarray) else diff
+                    )
+
+                diff_pair = tuple(
+                    sorted([to_tuple(final_diff1), to_tuple(final_diff2)])
+                )
+
+                if diff_pair in used_differences or diff_pair in temp_used_diffs:
+                    all_shifts_valid = False
+                    break
+
+                temp_used_diffs.add(diff_pair)
                 pair = {
                     f"Cyclic Pattern A (shift {shift})": vec1,
                     f"Cyclic Pattern B (shift {shift})": vec2,
+                    "option1_differences": (
+                        final_diff1.tolist()
+                        if isinstance(final_diff1, np.ndarray)
+                        else list(final_diff1)
+                    ),
+                    "option2_differences": (
+                        final_diff2.tolist()
+                        if isinstance(final_diff2, np.ndarray)
+                        else list(final_diff2)
+                    ),
                 }
                 group_pairs.append(pair)
 
-            if len(group_pairs) == 3:
-                used_pairs.update(temp_used)
+            if all_shifts_valid and len(group_pairs) == 3:
+                used_differences.update(temp_used_diffs)
                 return group_pairs
 
-        # If we couldn't generate 3 unique pairs after max_attempts
-        logger.warning(f"Could not generate 3 unique pairs for group {group_num}")
+        logger.warning(
+            f"Could not generate 3 valid pairs for group {group_num} "
+            f"after {max_attempts} attempts"
+        )
         return []
 
     def generate_pairs(
@@ -286,27 +334,18 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             List of 12 dictionaries containing comparison pairs
 
         Raises:
-            UnsuitableForStrategyError: If user vector contains zero values
             ValueError: If unable to generate required number of unique pairs
         """
-        # Check for zero values in user vector
-        if 0 in user_vector:
-            logger.info(f"User vector {user_vector} contains zero values")
-            raise UnsuitableForStrategyError(
-                "User vector contains zero values and is unsuitable for "
-                "cyclic shift strategy"
-            )
-
         # Validate inputs
         self._validate_vector(user_vector, vector_size)
 
         all_pairs = []
-        used_pairs = set()
+        used_differences = set()
 
         # Generate 4 groups of 3 pairs each
         for group_num in range(1, 5):
             group_pairs = self._generate_group(
-                user_vector, vector_size, group_num, used_pairs
+                user_vector, vector_size, group_num, used_differences
             )
             all_pairs.extend(group_pairs)
 
@@ -318,7 +357,10 @@ class CyclicShiftStrategy(PairGenerationStrategy):
             max_total_attempts = 400  # 4 groups × 100 attempts each
             while len(all_pairs) < 12 and total_attempts < max_total_attempts:
                 additional_pairs = self._generate_group(
-                    user_vector, vector_size, total_attempts // 100 + 1, used_pairs
+                    user_vector,
+                    vector_size,
+                    total_attempts // 100 + 1,
+                    used_differences,
                 )
                 all_pairs.extend(additional_pairs)
                 total_attempts += 1
@@ -341,7 +383,7 @@ class CyclicShiftStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "cyclic_shift"
+        return "component_symmetry_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         """Get labels for the two options being compared."""
@@ -359,16 +401,11 @@ class CyclicShiftStrategy(PairGenerationStrategy):
         Get column definitions for the cyclic shift response breakdown table.
 
         Returns:
-            Dict with column definitions for pattern preferences.
+            Dict with column definitions for group consistency.
         """
         return {
-            "pattern_a_preference": {
-                "name": get_translation("cyclic_pattern_a", "answers"),
-                "type": "percentage",
-                "highlight": True,
-            },
-            "pattern_b_preference": {
-                "name": get_translation("cyclic_pattern_b", "answers"),
+            "group_consistency": {
+                "name": get_translation("group_consistency", "answers"),
                 "type": "percentage",
                 "highlight": True,
             },

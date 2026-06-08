@@ -55,3 +55,38 @@ def ensure_fresh_report() -> None:
     except Exception as e:
         logger.error(f"Error ensuring fresh report: {e}")
         raise
+
+
+def build_html_table(
+    headers: list,
+    rows: list,
+    table_id: str = "",
+    table_classes: str = "",
+    caption: str = "",
+    title: str = "",
+) -> str:
+    """Build a generic HTML table from headers and rows."""
+    header_html = "".join(f"<th>{h}</th>" for h in headers)
+    rows_html = "".join(f"<tr>{r}</tr>" for r in rows)
+
+    caption_html = (
+        f'<caption class="table-caption">{caption}</caption>' if caption else ""
+    )
+    title_html = f'<h4 class="table-title">{title}</h4>' if title else ""
+    table_id_attr = f'id="{table_id}"' if table_id else ""
+    table_classes_attr = f'class="{table_classes}"' if table_classes else ""
+
+    return f"""
+    <div class="table-container">
+        {title_html}
+        <table {table_id_attr} {table_classes_attr}>
+            {caption_html}
+            <thead>
+                <tr>{header_html}</tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
+    """

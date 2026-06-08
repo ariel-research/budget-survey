@@ -52,8 +52,8 @@ def read_sql_file(file_path):
     return statements
 
 
-def execute_migration(file_path):
-    """Execute the SQL migration file"""
+def execute_migration(file_path, database_name):
+    """Execute the SQL migration file on the specified database"""
     if not os.path.exists(file_path):
         logger.error(f"Migration file not found: {file_path}")
         return False
@@ -65,21 +65,18 @@ def execute_migration(file_path):
             port=int(os.getenv("MYSQL_PORT", "3306")),
             user=os.getenv("MYSQL_USER", "root"),
             password=os.getenv("MYSQL_PASSWORD", ""),
-            database=os.getenv("MYSQL_DATABASE", "survey"),
+            database=database_name,
         )
         cursor = conn.cursor(dictionary=True)
 
-        logger.info(
-            f"Successfully connected to database "
-            f"{os.getenv('MYSQL_DATABASE', 'survey')}"
-        )
+        logger.info(f"Successfully connected to database {database_name}")
 
         # Read and execute SQL statements
         statements = read_sql_file(file_path)
 
         for statement in statements:
             if statement.strip():
-                logger.info(f"Executing: {statement[:50]}...")
+                logger.info(f"Executing on {database_name}: {statement[:50]}...")
                 cursor.execute(statement)
 
                 # If the statement is a SELECT, fetch and display results
@@ -91,11 +88,14 @@ def execute_migration(file_path):
 
         # Commit changes
         conn.commit()
-        logger.info(f"Migration {os.path.basename(file_path)} executed successfully")
+        logger.info(
+            f"Migration {os.path.basename(file_path)} executed successfully "
+            f"on {database_name}"
+        )
         return True
 
     except mysql.connector.Error as err:
-        logger.error(f"Database Error: {err}")
+        logger.error(f"Database Error on {database_name}: {err}")
         if err.errno == 2003:
             logger.error(
                 "Cannot connect to MySQL server. "
@@ -107,11 +107,17 @@ def execute_migration(file_path):
                 f"Host={os.getenv('MYSQL_HOST', 'localhost')}:"
                 f"{os.getenv('MYSQL_PORT', '3306')}, "
                 f"User={os.getenv('MYSQL_USER', 'root')}, "
-                f"Database={os.getenv('MYSQL_DATABASE', 'survey')}"
+                f"Database={database_name}"
             )
+        elif err.errno == 1049:  # Unknown database
+            logger.warning(
+                f"Database {database_name} does not exist. "
+                f"Skipping migration for this database."
+            )
+            return True  # Don't treat this as a failure
         return False
     except Exception as e:
-        logger.error(f"Error executing migration: {str(e)}")
+        logger.error(f"Error executing migration on {database_name}: {str(e)}")
         return False
     finally:
         if "conn" in locals() and conn.is_connected():
@@ -128,6 +134,12 @@ def main():
     parser.add_argument(
         "--port", type=int, help="MySQL port (overrides MYSQL_PORT env variable)"
     )
+    parser.add_argument(
+        "--main-only", action="store_true", help="Run migration only on main database"
+    )
+    parser.add_argument(
+        "--test-only", action="store_true", help="Run migration only on test database"
+    )
 
     args = parser.parse_args()
 
@@ -140,7 +152,35 @@ def main():
         os.environ["MYSQL_PORT"] = str(args.port)
         logger.info(f"Using MySQL port from command line: {args.port}")
 
-    success = execute_migration(args.file)
+    # Define database names
+    main_database = os.getenv("MYSQL_DATABASE", "survey")
+    test_database = "test_survey"
+
+    success = True
+
+    # Run migration on main database
+    if not args.test_only:
+        logger.info("=" * 50)
+        logger.info("RUNNING MIGRATION ON MAIN DATABASE")
+        logger.info("=" * 50)
+        success &= execute_migration(args.file, main_database)
+
+    # Run migration on test database
+    if not args.main_only:
+        logger.info("=" * 50)
+        logger.info("RUNNING MIGRATION ON TEST DATABASE")
+        logger.info("=" * 50)
+        success &= execute_migration(args.file, test_database)
+
+    if success:
+        logger.info("=" * 50)
+        logger.info("ALL MIGRATIONS COMPLETED SUCCESSFULLY")
+        logger.info("=" * 50)
+    else:
+        logger.error("=" * 50)
+        logger.error("SOME MIGRATIONS FAILED")
+        logger.error("=" * 50)
+
     sys.exit(0 if success else 1)
 
 

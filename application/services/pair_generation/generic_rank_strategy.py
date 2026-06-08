@@ -1,0 +1,824 @@
+"""
+Generic ranking-based pair generation strategy.
+Uses utility-model-based scoring and normalized ranking to select optimal pairs.
+"""
+
+import functools
+import logging
+from typing import Dict, List, Optional, Set, Tuple, Type
+
+import numpy as np
+
+from application.services.algorithms.math_utils import (
+    get_cached_simplex_pool,
+    min_max_scale,
+    rankdata,
+)
+from application.services.algorithms.utility_model_base import UtilityModel
+from application.services.pair_generation.base import PairGenerationStrategy
+
+logger = logging.getLogger(__name__)
+
+
+# Scoring methods
+SCORING_MAX_MIN = "max_min"
+SCORING_WEIGHTED_CC = "weighted_cc"
+SCORING_HARMONIC_MEAN = "harmonic_mean"
+
+VALID_SCORING_METHODS = {SCORING_MAX_MIN, SCORING_WEIGHTED_CC, SCORING_HARMONIC_MEAN}
+
+
+def _compute_pair_scores(
+    gains_a: np.ndarray,
+    gains_b: np.ndarray,
+    method: str,
+    lam: float = 0.1,
+) -> np.ndarray:
+    """
+    Compute scores for pairs based on their gains on two utility models.
+
+    Args:
+        gains_a: Array of gains (normalized rank differences) for model A.
+        gains_b: Array of gains (normalized rank differences) for model B.
+        method: Scoring strategy ('max_min', 'weighted_cc', or 'harmonic_mean').
+        lam: Lambda parameter for 'weighted_cc'.
+
+    Returns:
+        Array of scores.
+    """
+    if method == SCORING_MAX_MIN:
+        return np.minimum(gains_a, gains_b)
+    elif method == SCORING_WEIGHTED_CC:
+        min_g = np.minimum(gains_a, gains_b)
+        max_g = np.maximum(gains_a, gains_b)
+        return min_g + lam * (max_g - min_g)
+    elif method == SCORING_HARMONIC_MEAN:
+        # Guard against division by zero, safe to return 0.0 since both gains are 0 in that case
+        sum_g = gains_a + gains_b
+        return np.where(sum_g > 0, (2 * gains_a * gains_b) / sum_g, 0.0)
+    else:
+        raise ValueError(
+            f"Unknown scoring method: '{method}'. "
+            f"Must be one of {VALID_SCORING_METHODS}."
+        )
+
+
+@functools.lru_cache(maxsize=1024)
+def _compute_all_ranked_pairs(
+    user_vector: Tuple[int, ...],
+    vector_size: int,
+    grid_step: int,
+    current_floor: int,
+    utility_model_a_class: Type[UtilityModel],
+    utility_model_b_class: Type[UtilityModel],
+    normalization_method: str,
+    strategy_name: str,
+    scoring_method: str = "max_min",
+    scoring_lambda: float = 0.1,
+) -> List[Tuple[int, int, float]]:
+    """
+    Perform the heavy pure-math computation for pair generation.
+    This function is standalone and cached to improve performance.
+
+    Args:
+        user_vector: The user's ideal budget allocation (tuple).
+        vector_size: Number of elements in each vector.
+        grid_step: Step size for grid generation.
+        current_floor: Minimum value required for each vector component.
+        utility_model_a_class: Class for the first utility model.
+        utility_model_b_class: Class for the second utility model.
+        normalization_method: Method to normalize scores ('ordinal' or 'linear').
+        strategy_name: Unique identifier for this strategy (part of cache key).
+        scoring_method: Method to score pairs ('max_min', 'weighted_cc', 'harmonic_mean').
+        scoring_lambda: Lambda parameter for 'weighted_cc'.
+
+    Returns:
+        List of (index_a, index_b, score) tuples, sorted by score descending.
+    """
+    # 1. Instantiate models (recreating them inside keeps args hashable)
+    model_a = utility_model_a_class()
+    model_b = utility_model_b_class()
+
+    # 2. Generate Pool
+    pool = list(
+        get_cached_simplex_pool(
+            num_variables=vector_size,
+            side_length=100,
+            step=grid_step,
+            min_value=current_floor,
+        )
+    )
+    n_pool = len(pool)
+    if n_pool < 2:
+        return []
+
+    # 3. Calculate Utility Scores
+    # Use list comprehension for speed and then convert to numpy
+    scores_a = np.array(
+        [model_a.calculate(user_vector, candidate) for candidate in pool]
+    )
+    scores_b = np.array(
+        [model_b.calculate(user_vector, candidate) for candidate in pool]
+    )
+
+    # 4. Compute Ranks (Normalized 0-1)
+    if normalization_method == "ordinal":
+        # Percentile-based ranking (0.0 to 1.0)
+        # Higher values indicate a better match (closer to 1.0).
+        if n_pool <= 1:
+            ranks_a, ranks_b = np.ones(n_pool), np.ones(n_pool)
+        else:
+            # rankdata returns 1-based ranks
+            raw_ranks_a = rankdata(scores_a)
+            raw_ranks_b = rankdata(scores_b)
+            ranks_a = (raw_ranks_a - 1) / (n_pool - 1)
+            ranks_b = (raw_ranks_b - 1) / (n_pool - 1)
+    elif normalization_method == "linear":
+        # Min-Max scaling (0.0 to 1.0)
+        if n_pool <= 1:
+            ranks_a, ranks_b = np.ones(n_pool), np.ones(n_pool)
+        else:
+            ranks_a = min_max_scale(scores_a)
+            ranks_b = min_max_scale(scores_b)
+    else:
+        # Fallback for unexpected method
+        return []
+
+    # 5. Compute all valid pairs (MaxMin Logic)
+    # ----------------------------------------
+    # Convert to float32 to reduce memory bandwidth and improve speed.
+    ranks_a_f32 = np.asarray(ranks_a, dtype=np.float32)
+    ranks_b_f32 = np.asarray(ranks_b, dtype=np.float32)
+
+    # Collect valid candidates
+    all_idx_a = []
+    all_idx_b = []
+    all_scores = []
+
+    for i in range(n_pool - 1):
+        # Slice ranks for all remaining candidates (indices > i)
+        ranks_a_rest = ranks_a_f32[i + 1 :]
+        ranks_b_rest = ranks_b_f32[i + 1 :]
+
+        # gains_a: Advantage of 'i' over the 'rest' on Utility Model A
+        gains_a = ranks_a_f32[i] - ranks_a_rest
+
+        # gains_b: Advantage of the 'rest' over 'i' on Utility Model B
+        gains_b = ranks_b_rest - ranks_b_f32[i]
+
+        # Case 1: 'i' is better on Utility Model A, Candidate is better on Utility Model B
+        mask_i_better_on_a = (gains_a > 0) & (gains_b > 0)
+        if np.any(mask_i_better_on_a):
+            indices_rel = np.where(mask_i_better_on_a)[0]
+            all_idx_a.append(np.full(len(indices_rel), i, dtype=np.int32))
+            all_idx_b.append(indices_rel + i + 1)
+            all_scores.append(
+                _compute_pair_scores(
+                    gains_a[indices_rel],
+                    gains_b[indices_rel],
+                    scoring_method,
+                    scoring_lambda,
+                )
+            )
+
+        # Case 2: Candidate is better on Utility Model A, 'i' is better on Utility Model B
+        mask_candidate_better_on_a = (gains_a < 0) & (gains_b < 0)
+        if np.any(mask_candidate_better_on_a):
+            indices_rel = np.where(mask_candidate_better_on_a)[0]
+            all_idx_a.append(indices_rel + i + 1)
+            all_idx_b.append(np.full(len(indices_rel), i, dtype=np.int32))
+            all_scores.append(
+                _compute_pair_scores(
+                    -gains_a[indices_rel],
+                    -gains_b[indices_rel],
+                    scoring_method,
+                    scoring_lambda,
+                )
+            )
+
+    if not all_scores:
+        return []
+
+    # Concatenate results using NumPy
+    final_idx_a = np.concatenate(all_idx_a)
+    final_idx_b = np.concatenate(all_idx_b)
+    final_scores = np.concatenate(all_scores)
+
+    # Sort by score descending
+    sort_indices = np.argsort(final_scores)[::-1]
+
+    # Return as list of (idx_a, idx_b, score) tuples
+    return [
+        (int(final_idx_a[idx]), int(final_idx_b[idx]), float(final_scores[idx]))
+        for idx in sort_indices
+    ]
+
+
+class GenericRankStrategy(PairGenerationStrategy):
+    """
+    A generic engine that generates pairs by comparing two utility models.
+    It ranks all candidates in a grid using both utility models, then selects pairs
+    that maximize the minimum rank (MaxMin).
+
+    Expected Configuration (passed via pair_generation_config['params']):
+        - num_pairs (int): The number of comparison pairs to generate.
+        - min_score_threshold (float): The minimum acceptable utility score for a pair.
+          Evaluated during generation. (Note: Do not place this in suitability_rules).
+    """
+
+    # Step size for discrete simplex grid (5% increments)
+    DEFAULT_GRID_STEP = 5
+
+    # Optimization constants for extreme vector detection
+    CONCENTRATION_THRESHOLD = 70  # Max single-category % before relaxation
+    RELAXATION_STEP = 5  # Step size for floor reduction
+    HIGH_CONCENTRATION_CAP = 5  # Max floor allowed for concentrated vectors
+
+    def __init__(
+        self,
+        utility_model_a_class: Type[UtilityModel],
+        utility_model_b_class: Type[UtilityModel],
+        grid_step: int = None,
+        min_component: int = 10,
+        normalization_method: str = "ordinal",
+        scoring_method: str = "max_min",
+        scoring_lambda: float = 0.1,
+    ):
+        """
+        Initialize the strategy with two utility model classes.
+
+        Args:
+            utility_model_a_class: Class for the first utility model (e.g., L1UtilityModel)
+            utility_model_b_class: Class for the second utility model (e.g., LeontiefUtilityModel)
+            grid_step: Optional step size for grid generation. Defaults to DEFAULT_GRID_STEP.
+            min_component: Minimum value required for each vector component (default 0).
+                           Example: If 10, no category can have less than 10% budget.
+            normalization_method: Method to normalize scores.
+                                 Either 'ordinal' (default) or 'linear'.
+            scoring_method: Method to score pairs.
+                            'max_min', 'weighted_cc', or 'harmonic_mean'.
+            scoring_lambda: Lambda parameter for 'weighted_cc' (default 0.1).
+        """
+        if normalization_method not in ["ordinal", "linear"]:
+            raise ValueError(
+                f"Invalid normalization_method: {normalization_method}. "
+                "Must be 'ordinal' or 'linear'."
+            )
+
+        if scoring_method not in VALID_SCORING_METHODS:
+            raise ValueError(
+                f"Invalid scoring_method: {scoring_method}. "
+                f"Must be one of {list(VALID_SCORING_METHODS)}."
+            )
+
+        if not (0 <= scoring_lambda <= 1):
+            raise ValueError(
+                f"Invalid scoring_lambda: {scoring_lambda}. " "Must be between 0 and 1."
+            )
+
+        self.utility_model_a = utility_model_a_class()
+        self.utility_model_b = utility_model_b_class()
+        self.grid_step = grid_step if grid_step is not None else self.DEFAULT_GRID_STEP
+        self.min_component = min_component
+        self.normalization_method = normalization_method
+        self.scoring_method = scoring_method
+        self.scoring_lambda = scoring_lambda
+
+    def generate_vector_pool(
+        self, size: int, vector_size: int, min_val_override: int = None
+    ) -> Set[tuple]:
+        """
+        Generate a pool of vectors using a discrete simplex grid.
+
+        Args:
+            size: Used as the step size for the grid if > 0, else uses DEFAULT_GRID_STEP.
+            vector_size: Number of elements in each vector.
+            min_val_override: Optional override for min_component.
+
+        Returns:
+            Set of unique vectors summing to 100 on a step=size grid.
+        """
+        step = size if size > 0 else self.DEFAULT_GRID_STEP
+        min_val = (
+            min_val_override if min_val_override is not None else self.min_component
+        )
+        pool = set(
+            get_cached_simplex_pool(
+                num_variables=vector_size,
+                side_length=100,
+                step=step,
+                min_value=min_val,
+            )
+        )
+        logger.debug(
+            f"Generated simplex vector pool (step={step}, min={min_val}) of size {len(pool)}"
+        )
+        return pool
+
+    def generate_pairs(
+        self,
+        user_vector: tuple,
+        n: int,
+        vector_size: int,
+        min_score_threshold: Optional[float] = None,
+    ) -> List[Dict[str, tuple]]:
+        """
+        Generate pairs based on the generic ranking logic.
+
+        Args:
+            user_vector: The user's ideal budget allocation.
+            n: Number of pairs to generate.
+            vector_size: Size of each vector.
+            min_score_threshold: Minimum score required for a pair to be included.
+
+        Returns:
+            List of dicts containing vectors and embedded __metadata__ key
+            with score and strategy information.
+
+        Note on __metadata__:
+            The __metadata__ dictionary contains internal scoring details (e.g., "score")
+            that are useful for analysis or debugging.
+        """
+        self._validate_vector(user_vector, vector_size)
+
+        logger.info(
+            f"Generating {n} pairs using GenericRankStrategy "
+            f"for user_vector: {user_vector}"
+        )
+
+        # Retry logic for dynamic floor (min_component)
+        # Start with configured min_component and reduce by 5 if generation fails
+        # This handles extreme user vectors that cause correlation deadlocks
+
+        # Optimization: If user vector is extreme (violates floor or highly
+        # concentrated), start with a relaxed floor immediately.
+        user_min = min(user_vector)
+        user_max = max(user_vector)
+
+        # We start relaxed if:
+        # 1. User has a component below the required floor
+        # 2. User has a very high concentration which cramps the space
+        if user_min < self.min_component or user_max >= self.CONCENTRATION_THRESHOLD:
+            # Start at the nearest valid step below their min or straight to 0
+            start_min = (user_min // self.RELAXATION_STEP) * self.RELAXATION_STEP
+            current_min = min(self.min_component, start_min)
+            if user_max >= self.CONCENTRATION_THRESHOLD:
+                current_min = min(current_min, self.HIGH_CONCENTRATION_CAP)
+        else:
+            current_min = self.min_component
+
+        # Cache key inputs must be immutable
+        user_vector_tuple = tuple(user_vector)
+        utility_a_class = type(self.utility_model_a)
+        utility_b_class = type(self.utility_model_b)
+
+        top_n = []
+        while True:
+            try:
+                msg = f"Attempting pair generation with min_component={current_min}"
+                logger.debug(msg)
+
+                # Use cached ranking computation
+                ranked_pairs = _compute_all_ranked_pairs(
+                    user_vector=user_vector_tuple,
+                    vector_size=vector_size,
+                    grid_step=self.grid_step,
+                    current_floor=current_min,
+                    utility_model_a_class=utility_a_class,
+                    utility_model_b_class=utility_b_class,
+                    normalization_method=self.normalization_method,
+                    strategy_name=self.get_strategy_name(),
+                    scoring_method=self.scoring_method,
+                    scoring_lambda=self.scoring_lambda,
+                )
+
+                if len(ranked_pairs) >= n:
+                    top_n = ranked_pairs[:n]
+                    if min_score_threshold is not None:
+                        # Check n-th score
+                        nth_score = top_n[-1][2]
+                        if nth_score < min_score_threshold:
+                            from application.exceptions import (
+                                UnsuitableForStrategyError,
+                            )
+
+                            raise UnsuitableForStrategyError(
+                                f"Best available pair score {nth_score:.4f} is below "
+                                f"threshold {min_score_threshold:.4f} for {self.__class__.__name__}"
+                            )
+                    # Found enough valid pairs
+                    break
+
+                # If we found some pairs but not enough, retry with relaxed floor.
+                logger.info(
+                    f"Only found {len(ranked_pairs)}/{n} pairs with "
+                    f"min_component={current_min}. Attempting to relax."
+                )
+
+            except ValueError as e:
+                logger.info(
+                    f"Generation failed with min_component={current_min}: "
+                    f"{str(e)}. Attempting to relax."
+                )
+
+            # Reduce floor and retry
+            current_min -= self.RELAXATION_STEP
+            if current_min < 0:
+                # Exhausted all options
+                logger.warning(
+                    f"Failed to generate valid pairs even with "
+                    f"min_component=0 for vector {user_vector}"
+                )
+                from application.exceptions import UnsuitableForStrategyError
+
+                raise UnsuitableForStrategyError(
+                    "Unable to generate suitable comparison pairs for the "
+                    "provided preferences."
+                )
+
+        # Format output using the successful top_n
+        pool_list = list(
+            get_cached_simplex_pool(
+                num_variables=vector_size,
+                side_length=100,
+                step=self.grid_step,
+                min_value=current_min,
+            )
+        )
+
+        # Recalculate raw scores for formatting (numpy vectorized)
+        scores_a = np.array(
+            [self.utility_model_a.calculate(user_vector_tuple, v) for v in pool_list]
+        )
+        scores_b = np.array(
+            [self.utility_model_b.calculate(user_vector_tuple, v) for v in pool_list]
+        )
+
+        result_pairs = []
+        for idx_a, idx_b, score in top_n:
+            pair = self._create_pair_output(
+                pool_list[idx_a],
+                pool_list[idx_b],
+                score,
+                scores_a[idx_a],
+                scores_a[idx_b],
+                scores_b[idx_a],
+                scores_b[idx_b],
+                True,  # idx_a is always better for model A in _compute_all_ranked_pairs
+            )
+
+            # Add generation metadata
+            if "__metadata__" not in pair:
+                pair["__metadata__"] = {}
+            pair["__metadata__"]["relaxed_min_component"] = current_min
+
+            result_pairs.append(pair)
+
+        self._log_pairs(result_pairs)
+        return result_pairs
+
+    def _create_pair_output(
+        self,
+        vec_a: tuple,
+        vec_b: tuple,
+        score: float,
+        score_a_a: float,
+        score_a_b: float,
+        score_b_a: float,
+        score_b_b: float,
+        vec_a_wins_utility_a: bool,
+    ) -> Dict[str, tuple]:
+        """
+        Create the formatted pair dictionary with correct utility model descriptions.
+
+        Determines which vector represents the "Utility Model A" option and which represents
+        the "Utility Model B" option based on rank comparison.
+
+        Args:
+            vec_a: First vector from the pair.
+            vec_b: Second vector from the pair.
+            score: The MaxMin score for this pair.
+            score_a_a: Score of vec_a on Utility Model A.
+            score_a_b: Score of vec_b on Utility Model A.
+            score_b_a: Score of vec_a on Utility Model B.
+            score_b_b: Score of vec_b on Utility Model B.
+            vec_a_wins_utility_a: True if vec_a outranks vec_b on Utility Model A.
+
+        Returns:
+            Dict containing the two options with descriptive keys and metadata.
+        """
+        # Determine orientation: Which vector is better for Utility Model A?
+        if vec_a_wins_utility_a:
+            # vec_a is better on Utility Model A, vec_b is better on Utility Model B
+            utility_a_vec, utility_b_vec = vec_a, vec_b
+
+            # Utility Model A stats (Best = vec_a, Worst = vec_b)
+            utility_a_best, utility_a_worst = score_a_a, score_a_b
+
+            # Utility Model B stats (Best = vec_b, Worst = vec_a)
+            utility_b_best, utility_b_worst = score_b_b, score_b_a
+        else:
+            # vec_b is better on Utility Model A, vec_a is better on Utility Model B
+            utility_a_vec, utility_b_vec = vec_b, vec_a
+
+            # Utility Model A stats (Best = vec_b, Worst = vec_a)
+            utility_a_best, utility_a_worst = score_a_b, score_a_a
+
+            # Utility Model B stats (Best = vec_a, Worst = vec_b)
+            utility_b_best, utility_b_worst = score_b_a, score_b_b
+
+        return {
+            self.get_option_description(
+                metric_type=self.utility_model_a.name,
+                best_value=utility_a_best,
+                worst_value=utility_a_worst,
+            ): utility_a_vec,
+            self.get_option_description(
+                metric_type=self.utility_model_b.name,
+                best_value=utility_b_best,
+                worst_value=utility_b_worst,
+            ): utility_b_vec,
+            "__metadata__": {
+                "score": round(float(score), 2),
+                "strategy": "max_min_rank",
+            },
+        }
+
+    def _select_pairs(
+        self,
+        vectors: List[tuple],
+        ranks_a: np.ndarray,
+        ranks_b: np.ndarray,
+        target_pairs: int,
+    ) -> List[Tuple[int, int, float]]:
+        """
+        Select optimal pairs maximizing the 'MaxMin' trade-off between utility models.
+
+        Identifies 'complementary' pairs where:
+        1. Vector A is better on Utility Model A (positive Gain A).
+        2. Vector B is better on Utility Model B (positive Gain B).
+        3. The score is min(Gain A, Gain B), favoring balanced trade-offs.
+
+        Example:
+            - Pair 1: Gain A = 0.9, Gain B = 0.1 -> Score = 0.1 (Unbalanced, Low Rank)
+            - Pair 2: Gain A = 0.5, Gain B = 0.5 -> Score = 0.5 (Balanced, High Rank)
+
+        Args:
+            vectors: List of candidate vectors.
+            ranks_a: Normalized ranks (0-1) for Utility Model A.
+            ranks_b: Normalized ranks (0-1) for Utility Model B.
+            target_pairs: Number of pairs to select.
+
+        Returns:
+            List of (index_a, index_b, score) tuples, sorted by score descending.
+        """
+        n = len(vectors)
+        if n < 2:
+            return []
+
+        # PERFORMANCE ARCHITECTURE: HYBRID ITERATIVE VECTORIZATION
+        # --------------------------------------------------------
+        # We need to compare ~10,000 vectors against each other. A standard
+        # Python nested loop would take ~20 seconds. To optimize, we use a
+        # 'Hybrid' approach:
+        #
+        # 1. OUTER LOOP (Python): Iterates through each vector 'i' one by one.
+        #    This keeps memory usage constant (O(N)) and prevents OOM crashes
+        #    on low-RAM hardware.
+        #
+        # 2. INNER "LOOP" (NumPy): Compares vector 'i' against ALL remaining
+        #    candidates simultaneously using NumPy slicing and SIMD hardware
+        #    acceleration.
+        #
+        # Result: Execution time drops from 20s to < 0.9s while remaining
+        # memory-safe.
+
+        # Convert to float32 to reduce memory bandwidth and improve speed.
+        ranks_a_f32 = np.asarray(ranks_a, dtype=np.float32)
+        ranks_b_f32 = np.asarray(ranks_b, dtype=np.float32)
+
+        # High-performance candidate collection using list of NumPy arrays.
+        # (avoids the overhead of creating millions of Python tuples).
+        all_idx_a = []
+        all_idx_b = []
+        all_scores = []
+
+        for i in range(n - 1):
+            # Slice ranks for all remaining candidates (indices > i)
+            ranks_a_rest = ranks_a_f32[i + 1 :]
+            ranks_b_rest = ranks_b_f32[i + 1 :]
+
+            # gains_a: Advantage of 'i' over the 'rest' on Utility Model A
+            gains_a = ranks_a_f32[i] - ranks_a_rest
+
+            # gains_b: Advantage of the 'rest' over 'i' on Utility Model B
+            gains_b = ranks_b_rest - ranks_b_f32[i]
+
+            # Case 1: 'i' is better on Utility Model A, Candidate is better on Utility Model B
+            mask_i_better_on_a = (gains_a > 0) & (gains_b > 0)
+            if np.any(mask_i_better_on_a):
+                # Get indices relative to the slice
+                indices_rel = np.where(mask_i_better_on_a)[0]
+                all_idx_a.append(np.full(len(indices_rel), i, dtype=np.int32))
+                all_idx_b.append(indices_rel + i + 1)
+                all_scores.append(
+                    _compute_pair_scores(
+                        gains_a[indices_rel],
+                        gains_b[indices_rel],
+                        self.scoring_method,
+                        self.scoring_lambda,
+                    )
+                )
+
+            # Case 2: Candidate is better on Utility Model A, 'i' is better on Utility Model B
+            mask_candidate_better_on_a = (gains_a < 0) & (gains_b < 0)
+            if np.any(mask_candidate_better_on_a):
+                # Get indices relative to the slice
+                indices_rel = np.where(mask_candidate_better_on_a)[0]
+                all_idx_a.append(indices_rel + i + 1)
+                all_idx_b.append(np.full(len(indices_rel), i, dtype=np.int32))
+                all_scores.append(
+                    _compute_pair_scores(
+                        -gains_a[indices_rel],
+                        -gains_b[indices_rel],
+                        self.scoring_method,
+                        self.scoring_lambda,
+                    )
+                )
+
+        if not all_scores:
+            return []
+
+        # Concatenate and sort using NumPy
+        final_idx_a = np.concatenate(all_idx_a)
+        final_idx_b = np.concatenate(all_idx_b)
+        final_scores = np.concatenate(all_scores)
+
+        # Sort by score descending
+        sort_indices = np.argsort(final_scores)[::-1]
+
+        selected: List[Tuple[int, int, float]] = []
+        used_indices: Set[int] = set()
+
+        for idx in sort_indices:
+            if len(selected) >= target_pairs:
+                break
+
+            a_idx = int(final_idx_a[idx])
+            b_idx = int(final_idx_b[idx])
+            score = float(final_scores[idx])
+
+            if a_idx in used_indices or b_idx in used_indices:
+                continue
+
+            selected.append((a_idx, b_idx, score))
+            used_indices.add(a_idx)
+            used_indices.add(b_idx)
+
+        return selected
+
+    def _calculate_utility_scores(
+        self, vector_pool: Set[tuple], user_vector: tuple
+    ) -> Tuple[np.ndarray, np.ndarray, List[tuple]]:
+        """
+        Calculate raw utility scores for all vectors in the pool.
+
+        Args:
+            vector_pool: Set of candidate vectors.
+            user_vector: The user's ideal vector.
+
+        Returns:
+            Tuple containing:
+            - Array of scores for utility model A
+            - Array of scores for utility model B
+            - List of vectors (ordered corresponding to the arrays)
+
+        Example:
+            User Vector: (50, 50)
+            Pool: [(50, 50), (100, 0)]
+
+            Utility Model A (L1, returns negative distance):
+                (50,50) vs (50,50)   -> dist=0   -> score=0
+                (50,50) vs (100,0)   -> dist=100 -> score=-100
+
+            Output:
+                scores_a: [0, -100]
+                scores_b: [1.0, 0.0] (assuming Leontief for B)
+                pool_list: [(50, 50), (100, 0)]
+        """
+        # Convert set to list for stable ordering and indexing
+        pool_list = list(vector_pool)
+
+        scores_a = []
+        scores_b = []
+
+        for candidate in pool_list:
+            scores_a.append(self.utility_model_a.calculate(user_vector, candidate))
+            scores_b.append(self.utility_model_b.calculate(user_vector, candidate))
+
+        return np.array(scores_a), np.array(scores_b), pool_list
+
+    def _compute_ranks(
+        self, scores_a: np.ndarray, scores_b: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Convert raw utility scores into normalized values (0.0 to 1.0).
+        Higher values indicate a better match (closer to 1.0).
+
+        Args:
+            scores_a: Raw scores from utility model A.
+            scores_b: Raw scores from utility model B.
+
+        Returns:
+            Tuple of (normalized_ranks_a, normalized_ranks_b)
+        """
+        if self.normalization_method == "ordinal":
+            return self._ordinal_normalization(scores_a, scores_b)
+        elif self.normalization_method == "linear":
+            return self._linear_normalization(scores_a, scores_b)
+
+        raise ValueError(
+            f"Unsupported normalization method: {self.normalization_method}"
+        )
+
+    def _ordinal_normalization(
+        self, scores_a: np.ndarray, scores_b: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Percentile-based ranking (0.0 to 1.0).
+        Maps scores to their relative rank in the distribution.
+
+        Example:
+            Scores: [10, 50, 20]
+            Ranks:  [1, 3, 2]
+            Norm:   [(1-1)/2, (3-1)/2, (2-1)/2] -> [0.0, 1.0, 0.5]
+        """
+        n = len(scores_a)
+        if n <= 1:
+            # If only 0 or 1 item, rank is max (1.0)
+            return np.ones(n), np.ones(n)
+
+        # rankdata returns 1-based ranks
+        raw_ranks_a = rankdata(scores_a)
+        raw_ranks_b = rankdata(scores_b)
+
+        return (raw_ranks_a - 1) / (n - 1), (raw_ranks_b - 1) / (n - 1)
+
+    def _linear_normalization(
+        self, scores_a: np.ndarray, scores_b: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Min-Max scaling (0.0 to 1.0).
+        Linearly scales scores between the observed minimum and maximum.
+
+        Example:
+            Scores: [10, 50, 20]
+            Min/Max: 10, 50
+            Norm:   [(10-10)/40, (50-10)/40, (20-10)/40] -> [0.0, 1.0, 0.25]
+        """
+        n = len(scores_a)
+        if n <= 1:
+            return np.ones(n), np.ones(n)
+
+        return min_max_scale(scores_a), min_max_scale(scores_b)
+
+    def get_strategy_name(self) -> str:
+        """
+        Return unique identifier for this strategy.
+        Dynamically generated from utility model names.
+        """
+        return f"{self.utility_model_a.name}_vs_{self.utility_model_b.name}_rank_comparison"
+
+    def get_option_labels(self) -> Tuple[str, str]:
+        """
+        Return human-readable labels for the two options being compared in the 'Survey Summary' Table.
+        Dynamically generated from utility model names via the translation system.
+        """
+        return (
+            f"{self.utility_model_a.name} (Rank)",
+            f"{self.utility_model_b.name} (Rank)",
+        )
+
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the survey response breakdown table.
+        Dynamically generated from utility model names.
+        """
+        return {
+            self.utility_model_a.name: {
+                "name": self.utility_model_a.name,
+                "type": "percentage",
+                "highlight": True,
+            },
+            self.utility_model_b.name: {
+                "name": self.utility_model_b.name,
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
+
+    def _get_metric_name(self, utility_model_identifier: str) -> str:
+        """
+        Get the internal identifier for a utility model to be stored in the DB.
+        """
+        return utility_model_identifier

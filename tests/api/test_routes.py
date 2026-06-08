@@ -182,3 +182,134 @@ def test_panel4all_status_codes(app):
     assert "ATTENTION_FAILED" in app.config["PANEL4ALL"]["STATUS"]
     # assert app.config["PANEL4ALL"]["STATUS"]["COMPLETE"] == "finish"
     # assert app.config["PANEL4ALL"]["STATUS"]["ATTENTION_FAILED"] == "attentionfilter"
+
+
+def test_get_users_overview_route(client, monkeypatch):
+    """Tests the users overview endpoint with sample data."""
+
+    # Mock user participation data
+    mock_user_data = [
+        {
+            "user_id": "user123",
+            "successful_surveys_count": 2,
+            "failed_surveys_count": 1,
+            "last_activity": "2024-01-15 10:30:00",
+            "successful_survey_ids": "1,3",
+            "failed_survey_ids": "2",
+        },
+        {
+            "user_id": "user456",
+            "successful_surveys_count": 1,
+            "failed_surveys_count": 0,
+            "last_activity": "2024-01-14 09:15:00",
+            "successful_survey_ids": "1",
+            "failed_survey_ids": "",
+        },
+    ]
+
+    monkeypatch.setattr(
+        "database.queries.get_user_participation_overview", lambda: mock_user_data
+    )
+
+    # Test basic route
+    response = client.get("/surveys/users")
+    assert response.status_code == 200
+
+
+def test_get_users_overview_with_sorting(client, monkeypatch):
+    """Tests users overview endpoint with sorting parameters."""
+
+    mock_user_data = [
+        {
+            "user_id": "user123",
+            "successful_surveys_count": 2,
+            "failed_surveys_count": 1,
+            "last_activity": "2024-01-15 10:30:00",
+            "successful_survey_ids": "1,3",
+            "failed_survey_ids": "2",
+        }
+    ]
+
+    monkeypatch.setattr(
+        "database.queries.get_user_participation_overview", lambda: mock_user_data
+    )
+
+    # Test with valid sort parameters
+    response = client.get("/surveys/users?sort=user_id&order=desc")
+    assert response.status_code == 200
+
+    response = client.get("/surveys/users?sort=last_activity&order=asc")
+    assert response.status_code == 200
+
+
+def test_get_users_overview_empty_data(client, monkeypatch):
+    """Tests users overview endpoint when query succeeds but returns no data."""
+
+    # Test both None and empty list scenarios
+    for empty_result in [None, []]:
+        monkeypatch.setattr(
+            "database.queries.get_user_participation_overview", lambda: empty_result
+        )
+
+        response = client.get("/surveys/users")
+        assert response.status_code == 200
+
+
+def test_download_survey_responses_csv_success(client, mocker):
+    """
+    Test successful CSV download for a survey with responses.
+    """
+    # 1. Mock the function that gets the data to return a predictable structure
+    mock_data = {
+        "responses": [
+            {
+                "user_id": "test_user_1",
+                "survey_response_id": 101,
+                "response_created_at": "2025-09-21 12:00:00",
+                "optimal_allocation": "[50, 50]",
+                "pair_number": 1,
+                "option_1": "[45, 55]",
+                "option_2": "[55, 45]",
+                "user_choice": 1,
+                "raw_user_choice": 1,
+                "option1_strategy": "test",
+                "option2_strategy": "test",
+            }
+        ]
+    }
+    mocker.patch(
+        "application.routes.survey_responses.get_user_responses", return_value=mock_data
+    )
+
+    # 2. Make a request to the new endpoint
+    response = client.get("/surveys/1/responses/download")
+
+    # 3. Assert the response is correct
+    assert response.status_code == 200
+    assert response.mimetype == "text/csv"
+    assert (
+        "attachment; filename=survey_1_responses.csv"
+        in response.headers["Content-disposition"]
+    )
+
+    # 4. Check the content of the CSV
+    csv_content = response.data.decode("utf-8")
+    assert "user_id,survey_response_id,response_created_at" in csv_content
+    assert "test_user_1,101,2025-09-21 12:00:00" in csv_content
+
+
+def test_download_survey_responses_csv_no_data(client, mocker):
+    """
+    Test CSV download attempt for a survey with no responses (404).
+    """
+    # 1. Mock the data-fetching function to return an empty structure
+    mocker.patch(
+        "application.routes.survey_responses.get_user_responses",
+        return_value={"responses": []},
+    )
+
+    # 2. Make the request
+    response = client.get("/surveys/99/responses/download")
+
+    # 3. Assert it returns a 404 Not Found status
+    assert response.status_code == 404

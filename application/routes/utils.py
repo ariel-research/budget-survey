@@ -1,6 +1,7 @@
+from typing import Optional
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from flask import Blueprint, jsonify, redirect, request, url_for
+from flask import Blueprint, current_app, jsonify, redirect, request, url_for
 
 from application.translations import (
     TRANSLATIONS,
@@ -8,6 +9,7 @@ from application.translations import (
     get_translation,
     set_language,
 )
+from database.db import get_db
 
 util_routes = Blueprint("utils", __name__)
 
@@ -18,6 +20,51 @@ def before_request():
     lang = request.args.get("lang")
     if lang in ["en", "he"]:
         set_language(lang)
+
+
+@util_routes.route("/health")
+def health_check():
+    """
+    Health check endpoint for Docker and monitoring.
+    Returns 200 OK if the application and database are healthy.
+    """
+    try:
+        # Test database connection
+        db = get_db()
+        if db and db.is_connected():
+            return (
+                jsonify(
+                    {
+                        "status": "healthy",
+                        "database": "connected",
+                        "application": "running",
+                    }
+                ),
+                200,
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "status": "unhealthy",
+                        "database": "disconnected",
+                        "application": "running",
+                    }
+                ),
+                503,
+            )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "status": "unhealthy",
+                    "database": "error",
+                    "application": "running",
+                    "error": str(e),
+                }
+            ),
+            503,
+        )
 
 
 @util_routes.route("/get_messages")
@@ -58,5 +105,25 @@ def change_language():
 
     new_query = urlencode(query_params, doseq=True)
     return redirect(
-        f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{new_query}"
+        f"{parsed_url.scheme}://{parsed_url.netloc}" f"{parsed_url.path}?{new_query}"
     )
+
+
+def redirect_to_panel4all(
+    user_id: str, survey_id: str, status: str = "finish", q: str = None
+) -> str:
+    """Generate Panel4All redirect URL with specified status."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if q is not None:
+        params["q"] = q
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"
+
+
+def redirect_to_panel4all_with_pts(
+    user_id: str, survey_id: str, status: str, pts: Optional[str] = None
+) -> str:
+    """Generate Panel4All redirect URL with PTS parameter."""
+    params = {"surveyID": survey_id, "userID": user_id, "status": status}
+    if pts is not None:
+        params["PTS"] = pts
+    return f"{current_app.config['PANEL4ALL']['BASE_URL']}?{urlencode(params)}"

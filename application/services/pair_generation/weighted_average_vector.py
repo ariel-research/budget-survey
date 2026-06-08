@@ -189,7 +189,7 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
 
     def get_strategy_name(self) -> str:
         """Get the unique identifier for this strategy."""
-        return "weighted_average_vector"
+        return "star_shaped_preference_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         return (
@@ -209,6 +209,25 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             return "Random Vector"
         return f"Average Weighted Vector: {int(weight * 100)}%"
 
+    def get_table_columns(self) -> Dict[str, Dict]:
+        """
+        Get column definitions for the weighted average vector response breakdown table.
+
+        Returns:
+            Dict with column definitions for Random and Weighted Average options.
+        """
+        return {
+            "option1": {
+                "name": get_translation("random", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+            "option2": {
+                "name": get_translation("weighted_average", "answers"),
+                "type": "percentage",
+                "highlight": True,
+            },
+        }
 
 
 if __name__ == "__main__":
