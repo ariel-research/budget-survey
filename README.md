@@ -4,8 +4,7 @@ An open-source, high-rigor research framework designed to empirically validate h
 
 This repository contains the official production infrastructure and analysis suite for the paper: **"What Are People's Actual Utility Functions in Budget Aggregation?" (AAMAS GAIW 2026)**.
 
-**🚀 [Try it live](https://survey.csariel.xyz)**
-
+**🚀 [Try it live](https://survey.csariel.xyz) | 📄 [Read the Paper (arXiv)](https://arxiv.org/abs/2510.24872)**
 ---
 
 ## Quick Start
@@ -50,6 +49,7 @@ cp .env.example .env  # Edit this file to set your Database credentials
 - [Modifying the Survey](#modifying-the-survey)
 - [Analysis](#analysis)
 - [Algorithm](#algorithm)
+- [Citation](#citation)
 
 ### 🛠 For Developers
 
@@ -1659,3 +1659,20 @@ To modify displayed text:
 - **Translations**: `application/translations.py` (Hebrew/English)
 - **Templates**: `templates/` directory with translation key usage
 - **Dynamic content**: Loaded from database based on user language preference
+
+## Citation
+
+If you use this platform, code, or data in your research, please cite our paper:
+
+```bibtex
+@article{amster2026what,
+  title={What Are People's Actual Utility Functions in Budget Aggregation?},
+  author={Amster, Ayelet and Akirav, Lioz and Gonen, Rica and Segal-Halevi, Erel},
+  journal={arXiv preprint arXiv:2510.24872},
+  year={2026},
+  eprint={2510.24872},
+  archivePrefix={arXiv},
+  primaryClass={cs.GT},
+  note={Presented at AAMAS GAIW 2026}
+}
+```
