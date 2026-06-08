@@ -1,6 +1,8 @@
 # Budget Survey Application
 
-A research tool for collecting data on budget allocation preferences using multiple algorithmic strategies. Users create ideal budget allocations, then compare pairs of alternatives to understand decision-making patterns.
+An open-source, high-rigor research framework designed to empirically validate human utility models and preference aggregation strategies. The platform elicits a subject's ideal budget allocation and dynamically generates pairwise comparison tournaments to map real-world decision-making patterns at scale.
+
+This repository contains the official production infrastructure and analysis suite for the paper: **"What Are People's Actual Utility Functions in Budget Aggregation?" (AAMAS GAIW 2026)**.
 
 **🚀 [Try it live](https://survey.csariel.xyz)**
 
