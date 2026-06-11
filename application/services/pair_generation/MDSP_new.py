@@ -1,4 +1,4 @@
-"""Implementation of the multi-dimensional single-peaked (MDSP) strategy."""
+"""Implementation of the updated original MDSP strategy with weights and multiples of 5."""
 
 import logging
 import random
@@ -13,17 +13,77 @@ logger = logging.getLogger(__name__)
 
 
 class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
-    """Generate pairs that test multi-dimensional single-peaked preferences."""
+    """
+        Multi-Dimensional Single-Peaked (MDSP) Pair Generation Strategy.
 
+        This algorithm generates pairs of budget allocation vectors (Far vs. Near)
+        to test user preferences under MDSP utility functions. It ensures that the
+        'Near' vector is strictly closer to the user's ideal peak than the 'Far' vector
+        on a localized dimension pair, reducing cognitive load by keeping all other
+        dimensions completely frozen.
+
+        Algorithm Steps:
+        1. Generate a valid random budget vector (Far), rounded to multiples of 5.
+        2. Compare 'Far' to the 'User Ideal' to find 'over-budget' and 'under-budget' dimensions.
+        3. Randomly select exactly one over-budget dimension (i) and one under-budget dimension (j).
+        4. Calculate the maximum valid budget transfer (Max Delta) from i to j without
+           overshooting the User's Ideal in either dimension.
+        5. Multiply Max Delta by a predefined weight (e.g., 0.1 to 0.9) to get the exact Target Delta.
+        6. Transfer the Target Delta from i to j to create a continuous 'Near' vector.
+        7. Round the 'Near' vector to multiples of 5 and balance it to strictly sum to 100.
+        8. Filter out collisions (e.g., if Near == Far) to ensure unique data points.
+
+        Example:
+            User Ideal : (40, 30, 30)
+            Random Far : (70, 25, 5)
+            Weight     : 0.7
+
+            Step A: Identify dimensions & Max Delta
+                - Dim 1 (Over) : 70 vs 40 -> Max we can take is 30
+                - Dim 3 (Under): 5 vs 30  -> Max we can give is 25
+                - Max Delta = min(30, 25) = 25
+                - Dim 2 is completely frozen at 25.
+
+            Step B: Apply Weight
+                - Target Delta = 25 * 0.7 = 17.5
+
+            Step C: Continuous Transfer
+                - Exact Near = (70 - 17.5, 25, 5 + 17.5) = (52.5, 25, 22.5)
+
+            Step D: Round to 5 & Balance
+                - Rounding: 52.5 -> 50, 25 -> 25, 22.5 -> 20 (Sum: 95)
+                - Balancing: We need 5 more to reach 100. Both Dim 1 and Dim 3 lost 2.5
+                  due to rounding down. The algorithm optimally returns the 5 to Dim 1.
+                - Final Near = (55, 25, 20)
+
+            Actual Displayed Delta: round(17.5) = 18.
+        """
     MAX_ATTEMPTS = 10000
+    WEIGHTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    def _round_to_5_and_balance(self, vector: np.ndarray) -> np.ndarray:
+        """Round vector elements to nearest 5 while maintaining sum of 100."""
+        rounded = np.round(vector / 5) * 5
+        diff = int(100 - np.sum(rounded))
+
+        if diff != 0:
+            errors = vector - rounded
+            while diff > 0:
+                idx = np.argmax(errors)
+                rounded[idx] += 5
+                errors[idx] -= 5
+                diff -= 5
+            while diff < 0:
+                idx = np.argmin(errors)
+                rounded[idx] -= 5
+                errors[idx] += 5
+                diff += 5
+
+        return rounded.astype(int)
+
     def create_random_vector_unrestricted(self, size: int = 3) -> tuple:
-        """
-        Generate a random vector summing to 100 without divisibility limits.
-
-        Used by MDSP to broaden the candidate space for extreme user vectors.
-        """
+        """Generate a random vector summing to 100."""
         max_attempts = 100
-
         for _ in range(max_attempts):
             vector = np.random.rand(size)
             vector = np.floor(vector / vector.sum() * 100).astype(int)
@@ -32,156 +92,126 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
             if np.all(vector >= 0) and np.all(vector <= 100):
                 np.random.shuffle(vector)
                 return tuple(int(v) for v in vector)
-
         raise ValueError("Could not generate valid random vector")
 
     def generate_pairs(
             self, user_vector: tuple, n: int = 10, vector_size: int = 3
     ) -> List[Dict[str, tuple]]:
         """
-        Generate MDSP test pairs using a constructive mathematical approach.
-
-        Instead of rejection sampling, this constructs a 'near' vector directly
-        from a random 'far' vector by transferring budget strictly toward the user's peak.
-
-        Args:
-            user_vector: The user's ideal budget allocation (peak).
-            n: Number of pairs to generate (default: 10).
-            vector_size: Number of dimensions in the allocation vectors.
-
-        Returns:
-            List of dicts mapping option descriptions to allocation vectors.
-
-        Raises:
-            ValueError: If unable to generate the required number of pairs.
+        Generate MDSP pairs transferring budget between two dimensions,
+        scaled by a specific weight sequence and rounded to 5.
         """
         self._validate_vector(user_vector, vector_size)
+        user_vector_array = np.array(user_vector)
 
         pairs: List[Dict[str, tuple]] = []
-        seen_pairs: Set[Tuple[tuple, tuple]] = set()
+        seen_vectors: Set[tuple] = {user_vector}
+        used_near_vectors: Set[tuple] = set()
 
         attempts = 0
         max_attempts = self.MAX_ATTEMPTS
-        peak = user_vector
 
         while len(pairs) < n and attempts < max_attempts:
             attempts += 1
+            try:
+                q_far_raw = self.create_random_vector_unrestricted(vector_size)
+                q_far = tuple(self._round_to_5_and_balance(np.array(q_far_raw)))
 
-            # 1. Sample a random 'far' allocation
-            q_far = self.create_random_vector_unrestricted(vector_size)
+                if q_far in seen_vectors:
+                    continue
 
-            # Avoid using the peak itself as the starting point
-            if q_far == peak:
-                continue
+                over_budget_dims = [d for d in range(vector_size) if q_far[d] > user_vector[d]]
+                under_budget_dims = [d for d in range(vector_size) if q_far[d] < user_vector[d]]
 
-            # 2. Identify over-budget and under-budget dimensions relative to the peak
-            over_budget_dims = [d for d in range(vector_size) if q_far[d] > peak[d]]
-            under_budget_dims = [d for d in range(vector_size) if q_far[d] < peak[d]]
+                if not over_budget_dims or not under_budget_dims:
+                    continue
 
-            if not over_budget_dims or not under_budget_dims:
-                continue
+                i = random.choice(over_budget_dims)
+                j = random.choice(under_budget_dims)
+                max_delta = min(q_far[i] - user_vector[i], user_vector[j] - q_far[j])
 
-            # 3. Choose one dimension to decrease and one to increase
-            i = random.choice(over_budget_dims)
-            j = random.choice(under_budget_dims)
+                if max_delta < 1:
+                    continue
 
-            # 4. Calculate maximum valid integer transfer to avoid crossing the peak
-            max_delta = min(q_far[i] - peak[i], peak[j] - q_far[j])
+                x_weight = self.WEIGHTS[len(pairs)]
+                target_delta = max_delta * x_weight
 
-            # Ensure we can make a strictly positive integer improvement
-            if max_delta < 1:
-                continue
+                exact_near = np.array(q_far, dtype=float)
+                exact_near[i] -= target_delta
+                exact_near[j] += target_delta
 
-            # 5. Sample a random transfer amount (Integer)
-            delta = random.randint(1, max_delta)
+                q_near = tuple(self._round_to_5_and_balance(exact_near))
 
-            # 6. Construct the 'near' allocation
-            q_near_list = list(q_far)
-            q_near_list[i] -= delta
-            q_near_list[j] += delta
-            q_near = tuple(q_near_list)
+                actual_delta = int(round(target_delta))
 
-            candidate_pair = (q_far, q_near)
+                if q_near == q_far or q_near in used_near_vectors or q_near in seen_vectors:
+                    continue
 
-            # 7. Check for uniqueness
-            if candidate_pair in seen_pairs:
-                continue
+                pair_entry = {
+                    self.get_option_description(role="far"): q_far,
+                    self.get_option_description(role="near", weight=x_weight, delta=actual_delta): q_near,
+                }
+                pairs.append(pair_entry)
 
-            seen_pairs.add(candidate_pair)
+                seen_vectors.add(q_far)
+                used_near_vectors.add(q_near)
+                seen_vectors.add(q_near)
 
-            pair_entry = {
-                self.get_option_description(role="far"): q_far,
-                self.get_option_description(role="near"): q_near,
-            }
-            pairs.append(pair_entry)
+            except ValueError:
+                pass
 
         if len(pairs) < n:
             raise ValueError(
-                f"Could not generate {n} unique MDSP pairs after "
-                f"{max_attempts} attempts."
+                f"Could not generate {n} unique MDSP pairs after {max_attempts} attempts."
             )
 
         random.shuffle(pairs)
-
-        # Logging success rate - it should be very close to 100% now!
-        success_rate = 100 * len(pairs) / attempts if attempts > 0 else 0
-        logger.info(
-            "Generated %d MDSP pairs in %d attempts using %s (success rate: %.2f%%)",
-            len(pairs),
-            attempts,
-            self.__class__.__name__,
-            success_rate,
-        )
-        self._log_pairs(pairs)
         return pairs
 
     def get_strategy_name(self) -> str:
-        """Return the strategy identifier."""
         return "multi_dimensional_single_peaked_test"
 
     def get_option_labels(self) -> Tuple[str, str]:
         return (
-            get_translation("far_vector", "answers"),
-            get_translation("near_vector", "answers"),
+            "Far",
+            "Near",
         )
 
     def get_option_description(self, **kwargs) -> str:
+        """Return label with Weight and Delta for Near vector."""
         role = kwargs.get("role")
         if role == "far":
-            return "Further Vector"
-        return "Nearer Vector"
+            return "Far"
+
+        weight = kwargs.get("weight")
+        delta = kwargs.get("delta")
+        return f"Near (Weight: {weight}, Delta: {delta})"
 
     def _get_metric_name(self, metric_type: str) -> str:
-        """Provide metric display name required by the base class."""
-        return "Vector"
+        if metric_type == "delta":
+            return "Near Vector"
+        return "Far Vector"
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     strategy = MultiDimensionalSinglePeakedStrategy()
+    user_peak = (40, 30, 30)
 
-    user_peak = (20, 30, 50)
-
-    print(f"\n--- Testing MDSP Strategy ---")
+    print("Starting Original MDSP Strategy Test (with new logic)...\n")
     print(f"User Peak (Ideal): {user_peak}")
     print("-" * 50)
 
     try:
-        generated_pairs = strategy.generate_pairs(user_vector=user_peak, n=5, vector_size=3)
+        generated_pairs = strategy.generate_pairs(user_vector=user_peak, n=10, vector_size=3)
 
-        print("\n--- Results ---")
+        print("\nResults:")
         for i, pair in enumerate(generated_pairs, 1):
-            far_vec = pair["Further Vector"]
-            near_vec = pair["Nearer Vector"]
-
-            diff = tuple(n - f for f, n in zip(far_vec, near_vec))
-
-            print(f"Pair {i}:")
-            print(f"  Far Vector  (q_far) : {far_vec}  | Sum: {sum(far_vec)}")
-            print(f"  Near Vector (q_near): {near_vec}  | Sum: {sum(near_vec)}")
-            print(f"  Difference          : {diff}   (+\\-)")
-            print("-" * 50)
+            print(f"--- Pair {i} ---")
+            for option_name, vector in pair.items():
+                clean_vector = tuple(int(x) for x in vector)
+                print(f"{option_name}: {clean_vector}")
 
     except Exception as e:
         print(f"Error generating pairs: {e}")
