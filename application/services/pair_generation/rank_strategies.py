@@ -7,6 +7,7 @@ import logging
 
 from application.services.algorithms.utility_models import (
     AntiLeontiefUtilityModel,
+    CosineSimilarityUtilityModel,
     KLUtilityModel,
     L1UtilityModel,
     L2UtilityModel,
@@ -71,6 +72,66 @@ class L2VsLeontiefRankStrategy(GenericRankStrategy):
         super().__init__(
             utility_model_a_class=L2UtilityModel,
             utility_model_b_class=LeontiefUtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+            normalization_method="ordinal",
+        )
+
+
+class CosineSimilarityVsL1RankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing cosine similarity against L1 distance (Sum).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=CosineSimilarityUtilityModel,
+            utility_model_b_class=L1UtilityModel,
+            grid_step=grid_step,
+            min_component=0,
+            normalization_method="ordinal",
+        )
+
+
+class CosineSimilarityVsL2RankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing cosine similarity against L2 distance (Root Sum Squared).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=CosineSimilarityUtilityModel,
+            utility_model_b_class=L2UtilityModel,
+            grid_step=grid_step,
+            min_component=0,
+            normalization_method="ordinal",
+        )
+
+
+class CosineSimilarityVsLeontiefRankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing cosine similarity against Leontief ratio (Ratio).
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=CosineSimilarityUtilityModel,
+            utility_model_b_class=LeontiefUtilityModel,
+            grid_step=grid_step,
+            min_component=10,
+            normalization_method="ordinal",
+        )
+
+
+class CosineSimilarityVsKLRankStrategy(GenericRankStrategy):
+    """
+    Strategy comparing cosine similarity against KL divergence.
+    """
+
+    def __init__(self, grid_step: int = None):
+        super().__init__(
+            utility_model_a_class=CosineSimilarityUtilityModel,
+            utility_model_b_class=KLUtilityModel,
             grid_step=grid_step,
             min_component=10,
             normalization_method="ordinal",

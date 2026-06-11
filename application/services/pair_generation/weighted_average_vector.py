@@ -228,3 +228,13 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
                 "highlight": True,
             },
         }
+
+
+if __name__ == "__main__":
+    strategy = WeightedAverageVectorStrategy()
+    user_allocation = (50, 30, 20)   # must sum to 100
+    pairs = strategy.generate_pairs(user_allocation, n=5, vector_size=3)
+    for i, pair in enumerate(pairs, 1):
+        print(f"\nPair {i}:")
+        for description, vector in pair.items():
+            print(f"  [{description}]  {vector}  (sum={sum(vector)})")

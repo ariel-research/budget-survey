@@ -1,9 +1,10 @@
 # Budget Survey Application
 
-A research tool for collecting data on budget allocation preferences using multiple algorithmic strategies. Users create ideal budget allocations, then compare pairs of alternatives to understand decision-making patterns.
+An open-source, high-rigor research framework designed to empirically validate human utility models and preference aggregation strategies. The platform elicits a subject's ideal budget allocation and dynamically generates pairwise comparison tournaments to map real-world decision-making patterns at scale.
 
-**🚀 [Try it live](https://survey.csariel.xyz)**
+This repository contains the official production infrastructure and analysis suite for the paper: **"What Are People's Actual Utility Functions in Budget Aggregation?" (AAMAS GAIW 2026)**.
 
+**🚀 [Try it live](https://survey.csariel.xyz) | 📄 [Read the Paper (arXiv)](https://arxiv.org/abs/2510.24872)**
 ---
 
 ## Quick Start
@@ -48,6 +49,7 @@ cp .env.example .env  # Edit this file to set your Database credentials
 - [Modifying the Survey](#modifying-the-survey)
 - [Analysis](#analysis)
 - [Algorithm](#algorithm)
+- [Citation](#citation)
 
 ### 🛠 For Developers
 
@@ -114,12 +116,19 @@ This is a **research application** for studying budget allocation preferences. I
    cp .env.example .env
    Note: Open .env to set your database credentials.
    ```
-2. Create and activate a virtual environment:
 
+2. Create a virtual environment:
    ```
-   python -m venv venv
-   source venv/bin/activate
+   virtualenv venv
    ```
+
+   Activate the virtual environment, depending on your OS:
+   ```
+   source venv/bin/activate [on Linux]
+   venv\Scripts\activate.bat [on Windows]
+   venv\Scripts\activate.ps1 [on Windows PowerShell]
+   ```
+
 3. Install dependencies:
 
    ```
@@ -624,6 +633,7 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   - **L1 (Sum)**: Total absolute disagreement.
   - **Leontief (Ratio)**: Minimal satisfaction ratio (fairness).
   - **L2 (RSS)**: Euclidean distance (penalizes extreme outliers).
+  - **Cosine Similarity**: Alignment of relative budget priorities.
   - **Anti-Leontief**: Penalizes over-funding (waste aversion).
   - **Kullback-Leibler (KL)**: Information theoretic divergence (asymmetric penalty for losses).
 
@@ -763,6 +773,8 @@ The application provides a comprehensive dashboard showing participation statist
   - Full bilingual support with RTL/LTR layouts
   - Navigation to Performance Matrix for detailed metrics
 - **Data Displayed**: User IDs, survey counts, last activity timestamps, and direct links to individual responses
+
+
 
 ### User-Survey Performance Matrix
 
@@ -1656,3 +1668,20 @@ To modify displayed text:
 - **Translations**: `application/translations.py` (Hebrew/English)
 - **Templates**: `templates/` directory with translation key usage
 - **Dynamic content**: Loaded from database based on user language preference
+
+## Citation
+
+If you use this platform, code, or data in your research, please cite our paper:
+
+```bibtex
+@article{amster2026what,
+  title={What Are People's Actual Utility Functions in Budget Aggregation?},
+  author={Amster, Ayelet and Akirav, Lioz and Gonen, Rica and Segal-Halevi, Erel},
+  journal={arXiv preprint arXiv:2510.24872},
+  year={2026},
+  eprint={2510.24872},
+  archivePrefix={arXiv},
+  primaryClass={cs.GT},
+  note={Presented at AAMAS GAIW 2026}
+}
+```
