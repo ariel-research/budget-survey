@@ -7,7 +7,7 @@ from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrat
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .identity_asymmetry_strategy import IdentityAsymmetryStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
-from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrategy
+from .MDSP_new import MultiDimensionalSinglePeakedStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .rank_strategies import (

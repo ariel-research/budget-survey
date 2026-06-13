@@ -229,7 +229,6 @@ class WeightedAverageVectorStrategy(PairGenerationStrategy):
             },
         }
 
-
 if __name__ == "__main__":
     strategy = WeightedAverageVectorStrategy()
     user_allocation = (50, 30, 20)   # must sum to 100
