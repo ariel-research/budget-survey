@@ -60,6 +60,45 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         """
     MAX_ATTEMPTS = 10000
     WEIGHTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9]
+    def _is_unambiguously_closer(
+        self,
+        peak: Tuple[int, ...],
+        q_near: Tuple[int, ...],
+        q_far: Tuple[int, ...],
+    ) -> bool:
+        """
+        Checks if q_near is unambiguously closer to the peak than q_far
+        based on the MDSP definition (sub-Section 5.4).
+
+        Definition:
+        A budget q_near is MDSP if:
+        1. (Weak Dominance): For ALL issues j, q_near is weakly closer to the peak
+           in the same direction:
+           (0 <= |q_near_j - p_j| <= |q_far_j - p_j|) AND (sign match)
+        2. (Strict Dominance): There exists AT LEAST ONE issue k where q_near is strictly closer:
+           (|q_near_k - p_k| < |q_far_k - p_k|)
+        """
+        d_near_list = [
+            q_near_dim - peak_dim for q_near_dim, peak_dim in zip(q_near, peak)
+        ]
+        d_far_list = [q_far_dim - peak_dim for q_far_dim, peak_dim in zip(q_far, peak)]
+
+        has_strict_improvement = False
+
+        for d_near, d_far in zip(d_near_list, d_far_list):
+            # Weak dominance: deviations must share direction (or be zero)
+            if d_near * d_far < 0:
+                return False
+
+            # Weak dominance: q_near cannot be further away from the peak
+            if abs(d_near) > abs(d_far):
+                return False
+
+            # Strict dominance: track at least one dimension with improvement
+            if abs(d_near) < abs(d_far):
+                has_strict_improvement = True
+
+        return has_strict_improvement
 
     def _round_to_5_and_balance(self, vector: np.ndarray) -> np.ndarray:
         """Round vector elements to nearest 5 while maintaining sum of 100."""

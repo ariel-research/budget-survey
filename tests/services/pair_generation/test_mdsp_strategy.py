@@ -95,10 +95,12 @@ def test_generate_pairs_filters_user_vector(strategy):
     near_desc = strategy.get_option_description(role="near")
 
     for pair in pairs:
+        far_key = next(k for k in pair.keys() if k.startswith("Far"))
+        near_key = next(k for k in pair.keys() if k.startswith("Near"))
         vectors = list(pair.values())
         assert user_vector not in vectors
-        far_vector = pair[far_desc]
-        near_vector = pair[near_desc]
+        far_vector = pair[far_key]
+        near_vector = pair[near_key]
         assert strategy._is_unambiguously_closer(
             user_vector,
             near_vector,
