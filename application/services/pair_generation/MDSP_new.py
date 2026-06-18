@@ -78,6 +78,9 @@ class MultiDimensionalSinglePeakedNewStrategy(PairGenerationStrategy):
            (0 <= |q_near_j - p_j| <= |q_far_j - p_j|) AND (sign match)
         2. (Strict Dominance): There exists AT LEAST ONE issue k where q_near is strictly closer:
            (|q_near_k - p_k| < |q_far_k - p_k|)
+
+        Note: This method is not called during runtime pair generation (since the Near vector
+        is constructed mathematically to be closer), but is kept for validation and unit testing.
         """
         d_near_list = [
             q_near_dim - peak_dim for q_near_dim, peak_dim in zip(q_near, peak)
@@ -175,7 +178,8 @@ class MultiDimensionalSinglePeakedNewStrategy(PairGenerationStrategy):
                 if max_delta < 1:
                     continue
 
-                x_weight = self.WEIGHTS[len(pairs)]
+                # Safely select weight using modulo to support n > 10 without raising IndexError
+                x_weight = self.WEIGHTS[len(pairs) % len(self.WEIGHTS)]
                 target_delta = max_delta * x_weight
 
                 exact_near = np.array(q_far, dtype=float)
