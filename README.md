@@ -602,7 +602,31 @@ Note: '>' represents observed choice, which may include cases of user indifferen
   # Option B (Near): (50, 35, 15)  # Deviations: [0, +5, -5]
   ```
 
-14. **Identity Asymmetry Strategy**
+14. **Multi-Dimensional Single-Peaked (MDSP) New Strategy**
+
+- Strategy name: `MDSP_new`
+- An optimized, constructive implementation of the MDSP preference test that guarantees budget vectors are multiples of 5 and sum to 100.
+- **Algorithm Overview**:
+  - Generates a random "Far" vector and rounds/balances it to multiples of 5.
+  - Identifies over-budget and under-budget dimensions relative to the user's ideal peak.
+  - Selects exactly one over-budget dimension $i$ and one under-budget dimension $j$.
+  - Calculates the maximum valid budget transfer (Max Delta) from $i$ to $j$ without overshooting the user's ideal.
+  - Multiplies Max Delta by a weight from a predefined sequence `[0.1, 0.2, ..., 0.9]` to get a Target Delta.
+  - Transfers the Target Delta from $i$ to $j$ to construct the "Near" vector, keeping all other dimensions completely frozen.
+  - Rounds and balances the "Near" vector to multiples of 5.
+- **Parameters**:
+  - `num_pairs`: Number of pairs to generate (default: 10).
+- **Example**:
+  ```python
+  # User Ideal : (40, 30, 30)
+  # Random Far : (70, 25, 5)
+  # Selected Weight: 0.7
+  # Max Delta between Dim 1 (+30) and Dim 3 (-25) = 25
+  # Target Delta = 25 * 0.7 = 17.5
+  # Exact Near = (52.5, 25, 22.5) -> Rounded/Balanced Near = (55, 25, 20)
+  ```
+
+15. **Identity Asymmetry Strategy**
 - Strategy name: `identity_asymmetry`
 - **Core Hypothesis**: Tests whether users consistently prefer one subject over another when the starting budget allocations are **mathematically identical**. This isolates "Project Identity Bias" from numerical utility.
 - **Algorithm Overview**:
