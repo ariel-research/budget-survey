@@ -7,7 +7,8 @@ from .dynamic_temporal_preference_strategy import DynamicTemporalPreferenceStrat
 from .extreme_vectors_strategy import ExtremeVectorsStrategy
 from .identity_asymmetry_strategy import IdentityAsymmetryStrategy
 from .linear_symmetry_strategy import LinearSymmetryStrategy
-from .MDSP_new import MultiDimensionalSinglePeakedStrategy
+from .MDSP_new import MultiDimensionalSinglePeakedNewStrategy
+from .multi_dimensional_single_peaked import MultiDimensionalSinglePeakedStrategy
 from .optimization_metrics_vector import OptimizationMetricsStrategy
 from .preference_ranking_survey import PreferenceRankingSurveyStrategy
 from .rank_strategies import (
@@ -50,6 +51,7 @@ StrategyRegistry.register(WeightedAverageVectorStrategy)
 StrategyRegistry.register(RoundedWeightedAverageVectorStrategy)
 StrategyRegistry.register(PreferenceRankingSurveyStrategy)
 StrategyRegistry.register(MultiDimensionalSinglePeakedStrategy)
+StrategyRegistry.register(MultiDimensionalSinglePeakedNewStrategy)
 StrategyRegistry.register(RootSumSquaredSumStrategy)
 StrategyRegistry.register(RootSumSquaredRatioStrategy)
 StrategyRegistry.register(ExtremeVectorsStrategy)
@@ -79,6 +81,7 @@ __all__ = [
     "WeightedAverageVectorStrategy",
     "RoundedWeightedAverageVectorStrategy",
     "MultiDimensionalSinglePeakedStrategy",
+    "MultiDimensionalSinglePeakedNewStrategy",
     "RootSumSquaredSumStrategy",
     "RootSumSquaredRatioStrategy",
     "ExtremeVectorsStrategy",
