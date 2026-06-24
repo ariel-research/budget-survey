@@ -10,8 +10,6 @@ CSV_PATHS = [
     "data/survey_optimization_stats.csv",
     "data/summarize_stats_by_survey.csv",
 ]
-REPORT_PATH = "data/survey_analysis_report.pdf"
-
 
 def ensure_fresh_csvs() -> bool:
     """
@@ -40,21 +38,6 @@ def ensure_fresh_csvs() -> bool:
 
     return False
 
-
-def ensure_fresh_report() -> None:
-    """Ensure analysis report is up to date."""
-    try:
-        csvs_regenerated = ensure_fresh_csvs()
-
-        # Check if PDF needs updating
-        if csvs_regenerated or not os.path.exists(REPORT_PATH):
-            from analysis.survey_report_generator import generate_report
-
-            generate_report()
-            logger.info("Report regenerated successfully")
-    except Exception as e:
-        logger.error(f"Error ensuring fresh report: {e}")
-        raise
 
 
 def build_html_table(

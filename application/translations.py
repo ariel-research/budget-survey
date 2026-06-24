@@ -42,10 +42,6 @@ TRANSLATIONS: Dict[str, Dict[str, Dict[str, str]]] = {
             "he": "סקר מספר {survey_id} לא נמצא או אין לו נושאים",
             "en": "Survey #{survey_id} not found or has no subjects",
         },
-        "report_error": {
-            "he": "אירעה שגיאה בהפקת הדוח. אנא נסה שוב מאוחר יותר.",
-            "en": "An error occurred generating the report. Please try again later.",
-        },
         "dashboard_error": {
             "he": "שגיאה בטעינת לוח הבקרה",
             "en": "Error loading dashboard",

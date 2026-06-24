@@ -155,13 +155,6 @@ def test_thank_you_route(client):
     assert response.status_code == 200
 
 
-def test_report_route(client, monkeypatch):
-    """Tests report generation endpoint."""
-    monkeypatch.setattr("flask.send_file", lambda *args, **kwargs: "")
-    response = client.get("/report")
-    assert response.status_code == 200
-
-
 def test_missing_parameters(client):
     """Tests error handling for missing required parameters."""
     response = client.get("/take-survey/")

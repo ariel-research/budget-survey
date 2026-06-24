@@ -79,7 +79,7 @@ This is a **research application** for studying budget allocation preferences. I
 - Hebrew/English multilingual support with RTL/LTR layouts
 - Quality control via attention checks and user blacklisting
 - Cognitive load tracking via client-side response time measurement
-- Comprehensive analysis and PDF report generation
+- Comprehensive analysis 
 - Production-ready Docker deployment
 
 **Use Cases:**
@@ -186,11 +186,6 @@ This is a **research application** for studying budget allocation preferences. I
 docker compose -f docker-compose.dev.yml logs -f app # View application logs
 docker compose -f docker-compose.dev.yml exec app bash # Access application shell
 docker compose -f docker-compose.dev.yml down       # Stop everything
-
-# Analysis & Reports
-python -m analysis.survey_analysis                  # Run survey analysis
-python -m analysis.survey_report_generator_pdf      # Generate PDF report  
-open https://survey.csariel.xyz/report              # View live report
 
 # Testing
 pytest                                               # Run all tests
@@ -1037,16 +1032,7 @@ curl http://localhost:5001/health
    - `/take-survey/survey` - Compare budget pairs
    - `/take-survey/thank_you` - Survey completion page
    - `/take-survey/?userID=...&surveyID=...&demo=true` - Take survey in Demo Mode
-3. Analysis & Reports
 
-   - `/report` - View survey analysis report (PDF)
-     * Automatically refreshes based on latest data
-     * Updates CSVs and PDF as needed
-     * Shows PDF in browser with download option
-   - `/dev/report` - Development report for testing
-     * Always generates fresh report
-     * Useful for testing template changes
-     * Creates 'survey_analysis_report_dev.pdf'
 4. Survey Results
 
    - `/surveys/responses` - All survey responses
@@ -1087,10 +1073,7 @@ Notes:
    - Default survey: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...)
    - Custom survey: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...&amp;internalID=N](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&internalID=N)
    - Demo mode: [https://survey.csariel.xyz/take-survey/?userID=...&amp;surveyID=...&amp;demo=true](https://survey.csariel.xyz/take-survey/?userID=...&surveyID=...&demo=true)
-3. Analysis & Reports
 
-   - Survey Report: https://survey.csariel.xyz/report
-   - Development Report: https://survey.csariel.xyz/dev/report
 4. Survey Results
 
    - All Responses: https://survey.csariel.xyz/surveys/responses
@@ -1437,27 +1420,6 @@ To run the survey analysis, use the following command from the project root dire
 python -m analysis.survey_analysis
 ```
 
-### Generating the Survey Report
-
-To generate a comprehensive PDF report of the survey results, use the following command from the project root directory:
-
-```
-python -m analysis.survey_report_generator_pdf
-```
-
-This command will create a PDF report named 'survey_analysis_report.pdf' in the 'data' directory. The report includes:
-
-- Executive summary
-- Overall survey participation statistics
-- Visualizations of algorithm preferences:
-  - Per-survey answer percentages
-  - User survey majority choices
-  - Overall majority choice distribution
-  - Total answer percentage distribution
-- Detailed survey-wise analysis
-- Individual participant analysis
-- Key findings and conclusions
-- Methodology description
 
 ### Key Components and Functions
 
@@ -1470,10 +1432,7 @@ The analysis package consists of several key components:
 
    - `generate_survey_optimization_stats(df)`: Generates optimization statistics for all survey responses.
    - `summarize_stats_by_survey(df)`: Summarizes statistics by survey ID, including a total summary row.
-3. Report Generation:
 
-   - `generate_report()`: Orchestrates the entire report generation process, including data loading, analysis, visualization, and PDF creation.
-   - Various functions for generating specific report sections (e.g., executive summary, survey analysis, visualizations).
 4. Visualization:
 
    - Multiple functions for creating charts and graphs to visualize survey results and trends.
@@ -1487,7 +1446,6 @@ The analysis scripts generate the following files in the `data` directory:
 1. **all_completed_survey_responses.csv**: Raw data of all completed survey responses.
 2. **survey_optimization_stats.csv**: Optimization statistics for each survey response.
 3. **summarize_stats_by_survey.csv**: Aggregated statistics for each survey and overall summary.
-4. **survey_analysis_report.pdf**: Comprehensive PDF report of survey results and analysis.
 
 ### Table Explanations
 
@@ -1521,7 +1479,6 @@ tests/
 │   │   └── test_visualization_utils.py
 │   ├── test_report_content_generators.py
 │   ├── test_survey_analysis.py
-│   └── test_survey_report_generator.py
 ├── api/                         # API endpoint tests
 │   └── test_routes.py
 ├── database/                    # Database integration tests

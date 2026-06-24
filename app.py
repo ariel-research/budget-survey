@@ -120,7 +120,6 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
         )
 
     from application.routes.dashboard import dashboard_routes
-    from application.routes.report import report_routes
     from application.routes.survey import survey_routes
     from application.routes.survey_responses import responses_routes
     from application.routes.utils import util_routes
@@ -128,7 +127,6 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     app.register_blueprint(util_routes)
     app.register_blueprint(dashboard_routes, url_prefix="/")
     app.register_blueprint(survey_routes, url_prefix="/take-survey")
-    app.register_blueprint(report_routes)
     app.register_blueprint(responses_routes, url_prefix="/surveys")
 
     return app

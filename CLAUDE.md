@@ -62,7 +62,6 @@ Migration files: `YYYYMMDD_descriptive_name.sql`
 
 ```bash
 python -m analysis.survey_analysis                  # Survey analysis
-python -m analysis.survey_report_generator_pdf      # Generate PDF report (deprecated)
 ```
 
 ## Research Correctness
@@ -91,7 +90,7 @@ Before shipping any change that touches `application/services/pair_generation/`,
 
 - **`app.py`**: Flask factory, blueprint registration, template filters
 - **`config.py`**: `Config` / `TestConfig` classes; active survey set via `SURVEY_ID` env var
-- **`application/routes/`**: Blueprints — `survey`, `dashboard`, `report`, `survey_responses`, `utils`
+- **`application/routes/`**: Blueprints — `survey`, `dashboard`, `survey_responses`, `utils`
 - **`application/services/survey_service.py`**: Orchestrates pair generation, awareness checks, submission
 - **`application/services/pair_generation/`**: Strategy pattern implementations (see below)
 - **`application/services/algorithms/`**: Pure math — utility models and `math_utils.py`
@@ -125,7 +124,6 @@ Language is set per-request via `?lang=he|en`. Default is Hebrew (`he`). Always 
 - **Budget multiples of 5**: All allocation vectors must be integers divisible by 5 and sum to 100. Verify any new algorithm or UI change respects this.
 - **Raw SQL only**: No ORM. All queries go through `database/queries.py`.
 - **`UnsuitableForStrategyError`**: Raise this (not a generic error) when a user's ideal vector doesn't satisfy a strategy's requirements (e.g., contains zeros when strategy requires all-positive).
-- **PDF generation** (`survey_report_generator_pdf.py`): Deprecated — do not extend.
 - **`dashboard_OLD.py` / `surveys_overview_OLD.html`**: Legacy files, do not modify.
 
 ### Security
