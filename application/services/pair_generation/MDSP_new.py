@@ -7,59 +7,60 @@ from typing import Dict, List, Set, Tuple
 import numpy as np
 
 from application.services.pair_generation.base import PairGenerationStrategy
-from application.translations import get_translation
 
 logger = logging.getLogger(__name__)
 
 
-class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
+class MultiDimensionalSinglePeakedNewStrategy(PairGenerationStrategy):
     """
-        Multi-Dimensional Single-Peaked (MDSP) Pair Generation Strategy.
+    Multi-Dimensional Single-Peaked (MDSP) Pair Generation Strategy.
 
-        This algorithm generates pairs of budget allocation vectors (Far vs. Near)
-        to test user preferences under MDSP utility functions. It ensures that the
-        'Near' vector is strictly closer to the user's ideal peak than the 'Far' vector
-        on a localized dimension pair, reducing cognitive load by keeping all other
-        dimensions completely frozen.
+    This algorithm generates pairs of budget allocation vectors (Far vs. Near)
+    to test user preferences under MDSP utility functions. It ensures that the
+    'Near' vector is strictly closer to the user's ideal peak than the 'Far' vector
+    on a localized dimension pair, reducing cognitive load by keeping all other
+    dimensions completely frozen.
 
-        Algorithm Steps:
-        1. Generate a valid random budget vector (Far), rounded to multiples of 5.
-        2. Compare 'Far' to the 'User Ideal' to find 'over-budget' and 'under-budget' dimensions.
-        3. Randomly select exactly one over-budget dimension (i) and one under-budget dimension (j).
-        4. Calculate the maximum valid budget transfer (Max Delta) from i to j without
-           overshooting the User's Ideal in either dimension.
-        5. Multiply Max Delta by a predefined weight (e.g., 0.1 to 0.9) to get the exact Target Delta.
-        6. Transfer the Target Delta from i to j to create a continuous 'Near' vector.
-        7. Round the 'Near' vector to multiples of 5 and balance it to strictly sum to 100.
-        8. Filter out collisions (e.g., if Near == Far) to ensure unique data points.
+    Algorithm Steps:
+    1. Generate a valid random budget vector (Far), rounded to multiples of 5.
+    2. Compare 'Far' to the 'User Ideal' to find 'over-budget' and 'under-budget' dimensions.
+    3. Randomly select exactly one over-budget dimension (i) and one under-budget dimension (j).
+    4. Calculate the maximum valid budget transfer (Max Delta) from i to j without
+       overshooting the User's Ideal in either dimension.
+    5. Multiply Max Delta by a predefined weight (e.g., 0.1 to 0.9) to get the exact Target Delta.
+    6. Transfer the Target Delta from i to j to create a continuous 'Near' vector.
+    7. Round the 'Near' vector to multiples of 5 and balance it to strictly sum to 100.
+    8. Filter out collisions (e.g., if Near == Far) to ensure unique data points.
 
-        Example:
-            User Ideal : (40, 30, 30)
-            Random Far : (70, 25, 5)
-            Weight     : 0.7
+    Example:
+        User Ideal : (40, 30, 30)
+        Random Far : (70, 25, 5)
+        Weight     : 0.7
 
-            Step A: Identify dimensions & Max Delta
-                - Dim 1 (Over) : 70 vs 40 -> Max we can take is 30
-                - Dim 3 (Under): 5 vs 30  -> Max we can give is 25
-                - Max Delta = min(30, 25) = 25
-                - Dim 2 is completely frozen at 25.
+        Step A: Identify dimensions & Max Delta
+            - Dim 1 (Over) : 70 vs 40 -> Max we can take is 30
+            - Dim 3 (Under): 5 vs 30  -> Max we can give is 25
+            - Max Delta = min(30, 25) = 25
+            - Dim 2 is completely frozen at 25.
 
-            Step B: Apply Weight
-                - Target Delta = 25 * 0.7 = 17.5
+        Step B: Apply Weight
+            - Target Delta = 25 * 0.7 = 17.5
 
-            Step C: Continuous Transfer
-                - Exact Near = (70 - 17.5, 25, 5 + 17.5) = (52.5, 25, 22.5)
+        Step C: Continuous Transfer
+            - Exact Near = (70 - 17.5, 25, 5 + 17.5) = (52.5, 25, 22.5)
 
-            Step D: Round to 5 & Balance
-                - Rounding: 52.5 -> 50, 25 -> 25, 22.5 -> 20 (Sum: 95)
-                - Balancing: We need 5 more to reach 100. Both Dim 1 and Dim 3 lost 2.5
-                  due to rounding down. The algorithm optimally returns the 5 to Dim 1.
-                - Final Near = (55, 25, 20)
+        Step D: Round to 5 & Balance
+            - Rounding: 52.5 -> 50, 25 -> 25, 22.5 -> 20 (Sum: 95)
+            - Balancing: We need 5 more to reach 100. Both Dim 1 and Dim 3 lost 2.5
+              due to rounding down. The algorithm optimally returns the 5 to Dim 1.
+            - Final Near = (55, 25, 20)
 
-            Actual Displayed Delta: round(17.5) = 18.
-        """
+        Actual Displayed Delta: round(17.5) = 18.
+    """
+
     MAX_ATTEMPTS = 10000
     WEIGHTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9]
+
     def _is_unambiguously_closer(
         self,
         peak: Tuple[int, ...],
@@ -77,6 +78,9 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
            (0 <= |q_near_j - p_j| <= |q_far_j - p_j|) AND (sign match)
         2. (Strict Dominance): There exists AT LEAST ONE issue k where q_near is strictly closer:
            (|q_near_k - p_k| < |q_far_k - p_k|)
+
+        Note: This method is not called during runtime pair generation (since the Near vector
+        is constructed mathematically to be closer), but is kept for validation and unit testing.
         """
         d_near_list = [
             q_near_dim - peak_dim for q_near_dim, peak_dim in zip(q_near, peak)
@@ -134,15 +138,13 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         raise ValueError("Could not generate valid random vector")
 
     def generate_pairs(
-            self, user_vector: tuple, n: int = 10, vector_size: int = 3
+        self, user_vector: tuple, n: int = 10, vector_size: int = 3
     ) -> List[Dict[str, tuple]]:
         """
         Generate MDSP pairs transferring budget between two dimensions,
         scaled by a specific weight sequence and rounded to 5.
         """
         self._validate_vector(user_vector, vector_size)
-        user_vector_array = np.array(user_vector)
-
         pairs: List[Dict[str, tuple]] = []
         seen_vectors: Set[tuple] = {user_vector}
         used_near_vectors: Set[tuple] = set()
@@ -159,8 +161,12 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
                 if q_far in seen_vectors:
                     continue
 
-                over_budget_dims = [d for d in range(vector_size) if q_far[d] > user_vector[d]]
-                under_budget_dims = [d for d in range(vector_size) if q_far[d] < user_vector[d]]
+                over_budget_dims = [
+                    d for d in range(vector_size) if q_far[d] > user_vector[d]
+                ]
+                under_budget_dims = [
+                    d for d in range(vector_size) if q_far[d] < user_vector[d]
+                ]
 
                 if not over_budget_dims or not under_budget_dims:
                     continue
@@ -172,7 +178,8 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
                 if max_delta < 1:
                     continue
 
-                x_weight = self.WEIGHTS[len(pairs)]
+                # Safely select weight using modulo to support n > 10 without raising IndexError
+                x_weight = self.WEIGHTS[len(pairs) % len(self.WEIGHTS)]
                 target_delta = max_delta * x_weight
 
                 exact_near = np.array(q_far, dtype=float)
@@ -183,12 +190,18 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
 
                 actual_delta = int(round(target_delta))
 
-                if q_near == q_far or q_near in used_near_vectors or q_near in seen_vectors:
+                if (
+                    q_near == q_far
+                    or q_near in used_near_vectors
+                    or q_near in seen_vectors
+                ):
                     continue
 
                 pair_entry = {
                     self.get_option_description(role="far"): q_far,
-                    self.get_option_description(role="near", weight=x_weight, delta=actual_delta): q_near,
+                    self.get_option_description(
+                        role="near", weight=x_weight, delta=actual_delta
+                    ): q_near,
                 }
                 pairs.append(pair_entry)
 
@@ -208,7 +221,7 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
         return pairs
 
     def get_strategy_name(self) -> str:
-        return "multi_dimensional_single_peaked_test"
+        return "MDSP_new"
 
     def get_option_labels(self) -> Tuple[str, str]:
         return (
@@ -235,7 +248,7 @@ class MultiDimensionalSinglePeakedStrategy(PairGenerationStrategy):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    strategy = MultiDimensionalSinglePeakedStrategy()
+    strategy = MultiDimensionalSinglePeakedNewStrategy()
     user_peak = (40, 30, 30)
 
     print("Starting Original MDSP Strategy Test (with new logic)...\n")
@@ -243,7 +256,9 @@ if __name__ == "__main__":
     print("-" * 50)
 
     try:
-        generated_pairs = strategy.generate_pairs(user_vector=user_peak, n=10, vector_size=3)
+        generated_pairs = strategy.generate_pairs(
+            user_vector=user_peak, n=10, vector_size=3
+        )
 
         print("\nResults:")
         for i, pair in enumerate(generated_pairs, 1):

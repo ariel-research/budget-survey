@@ -1,17 +1,17 @@
-"""Tests for the MultiDimensionalSinglePeakedStrategy."""
+"""Tests for the MultiDimensionalSinglePeakedNewStrategy."""
 
 from unittest.mock import patch
 
 import pytest
 
 from application.services.pair_generation import (
-    MultiDimensionalSinglePeakedStrategy,
+    MultiDimensionalSinglePeakedNewStrategy,
 )
 
 
 @pytest.fixture
 def strategy():
-    return MultiDimensionalSinglePeakedStrategy()
+    return MultiDimensionalSinglePeakedNewStrategy()
 
 
 def enumerate_all_valid_vectors():
@@ -91,13 +91,14 @@ def test_generate_pairs_filters_user_vector(strategy):
     pairs = strategy.generate_pairs(user_vector, n=10, vector_size=3)
 
     assert len(pairs) == 10
-    far_desc = strategy.get_option_description(role="far")
-    near_desc = strategy.get_option_description(role="near")
 
     for pair in pairs:
-        assert user_vector not in pair.values()
-        far_vector = pair[far_desc]
-        near_vector = pair[near_desc]
+        far_key = next(k for k in pair.keys() if k.startswith("Far"))
+        near_key = next(k for k in pair.keys() if k.startswith("Near"))
+        vectors = list(pair.values())
+        assert user_vector not in vectors
+        far_vector = pair[far_key]
+        near_vector = pair[near_key]
         assert strategy._is_unambiguously_closer(
             user_vector,
             near_vector,
@@ -110,9 +111,9 @@ def test_generate_pairs_failure(strategy):
     user_vector = (40, 35, 25)
 
     with (
-        patch.object(MultiDimensionalSinglePeakedStrategy, "MAX_ATTEMPTS", 5),
+        patch.object(MultiDimensionalSinglePeakedNewStrategy, "MAX_ATTEMPTS", 5),
         patch.object(
-            MultiDimensionalSinglePeakedStrategy,
+            MultiDimensionalSinglePeakedNewStrategy,
             "_is_unambiguously_closer",
             return_value=False,
         ),

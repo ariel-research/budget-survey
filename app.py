@@ -2,7 +2,7 @@ import hashlib
 from typing import Optional, Type
 
 from dotenv import load_dotenv
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from application.translations import get_current_language, get_translation
 from config import Config, get_config
@@ -111,10 +111,21 @@ def create_app(config_class: Optional[Type[Config]] = None) -> Flask:
     @app.errorhandler(500)
     def internal_server_error(e):
         """Handle 500 Internal Server Error."""
+        original_e = getattr(e, "original_exception", None)
+        is_debug = app.config.get("DEBUG", False)
+        is_demo = request.args.get("demo", "").lower() == "true"
+
+        if (is_debug or is_demo) and original_e:
+            message = (
+                f"Developer Error: {type(original_e).__name__} - {str(original_e)}"
+            )
+        else:
+            message = get_translation("survey_processing_error", "messages")
+
         return (
             render_template(
                 "error.html",
-                message=e.description,
+                message=message,
             ),
             500,
         )

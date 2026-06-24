@@ -237,7 +237,7 @@ def create_vector():
     )
     return render_template(
         "create_vector.html",
-        survey_description=survey_data["description"],
+        survey_description=survey_data.get("description", ""),
         subjects=survey_data["subjects"],
         user_id=user_id,
         external_survey_id=external_survey_id,
@@ -393,7 +393,12 @@ def handle_survey_get(
             )
     except Exception as e:
         logger.error(f"Error in survey GET: {str(e)}", exc_info=True)
-        abort(400, description=get_translation("survey_processing_error", "messages"))
+        if is_demo or current_app.config.get("DEBUG", False):
+            abort(400, description=f"Developer Error: {type(e).__name__} - {str(e)}")
+        else:
+            abort(
+                400, description=get_translation("survey_processing_error", "messages")
+            )
 
 
 @survey_routes.route("/blacklisted")
@@ -572,9 +577,11 @@ def handle_survey_post(
 
     except Exception as e:
         logger.error(f"Error in survey POST: {str(e)}", exc_info=True)
-        return render_template(
-            "error.html", message=get_translation("survey_processing_error", "messages")
-        )
+        if is_demo or current_app.config.get("DEBUG", False):
+            message = f"Developer Error: {type(e).__name__} - {str(e)}"
+        else:
+            message = get_translation("survey_processing_error", "messages")
+        return render_template("error.html", message=message)
 
 
 @survey_routes.route("/screening", methods=["GET", "POST"])
