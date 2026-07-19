@@ -1,6 +1,8 @@
 """
-Concrete implementations of ranking-based pair generation strategies.
+Concrete implementations of ranking-based pair generation strategies in the *new* way.
 Defines specific utility model combinations used in surveys.
+
+For the base class of the *new* way, see generic_rank_strategy.py.
 """
 
 import logging
@@ -216,3 +218,33 @@ class KLVsL2RankStrategy(GenericRankStrategy):
             min_component=10,
             normalization_method="ordinal",
         )
+
+
+
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    strategy = CosineSimilarityVsKLRankStrategy()
+    # user_peak = (30, 20, 20, 30)
+    user_peak = (50, 30, 20)
+
+    print("Starting cosine similarity vs. KL Strategy Test (with new logic)...\n")
+    print(f"User Peak (Ideal): {user_peak}")
+    print("-" * 50)
+
+    try:
+        generated_pairs = strategy.generate_pairs(
+            user_vector=user_peak, n=10, vector_size=len(user_peak)
+        )
+
+        print("\nResults:")
+        for i, pair in enumerate(generated_pairs, 1):
+            print(f"--- Pair {i} ---")
+            for option_name, vector in pair.items():
+                clean_vector = tuple(vector) # tuple(int(x) for x in vector)
+                print(f"{option_name}: {clean_vector}")
+
+    except Exception as e:
+        print(f"Main: Error generating pairs: {e}")

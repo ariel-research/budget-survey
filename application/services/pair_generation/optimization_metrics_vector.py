@@ -1,4 +1,8 @@
-"""Implementation of the optimization metrics pair generation strategy."""
+"""
+    Base for all pair-generation strategies for comparing two utility models in the *old* way.
+    
+    For the *new* way, see generic_rank_strategy.py.
+"""
 
 import logging
 import random

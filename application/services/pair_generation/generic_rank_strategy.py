@@ -1,6 +1,8 @@
 """
-Generic ranking-based pair generation strategy.
-Uses utility-model-based scoring and normalized ranking to select optimal pairs.
+    Base for all pair-generation strategies for comparing two utility models in the *new* way.
+    Uses utility-model-based scoring and normalized ranking to select optimal pairs.
+    
+    For specific instantiations, see rank_strategies.py.
 """
 
 import functools
@@ -142,7 +144,7 @@ def _compute_all_ranked_pairs(
             ranks_b = min_max_scale(scores_b)
     else:
         # Fallback for unexpected method
-        return []
+        raise RuntimeError(f"unexpected normalization_method {normalization_method}")
 
     # 5. Compute all valid pairs (MaxMin Logic)
     # ----------------------------------------
@@ -360,7 +362,7 @@ class GenericRankStrategy(PairGenerationStrategy):
         # 2. User has a very high concentration which cramps the space
         if user_min < self.min_component or user_max >= self.CONCENTRATION_THRESHOLD:
             # Start at the nearest valid step below their min or straight to 0
-            start_min = (user_min // self.RELAXATION_STEP) * self.RELAXATION_STEP
+            start_min = (user_min // self.RELAXATION_STEP) * self.RELAXATION_STEP  # round start_min down to the nearest multiple of 5
             current_min = min(self.min_component, start_min)
             if user_max >= self.CONCENTRATION_THRESHOLD:
                 current_min = min(current_min, self.HIGH_CONCENTRATION_CAP)
