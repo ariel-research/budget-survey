@@ -90,7 +90,7 @@ class CosineSimilarityVsL1RankStrategy(GenericRankStrategy):
             utility_model_a_class=CosineSimilarityUtilityModel,
             utility_model_b_class=L1UtilityModel,
             grid_step=grid_step,
-            min_component=0,
+            min_component=10,
             normalization_method="ordinal",
         )
 
@@ -105,7 +105,7 @@ class CosineSimilarityVsL2RankStrategy(GenericRankStrategy):
             utility_model_a_class=CosineSimilarityUtilityModel,
             utility_model_b_class=L2UtilityModel,
             grid_step=grid_step,
-            min_component=0,
+            min_component=10,
             normalization_method="ordinal",
         )
 
