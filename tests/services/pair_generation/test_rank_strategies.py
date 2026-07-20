@@ -192,13 +192,13 @@ class TestL2VsLeontiefRankStrategy:
             "cosine_l1_strategy",
             "cosine_similarity_vs_l1_rank_comparison",
             "l1",
-            0,
+            10,
         ),
         (
             "cosine_l2_strategy",
             "cosine_similarity_vs_l2_rank_comparison",
             "l2",
-            0,
+            10,
         ),
         (
             "cosine_leontief_strategy",
