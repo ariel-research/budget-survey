@@ -186,7 +186,8 @@ class MultiDimensionalSinglePeakedNewStrategy(PairGenerationStrategy):
                 exact_near[i] -= target_delta
                 exact_near[j] += target_delta
 
-                q_near = tuple(self._round_to_5_and_balance(exact_near))
+                #q_near = tuple(self._round_to_5_and_balance(exact_near))
+                q_near = tuple(exact_near)
 
                 actual_delta = int(round(target_delta))
 
