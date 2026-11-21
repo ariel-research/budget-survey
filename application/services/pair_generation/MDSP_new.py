@@ -181,15 +181,14 @@ class MultiDimensionalSinglePeakedNewStrategy(PairGenerationStrategy):
                 # Safely select weight using modulo to support n > 10 without raising IndexError
                 x_weight = self.WEIGHTS[len(pairs) % len(self.WEIGHTS)]
                 target_delta = max_delta * x_weight
-
-                exact_near = np.array(q_far, dtype=float)
-                exact_near[i] -= target_delta
-                exact_near[j] += target_delta
-
-                #q_near = tuple(self._round_to_5_and_balance(exact_near))
-                q_near = tuple(exact_near)
-
                 actual_delta = int(round(target_delta))
+
+                # Use the existing rounded delta to create an integer Near vector
+                near_values = list(q_far)
+                near_values[i] -= actual_delta
+                near_values[j] += actual_delta
+
+                q_near = tuple(near_values)
 
                 if (
                     q_near == q_far
